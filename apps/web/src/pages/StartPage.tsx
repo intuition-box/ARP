@@ -13,12 +13,13 @@ import {BackLink} from "../components/brand/BackLink";
 import {Hint} from "../components/brand/Hint";
 import {PageLoading} from "../components/brand/PageLoading";
 import {useAgentActivity} from "../hooks/use-agent-activity";
-import {controlClass, linkClass} from "../lib/control-class";
-import {START_PATHS, isStartProfile, rememberProfile} from "../lib/start-paths";
-import type {AgentFeed} from "../services/agent-feed";
 import {useDomainTree} from "../hooks/use-domain-tree";
 import {useListTool} from "../hooks/use-list-tool";
 import {useProposeCategory} from "../hooks/use-propose-category";
+import {controlClass, linkClass} from "../lib/control-class";
+import {START_PATHS, isStartProfile, rememberProfile} from "../lib/start-paths";
+import type {AgentFeed} from "../services/agent-feed";
+import {DOMAIN_ROOT} from "../services/domain-filter";
 import {listToolMessage} from "../services/list-tool";
 import {proposeCategoryMessage} from "../services/propose-category";
 import {stepsFor, type StartStep} from "../services/start-steps";
@@ -387,7 +388,7 @@ const NONE_FITS = "__none-fits";
 
 /** Tag the listed tool with an existing category, or file a new one under a parent (task 59). */
 function ChooseCategory({subjectId}: {subjectId: string}) {
-    const {options} = useDomainTree();
+    const {options, error} = useDomainTree();
     const proposal = useProposeCategory();
     const [choice, setChoice] = useState("");
     const [label, setLabel] = useState("");
@@ -426,9 +427,10 @@ function ChooseCategory({subjectId}: {subjectId: string}) {
                 <option value="" disabled>
                     Choose one
                 </option>
+                {/* Sorted by label, not in tree order, so no indent: it would sit under the wrong parent. */}
                 {options.map((option) => (
                     <option key={option.label} value={option.label}>
-                        {`${"— ".repeat(Math.max(0, option.depth - 1))}${option.label}`}
+                        {option.label}
                     </option>
                 ))}
                 <option value={NONE_FITS}>None fits</option>
@@ -457,6 +459,9 @@ function ChooseCategory({subjectId}: {subjectId: string}) {
                         <option value="" disabled>
                             Choose its parent
                         </option>
+                        {/* The root is a parent like any other: a new top-level category meets the
+                        same rules here as through the MCP tool (`docs/25` §8). */}
+                        <option value={DOMAIN_ROOT}>{DOMAIN_ROOT}</option>
                         {options.map((option) => (
                             <option key={option.label} value={option.label}>
                                 {option.label}
@@ -489,7 +494,9 @@ function ChooseCategory({subjectId}: {subjectId: string}) {
             >
                 {proposal.pending
                     ? "Filing…"
-                    : proposal.result !== null && proposeCategoryMessage(proposal.result)}
+                    : proposal.result !== null
+                      ? proposeCategoryMessage(proposal.result)
+                      : error !== null && "The categories could not be read."}
             </p>
         </form>
     );
