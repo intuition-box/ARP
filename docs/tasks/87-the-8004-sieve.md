@@ -1,6 +1,6 @@
 # Task 87 — The 8004 sieve: separate the agents that exist from the ones that answer
 
-**Status:** built 2026-11-09; `ui-reviewer` round 1 FAIL (fixed), `task-verifier` round 1 FAIL (fixed); re-review pending. Brief written 2026-11-09 from a design session with the user.
+**Status:** verified 2026-11-09: `ui-reviewer` PASS (round 2), `task-verifier` PASS (round 2), commit `1339f8b`, post-mortem `learning/74`. Brief written 2026-11-09 from a design session with the user.
 **ADR:** `0156`.
 **Rules:** `code.md`, `claims.md`, `portability.md`, `workflow.md`, and `ui.md` for the page.
 **Read first:** `docs/19_THE_GAP_A_THIRD_PARTY_MEASURED.md` (all of it), `docs/08` §F5, `docs/14`,

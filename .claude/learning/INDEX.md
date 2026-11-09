@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-82 entries, one per completed task. Written by `task-verifier` on a pass.
+83 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -86,5 +86,6 @@
 | [71](71-the-nav-coin.md) | `docs/tasks/80-the-nav-coin.md` | PASS (round 3; round 1 FAIL on unported tests, a stale README status, a duplicate CSS rule; round 2 FAIL on a numbering clash) | The nav: the coin |
 | [72](72-the-landing-galaxy.md) | `docs/tasks/81-the-landing-galaxy.md` | PASS (round 3) | The landing: one camera through the registry |
 | [73](73-enough-to-test.md) | `docs/tasks/82-enough-to-test.md` | PASS (round 2; round 1 FAIL on one claim and uncommented casts) | Enough to test |
+| [74](74-the-8004-sieve.md) | `docs/tasks/87-the-8004-sieve.md` (written as task 83, renumbered at rebase) | PASS on round 2 | The 8004 sieve: separate the agents that exist from the ones that answer |
 | [75](75-words-to-the-tree.md) | `docs/tasks/84-words-to-the-tree.md` | PASS (round 2) | Words to the tree |
 | [76](76-no-limits-page.md) | `docs/tasks/85-no-limits-page.md` | PASS | The docs have no Limits page |
