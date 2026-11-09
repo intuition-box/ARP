@@ -113,6 +113,16 @@ export function SceneDeck({
         if (node === null || !pinned) return;
         const still = prefersStill();
 
+        // The fixed activity bar at the foot of every page: the scenes keep their copy above it.
+        const bar = document.querySelector<HTMLElement>("[data-bottom-bar]");
+        const floor = () => node.style.setProperty("--gx-floor", `${bar?.offsetHeight ?? 0}px`);
+        floor();
+        const watch =
+            bar === null || typeof ResizeObserver === "undefined"
+                ? null
+                : new ResizeObserver(floor);
+        if (bar !== null) watch?.observe(bar);
+
         const show = (index: number): number => {
             const from = live.current.current;
             if (index === from) return 0;
@@ -128,8 +138,12 @@ export function SceneDeck({
             return settleMs;
         };
 
+        // One band per scene, measured: the bands are `svh`, which on a phone is not `innerHeight`
+        // while its toolbar is collapsed.
+        const band = () =>
+            node.offsetHeight / Math.max(1, live.current.count) || window.innerHeight;
         const bandTop = (index: number) =>
-            window.scrollY + node.getBoundingClientRect().top + index * window.innerHeight;
+            window.scrollY + node.getBoundingClientRect().top + index * band();
 
         /** The deck owns the gesture while its stage fills the viewport. */
         const owns = (): boolean => {
@@ -158,7 +172,7 @@ export function SceneDeck({
 
         const onScroll = () => {
             if (locked()) return;
-            const raw = -node.getBoundingClientRect().top / window.innerHeight;
+            const raw = -node.getBoundingClientRect().top / band();
             show(Math.round(Math.min(live.current.count - 1, Math.max(0, raw))));
         };
 
@@ -190,12 +204,23 @@ export function SceneDeck({
             if (Math.abs(dy) > 40) step(Math.sign(dy));
         };
 
-        /** Anything with its own meaning for Space or an arrow key keeps it. */
-        const OWN_KEYS = "input,textarea,select,[contenteditable],button,a,summary,[role='button']";
+        /**
+         * Typing keeps every key; a button or a link keeps Space, which presses it. Arrows mean
+         * nothing on a button or a link, so they still step the deck from one, and a keyboard
+         * reader can reach every scene after tabbing to the first link.
+         */
+        const TYPING = "input,textarea,select,[contenteditable]";
+        const PRESSABLE = "button,a,summary,[role='button']";
         const onKeyDown = (event: KeyboardEvent) => {
             if (!owns()) return;
             const target = event.target;
-            if (target instanceof Element && target.closest(OWN_KEYS) !== null) return;
+            if (target instanceof Element && target.closest(TYPING) !== null) return;
+            if (
+                event.key === " " &&
+                target instanceof Element &&
+                target.closest(PRESSABLE) !== null
+            )
+                return;
             const down =
                 event.key === "ArrowDown" ||
                 event.key === "PageDown" ||
@@ -253,6 +278,7 @@ export function SceneDeck({
         document.addEventListener("click", onClick);
         window.addEventListener("hashchange", onHashChange);
         return () => {
+            watch?.disconnect();
             window.removeEventListener("scroll", onScroll);
             window.removeEventListener("wheel", onWheel);
             window.removeEventListener("touchstart", onTouchStart);

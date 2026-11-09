@@ -1,3 +1,4 @@
+import {LANDING_DOTS_PER_RING} from "../../services/landing-field";
 import {dotDiameter, landingOffset, ringAngle, type Point} from "../atom/claim-field-geometry";
 
 /**
@@ -88,13 +89,6 @@ export const RING_RADII = [7, 11.5, 15.5] as const;
 export const RING_NAMES = ["used by", "in context of", "has outcome"] as const;
 
 /**
- * The most dots drawn on one ring of the landing's field. **Fewer is the point** (the user:
- * « on n'a pas besoin d'autant de points ») — the rest is stated in the panel, as `ClaimField`
- * states what `MAX_DOTS_PER_RING` leaves out.
- */
-export const LANDING_DOTS_PER_RING = 6;
-
-/**
  * A claim's place on its ring, in world units. The angle is `claim-field-geometry`'s
  * {@link ringAngle} with the landing's offsets (no dot at twelve o'clock, where the ring's name
  * sits; rings 1 and 2 never on one radius).
@@ -105,10 +99,13 @@ export function slotOf(ring: number, position: number, drawn: number): Point {
     return {x: SUBJECT.x + r * Math.cos(angle), y: SUBJECT.y + r * Math.sin(angle)};
 }
 
-/** Where your agent stands to read the field: outside it, lower left. */
+/**
+ * Where your agent stands to read the field: outside it, upper right. The reference had it lower
+ * left, where at the desktop stops it lands on the scene's heading.
+ */
 export const READER_SLOT: Point = {
-    x: SUBJECT.x + 21 * Math.cos(Math.PI * 0.82),
-    y: SUBJECT.y + 21 * Math.sin(Math.PI * 0.82),
+    x: SUBJECT.x + 21 * Math.cos(-Math.PI * 0.22),
+    y: SUBJECT.y + 21 * Math.sin(-Math.PI * 0.22),
 };
 
 /** How many atoms can be drawn at once: the tool, three capped rings, and your agent. */
@@ -350,10 +347,12 @@ export const WORD_LIGHTS_AFTER = 0.9;
 /** Scene 2: the loupe starts reading after this, and holds each claim this long. */
 export const READ = {startS: 0.6, forS: 2.8} as const;
 
-/** Which reading the loupe is on, or -1 before it starts. Under reduced motion, the first, held. */
+/**
+ * Which reading the loupe is on, or -1 when none. Under reduced motion the end state is every
+ * reading at once, so the loupe tours nothing and no claim stays lit.
+ */
 export function readingAt(since: number, count: number, still: boolean): number {
-    if (count === 0) return -1;
-    if (still) return 0;
+    if (count === 0 || still) return -1;
     if (since < READ.startS) return -1;
     return Math.floor((since - READ.startS) / READ.forS) % count;
 }

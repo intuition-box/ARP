@@ -101,11 +101,11 @@ describe("the field", () => {
         expect(joinAt(17, 18)).toBeLessThanOrEqual(JOIN.until + 1e-9);
     });
 
-    it("tours the readings 2.8 s each, and holds the first under reduced motion", () => {
+    it("tours the readings 2.8 s each, and tours nothing under reduced motion", () => {
         expect(readingAt(0.1, 4, false)).toBe(-1);
         expect(readingAt(0.7, 4, false)).toBe(0);
         expect(readingAt(0.6 + 2.8 * 5 + 0.1, 4, false)).toBe(1);
-        expect(readingAt(99, 4, true)).toBe(0);
+        expect(readingAt(99, 4, true)).toBe(-1);
         expect(readingAt(5, 0, false)).toBe(-1);
     });
 });

@@ -143,6 +143,14 @@ function NotYet({read, empty}: {read: {status: "pending" | "failed" | "ok"}; emp
     return <div className="arp-gx-empty">{empty}</div>;
 }
 
+/**
+ * The field's read as the lines see it: the tool can be found while its lines did not answer, and
+ * then the line panels say the read failed rather than that nobody wrote one.
+ */
+function linesOf(read: LandingFieldRead): {status: "pending" | "failed" | "ok"} {
+    return read.status === "ok" && read.field.linesFailed ? {status: "failed"} : read;
+}
+
 /** Names only: a tool's label is its URL, and a skill is named by its skill. */
 function nameOf(end: {atomId: string; label: string | null}): string {
     return end.label === null
@@ -231,7 +239,7 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
             <Panel label="A line, word by word" className="arp-gx-subject arp-gx-feed" index={1}>
                 {line === null ? (
                     <NotYet
-                        read={read}
+                        read={linesOf(read)}
                         empty={<NoActivityYet what="No line written here yet." />}
                     />
                 ) : (
@@ -272,7 +280,7 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
                             ))}
                         </ol>
                         <p className="arp-gx-foot">
-                            {joined} {joined === 1 ? "agent" : "agents"} writing into these words
+                            {joined} {joined === 1 ? "agent" : "agents"} writing into them
                         </p>
                     </>
                 )}
@@ -318,20 +326,25 @@ function SceneTravels({
                 index={1}
             >
                 {readings.length === 0 ? (
-                    <NotYet read={read} empty={<p>Nothing to read here yet.</p>} />
+                    <NotYet read={linesOf(read)} empty={<p>Nothing to read here yet.</p>} />
                 ) : (
-                    <ol className="arp-gx-reads">
-                        {readings.map((row, index) => (
-                            <li
-                                key={row.kind}
-                                ref={rowRef(index)}
-                                data-on={ended || index === reading}
-                            >
-                                <em>{row.kind}</em>
-                                <span>{row.text}</span>
-                            </li>
-                        ))}
-                    </ol>
+                    <>
+                        <ol className="arp-gx-reads">
+                            {readings.map((row, index) => (
+                                <li
+                                    key={row.kind}
+                                    ref={rowRef(index)}
+                                    data-on={ended || index === reading}
+                                >
+                                    <em>{row.kind}</em>
+                                    <span>{row.text}</span>
+                                </li>
+                            ))}
+                        </ol>
+                        {field?.linesFailed === true ? (
+                            <NotYet read={{status: "failed"}} empty={null} />
+                        ) : null}
+                    </>
                 )}
             </Panel>
             <div className="arp-gx-copy">
@@ -403,10 +416,13 @@ function CommandCard({name, lines}: {name: string; lines: readonly string[]}) {
                 type="button"
                 className="arp-gx-copy-btn"
                 onClick={copy}
-                aria-label={`Copy the ${name} commands`}
+                aria-label={copied ? `${name} commands copied` : `Copy the ${name} commands`}
             >
                 {copied ? "Copied" : "Copy"}
             </button>
+            <span className="sr-only" aria-live="polite">
+                {copied ? `${name} commands copied` : ""}
+            </span>
         </div>
     );
 }

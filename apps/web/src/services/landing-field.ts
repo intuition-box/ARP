@@ -12,7 +12,6 @@ import {
 } from "@arp-protocol/core";
 import {stringToHex, type Address, type Hex} from "viem";
 
-import {LANDING_DOTS_PER_RING} from "../components/brand/galaxy-geometry";
 import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
 import {truncateMiddle} from "./trust-format";
 
@@ -25,6 +24,13 @@ import {truncateMiddle} from "./trust-format";
  * behind it is left out, not invented; when no tool has a declaration the field is empty and the
  * page says so. The reference's samples (`8453:3107`, `video`, `missing-key`…) never reach here.
  */
+
+/**
+ * The most dots drawn on one ring of the landing's field. **Fewer is the point** (the user:
+ * « on n'a pas besoin d'autant de points ») — the panel states the rest, as `ClaimField` states
+ * what `MAX_DOTS_PER_RING` leaves out.
+ */
+export const LANDING_DOTS_PER_RING = 6;
 
 export type FieldClaim = {
     key: string;
@@ -63,6 +69,11 @@ export type LandingField = {
     /** Distinct agents that declared the tool, after the hiding. */
     agents: number;
     readings: FieldReading[];
+    /**
+     * The tool was found but its lines did not answer: the line and the readings are unknown, not
+     * absent, and the page says the read failed (`rules/claims.md` §1).
+     */
+    linesFailed: boolean;
 };
 
 export const EMPTY_FIELD: LandingField = {
@@ -71,6 +82,7 @@ export const EMPTY_FIELD: LandingField = {
     line: null,
     agents: 0,
     readings: [],
+    linesFailed: false,
 };
 
 const lower = (value: string) => value.toLowerCase();
@@ -284,6 +296,7 @@ export function buildLandingField(input: {
         line,
         agents: agentCount,
         readings: readings.filter((reading) => drawn.has(reading.claimKey)),
+        linesFailed: usage === null,
     };
 }
 

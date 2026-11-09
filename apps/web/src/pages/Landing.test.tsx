@@ -211,6 +211,17 @@ describe("Landing", () => {
         expect(screen.queryByText("No activity yet.")).toBeNull();
     });
 
+    it("says the lines did not answer, rather than that nobody wrote one", async () => {
+        withRealLine();
+        getPulseUsage.mockRejectedValue(new Error("502 from the indexer"));
+        const {container} = renderWithProviders(<Landing />);
+        expect(
+            await within(scene(container, 1)).findByText(/The graph did not answer/i),
+        ).toBeTruthy();
+        expect(within(scene(container, 2)).getByText(/The graph did not answer/i)).toBeTruthy();
+        expect(within(scene(container, 1)).queryByText("No line written here yet.")).toBeNull();
+    });
+
     it("writes the most declared tool's latest line, word by word, from the chain", async () => {
         withRealLine();
         const {container} = renderWithProviders(<Landing />);
@@ -220,7 +231,7 @@ describe("Landing", () => {
                 "13579:812 uses transcribe in context of research has outcome failed: missing-key",
             ),
         );
-        expect(written.textContent).toContain("1 agent writing into these words");
+        expect(written.textContent).toContain("1 agent writing into them");
 
         const reads = scene(container, 2);
         await waitFor(() => expect(reads.querySelectorAll(".arp-gx-reads li")).toHaveLength(3));

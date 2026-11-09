@@ -234,6 +234,7 @@
     --row-index: 0; /* which row of a list */
     --gx-i: 0; /* which piece of a landing scene, for the stagger */
     --gx-base: 0ms; /* when the scene's first piece starts: half the camera's move */
+    --gx-floor: 0px; /* the fixed activity bar's height, which the landing's copy stays above */
     --orbit-for: 90s; /* how long one ring of the claim field takes to turn */
     --claim-dot: 10px; /* one claim's mark in the field, set per dot by positions */
     --orbit-to: 360deg; /* and which way — negative reverses it */
@@ -1056,7 +1057,7 @@ a.arp-cf-card:hover {
     width: 6px;
     height: 6px;
     border-radius: 999px;
-    background: var(--color-accent);
+    background: var(--color-steel);
 }
 
 .arp-coin .arp-coin-here {
@@ -1437,7 +1438,7 @@ a.arp-cf-card:hover {
 .arp-deck-pinned .arp-gx-copy {
     position: absolute;
     left: max(24px, 5vw);
-    bottom: clamp(40px, 9vh, 96px);
+    bottom: calc(var(--gx-floor) + clamp(24px, 6vh, 64px));
     max-width: min(34rem, calc(100% - 48px));
 }
 
@@ -1539,7 +1540,7 @@ a.arp-cf-card:hover {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: max(16px, 2.4vh);
+    bottom: calc(var(--gx-floor) + 12px);
     margin: 0;
     text-align: center;
     font-family: var(--font-mono);
@@ -1639,7 +1640,7 @@ a.arp-cf-card:hover {
 
 .arp-deck-pinned .arp-gx-subject {
     right: max(24px, 5vw);
-    bottom: clamp(40px, 9vh, 96px);
+    bottom: calc(var(--gx-floor) + clamp(24px, 6vh, 64px));
     width: min(23rem, calc(100% - 48px));
 }
 
@@ -1727,7 +1728,7 @@ a.arp-cf-card:hover {
     position: absolute;
     left: max(24px, 5vw);
     right: max(24px, 5vw);
-    bottom: clamp(36px, 8vh, 80px);
+    bottom: calc(var(--gx-floor) + clamp(20px, 5vh, 56px));
 }
 
 .arp-gx-cmd {
@@ -1743,7 +1744,7 @@ a.arp-cf-card:hover {
 }
 
 .arp-gx-cmd.is-ask {
-    border-color: var(--color-accent);
+    border-color: var(--color-steel);
 }
 
 .arp-gx-cmd-name {
@@ -1775,8 +1776,8 @@ a.arp-cf-card:hover {
 }
 
 .arp-gx-cmd b {
-    font-weight: 700;
-    color: var(--color-accent);
+    font-weight: 800;
+    color: var(--color-fg);
 }
 
 /* A button: the unlayered `button {}` rule sets a border and a radius, and
@@ -1832,7 +1833,7 @@ a.arp-cf-card:hover {
 .arp-deck-pinned .arp-gx-compare {
     position: absolute;
     right: max(24px, 5vw);
-    bottom: clamp(40px, 9vh, 96px);
+    bottom: calc(var(--gx-floor) + clamp(24px, 6vh, 64px));
     width: min(30rem, calc(100% - 48px));
 }
 

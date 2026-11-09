@@ -99,7 +99,7 @@ function readPalette(): Palette {
         steel: token("--color-steel", "#8a9096"),
         accent: token("--color-accent", "#ffb020"),
         ruleStrong: token("--color-rule-strong", "#43474b"),
-        track: "#3a3e42",
+        track: token("--color-rule-strong", "#43474b"),
         mono: token("--font-mono", "ui-monospace, monospace"),
     };
 }
@@ -215,9 +215,10 @@ export function GalaxyField({
     });
 
     useEffect(() => {
-        const canvas = canvasRef.current;
-        const context = canvas?.getContext("2d") ?? null;
-        if (canvas === null || context === null) return;
+        const element = canvasRef.current;
+        const context = element?.getContext("2d") ?? null;
+        if (element === null || element === undefined || context === null) return;
+        const canvas: HTMLCanvasElement = element;
         const ctx = context;
         const palette = readPalette();
         const stars = buildStars();
@@ -228,9 +229,12 @@ export function GalaxyField({
         let height = 0;
         let frame = 0;
         let last = performance.now();
+        /** Scene 0's beats: one per real line, once each time the pulse is shown. */
+        let beatsLeft = 0;
         let nextBeat = 0;
 
         let seenChange = -1;
+        let beatsFor = -1;
         let seenScene = 0;
         let camFrom: Camera = cameraFor(0, window.innerWidth);
         let camTo: Camera = camFrom;
@@ -246,11 +250,11 @@ export function GalaxyField({
 
         function fit() {
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
-            const box = canvas!.getBoundingClientRect();
+            const box = canvas.getBoundingClientRect();
             width = box.width;
             height = box.height;
-            canvas!.width = Math.round(width * dpr);
-            canvas!.height = Math.round(height * dpr);
+            canvas.width = Math.round(width * dpr);
+            canvas.height = Math.round(height * dpr);
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             camFrom = cameraFor(seenScene, window.innerWidth);
             camTo = camFrom;
@@ -305,12 +309,14 @@ export function GalaxyField({
             const cx = Math.max(boxW / 2 + 8, Math.min(width - boxW / 2 - 8, x));
             const top = y - boxH;
             if (style.border !== null) {
-                ctx.fillStyle = "rgba(11,12,13,0.85)";
+                ctx.fillStyle = palette.ground;
                 ctx.strokeStyle = style.border;
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.roundRect(cx - boxW / 2, top, boxW, boxH, 6);
+                ctx.globalAlpha = alpha * 0.85;
                 ctx.fill();
+                ctx.globalAlpha = alpha;
                 ctx.stroke();
             }
             ctx.fillStyle = style.colour;
@@ -324,7 +330,7 @@ export function GalaxyField({
             frame = requestAnimationFrame(draw);
             const dt = Math.min(0.05, (now - last) / 1000);
             last = now;
-            const box = canvas!.getBoundingClientRect();
+            const box = canvas.getBoundingClientRect();
             if (box.bottom <= 0 || box.width === 0) return;
             if (Math.abs(box.width - width) > 0.5 || Math.abs(box.height - height) > 0.5) fit();
 
@@ -355,9 +361,16 @@ export function GalaxyField({
             ctx.fillStyle = palette.ground;
             ctx.fillRect(0, 0, width, height);
 
-            // The pulse beats in scene 0, and only when the chain has lines to beat for.
-            if (current === 0 && !still && beatCount > 0 && now >= nextBeat) {
-                nextBeat = now + 4000;
+            // The pulse: one beat per real line on the chain, when scene 0 arrives, and then still.
+            // No line, no beat; nothing here loops to suggest activity the chain does not have.
+            if (deck.changedAt !== beatsFor) {
+                beatsFor = deck.changedAt;
+                beatsLeft = current === 0 && !still ? Math.min(beatCount, 8) : 0;
+                nextBeat = now + 400;
+            }
+            if (beatsLeft > 0 && now >= nextBeat) {
+                beatsLeft -= 1;
+                nextBeat = now + 600;
                 beat[Math.floor(Math.random() * stars.length)] = 1;
             }
 
@@ -365,9 +378,8 @@ export function GalaxyField({
             const away = new Set<number>();
             for (const atom of atoms) if (atom.v > 0.001) away.add(starOf[atom.k] ?? -1);
 
-            for (let i = 0; i < stars.length; i += 1) {
+            for (const [i, star] of stars.entries()) {
                 if (away.has(i)) continue;
-                const star = stars[i]!;
                 const X = view.x(star.x);
                 const Y = view.y(star.y);
                 if (X < -20 || X > width + 20 || Y < -20 || Y > height + 20) continue;
@@ -430,7 +442,7 @@ export function GalaxyField({
 
             const n = atoms.length;
             const where = new Map<string, {x: number; y: number; r: number}>();
-            for (const atom of atoms) {
+            for (const [order, atom] of atoms.entries()) {
                 let target = 0;
                 if (!atom.leaving) {
                     if (atom.kind === "reader") target = current >= 2 && current <= 4 ? 1 : 0;
@@ -441,15 +453,18 @@ export function GalaxyField({
                 if (target !== atom.to) {
                     atom.from = atom.v;
                     atom.to = target;
+                    // By place in the list, last written first. Not by `k`: your agent's slot is
+                    // the last index, and a delay below zero would start it half way home.
                     atom.t0 =
-                        now + (target === 0 && !still ? (n - 1 - atom.k) * GLIDE.staggerMs : 0);
+                        now + (target === 0 && !still ? (n - 1 - order) * GLIDE.staggerMs : 0);
                     atom.dur = target === 1 ? GLIDE.inMs : GLIDE.outMs;
                 }
                 const q = still ? 1 : clamp((now - atom.t0) / atom.dur);
                 atom.v = lerp(atom.from, atom.to, cameraEase(q));
                 if (atom.v <= 0.001) continue;
 
-                const star = stars[starOf[atom.k] ?? 0]!;
+                const star = stars[starOf[atom.k] ?? -1];
+                if (star === undefined) continue;
                 const e = atom.v;
                 const X = view.x(lerp(star.x, atom.slot.x, e));
                 const Y = view.y(lerp(star.y, atom.slot.y, e));
@@ -532,8 +547,15 @@ export function GalaxyField({
                 if (row !== null && panel !== null) {
                     const rr = row.getBoundingClientRect();
                     const pr = panel.getBoundingClientRect();
-                    const barY = rr.top + rr.height / 2 - box.top;
-                    const endX = pr.left - box.left;
+                    // Beside the field (desktop) the line runs level to the row it reads. Above it (a
+                    // phone) it rises to the panel's lower edge and runs a short way along it, so it
+                    // never hooks round the side of the screen.
+                    const above = pr.bottom - box.top < loupe.y - R;
+                    const barY = above ? pr.bottom - box.top : rr.top + rr.height / 2 - box.top;
+                    const rise = Math.abs(loupe.y - barY) / Math.tan((35 * Math.PI) / 180);
+                    const endX = above
+                        ? Math.min(pr.right - box.left - 16, loupe.x + rise + 28)
+                        : pr.left - box.left;
                     const [start, corner, end] = elbowLine(
                         {x: loupe.x, y: loupe.y},
                         {radius: R, barY, endX, cornerMaxX: endX - 14},
@@ -568,7 +590,7 @@ export function GalaxyField({
                 ctx.letterSpacing = "1.5px";
                 label(name.toUpperCase(), cx, cy - r * view.scale - 6, ringNameA[ring] ?? 0, {
                     mono: true,
-                    size: 10.5,
+                    size: 11,
                     colour: palette.steel,
                     border: null,
                 });
@@ -584,13 +606,13 @@ export function GalaxyField({
                 if (atom.kind === "reader") show = current === 2 || current === 3;
                 if (current === 2 && atom.kind === "claim") show = show && readKey === atom.key;
                 if (current === 3 && atom.kind === "claim") show = false;
-                if (
-                    small &&
-                    current === 1 &&
-                    atom.kind === "claim" &&
-                    atom.ring === 0 &&
-                    atom.key !== line?.keys.agent
-                )
+                // Scene 1 names only the line's own words and the claim being written: six agents'
+                // ids side by side cover each other and the ring's name.
+                const ownWord =
+                    atom.key === line?.keys.agent ||
+                    atom.key === line?.keys.context ||
+                    atom.key === line?.keys.outcome;
+                if (current === 1 && atom.kind === "claim" && !ownWord && atom.hl < 0.3)
                     show = false;
                 show =
                     show &&

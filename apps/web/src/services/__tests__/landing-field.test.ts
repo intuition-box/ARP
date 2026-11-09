@@ -182,6 +182,7 @@ describe("buildLandingField", () => {
         expect(field.rings[0]?.claims).toHaveLength(1);
         expect(field.rings[0]?.claims[0]?.isId).toBe(true);
         expect(field.line).toBeNull();
+        expect(field.linesFailed).toBe(true);
     });
 });
 

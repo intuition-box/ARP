@@ -155,7 +155,10 @@ export function ActivityLog({store, feed}: {store?: Store; feed?: AgentFeed} = {
     const latest = entries[entries.length - 1];
 
     return (
-        <aside className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--color-rule)] bg-[color:var(--color-bg)]">
+        <aside
+            data-bottom-bar
+            className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--color-rule)] bg-[color:var(--color-bg)]"
+        >
             <div className="flex items-baseline gap-3 px-4">
                 <button
                     type="button"
