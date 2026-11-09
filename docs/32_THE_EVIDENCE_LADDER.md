@@ -80,7 +80,8 @@ own funds.
 | Observed | yes — hook failures, content receipts | yes — probes | receipts yes (`docs/tasks/65` §8); payment under a delegation **not built** — delegations were set aside on 2026-11-03 and come back for this column only |
 | Corroborated | **no** | **no** | **no** |
 
-Measured on testnet 13579 on 2026-11-09 by `bun run scripts/measure/line-writers.ts`: 10 `has outcome`
+Measured on testnet 13579 on 2026-11-09 by `bun run scripts/measure/line-writers.ts`, raw output in
+`data/measurements/line-writers-2026-11-09T1021.json`: 10 `has outcome`
 lines, all 10 written by ARP's two wallets, none by an independent wallet. So no column reaches tier 3,
 and no ranking has moved from a line.
 
