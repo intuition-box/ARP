@@ -25852,6 +25852,77 @@ var init_line = __esm(() => {
   };
 });
 
+// ../../packages/protocol/dist/sponsor/category.js
+function categoryRequestTypedData(request, chainId) {
+  return {
+    domain: { name: "ARP Category Request", version: "1", chainId },
+    types: CATEGORY_REQUEST_TYPES,
+    primaryType: "CategoryRequest",
+    message: { ...request, expiresAt: BigInt(request.expiresAt) }
+  };
+}
+async function signCategoryRequest(request, chainId, signer) {
+  return { request, chainId, signature: await signer.signTypedData(categoryRequestTypedData(request, chainId)) };
+}
+async function verifyCategoryRequest(signed, now) {
+  if (typeof signed !== "object" || signed === null)
+    return { status: "malformed", reason: "no request" };
+  const { request, chainId, signature } = signed;
+  if (typeof request !== "object" || request === null)
+    return { status: "malformed", reason: "no request" };
+  if (typeof chainId !== "number" || !Number.isInteger(chainId))
+    return { status: "malformed", reason: "chainId" };
+  if (typeof signature !== "string" || !isHex(signature))
+    return { status: "malformed", reason: "signature" };
+  const { agent, agentRegistry, agentId, label, parent, subject, reason, nonce, expiresAt } = request;
+  if (typeof agent !== "string" || !isAddress(agent))
+    return { status: "malformed", reason: "agent" };
+  if (typeof agentRegistry !== "string" || typeof agentId !== "string")
+    return { status: "malformed", reason: "agent reference" };
+  if (typeof label !== "string" || label.length === 0 || label.length > CATEGORY_REQUEST_MAX_LABEL_LENGTH) {
+    return { status: "malformed", reason: "label" };
+  }
+  if (typeof parent !== "string" || parent.length > CATEGORY_REQUEST_MAX_LABEL_LENGTH)
+    return { status: "malformed", reason: "parent" };
+  if (!isBytes322(subject))
+    return { status: "malformed", reason: "subject" };
+  if (typeof reason !== "string" || reason.length > CATEGORY_REQUEST_MAX_REASON_LENGTH)
+    return { status: "malformed", reason: "reason" };
+  if (!isBytes322(nonce))
+    return { status: "malformed", reason: "nonce" };
+  if (typeof expiresAt !== "number" || !Number.isInteger(expiresAt))
+    return { status: "malformed", reason: "expiresAt" };
+  if (expiresAt <= now)
+    return { status: "expired", expiresAt };
+  if (expiresAt > now + CATEGORY_REQUEST_MAX_TTL_SECONDS)
+    return { status: "malformed", reason: "expires too far ahead" };
+  let recovered;
+  try {
+    recovered = await recoverTypedDataAddress2({ ...categoryRequestTypedData(request, chainId), signature });
+  } catch {
+    return { status: "malformed", reason: "signature" };
+  }
+  const declared = getAddress(agent);
+  return getAddress(recovered) === declared ? { status: "valid", address: declared } : { status: "mismatch", declared, recovered };
+}
+var CATEGORY_REQUEST_TYPES, CATEGORY_REQUEST_MAX_TTL_SECONDS = 3600, CATEGORY_REQUEST_MAX_LABEL_LENGTH = 64, CATEGORY_REQUEST_MAX_REASON_LENGTH = 500, isBytes322 = (value) => typeof value === "string" && isHex(value) && value.length === 66;
+var init_category = __esm(() => {
+  init__esm();
+  CATEGORY_REQUEST_TYPES = {
+    CategoryRequest: [
+      { name: "agent", type: "address" },
+      { name: "agentRegistry", type: "string" },
+      { name: "agentId", type: "string" },
+      { name: "label", type: "string" },
+      { name: "parent", type: "string" },
+      { name: "subject", type: "bytes32" },
+      { name: "reason", type: "string" },
+      { name: "nonce", type: "bytes32" },
+      { name: "expiresAt", type: "uint256" }
+    ]
+  };
+});
+
 // ../../packages/protocol/dist/index.js
 var init_dist2 = __esm(() => {
   init_client2();
@@ -25891,6 +25962,7 @@ var init_dist2 = __esm(() => {
   init_mint_gas();
   init_list_tool();
   init_line();
+  init_category();
 });
 
 // ../node/src/node-key.ts
@@ -33402,6 +33474,48 @@ var init_agent_key = __esm(() => {
   init_dist2();
 });
 
+// ../mcp/src/desktop/file-category.ts
+function isRecord2(value) {
+  return typeof value === "object" && value !== null;
+}
+async function fileCategory(args, deps) {
+  let request;
+  try {
+    request = await deps.sign({
+      label: args.category,
+      parent: args.parent ?? "",
+      subject: args.id,
+      reason: args.reason ?? ""
+    });
+  } catch (error) {
+    return { error: `this agent could not sign the request: ${error instanceof Error ? error.message : String(error)}` };
+  }
+  return submitCategory(request, deps);
+}
+async function submitCategory(request, deps) {
+  let response;
+  try {
+    response = await deps.fetch(`${deps.sponsorUrl}/propose-category`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ request })
+    });
+  } catch {
+    return { error: "ARP's sponsor is not reachable, so the category was not filed." };
+  }
+  const answer = await response.json().catch(() => null);
+  if (response.ok && isRecord2(answer) && typeof answer["label"] === "string") {
+    return {
+      filed: answer["label"],
+      new_category: answer["newCategory"] === true,
+      written: answer["created"] === true
+    };
+  }
+  const rule = isRecord2(answer) && typeof answer["rule"] === "string" ? answer["rule"] : "unknown";
+  const detail = isRecord2(answer) && typeof answer["error"] === "string" ? answer["error"] : `HTTP ${response.status}`;
+  return { refused: rule, detail };
+}
+
 // ../mcp/src/desktop/skill-gate.ts
 import { existsSync as existsSync4, mkdirSync as mkdirSync4, readFileSync as readFileSync3, writeFileSync as writeFileSync5, appendFileSync as appendFileSync3 } from "node:fs";
 import { dirname as dirname4, join as join7 } from "node:path";
@@ -33753,6 +33867,39 @@ async function desktopTool(id, name, args) {
   if (typeof atom !== "string" || !/^0x[0-9a-fA-F]{64}$/.test(atom)) {
     return fail(id, -32602, "id must be the 0x + 32 bytes id from arp_find_tools");
   }
+  if (name === "arp_file_category") {
+    const category = args["category"];
+    if (typeof category !== "string" || category.trim().length === 0) {
+      return fail(id, -32602, "category must be a category name");
+    }
+    const parent = typeof args["parent"] === "string" ? args["parent"] : undefined;
+    const reason = typeof args["reason"] === "string" ? args["reason"] : undefined;
+    return text(id, await fileCategory({
+      id: atom,
+      category,
+      ...parent === undefined ? {} : { parent },
+      ...reason === undefined ? {} : { reason }
+    }, {
+      sponsorUrl: SPONSOR_URL,
+      fetch: globalThis.fetch.bind(globalThis),
+      sign: async (fields) => {
+        const sender = agentFor();
+        const config = loopConfig();
+        const state = await ensureAgent(config, sender);
+        return signCategoryRequest({
+          agent: sender.address,
+          agentRegistry: registryRef(config),
+          agentId: state.agentId,
+          label: fields.label,
+          parent: fields.parent,
+          subject: atom,
+          reason: fields.reason,
+          nonce: keccak256(stringToBytes(`category-${atom}-${Date.now()}`)),
+          expiresAt: Math.floor(Date.now() / 1000) + 600
+        }, DESKTOP_CHAIN_ID, sender.account);
+      }
+    }));
+  }
   const loop2 = loopConfig();
   try {
     if (name === "arp_get_skill") {
@@ -34013,7 +34160,15 @@ var init_tools = __esm(() => {
           },
           domain: {
             type: "string",
-            description: "Optional. The category this use was in, one existing word such as `video`. Never the " + "text of a request. One more paid triple per tool, so other agents can read it in context."
+            description: "Optional. The category this use was in, one existing word such as `video`. Never the " + "text of a request. One more paid triple per tool, so other agents can read it in context. " + "A word the tree lacks can be added: pass `domain_parent`, `domain_reason` and `declarer`."
+          },
+          domain_parent: {
+            type: "string",
+            description: "Only for a `domain` the tree does not have yet: the existing category it sits under. " + "The answer is then a request for your agent to sign, not calls; see its `next`."
+          },
+          domain_reason: {
+            type: "string",
+            description: "Only with `domain_parent`: why no existing category fits. Kept with the category."
           },
           budget_wei: {
             type: "string",
@@ -34035,6 +34190,18 @@ var init_tools = __esm(() => {
           }
         },
         required: ["agent_chain_id", "agent_token_id", "tools"]
+      }
+    },
+    {
+      name: "arp_propose_category",
+      description: "Add a category to the domain tree, after `arp_declare_used` answered `sign_category_first`. " + "Pass its `request` and your signature of its `typed_data`, made with the wallet that holds your " + "ERC-8004 identity. ARP checks the category against the tree rules, files it and pays for it, on " + "testnet 13579. Then call `arp_declare_used` again.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          request: { type: "object", description: "The `request` object `arp_declare_used` returned." },
+          signature: { type: "string", description: "Your 0x signature of `typed_data`." }
+        },
+        required: ["request", "signature"]
       }
     },
     {
@@ -34241,6 +34408,26 @@ var init_tools = __esm(() => {
         },
         required: ["id"]
       }
+    },
+    {
+      name: "arp_file_category",
+      description: "File a skill under a category, so others can find it by what it is for. Use it when a skill " + "you found or used has no category, or a wrong one. Pass `id` (from `arp_find_tools`) and " + "`category`: pick an existing one first, from `domains_available` (ask `arp_find_tools` with " + "any `domain`). If none fits, pass a new one-word `category` with `parent`, the existing " + "category it sits under, and `reason`, why none fits. ARP checks it and files it; nothing is " + "asked of the person.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: {
+            type: "string",
+            description: "The skill's `id` from `arp_find_tools`, 0x + 32 bytes."
+          },
+          category: { type: "string", description: "An existing category, or a new one-word one." },
+          parent: {
+            type: "string",
+            description: "For a new category: the existing one it sits under."
+          },
+          reason: { type: "string", description: "For a new category: why no existing one fits." }
+        },
+        required: ["id", "category"]
+      }
     }
   ];
   DESKTOP_TOOL_NAMES = new Set(DESKTOP_TOOLS.map((tool) => tool.name));
@@ -34371,6 +34558,66 @@ var init_reputation = __esm(() => {
   init_serialise();
 });
 
+// ../mcp/src/handlers/category.ts
+function categoryToSign(params) {
+  const request = {
+    agent: getAddress(params.declarer),
+    agentRegistry: params.agentRegistry,
+    agentId: params.agentId,
+    label: params.domain,
+    parent: params.parent,
+    subject: params.subject,
+    reason: params.reason,
+    nonce: keccak256(stringToBytes(`category-${params.subject}-${params.domain}-${params.nowSeconds}`)),
+    expiresAt: params.nowSeconds + TTL_SECONDS
+  };
+  const typed = categoryRequestTypedData(request, chainId);
+  return {
+    status: "sign_category_first",
+    why: `"${params.domain}" is not a category yet. ARP adds it to the tree under "${params.parent}" when your agent signs for it.`,
+    request,
+    typed_data: {
+      domain: typed.domain,
+      types: {
+        EIP712Domain: [
+          { name: "name", type: "string" },
+          { name: "version", type: "string" },
+          { name: "chainId", type: "uint256" }
+        ],
+        ...CATEGORY_REQUEST_TYPES
+      },
+      primaryType: typed.primaryType,
+      message: { ...request, expiresAt: String(request.expiresAt) }
+    },
+    next: `Sign typed_data with ${request.agent} within ${TTL_SECONDS / 60} minutes, then call arp_propose_category ` + "with `request` and the `signature`. Once it answers `filed`, call arp_declare_used again with the same arguments."
+  };
+}
+async function proposeCategory(id, args) {
+  const request = args["request"];
+  const signature = args["signature"];
+  if (typeof request !== "object" || request === null) {
+    return fail(id, -32602, "request must be the `request` object arp_declare_used returned");
+  }
+  if (typeof signature !== "string" || !isHex(signature)) {
+    return fail(id, -32602, "signature must be the 0x signature of `typed_data`");
+  }
+  const signed = { request, chainId, signature };
+  const verdict = await verifyCategoryRequest(signed, Math.floor(Date.now() / 1000));
+  if (verdict.status !== "valid") {
+    return fail(id, -32602, `the request is ${verdict.status}: sign typed_data with the request's agent address`);
+  }
+  return text(id, await submitCategory(signed, {
+    sponsorUrl: SPONSOR_URL,
+    fetch: globalThis.fetch.bind(globalThis)
+  }));
+}
+var TTL_SECONDS = 600;
+var init_category2 = __esm(() => {
+  init_dist2();
+  init__esm();
+  init_config();
+});
+
 // ../mcp/src/handlers/declare.ts
 import { readFileSync as readFileSync5 } from "node:fs";
 async function readLocalReceipts() {
@@ -34469,6 +34716,40 @@ async function declareUsed2(id, args) {
     return text(id, overBudget(plan.totalValue) ?? serialiseDeclarePlan(plan));
   }
   const tree = domainRaw === undefined ? null : await readDomainTree(domainWalk());
+  const domain = domainRaw?.trim().toLowerCase();
+  if (tree !== null && domain !== undefined && !tree.pathToRoot(domain).found) {
+    const parent = args["domain_parent"];
+    const domainReason = args["domain_reason"];
+    if (parent === undefined && domainReason === undefined) {
+      return fail(id, -32602, `"${domain}" is not a category under tool. Pick an existing one, or pass domain_parent and domain_reason to add it`);
+    }
+    if (typeof parent !== "string" || parent.trim() === "" || typeof domainReason !== "string" || domainReason.trim() === "") {
+      return fail(id, -32602, "a new domain needs domain_parent, an existing category, and domain_reason, why none fits");
+    }
+    if (declarerRaw === undefined) {
+      return fail(id, -32602, "a new domain is signed by your agent: pass declarer, the address that holds it");
+    }
+    const first = plan.tools[0];
+    if (first === undefined)
+      return fail(id, -32602, "no tool to file under the new domain");
+    if (!first.atomExists) {
+      return fail(id, -32602, "this tool is not on the graph yet, so nothing can be filed under a new domain: declare it without a domain first");
+    }
+    const registry = registryRaw ?? (chainId === agentChainId ? record.arp?.identityRegistry : undefined);
+    if (typeof registry !== "string" || !isAddress3(registry)) {
+      return fail(id, -32602, "a new domain needs registry, the identity registry that holds your agent");
+    }
+    return text(id, categoryToSign({
+      domain,
+      parent: parent.trim().toLowerCase(),
+      reason: domainReason.trim(),
+      declarer: declarerRaw,
+      agentRegistry: `eip155:${agentChainId}:${registry}`,
+      agentId: agentTokenId,
+      subject: first.atomId,
+      nowSeconds: Math.floor(Date.now() / 1000)
+    }));
+  }
   const qualifiers = [];
   const alreadyWritten = [];
   const existing = plan.tools.filter((tool) => tool.tripleExists).map((tool) => tool.tripleId);
@@ -34604,6 +34885,7 @@ async function declareSession(id, args) {
 var init_declare2 = __esm(() => {
   init_dist2();
   init_config();
+  init_category2();
   init_serialise();
 });
 
@@ -36719,6 +37001,8 @@ async function callTool(id, params) {
         return await toolReputation(id, args);
       case "arp_declare_used":
         return await declareUsed2(id, args);
+      case "arp_propose_category":
+        return await proposeCategory(id, args);
       case "arp_stake_on_used":
         return await stakeOnUsed(id, args);
       case "arp_take_position":
@@ -36834,6 +37118,7 @@ var init_server = __esm(async () => {
   init_config();
   init_reputation();
   init_declare2();
+  init_category2();
   init_positions();
   init_agents();
   init_reachability();
@@ -37805,7 +38090,7 @@ var init_node3 = __esm(async () => {
 });
 
 // src/install/edits.ts
-function isRecord2(value) {
+function isRecord3(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function parseJsonConfig(text2) {
@@ -37813,7 +38098,7 @@ function parseJsonConfig(text2) {
     return {};
   try {
     const parsed = JSON.parse(text2);
-    return isRecord2(parsed) ? parsed : new Error("not a JSON object");
+    return isRecord3(parsed) ? parsed : new Error("not a JSON object");
   } catch (error) {
     return error instanceof Error ? error : new Error(String(error));
   }
@@ -37823,7 +38108,7 @@ function formatJson(value) {
 `;
 }
 function withMcpServer(config, name, entry) {
-  const servers = isRecord2(config.mcpServers) ? { ...config.mcpServers } : {};
+  const servers = isRecord3(config.mcpServers) ? { ...config.mcpServers } : {};
   if (entry === null)
     delete servers[name];
   else
@@ -37834,7 +38119,7 @@ function withMcpServer(config, name, entry) {
   return next;
 }
 function isOurs(hook, marker) {
-  return isRecord2(hook) && typeof hook.command === "string" && hook.command.includes(marker);
+  return isRecord3(hook) && typeof hook.command === "string" && hook.command.includes(marker);
 }
 function strip(list, spec, marker) {
   if (!Array.isArray(list))
@@ -37843,7 +38128,7 @@ function strip(list, spec, marker) {
     return list.filter((entry) => !isOurs(entry, marker));
   const kept = [];
   for (const group of list) {
-    if (!isRecord2(group) || !Array.isArray(group.hooks)) {
+    if (!isRecord3(group) || !Array.isArray(group.hooks)) {
       kept.push(group);
       continue;
     }
@@ -37858,10 +38143,10 @@ function ours(list, spec, marker) {
     return [];
   if (spec.shape === "flat")
     return list.filter((entry) => isOurs(entry, marker));
-  return list.flatMap((group) => isRecord2(group) && Array.isArray(group.hooks) ? group.hooks.filter((hook) => isOurs(hook, marker)) : []);
+  return list.flatMap((group) => isRecord3(group) && Array.isArray(group.hooks) ? group.hooks.filter((hook) => isOurs(hook, marker)) : []);
 }
 function withHooks(settings, spec, command, marker) {
-  const hooks = isRecord2(settings.hooks) ? { ...settings.hooks } : {};
+  const hooks = isRecord3(settings.hooks) ? { ...settings.hooks } : {};
   for (const event of spec.events) {
     const kept = strip(hooks[event.name], spec, marker);
     if (command !== null) {
@@ -37884,7 +38169,7 @@ function withHooks(settings, spec, command, marker) {
   return next;
 }
 function hooksOf(settings, spec, marker) {
-  if (!isRecord2(settings.hooks))
+  if (!isRecord3(settings.hooks))
     return {};
   const out = {};
   for (const event of spec.events) {

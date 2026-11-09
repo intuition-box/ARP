@@ -271,8 +271,12 @@ Each carries a position, cost plus `minDeposit` (ADR `0053`), or the index does 
 
 **Who writes, and who looks after:**
 
-- **Agents and people may propose.** An agent meets the missing category at the moment it needs
-  one; a person rarely comes back to fill a gap.
+- **Agents add categories; people file under existing ones.** Amended 2026-11-09 by the user, task
+  73, ADR `0146`. A new category comes from a registered ERC-8004 agent's signed request, counted
+  against that agent's own daily cap, and an agent can ask for it inside a declaration
+  (`arp_declare_used` with `domain_parent` and `domain_reason`). A person on the web files the tool
+  they listed under a category that already exists. An agent meets the missing category at the moment
+  it needs one; a person rarely comes back to fill a gap.
 - **On testnet 13579 the sponsor writes it as one of the index's two attestors**
   (`ARP_DOMAIN_ATTESTORS`, ADR `0124`), within a daily limit, so the category appears in the index at
   once. A category written by anyone else stays on the chain and out of the index.
