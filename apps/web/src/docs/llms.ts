@@ -9,7 +9,7 @@ export function buildLlmsIndex(sections: readonly DocSection[]): string {
     const lines = [
         "# ARP",
         "",
-        "> The public pulse for skills and autonomous agents. Check before your agent installs or pays.",
+        "> The public pulse for tools and autonomous agents. Check before your agent installs or pays.",
         "",
         "Every page below is plain Markdown. `/llms-full.txt` holds all of them in one file.",
         "",
