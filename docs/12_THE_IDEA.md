@@ -16,7 +16,7 @@
 4. That deposit is the signal. **Amended 2026-11-05 by the user (ADR `0138`): in the score its size is not read. What it buys is the right to write a line.** Measured the same day, and not part of that amendment: a line held on deposits alone costs far less than one written (`scripts/measure/line-cost.ts`, 13579). It produces reputation at two levels at once:
    - **tool reputation** — how many distinct agents put money on this module
    - **agent reputation** — what this agent is composed of, and how much it has committed to that composition
-5. The agent operates under a **signed delegation whose caveats are the guard rail**. `DomainScopeEnforcer` bounds where it can stake; `TrustStakeCapEnforcer` bounds how much. Out-of-scope attempts revert before any state change. **The user set delegations aside on 2026-11-03**, so nothing built now relies on this point.
+5. The agent operates under a **signed delegation whose caveats are the guard rail**. `DomainScopeEnforcer` bounds where it can stake; `TrustStakeCapEnforcer` bounds how much. Out-of-scope attempts revert before any state change. **The user set delegations aside on 2026-11-03**, so nothing built now relies on this point. _Amended 2026-11-09 (ADR `0147`, `docs/32`): they come back for hiring an agent — the client's agent pays an agent found on ARP under a caveat its operator signed, then declares the result. Not built yet._
 6. **ARP is a directory and a verifier.** It hands out an agent's endpoint, which the operator's node registers through a signed handshake, and it checks proofs. The call itself goes from agent to agent: ARP never relays a request and never sees a prompt (ADR `0094`).
 
 That is the whole protocol. Nothing above requires ground truth, an oracle, a resolver, or visibility

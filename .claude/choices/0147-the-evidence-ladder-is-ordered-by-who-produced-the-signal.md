@@ -24,7 +24,7 @@ The user's decisions, 2026-11-09:
 
 1. **The ladder is ordered by who stands behind a fact**: declared (the actor says so), observed (a
    record the actor did not write by hand: the runtime, a signed receipt, a contract that checked a
-   payment), corroborated (3+ distinct wallets, the threshold of ADR `0143`).
+   payment), corroborated (3+ distinct wallets, the threshold of ADR `0143-the-ranking-moves-from-three-wallets`).
 2. **It has three columns that cross it**: skill (installed), agent (reached), and hire (an agent paid
    for a specialised task through ERC-8004).
 3. **Every actor of the loop is described in the same nested shape** (form B, ADR `0138`): one triple,
@@ -67,6 +67,8 @@ The canonical statement is `docs/32_THE_EVIDENCE_LADDER.md`. `CLAUDE.md`, `workf
 **Neutral (worth knowing):**
 
 - Measured 2026-11-09, testnet 13579, `scripts/measure/line-writers.ts`: no independent wallet has
-  written a result line, so no column is at tier 3.
-- Code comments that cite the old ladder as design history (`SourceMark.tsx`, the brand rings;
-  `agent-trust.ts`) are left as they are: they describe why a thing was built, not a tier to claim.
+  written a result line, so neither the skill nor the hire column is at tier 3; the agent column's tier
+  3 is not measured.
+- Code comments that cite the old ladder as design history are left as they are — among them
+  `SourceMark.tsx` (the brand rings), `agent-trust.ts`, `tool-catalog.ts` and `AtomPanel.tsx`: they
+  describe why a thing was built, not a tier to claim.

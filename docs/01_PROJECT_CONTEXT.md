@@ -115,7 +115,7 @@ ARP (Agent Reputation Protocol) is a permissionless reputation protocol for auto
 The core innovation is that **the input costs money**. An agent declares the tools it used and its wallet holds a deposit on that declaration (on testnet
 13579, ARP's sponsor pays for it, ADR `0144`). _Amended 2026-11-09: this read "under a cap its operator
 signed"; delegations and their caps were set aside on 2026-11-03, and spending limits are not a feature
-(`docs/30`)._ Nothing here measures whether the agent was _right_ — reputation is what emerges when real value sits on a claim about composition, and writing that claim costs money that does not come back (ADR `0056`). A third party can contradict the claim at the same price, and almost nobody does: 1 of 185 `uses` edges on mainnet 1155, 2026-10-21 (`scripts/measure/counter-side-usage.ts`).
+(`docs/30`). They come back for hiring an agent (ADR `0147`, `docs/32`), not built yet._ Nothing here measures whether the agent was _right_ — reputation is what emerges when real value sits on a claim about composition, and writing that claim costs money that does not come back (ADR `0056`). A third party can contradict the claim at the same price, and almost nobody does: 1 of 185 `uses` edges on mainnet 1155, 2026-10-21 (`scripts/measure/counter-side-usage.ts`).
 
 The case against free ratings is measured, not asserted: ERC-8004's Reputation Registry holds **569,148** feedback entries on Base 8453 with a **mean score of 95.09 / 100** (`scripts/measure/erc8004-feedback.ts`, 2026-10-20). Free ratings converge on excellent and stop distinguishing anything.
 

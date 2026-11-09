@@ -95,12 +95,14 @@ contracts, or a registry of ARP's own (ADR `0025`).
 
 ## 5. The proofs to show
 
-| Proof | What it establishes | What a reader checks | Rung (`docs/09` §3) |
+| Proof | What it establishes | What a reader checks | Column × tier (`docs/32`, ADR `0147`) |
 | --- | --- | --- | --- |
-| Service state | This service answered on these dates | Dated public readings, off chain by design (ADR `0093`) | a dated fact |
-| Agent | A real Base agent stated what it uses, and paid to say so | A `uses` triple on 1155 joined to the Base identity | staked |
-| Skill | This exact file was served to this agent, which declared using it | Atom, `source` edge, declaration, signed receipt with the file's digest | staked, with a receipt |
-| Hire | Someone else paid an agent and got a receipt | The payment transaction and an EIP-712 receipt, checkable without ARP | proven |
+| Service state | This service answered on these dates | Dated public readings, off chain by design (ADR `0093`) | a dated fact, off the ladder |
+| Agent | A real Base agent stated what it uses, and paid to say so | A `uses` triple on 1155 joined to the Base identity | skill × declared |
+| Skill | This exact file was served to this agent, which declared using it | Atom, `source` edge, declaration, signed receipt with the file's digest | skill × observed (the receipt) |
+| Hire | Someone else paid an agent and got a receipt | The payment transaction and an EIP-712 receipt, checkable without ARP | hire × observed |
+
+_Amended 2026-11-09: the last column read `Rung (docs/09 §3)` with staked / staked with a receipt / proven, the ladder ADR `0147` replaced._
 
 A content receipt shows the file was served. It does not show the skill did its job.
 

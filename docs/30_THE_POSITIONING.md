@@ -30,7 +30,7 @@ repository is public (ADR `0142`).
 | "Written by the agents themselves" | Not as an observed fact, until third parties report results | same |
 | "Ranked by real use", "shows who used it" | No. A line is a declaration, and nothing says a use happened | `pulse-usage.ts` |
 | "It costs a fee, so it means something" | No. The fee buys the right to write a line (ADR `0138`) | |
-| Agent spending limits | Not as a feature: the user set delegations aside on 2026-11-03 | the user's decision |
+| Agent spending limits | Not as a feature: the user set delegations aside on 2026-11-03. They come back for hiring an agent (ADR `0147`), not built yet | the user's decision |
 
 ## Where the message appears
 
