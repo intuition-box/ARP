@@ -269,30 +269,14 @@ describe("Landing", () => {
         expect(container.textContent).not.toMatch(/\d{2} \/ \d{2}/);
     });
 
-    it("keeps a space between the headline's words", async () => {
+    it("shows no eyebrow and no title, and keeps one h1 for assistive technology", async () => {
         const {container} = renderWithProviders(<Landing />);
         await waitFor(() => expect(cost).toHaveBeenCalled());
 
-        // Each word is an inline-block, which drops a space at the end of its own box. The space
-        // has to sit between the boxes, or the headline reads "Thepublic pulsefor".
-        const words = container.querySelector("h1 [aria-hidden='true']");
-        expect(words?.textContent).toBe("The public pulse for skills and autonomous agents.");
-        for (const word of words?.querySelectorAll(".arp-word") ?? []) {
-            expect(word.textContent).not.toMatch(/\s/);
-        }
-    });
-
-    it("keeps the headline as one sentence for assistive technology", async () => {
-        const {container} = renderWithProviders(<Landing />);
-        await waitFor(() => expect(cost).toHaveBeenCalled());
-
-        // `docs/18` §4: a headline split into one span per word can be announced word by word. The
-        // accessible name has to stay one sentence, so the real text is a visually hidden node and
-        // the animated words are `aria-hidden`.
+        // The user, 2026-11-09: the eyebrow and the visible title go.
+        expect(container.textContent).not.toContain("Check before your agent installs or pays");
         const heading = container.querySelector("h1");
-        expect(heading?.querySelector(".sr-only")?.textContent).toBe(
-            "The public pulse for skills and autonomous agents.",
-        );
-        expect(heading?.querySelector("[aria-hidden='true']")).not.toBeNull();
+        expect(heading).toHaveClass("sr-only");
+        expect(heading?.textContent).toBe("The public pulse for skills and autonomous agents.");
     });
 });
