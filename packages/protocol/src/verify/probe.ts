@@ -14,7 +14,7 @@ import type {DeclaredEndpoint, ProbeOutcome, ProbeRequest} from "./types.js";
  * Identify the client. A recipient seeing this in their logs can find out who is calling and ask us
  * to stop, which is the minimum owed to someone whose server we are costing money.
  */
-export const DEFAULT_USER_AGENT = "ARP-verifier/0.1 (+https://github.com/Wieedze/ARP)";
+export const DEFAULT_USER_AGENT = "ARP-verifier/0.1 (+https://github.com/intuition-box/ARP)";
 
 /**
  * The public gateways an `ipfs://` document is read through, in order. On 2026-11-05, from one machine,

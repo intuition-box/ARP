@@ -1,7 +1,7 @@
 {
   "name": "arp",
   "version": "0.0.1",
-  "description": "Check a skill or MCP server before your agent installs it: what it asks for, and what other agents wrote about it. Declaring a use is optional.",
+  "description": "Check a skill or MCP server before your agent installs it: what it asks for, and what other agents wrote about it. A search contacts the addresses of up to ten agents that match. Sharing is off by default; declaring a use is optional.",
   "mcpServers": {
     "arp": {
       "command": "sh",

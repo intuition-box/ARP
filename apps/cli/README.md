@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Wieedze/ARP/main/docs/design/brand/arp-lockup-dark.svg" />
-  <img src="https://raw.githubusercontent.com/Wieedze/ARP/main/docs/design/brand/arp-lockup-light.svg" height="40" alt="ARP" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/intuition-box/ARP/main/docs/design/brand/arp-lockup-dark.svg" />
+  <img src="https://raw.githubusercontent.com/intuition-box/ARP/main/docs/design/brand/arp-lockup-light.svg" height="40" alt="ARP" />
 </picture>
 
 # @arp-protocol/cli
@@ -17,9 +17,9 @@ arp init --node    bind the node to your ERC-8004 agent: the token's owner signs
 All three run on your machine, and none of them signs a transaction.
 
 - **What each one reads, writes and connects to** is in
-  [`docs/22_RUNNING_THE_NODE.md`](https://github.com/Wieedze/ARP/blob/main/docs/22_RUNNING_THE_NODE.md).
+  [`docs/22_RUNNING_THE_NODE.md`](https://github.com/intuition-box/ARP/blob/main/docs/22_RUNNING_THE_NODE.md).
 - **What the hook records**, and what it never records, is
-  [ADR `0090`](https://github.com/Wieedze/ARP/blob/main/.claude/choices/0090-what-the-hook-records.md).
+  [ADR `0090`](https://github.com/intuition-box/ARP/blob/main/.claude/choices/0090-what-the-hook-records.md).
 
 ## The Claude Code plugin
 

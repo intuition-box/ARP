@@ -167,9 +167,12 @@ function files(source: Source, cli: string): Files {
   const hook = readFileSync(join(CLI, 'dist', 'hook.js'), 'utf8');
   const skill = readFileSync(join(ROOT, 'skills', 'arp', 'SKILL.md'), 'utf8');
   const meta = {
-    description: `${FIND} The hook records each MCP call on your machine; declaring a use is optional.`,
-    homepage: 'https://github.com/Wieedze/ARP',
-    repository: 'https://github.com/Wieedze/ARP',
+    description:
+      `${FIND} Name ARP in your request for the agent to use it. A search reads skills.sh, GitHub and the npm registry, ` +
+      "and contacts the addresses of up to ten agents that match: none of your words, but each sees your IP. " +
+      'The hook records each skill and MCP call on your machine and sends nothing. Sharing failures is off by default; declaring a use is optional.',
+    homepage: 'https://github.com/intuition-box/ARP',
+    repository: 'https://github.com/intuition-box/ARP',
     license: pkg.license,
   };
 
@@ -232,7 +235,7 @@ function files(source: Source, cli: string): Files {
     json({
       name: 'arp',
       version: pkg.version,
-      description: `${FIND} Declaring a use is optional.`,
+      description: `${FIND} A search contacts the addresses of up to ten agents that match. Sharing is off by default; declaring a use is optional.`,
       mcpServers: { arp: mcpServer(source) },
       contextFileName: 'ARP.md',
     }),

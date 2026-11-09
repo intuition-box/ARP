@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Wieedze/ARP/main/docs/design/brand/arp-lockup-dark.svg" />
-  <img src="https://raw.githubusercontent.com/Wieedze/ARP/main/docs/design/brand/arp-lockup-light.svg" height="40" alt="ARP" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/intuition-box/ARP/main/docs/design/brand/arp-lockup-dark.svg" />
+  <img src="https://raw.githubusercontent.com/intuition-box/ARP/main/docs/design/brand/arp-lockup-light.svg" height="40" alt="ARP" />
 </picture>
 
 # `@arp-protocol/core`
