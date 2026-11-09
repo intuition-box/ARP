@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-71 entries, one per completed task. Written by `task-verifier` on a pass.
+72 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -77,3 +77,4 @@
 | [62](62-the-local-package.md) | `docs/tasks/70-the-local-package.md` | PASS, at the second reading | The whole package, working locally |
 | [63](63-the-docs.md) | `docs/tasks/72-the-docs.md` | PASS (second round; first round failed on one visible `docs/NN` link text) | The docs on the site |
 | [64](64-the-tree-grows.md) | `docs/tasks/73-the-tree-grows.md` | PASS | The domain tree grows from the agents |
+| [65](65-the-public-site.md) | `docs/tasks/74-the-public-site.md` | PASS (round 3) | The public site, and everything around it |

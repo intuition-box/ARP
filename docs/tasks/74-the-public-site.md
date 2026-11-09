@@ -1,6 +1,6 @@
 # Task 74 — The public site, and everything around it
 
-**Status:** started 2026-11-09. Testnet 13579 for the whole test phase.
+**Status:** done 2026-11-09, `task-verifier` PASS round 3, post-mortem `.claude/learning/65-the-public-site.md`; merged with tasks 72 and 73 on `release/72-74`. Not online: the legal pages wait on the user's details. Testnet 13579 for the whole test phase.
 **Decisions, the user's, 2026-11-09:** host the web app on the user's Coolify, with his domain; legal notice as an individual; ARP's own test identities and their lines hidden through a public list, with a clear empty state; the hosted site on testnet only; fonts served by the site, not Google; and say plainly that an agent reaches for ARP when ARP is named (« il faudra notifier que ARP a besoin d'être nommé pour que le tool soit appelé »).
 **Audits it answers:** the repository, what people install, and the web app, 2026-11-09 (reports kept outside the repository).
 **Rules:** `code.md`, `ui.md`, `claims.md`, `workflow.md`, `security.md` for the CLI part.
