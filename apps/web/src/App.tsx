@@ -46,6 +46,8 @@ const SearchPage = lazy(() =>
 const ToolCatalog = lazy(() =>
     import("./pages/ToolCatalog").then((module) => ({default: module.ToolCatalog})),
 );
+/** The docs: Markdown, and Mermaid only when a page draws a diagram (task 72). */
+const DocsPage = lazy(() => import("./pages/DocsPage").then((module) => ({default: module.DocsPage})));
 /** The three paths opened from scene 4 of `/` (task 53). */
 const StartPage = lazy(() =>
     import("./pages/StartPage").then((module) => ({default: module.StartPage})),
@@ -179,6 +181,17 @@ function App() {
                             </Suspense>
                         }
                     />
+                    {["/docs", "/docs/:slug"].map((path) => (
+                        <Route
+                            key={path}
+                            path={path}
+                            element={
+                                <Suspense fallback={<RouteFallback label="docs" />}>
+                                    <DocsPage />
+                                </Suspense>
+                            }
+                        />
+                    ))}
                     {siteRoutes()}
                 </Routes>
             </RouteTransition>

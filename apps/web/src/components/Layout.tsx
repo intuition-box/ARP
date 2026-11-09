@@ -83,6 +83,7 @@ export function Layout({children}: {children: ReactNode}) {
                         <NavLink to="/activity">Activity</NavLink>
                         {/* Both indexes from one field; `/` opens it from anywhere (task 48). */}
                         <NavLink to="/search">Search</NavLink>
+                        <NavLink to="/docs">Docs</NavLink>
                     </>
                 }
                 right={

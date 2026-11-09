@@ -4,6 +4,8 @@
 On testnet 13579 consulting ARP is free, so "Base Sepolia while on testnet" below no longer
 applies. Planned 2026-10-30.
 **ADR:** `0094` §4.
+**Read first when picked up:** `FUTURE.md` § "x402: check before paying, and say what happened
+after" (2026-11-09) — Fizzl's x402 Doctor, what it publishes, and four ways it meets ARP.
 **Rules:** `code.md`, `security.md`, `portability.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
 
