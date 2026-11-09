@@ -167,10 +167,18 @@ function alive(pid: number): boolean {
     }
 }
 
+/** The lock files this process took and has not released. */
+const HELD_HERE = new Set<string>();
+
 /**
  * An exclusive hold on `path`, as `<path>.lock` holding this process's pid. A second process on the
  * same file is refused: two writers on one ledger each count only their own spends, so each would
  * let through what the other already spent. A lock whose process is gone is taken over.
+ *
+ * So is a lock naming this process's own pid that this process did not take: an earlier process
+ * with the same pid left it, which in a container is every restart (pid 1) after a stop that ran no
+ * exit handler. The pid check sees one pid namespace, so two containers on one volume are not told
+ * apart: the deployment stops the old one before it starts the new one (`apps/web/DEPLOY.md`, "The sponsor").
  */
 export function lockFile(path: string): {release(): void} {
     const lock = `${path}.lock`;
@@ -182,7 +190,8 @@ export function lockFile(path: string): {release(): void} {
         } catch (error) {
             if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
             const holder = Number(readFileSync(lock, "utf8").trim());
-            if (Number.isInteger(holder) && holder > 0 && alive(holder)) {
+            const ownLeftover = holder === process.pid && !HELD_HERE.has(lock);
+            if (Number.isInteger(holder) && holder > 0 && !ownLeftover && alive(holder)) {
                 throw new Error(`${path} is held by process ${holder} (${lock}); one process per ledger`);
             }
             unlinkSync(lock);
@@ -190,10 +199,12 @@ export function lockFile(path: string): {release(): void} {
         }
         writeSync(fd, `${process.pid}\n`);
         closeSync(fd);
+        HELD_HERE.add(lock);
         let held = true;
         const release = () => {
             if (!held) return;
             held = false;
+            HELD_HERE.delete(lock);
             try {
                 if (readFileSync(lock, "utf8").trim() === String(process.pid)) unlinkSync(lock);
             } catch {

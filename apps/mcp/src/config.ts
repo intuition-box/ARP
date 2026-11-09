@@ -290,10 +290,14 @@ export const IN_CONTEXT_OF: Hex = (() => {
   return (typeof id === 'string' && id.startsWith('0x') ? id : `0x${'0'.repeat(64)}`) as Hex; // 0x-prefixed by the check
 })();
 
-/** The sponsoring service's own wallet, which pays for a line and says nothing by it (ADR `0144`). */
+/**
+ * The sponsoring service's wallets, which pay for a line and say nothing by it (ADR `0144`): the
+ * deployer, which sent for it until it was hosted, and its own key since (ADR `0149`).
+ */
 export const LINE_PAYERS: readonly string[] = (() => {
-  const arp = (record as { arp?: { deployer?: string } }).arp; // a JSON record this repo writes
-  return typeof arp?.deployer === 'string' ? [arp.deployer] : [];
+  const arp = (record as { arp?: { deployer?: string; sponsor?: string } }).arp; // a JSON record this repo writes
+  const wallets = [arp?.deployer, arp?.sponsor].filter((wallet): wallet is string => typeof wallet === 'string');
+  return [...new Set(wallets)];
 })();
 
 /** The domain tree a declaration's domain has to be in: ARP's reading, as a search uses it. */

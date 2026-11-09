@@ -145,6 +145,16 @@ describe("lockFile", () => {
         writeFileSync(`${path}.lock`, `${gone}\n`);
         lockFile(path).release();
     });
+
+    it("takes over a lock left under its own pid, as a restarted container's pid 1 finds it", () => {
+        const path = join(dir, "ledger.jsonl");
+        writeFileSync(`${path}.lock`, `${process.pid}\n`);
+        const held = lockFile(path);
+        // Taken now, so this process's second attempt is refused as before.
+        expect(() => lockFile(path)).toThrow(/held by process/);
+        held.release();
+        expect(existsSync(`${path}.lock`)).toBe(false);
+    });
 });
 
 describe("redactUrls", () => {

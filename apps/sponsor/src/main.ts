@@ -61,6 +61,7 @@ import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
+import { listenFrom, type Listen } from './listen.ts';
 import { categoryLog, categoryTree, compoundsFrom, lineSubjectCheck, toolCheck } from './categories.ts';
 import { resolveOnGitHubCached } from './github.ts';
 import { repoSpellingsOnGraph } from './indexer.ts';
@@ -103,6 +104,10 @@ function count(name: string, fallback: number): number {
 }
 
 const PORT = count('SPONSOR_PORT', 3200);
+// Loopback unless hosted (task 78, ADR `0149`): the container sets both, a local run neither.
+const listening = listenFrom(PORT, process.env.SPONSOR_LISTEN, process.env.SPONSOR_PUBLIC_HOST);
+if ('error' in listening) fail(listening.error);
+const LISTEN: Listen = listening;
 // Optional: unset, the routes that pin (`/identity`, `/publish`, the listing) answer 503. Never printed.
 const PIN_KEY = (process.env.INTUITION_PIN_API_KEY ?? '').trim();
 // `~/.arp/` (or `ARP_HOME`), never the working directory: started anywhere else, a ledger resolved
@@ -339,7 +344,7 @@ const service = createSponsor({
     },
   },
   registries,
-  hosts: loopbackHosts(PORT),
+  hosts: LISTEN.hosts,
   // The web app's own origins, for `/list-tool` only (ADR `0123`), plus any the operator lists.
   listToolOrigins: [
     ...DEFAULT_LIST_TOOL_ORIGINS,
@@ -392,12 +397,19 @@ const service = createSponsor({
         }),
 });
 
-/** Start the service. Bound to localhost: it runs locally first (`docs/tasks/37` §4.2). */
+/** Start the service. On 127.0.0.1 unless hosted behind a proxy (task 78, ADR `0149`). */
 export async function main(): Promise<void> {
-  await serveFetch({ port: PORT, hostname: '127.0.0.1', maxBodyBytes: 64 * 1024 }, (request) =>
+  await serveFetch({ port: PORT, hostname: LISTEN.hostname, maxBodyBytes: 64 * 1024 }, (request) =>
     service.fetch(request),
   );
-  process.stderr.write(`sponsoring service on http://127.0.0.1:${PORT}\n`);
+  // A container is stopped with SIGTERM, which runs no exit handler by default: exiting here
+  // releases the ledger's lock. A send in flight stays pending in the ledger, and pending counts
+  // as spent, so stopping mid-send pays nothing twice.
+  for (const signal of ['SIGTERM', 'SIGINT'] as const) process.once(signal, () => process.exit(0));
+  process.stderr.write(`sponsoring service on http://${LISTEN.hostname}:${PORT}\n`);
+  if (LISTEN.hosts.length > loopbackHosts(PORT).length) {
+    process.stderr.write(`  answers    ${LISTEN.hosts.at(-1)}, through its proxy\n`);
+  }
   process.stderr.write(`  sponsor    ${account.address}\n`);
   process.stderr.write(`  chain      ${intuitionTestnet.id}\n`);
   process.stderr.write(

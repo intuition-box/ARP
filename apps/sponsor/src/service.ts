@@ -152,8 +152,8 @@ export type SponsorOptions = {
    */
   pinThing?: ((thing: AgentThing) => Promise<string>) | null;
   /**
-   * The `Host` values this service answers to: its own `127.0.0.1:<port>` and `localhost:<port>`.
-   * Anything else is refused before a body is read, and so is a browser `Origin` not in
+   * The `Host` values this service answers to: its own `127.0.0.1:<port>` and `localhost:<port>`,
+   * and, hosted, its one public name (`listen.ts`, ADR `0149`). Anything else is refused before a body is read, and so is a browser `Origin` not in
    * {@link origins} and a `POST` that is not `application/json` (ADR `0116`): `/mint-gas`, `/gas` and
    * `/identity` spend the treasury key, and a page on any site can otherwise POST to a loopback port.
    */

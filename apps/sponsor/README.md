@@ -38,7 +38,7 @@ SPONSOR_REGISTRIES=eip155:13579:0x… \
 ```
 
 It reads the treasury key from a file that only you can read, never from the environment, and never
-prints it. The deposit amount and the approval gas have no default: you set both.
+prints it. To host it, with its own key, see `apps/web/DEPLOY.md`, "The sponsor". The deposit amount and the approval gas have no default: you set both.
 
 | optional                    | turns on                                      |
 | --------------------------- | --------------------------------------------- |

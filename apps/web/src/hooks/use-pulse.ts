@@ -16,7 +16,8 @@ export function usePulse(source: string, skill: string): PulseRead {
                 rpcUrl: deployments.chain.rpcUrl,
                 graphqlUrl: deployments.chain.graphqlUrl,
                 inContextOf: deployments.arp.endpointBinding.inContextOf,
-                linePayers: [deployments.arp.deployer],
+                // The deployer sent for the sponsor until it was hosted with its own key (ADR `0149`).
+                linePayers: [...new Set([deployments.arp.deployer, deployments.arp.sponsor])],
             }),
         staleTime: 15 * 60 * 1000,
         retry: 1,

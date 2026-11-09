@@ -5978,7 +5978,8 @@ function lockFile(path) {
       if (error.code !== "EEXIST")
         throw error;
       const holder = Number(readFileSync(lock, "utf8").trim());
-      if (Number.isInteger(holder) && holder > 0 && alive(holder)) {
+      const ownLeftover = holder === process.pid && !HELD_HERE.has(lock);
+      if (Number.isInteger(holder) && holder > 0 && !ownLeftover && alive(holder)) {
         throw new Error(`${path} is held by process ${holder} (${lock}); one process per ledger`);
       }
       unlinkSync(lock);
@@ -5987,11 +5988,13 @@ function lockFile(path) {
     writeSync(fd, `${process.pid}
 `);
     closeSync(fd);
+    HELD_HERE.add(lock);
     let held = true;
     const release = () => {
       if (!held)
         return;
       held = false;
+      HELD_HERE.delete(lock);
       try {
         if (readFileSync(lock, "utf8").trim() === String(process.pid))
           unlinkSync(lock);
@@ -6037,7 +6040,7 @@ function refuseForeignRequest(request, policy) {
   }
   return null;
 }
-var MovedStateError, KeyFileError, PRIVATE_KEY;
+var MovedStateError, KeyFileError, PRIVATE_KEY, HELD_HERE;
 var init_local_state = __esm(() => {
   init_accounts();
   init_identifiers();
@@ -6058,6 +6061,7 @@ var init_local_state = __esm(() => {
     }
   };
   PRIVATE_KEY = /^0x[0-9a-fA-F]{64}$/;
+  HELD_HERE = new Set;
 });
 
 // ../../packages/protocol/dist/node/index.js
@@ -33162,7 +33166,8 @@ var init_config = __esm(() => {
   })();
   LINE_PAYERS = (() => {
     const arp = record.arp;
-    return typeof arp?.deployer === "string" ? [arp.deployer] : [];
+    const wallets = [arp?.deployer, arp?.sponsor].filter((wallet) => typeof wallet === "string");
+    return [...new Set(wallets)];
   })();
 });
 
