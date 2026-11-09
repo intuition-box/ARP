@@ -6,10 +6,12 @@ import {PageLoading} from "../components/brand/PageLoading";
 import {ToolCatalogList} from "../components/tool/ToolCatalogList";
 import {useAgentSearch} from "../hooks/use-agent-cohort";
 import {useSkillFacts} from "../hooks/use-skill-facts";
+import {useSkillsIndex} from "../hooks/use-skills-index";
 import {useReadsSignals, useToolCatalog} from "../hooks/use-tool-catalog";
 import {linkClass} from "../lib/control-class";
 import {agentRefOf} from "../services/agent-lookup";
-import {livenessOf, rankTools, TOOL_CURVES, toolMatches} from "../services/tool-catalog";
+import {labelKeyOf} from "../services/skills-index";
+import {livenessOf, rankTools, TOOL_CURVES, toolMatches, type ToolRow} from "../services/tool-catalog";
 
 const QUERY_PARAM = "q";
 const LABEL =
@@ -52,7 +54,7 @@ export function SearchPage() {
                         </p>
                     )}
                     <AgentResults name={query} />
-                    <ToolResults query={query} />
+                    <Results query={query} />
                 </>
             )}
         </section>
@@ -114,7 +116,8 @@ function AgentResults({name}: {name: string}) {
     );
 }
 
-function ToolResults({query}: {query: string}) {
+/** The catalogue's rows that match the search, ranked. Shared by both result lists, one read. */
+function useToolMatches(query: string) {
     const catalog = useToolCatalog("conviction", TOOL_CURVES[0]?.id ?? 1);
     const axis = useReadsSignals() ? "signals" : "installs";
     const {factFor, repoFactFor} = useSkillFacts();
@@ -137,6 +140,21 @@ function ToolResults({query}: {query: string}) {
                               ?.stars ?? null,
                   }),
               );
+    return {catalog, view, matches};
+}
+
+/** Both lists from one match, so the catalogue is filtered and ranked once per render. */
+function Results({query}: {query: string}) {
+    const tools = useToolMatches(query);
+    return (
+        <>
+            <ToolResults {...tools} />
+            <IndexResults query={query} matches={tools.matches} />
+        </>
+    );
+}
+
+function ToolResults({catalog, view, matches}: ReturnType<typeof useToolMatches>) {
     return (
         <section aria-labelledby="search-tools" className="mt-14">
             <h2 id="search-tools" className={LABEL}>
@@ -157,6 +175,62 @@ function ToolResults({query}: {query: string}) {
                 <div className="mt-4">
                     <ToolCatalogList rows={matches} curveId={view.curveId} />
                 </div>
+            )}
+        </section>
+    );
+}
+
+/**
+ * skills.sh's results for the same words, minus what the list above already shows (task 82). ARP's
+ * catalogue is 673 skills; this is the index `npx skills add` installs from. Each opens its pulse
+ * page, which reads the skill's own file.
+ */
+function IndexResults({query, matches}: {query: string; matches: readonly ToolRow[]}) {
+    const read = useSkillsIndex(query);
+    const shown = new Set(matches.flatMap((row) => (row.label === null ? [] : [labelKeyOf(row.label)])));
+    const rows =
+        read.status === "ok"
+            ? read.skills.filter((skill) => skill.url !== null && !shown.has(labelKeyOf(skill.url)))
+            : [];
+    return (
+        <section aria-labelledby="search-index" className="mt-14">
+            <h2 id="search-index" className={LABEL}>
+                {read.status === "ok" ? `On skills.sh · ${rows.length.toLocaleString("en-US")}` : "On skills.sh"}
+            </h2>
+            {read.status === "pending" ? (
+                <PageLoading label="Searching skills.sh" />
+            ) : read.status !== "ok" ? (
+                <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    skills.sh did not answer. Try again in a moment.
+                </p>
+            ) : rows.length === 0 ? (
+                <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Nothing more on skills.sh for that.
+                </p>
+            ) : (
+                <ul className="mt-4 border-t border-[color:var(--color-rule)]">
+                    {rows.map((skill) => (
+                        <li key={`${skill.source}@${skill.skill}`} className="border-b border-[color:var(--color-rule)]">
+                            <Link
+                                to={`/pulse/${skill.source}/${encodeURIComponent(skill.skill)}`}
+                                className="block py-4 hover:bg-[color:var(--color-surface-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[color:var(--color-accent)]"
+                            >
+                                <span className="block truncate font-medium leading-tight" title={skill.skill}>
+                                    {skill.skill}
+                                </span>
+                                <span className="block font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+                                    {skill.source}
+                                    {skill.installs === null ? null : (
+                                        <>
+                                            <span className="px-1.5 text-[color:var(--color-rule-strong)]">·</span>
+                                            {`${Intl.NumberFormat("en-US", {notation: "compact"}).format(skill.installs)} installs`}
+                                        </>
+                                    )}
+                                </span>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
             )}
         </section>
     );

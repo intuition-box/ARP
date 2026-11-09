@@ -936,3 +936,12 @@ export {
     type DelegationOnChainState,
     type DisabledDelegationsReader,
 } from "./delegation/state.js";
+export {
+    parseSkillsIndex,
+    searchSkillsIndex,
+    skillUrlOf,
+    SKILLS_INDEX_URL,
+    type IndexedSkill,
+    type SkillsIndexAnswer,
+    type SkillsIndexOptions,
+} from "./skills-index.js";

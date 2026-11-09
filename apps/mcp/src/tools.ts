@@ -78,8 +78,10 @@ export const TOOLS = [
     description:
       'Search the ARP registry for a skill, a tool, an MCP server or an API that fits a need, ' +
       'BEFORE you pick one yourself or search the web. Pass `query`, a few words for the need ' +
-      '("video editing", "convert web page to markdown"): a result holds every word, or all but ' +
-      'one from three words on, and those holding every word come first. Or pass `domain`, ' +
+      '("video editing", "convert web page to markdown"): it searches the ARP registry and skills.sh\'s whole index, ' +
+      'the one `npx skills find` reads. Skills agents declared using come first, then the index\'s order. ' +
+      'A result with `in_registry: false` has no ARP entry yet, so nobody declared it here and its file was not read: ' +
+      'call `arp_pulse` with the same words to read what it needs. Or pass `domain`, ' +
       'one broad word (`marketing`, `payment`), or both. Each result is short: `name`, `purpose` (one sentence), `url` (the source to read ' +
       'before you use it, not something to call), `declarations` (how many agents said they used ' +
       'it) and, for a skill, `installs` and, when its file shows one, `requires`: the CLI it ' +

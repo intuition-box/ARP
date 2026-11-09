@@ -8,6 +8,8 @@ import {
   listRegisteredTools,
   listTools,
   readDomainTree,
+  searchSkillsIndex,
+  type SkillsIndexAnswer,
   type ToolListingOrder,
   toolsInDomain,
 } from '@arp-protocol/core';
@@ -16,12 +18,14 @@ import { GRAPHQL, DOMAIN_ROOT, DOMAIN_ATTESTORS } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 import {
   type CatalogueEntry,
+  type Described,
   type SkillFact,
   cachedFor,
   collapseCopies,
   describe,
   keyOf,
   matchOf,
+  mergeIndexed,
   pageOf,
   rankOf,
 } from '../tool-search.js';
@@ -169,6 +173,12 @@ const readListings = cachedFor(LISTINGS_TTL_MS, (key) => {
     listRegisteredTools({ graphqlUrl: GRAPHQL, ...curve }),
   ]);
 });
+
+// skills.sh's answer for a query, kept a minute like the listings: an agent asks two or three
+// times while it picks, and the index does not move faster than that.
+const readIndex = cachedFor(LISTINGS_TTL_MS, (query): Promise<SkillsIndexAnswer> =>
+  searchSkillsIndex(query, { limit: 20 }),
+);
 
 export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   const orderRaw = args['order'] ?? 'priced-edges';
@@ -344,13 +354,79 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
               a.missed - b.missed ||
               b.rank - a.rank,
           );
+  // A search by need reads skills.sh's whole index too (task 82): the catalogue alone met 10 of 20
+  // fixed needs. Not with a domain, which is ARP's own tree and means "what ARP filed there".
+  const index: SkillsIndexAnswer | null =
+    query === null || domainRaw !== undefined ? null : await readIndex(query);
+  const byKey = new Map(
+    described
+      .filter((entry) => entry.row.label !== null)
+      .map((entry) => [keyOf(entry.row.label ?? ''), entry] as const),
+  );
+  const indexed = (index?.status === 'ok' ? index.skills : [])
+    .filter((skill) => skill.url !== null && !isGone(skill.url))
+    .map((skill) => ({ key: keyOf(skill.url ?? ''), skill }));
+  type IndexRow = {
+    tool_atom_id: null;
+    label: string;
+    provenance: 'skills.sh';
+    title: null;
+    purpose: null;
+    hosted_at: string | null;
+    atom_uri: null;
+    declarations: number;
+    paid_declarations: null;
+    support_assets_wei: null;
+    oppose_assets_wei: null;
+    position_count: null;
+  };
+  type Found = { row: (typeof rows)[number] | IndexRow; about: Described; missed: number };
+  const found: Found[] = matched.map((entry) => ({
+    row: entry.row,
+    about: entry.about,
+    missed: 'missed' in entry && typeof entry.missed === 'number' ? entry.missed : 0,
+  }));
+  const searched: Found[] =
+    index === null
+      ? found
+      : mergeIndexed<Found>(found, indexed, {
+          keyOf: (entry) => (entry.row.label === null ? null : keyOf(entry.row.label)),
+          held: (key) => {
+            const hit = byKey.get(key);
+            return hit === undefined ? undefined : { row: hit.row, about: hit.about, missed: 0 };
+          },
+          make: (at) => {
+            const { key, skill } = indexed[at] ?? { key: '', skill: null };
+            const about = describe(key, CATALOGUE, SKILLS);
+            return {
+              row: {
+                // Not in ARP's registry: no atom, so nobody has declared anything about it here.
+                tool_atom_id: null,
+                label: key,
+                provenance: 'skills.sh' as const,
+                title: null,
+                purpose: null,
+                hosted_at: skill?.url ?? null,
+                atom_uri: null,
+                declarations: 0,
+                paid_declarations: null,
+                support_assets_wei: null,
+                oppose_assets_wei: null,
+                position_count: null,
+              },
+              about: { ...about, installs: about.installs ?? skill?.installs ?? null },
+              missed: 0,
+            };
+          },
+          leads: (entry) => entry.missed === 0 && (entry.row.declarations ?? 0) > 0,
+        });
   // The same skill copied into several repositories reads as one result in the short answer: one
   // copy stands for the others (`collapseCopies` says which), and `copies` says how many. Five rows of
   // `youtube-thumbnail-design` were five times the tokens for one finding (testnet, 2026-11-02).
   const listed =
     detailRaw === 'full'
-      ? matched.map((entry) => ({ ...entry, copies: 1 }))
-      : collapseCopies(matched, (entry) => entry.row.declarations ?? 0);
+      ? searched.map((entry) => ({ ...entry, copies: 1 }))
+      : collapseCopies(searched, (entry) => entry.row.declarations ?? 0);
   const { rows: pageRows, total, nextOffset } = pageOf(listed, offsetRaw, limitRaw);
 
   // A domain search that returns no row carries the words the registry does use, so the agent can
@@ -372,6 +448,8 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
     offset: offsetRaw,
     next_offset: nextOffset,
     ...(query === null ? {} : { query }),
+    // Said only when it failed: then only ARP's own catalogue was searched.
+    ...(index?.status === 'unavailable' ? { skills_index: 'unavailable' } : {}),
   };
 
   if (detailRaw === 'short') {
@@ -391,6 +469,7 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
         declarations: row.declarations,
         ...(about.installs === null ? {} : { installs: about.installs }),
         ...requiresFor(row.label),
+        ...(row.provenance === 'skills.sh' ? { in_registry: false } : {}),
         ...(copies > 1 ? { copies } : {}),
       })),
     });

@@ -3,6 +3,7 @@ import { describe as group, expect, it } from 'vitest';
 import {
   cachedFor,
   collapseCopies,
+  mergeIndexed,
   describe,
   keyOf,
   matchOf,
@@ -242,5 +243,33 @@ group('cachedFor', () => {
     });
     await expect(read('a')).rejects.toThrow('down');
     await expect(read('a')).resolves.toBe('up');
+  });
+});
+
+group('mergeIndexed', () => {
+  type E = { key: string | null; declared: boolean; from: string };
+  const options = (held: E[]) => ({
+    keyOf: (entry: E) => entry.key,
+    held: (key: string) => held.find((entry) => entry.key === key),
+    make: (at: number) => ({ key: `new${at}`, declared: false, from: 'index' }),
+    leads: (entry: E) => entry.declared,
+  });
+
+  it('puts declared matches first, then the index in its order, then the rest, each once', () => {
+    const matched: E[] = [
+      { key: 'a', declared: false, from: 'registry' },
+      { key: 'b', declared: true, from: 'registry' },
+    ];
+    const registry: E[] = [...matched, { key: 'c', declared: false, from: 'registry' }];
+    const indexed = [{ key: 'c' }, { key: 'new1' }, { key: 'b' }];
+    const out = mergeIndexed(matched, indexed, options(registry));
+    expect(out.map((entry) => entry.key)).toEqual(['b', 'c', 'new1', 'a']);
+    expect(out[1]?.from).toBe('registry');
+    expect(out[2]?.from).toBe('index');
+  });
+
+  it('is the registry alone when the index has nothing', () => {
+    const matched: E[] = [{ key: 'a', declared: false, from: 'registry' }];
+    expect(mergeIndexed(matched, [], options(matched))).toEqual(matched);
   });
 });

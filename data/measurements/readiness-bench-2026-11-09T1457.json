@@ -1,0 +1,1051 @@
+{
+ "at": "2026-11-09T15:00:44.389Z",
+ "chain": 13579,
+ "gate": "15 of 20",
+ "arpMet": 18,
+ "referenceMet": null,
+ "passes": true,
+ "judgeCostUsd": 0.0962,
+ "needs": [
+  {
+   "need": "send a transactional email from my app",
+   "query": "send email",
+   "arp": [
+    {
+     "name": "email-smtp-send",
+     "source": "https://github.com/tiangong-ai/agent-skills?skill=email-smtp-send",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "lark-mail",
+     "source": "https://github.com/larksuite/cli?skill=lark-mail",
+     "purpose": "飞书邮箱：Use when user mentions 起草邮件、写邮件、草稿、发送/回复/转发邮件、查阅邮件、看邮件、搜索邮件、邮件文件夹、邮件标签、邮件联系人、监听新邮件、邮件收信规则等；use for mail/email intent only.",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "gws-gmail",
+     "source": "https://github.com/googleworkspace/cli?skill=gws-gmail",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "gws-gmail-send",
+     "source": "https://github.com/googleworkspace/cli?skill=gws-gmail-send",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "two-factor-authentication-best-practices",
+     "source": "https://github.com/better-auth/skills?skill=two-factor-authentication-best-practices",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "set up a Postgres database for my app",
+   "query": "postgres database",
+   "arp": [
+    {
+     "name": "postgres-best-practices",
+     "source": "https://github.com/neondatabase/postgres-skills?skill=postgres-best-practices",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "supabase-postgres-best-practices",
+     "source": "https://github.com/supabase/agent-skills?skill=supabase-postgres-best-practices",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "prisma-postgres-setup",
+     "source": "https://github.com/prisma/skills?skill=prisma-postgres-setup",
+     "purpose": "Obtain or reuse a Prisma Postgres database and connect an application.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "supabase",
+     "source": "https://github.com/supabase/agent-skills?skill=supabase",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "prisma-orm-setup",
+     "source": "https://github.com/prisma/skills?skill=prisma-orm-setup",
+     "purpose": "Set up Prisma ORM in an application, connect its database, or troubleshoot the connection of an existing Prisma 6, 7, or 8 app.",
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "translate a document into French",
+   "query": "translate document",
+   "arp": [
+    {
+     "name": "visa-doc-translate",
+     "source": "https://github.com/affaan-m/ecc?skill=visa-doc-translate",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "pdf-to-html",
+     "source": "https://github.com/daymade/claude-code-skills?skill=pdf-to-html",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "en-to-zh-translator",
+     "source": "https://github.com/seefreed/skills?skill=en-to-zh-translator",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "skywork-document",
+     "source": "https://github.com/skyworkai/skywork-skills?skill=skywork-document",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "databricks-ai-functions",
+     "source": "https://github.com/databricks/databricks-agent-skills?skill=databricks-ai-functions",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": false
+  },
+  {
+   "need": "read and edit an Excel spreadsheet",
+   "query": "excel spreadsheet",
+   "arp": [
+    {
+     "name": "convert-documents-to-markdown",
+     "source": "https://github.com/firecrawl/anydoc?skill=convert-documents-to-markdown",
+     "purpose": null,
+     "ratings": [
+      1,
+      0
+     ]
+    },
+    {
+     "name": "data-analysis",
+     "source": "https://github.com/claude-office-skills/skills?skill=data-analysis",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "xlsx-manipulation",
+     "source": "https://github.com/claude-office-skills/skills?skill=xlsx-manipulation",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "excel-analysis",
+     "source": "https://github.com/davila7/claude-code-templates?skill=excel-analysis",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "minimax-xlsx",
+     "source": "https://github.com/minimax-ai/skills?skill=minimax-xlsx",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "accept payments with Stripe",
+   "query": "stripe payments",
+   "arp": [
+    {
+     "name": "stripe-payments",
+     "source": "https://github.com/claude-office-skills/skills?skill=stripe-payments",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "payment-security-clerk-billing-stripe",
+     "source": "https://github.com/harperaa/secure-claude-skills?skill=payment-security-clerk-billing-stripe",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "stripe",
+     "source": "https://github.com/vercel-labs/emulate?skill=stripe",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "amazon-bedrock",
+     "source": "https://github.com/aws/agent-toolkit-for-aws?skill=amazon-bedrock",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "convex-billing",
+     "source": "https://github.com/convex/agent-skills?skill=convex-billing",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "transcribe an audio recording to text",
+   "query": "transcribe audio",
+   "arp": [
+    {
+     "name": "audio-transcribe",
+     "source": "https://github.com/infquest/vibe-ops-plugin?skill=audio-transcribe",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "speech-to-text",
+     "source": "https://github.com/elevenlabs/skills?skill=speech-to-text",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "transcribe",
+     "source": "https://github.com/openai/skills?skill=transcribe",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "mmx-cli",
+     "source": "https://github.com/minimax-ai/cli?skill=mmx-cli",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "speech-recognition",
+     "source": "https://github.com/dpearson2699/swift-ios-skills?skill=speech-recognition",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "write tests for my React components",
+   "query": "react component tests",
+   "arp": [
+    {
+     "name": "react-testing",
+     "source": "https://github.com/affaan-m/ecc?skill=react-testing",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "react-testing-library",
+     "source": "https://github.com/itechmeat/llm-code?skill=react-testing-library",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "ui-design",
+     "source": "https://github.com/mblode/agent-skills?skill=ui-design",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "senior-qa",
+     "source": "https://github.com/alirezarezvani/claude-skills?skill=senior-qa",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "playwright-core",
+     "source": "https://github.com/testdino-hq/playwright-skill?skill=playwright-core",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "scrape data from a website",
+   "query": "scrape website",
+   "arp": [
+    {
+     "name": "agent-browser",
+     "source": "https://github.com/vercel-labs/agent-browser?skill=agent-browser",
+     "purpose": "Browser automation CLI for AI agents.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "firecrawl-seo-audit",
+     "source": "https://github.com/firecrawl/firecrawl-workflows?skill=firecrawl-seo-audit",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "browser-act-skill-forge",
+     "source": "https://github.com/browser-act/skills?skill=browser-act-skill-forge",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "firecrawl-build",
+     "source": "https://github.com/firecrawl/skills?skill=firecrawl-build",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "apify-lead-generation",
+     "source": "https://github.com/apify/agent-skills?skill=apify-lead-generation",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "make a slide deck from my notes",
+   "query": "slide deck",
+   "arp": [
+    {
+     "name": "pptx",
+     "source": "https://github.com/anthropics/skills?skill=pptx",
+     "purpose": "Use this skill any time a .pptx or .potx file is involved in any way — as input, output, or both.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "baoyu-slide-deck",
+     "source": "https://github.com/jimliu/baoyu-skills?skill=baoyu-slide-deck",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "deck-open-slide-canvas",
+     "source": "https://github.com/nexu-io/open-design?skill=deck-open-slide-canvas",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "slidev",
+     "source": "https://github.com/antfu/skills?skill=slidev",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "html-ppt",
+     "source": "https://github.com/lewislulu/html-ppt-skill?skill=html-ppt",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "fill in a PDF form",
+   "query": "pdf form",
+   "arp": [
+    {
+     "name": "arp",
+     "source": "https://github.com/intuition-box/ARP?skill=arp",
+     "purpose": "Find the skill, MCP server or API that fits a task, before you pick one yourself, and see which ones other agents actually used.",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "pdf-form-filler",
+     "source": "https://github.com/claude-office-skills/skills?skill=pdf-form-filler",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "pdf",
+     "source": "https://github.com/anthropics/skills?skill=pdf",
+     "purpose": "Use this skill whenever the user wants to do anything with PDF files.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "pdftk-server",
+     "source": "https://github.com/github/awesome-copilot?skill=pdftk-server",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "view-pdf",
+     "source": "https://github.com/anthropics/knowledge-work-plugins?skill=view-pdf",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "deploy my web app to the cloud",
+   "query": "deploy web app",
+   "arp": [
+    {
+     "name": "azure-resource-lookup",
+     "source": "https://github.com/microsoft/azure-skills?skill=azure-resource-lookup",
+     "purpose": "List, find, and show Azure resources across subscriptions or resource groups.",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "design-mobile-apps",
+     "source": "https://github.com/designed-by-ai/skills?skill=design-mobile-apps",
+     "purpose": "Design mobile app screens with Sleek, edit Sleek projects, and implement their designs in React Native or HTML.",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "expo-deployment",
+     "source": "https://github.com/expo/skills?skill=expo-deployment",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "eas-hosting",
+     "source": "https://github.com/expo/skills?skill=eas-hosting",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "azure-static-web-apps",
+     "source": "https://github.com/github/awesome-copilot?skill=azure-static-web-apps",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "review my code for security issues",
+   "query": "security review code",
+   "arp": [
+    {
+     "name": "security-review",
+     "source": "https://github.com/getsentry/skills?skill=security-review",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "code-review",
+     "source": "https://github.com/coderabbitai/skills?skill=code-review",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "security-best-practices",
+     "source": "https://github.com/openai/skills?skill=security-best-practices",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "security-threat-model",
+     "source": "https://github.com/openai/skills?skill=security-threat-model",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "sql-code-review",
+     "source": "https://github.com/github/awesome-copilot?skill=sql-code-review",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "generate an image from a description",
+   "query": "generate image",
+   "arp": [
+    {
+     "name": "flux-2-klein",
+     "source": "https://github.com/prime-skills/runcomfy-agent-skills?skill=flux-2-klein",
+     "purpose": "Generate images with Flux 2 Klein (Black Forest Labs' distilled fast variant of Flux 2) on RunComfy — bundled with the model's documented…",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "ai-video-generation",
+     "source": "https://github.com/101-skills/superpowers?skill=ai-video-generation",
+     "purpose": "Generate AI videos with Google Veo, Seedance 2.0, HappyHorse, Wan, Grok and 40+ models via inference.sh CLI.",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "image",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=image",
+     "purpose": "When the user wants to create, generate, edit, or optimize images for marketing — blog heroes, social graphics, product mockups, profile…",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "wonda-cli",
+     "source": "https://github.com/degausai/wonda?skill=wonda-cli",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "design",
+     "source": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill?skill=design",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "write an SEO-friendly blog post",
+   "query": "seo blog post",
+   "arp": [
+    {
+     "name": "content-creation",
+     "source": "https://github.com/anthropics/knowledge-work-plugins?skill=content-creation",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "blog-post",
+     "source": "https://github.com/langchain-ai/deepagents?skill=blog-post",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "draft-content",
+     "source": "https://github.com/anthropics/knowledge-work-plugins?skill=draft-content",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "blog-seo-check",
+     "source": "https://github.com/agricidaniel/claude-blog?skill=blog-seo-check",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "substack-ghostwriting",
+     "source": "https://github.com/samber/cc-skills?skill=substack-ghostwriting",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "design a landing page",
+   "query": "landing page design",
+   "arp": [
+    {
+     "name": "landing-page-design",
+     "source": "https://github.com/101-skills/superpowers?skill=landing-page-design",
+     "purpose": "Landing page conversion optimization with layout rules, hero section design, and CTA psychology.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "landing-page-design",
+     "source": "https://github.com/inference-sh/skills?skill=landing-page-design",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "frontend-design",
+     "source": "https://github.com/anthropics/skills?skill=frontend-design",
+     "purpose": "Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one.",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "design-mobile-apps",
+     "source": "https://github.com/designed-by-ai/skills?skill=design-mobile-apps",
+     "purpose": "Design mobile app screens with Sleek, edit Sleek projects, and implement their designs in React Native or HTML.",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "penpot-uiux-design",
+     "source": "https://github.com/github/awesome-copilot?skill=penpot-uiux-design",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "analyse a CSV and make charts",
+   "query": "csv charts",
+   "arp": [
+    {
+     "name": "drawio",
+     "source": "https://github.com/bahayonghang/drawio-skills?skill=drawio",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "animated-infographic",
+     "source": "https://github.com/iart-ai/data-animation-skills?skill=animated-infographic",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "xlsx",
+     "source": "https://github.com/appautomaton/document-skills?skill=xlsx",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "claude-dashboard",
+     "source": "https://github.com/jimliu/baoyu-design?skill=claude-dashboard",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "agent-xlsx",
+     "source": "https://github.com/apetta/agent-xlsx?skill=agent-xlsx",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": false
+  },
+  {
+   "need": "automate a task in a web browser",
+   "query": "browser automation",
+   "arp": [
+    {
+     "name": "browser-automation",
+     "source": "https://github.com/sickn33/agentic-awesome-skills?skill=browser-automation",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "agent-browser",
+     "source": "https://github.com/vercel-labs/agent-browser?skill=agent-browser",
+     "purpose": "Browser automation CLI for AI agents.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "playwright-cli",
+     "source": "https://github.com/microsoft/playwright-cli?skill=playwright-cli",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "browser-use",
+     "source": "https://github.com/browser-use/browser-use?skill=browser-use",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "browser-act",
+     "source": "https://github.com/browser-act/skills?skill=browser-act",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "open a pull request on GitHub with a good description",
+   "query": "github pull request",
+   "arp": [
+    {
+     "name": "create-github-pull-request-from-specification",
+     "source": "https://github.com/github/awesome-copilot?skill=create-github-pull-request-from-specification",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "my-pull-requests",
+     "source": "https://github.com/github/awesome-copilot?skill=my-pull-requests",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "code-review",
+     "source": "https://github.com/mattpocock/skills?skill=code-review",
+     "purpose": "Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes: Standards (does the code follow this repo's…",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "research",
+     "source": "https://github.com/mattpocock/skills?skill=research",
+     "purpose": "Investigate a question against high-trust primary sources and capture the findings as a Markdown file in the repo.",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "git-guardrails-claude-code",
+     "source": "https://github.com/mattpocock/skills?skill=git-guardrails-claude-code",
+     "purpose": "Set up Claude Code hooks to block dangerous git commands (push, reset --hard, clean, branch -D, etc.) before they execute.",
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "write a Dockerfile for my project",
+   "query": "dockerfile",
+   "arp": [
+    {
+     "name": "multi-stage-dockerfile",
+     "source": "https://github.com/github/awesome-copilot?skill=multi-stage-dockerfile",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "dockerfile-validator",
+     "source": "https://github.com/akin-ozer/cc-devops-skills?skill=dockerfile-validator",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "dockerfile-optimizer",
+     "source": "https://github.com/patricio0312rev/skills?skill=dockerfile-optimizer",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "dockerfile-optimise",
+     "source": "https://github.com/pproenca/dot-skills?skill=dockerfile-optimise",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "generate-dockerfile",
+     "source": "https://github.com/vtmocanu/skills?skill=generate-dockerfile",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "arpMet": true
+  },
+  {
+   "need": "schedule meetings in my calendar",
+   "query": "calendar meetings",
+   "arp": [
+    {
+     "name": "lark-calendar",
+     "source": "https://github.com/larksuite/cli?skill=lark-calendar",
+     "purpose": "飞书日历：管理日历日程和会议室。查看/搜索日程、创建/更新日程、管理参会人、查询忙闲和推荐时段、预定会议室。当用户需要查看日程安排、创建/修改会议、查询/预定会议室时使用。不负责：查询过去的视频会议记录（走 lark-meeting）、待办任务（走 lark-task）。",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "lark-workflow-standup-report",
+     "source": "https://github.com/larksuite/cli?skill=lark-workflow-standup-report",
+     "purpose": "日程待办摘要：编排 calendar +agenda 和 task +get-my-tasks，生成指定日期的日程与未完成任务摘要。适用于了解今天/明天/本周的安排。",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "extension-email-calendar-events",
+     "source": "https://github.com/caffeinelabs/skills?skill=extension-email-calendar-events",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "daily-prep",
+     "source": "https://github.com/github/awesome-copilot?skill=daily-prep",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "high-output-management",
+     "source": "https://github.com/wondelai/skills?skill=high-output-management",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": true
+  }
+ ]
+}

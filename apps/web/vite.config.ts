@@ -101,6 +101,17 @@ export default defineConfig(({mode}) => {
     const env = {...loadEnv(mode, process.cwd(), 'VITE_'), ...pickVite(process.env)};
     return {
         plugins: [react(), tailwindcss(), llmsTxt(), publicSite(env)],
+        // skills.sh sends no CORS header, so the search reads it through the site's own origin.
+        // The same path is proxied by `nginx.conf` in production (task 82).
+        server: {
+            proxy: {
+                '/skills-index/api/search': {
+                    target: 'https://skills.sh',
+                    changeOrigin: true,
+                    rewrite: (path: string) => path.replace(/^\/skills-index/, ''),
+                },
+            },
+        },
     };
 });
 

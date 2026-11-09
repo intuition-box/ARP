@@ -1,6 +1,7 @@
 import {fireEvent, screen} from "@testing-library/react";
 import {describe, expect, it, vi} from "vitest";
 
+import type {SkillsIndexRead} from "../hooks/use-skills-index";
 import type {CohortView} from "../services/agent-cohort";
 import type {ToolCatalogView, ToolRow} from "../services/tool-catalog";
 import {renderWithProviders} from "../test/render";
@@ -83,6 +84,9 @@ vi.mock("../hooks/use-skill-facts", () => ({
     }),
 }));
 
+let indexRead: SkillsIndexRead = {status: "ok", skills: []};
+vi.mock("../hooks/use-skills-index", () => ({useSkillsIndex: () => indexRead}));
+
 const search = (text: string) => {
     const box = screen.getByRole("searchbox", {name: "Search agents and tools"});
     fireEvent.change(box, {target: {value: text}});
@@ -123,5 +127,33 @@ describe("the search page (task 48)", () => {
             "href",
             "/agent/8453/1380",
         );
+    });
+});
+
+describe("the search reads skills.sh too (task 82)", () => {
+    it("lists skills.sh's results, without the ones ARP already shows, each opening its pulse", () => {
+        indexRead = {
+            status: "ok",
+            skills: [
+                {source: "obra/superpowers", skill: "writing-plans", installs: 10, url: "https://github.com/obra/superpowers?skill=writing-plans"},
+                {source: "openai/skills", skill: "transcribe", installs: 4033, url: "https://github.com/openai/skills?skill=transcribe"},
+                {source: "mintlify.com", skill: "docs", installs: 1, url: null},
+            ],
+        };
+        renderWithProviders(<SearchPage />);
+        search("writing");
+        expect(screen.getByRole("heading", {name: "On skills.sh · 1"})).toBeInTheDocument();
+        expect(screen.getByRole("link", {name: /transcribe/})).toHaveAttribute("href", "/pulse/openai/skills/transcribe");
+        expect(screen.getByText(/4K installs/)).toBeInTheDocument();
+        expect(screen.getAllByText("writing-plans")).toHaveLength(1);
+        expect(screen.queryByText("docs")).toBeNull();
+    });
+
+    it("says so when skills.sh does not answer, rather than showing an empty list", () => {
+        indexRead = {status: "unavailable", reason: "skills.sh answered 503"};
+        renderWithProviders(<SearchPage />);
+        search("writing");
+        expect(screen.getByText("skills.sh did not answer. Try again in a moment.")).toBeInTheDocument();
+        indexRead = {status: "ok", skills: []};
     });
 });

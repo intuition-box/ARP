@@ -187,3 +187,36 @@ export function pageOf<T>(
     nextOffset: offset + limit < entries.length ? offset + limit : null,
   };
 }
+
+/**
+ * A search's rows with skills.sh's results laid in (task 82). ARP's catalogue met 10 of 20 fixed
+ * needs and skills.sh 18 (`scripts/measure/readiness-bench.ts`, 2026-11-09), so the index's order
+ * leads. What it cannot know comes first: a row holding every word that agents declared using.
+ * Then the index's results in its order, each as ARP's own row when the registry holds the skill.
+ * Then the registry's other matches. Nothing appears twice.
+ */
+export function mergeIndexed<T>(
+  matched: readonly T[],
+  indexed: readonly { key: string }[],
+  options: {
+    keyOf: (entry: T) => string | null;
+    held: (key: string) => T | undefined;
+    make: (index: number) => T;
+    leads: (entry: T) => boolean;
+  },
+): T[] {
+  const out: T[] = [];
+  const taken = new Set<string>();
+  const add = (entry: T) => {
+    const key = options.keyOf(entry);
+    if (key !== null) {
+      if (taken.has(key)) return;
+      taken.add(key);
+    }
+    out.push(entry);
+  };
+  for (const entry of matched) if (options.leads(entry)) add(entry);
+  indexed.forEach(({ key }, index) => add(options.held(key) ?? options.make(index)));
+  for (const entry of matched) add(entry);
+  return out;
+}

@@ -1,0 +1,1593 @@
+{
+ "at": "2026-11-09T14:50:29.181Z",
+ "chain": 13579,
+ "gate": "15 of 20",
+ "arpMet": 10,
+ "referenceMet": 18,
+ "passes": false,
+ "judgeCostUsd": 0.1675,
+ "needs": [
+  {
+   "need": "send a transactional email from my app",
+   "query": "send email",
+   "arp": [
+    {
+     "name": "cold-email",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=cold-email",
+     "purpose": "Write and run B2B cold outbound that gets replies, from cold emails and follow-ups to sending setup, LinkedIn, multichannel cadences, and…",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "cloudflare-email-service",
+     "source": "https://github.com/cloudflare/skills?skill=cloudflare-email-service",
+     "purpose": "Implement or troubleshoot Cloudflare Email Sending and Email Routing integrations and their delivery configuration.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "emails",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=emails",
+     "purpose": "When the user wants to create or optimize an email sequence, drip campaign, automated email flow, or lifecycle email program.",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "sms",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=sms",
+     "purpose": "When the user wants to plan, build, or optimize SMS, MMS, or WhatsApp marketing — including welcome flows, abandoned cart texts,…",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "prospecting",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=prospecting",
+     "purpose": "When the user wants to find, qualify, and build a list of prospects to reach out to, across B2B SaaS, general B2B, or local small…",
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": true,
+   "reference": [
+    {
+     "name": "send-email",
+     "source": "resend/resend-skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "email-smtp-send",
+     "source": "tiangong-ai/agent-skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "recipe-send-personalized-emails",
+     "source": "googleworkspace/cli",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "send-email",
+     "source": "wangyendt/wayne-skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "agentmail-send-email",
+     "source": "agentmail-to/agentmail-skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "set up a Postgres database for my app",
+   "query": "postgres database",
+   "arp": [
+    {
+     "name": "prisma-postgres-setup",
+     "source": "https://github.com/prisma/skills?skill=prisma-postgres-setup",
+     "purpose": "Obtain or reuse a Prisma Postgres database and connect an application.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "prisma-orm-setup",
+     "source": "https://github.com/prisma/skills?skill=prisma-orm-setup",
+     "purpose": "Set up Prisma ORM in an application, connect its database, or troubleshoot the connection of an existing Prisma 6, 7, or 8 app.",
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": true,
+   "reference": [
+    {
+     "name": "postgres-best-practices",
+     "source": "neondatabase/postgres-skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "postgres-database-migration",
+     "source": "timescale/pg-aiguide",
+     "purpose": null,
+     "ratings": [
+      1,
+      0
+     ]
+    },
+    {
+     "name": "prisma-database-setup-prisma-postgres",
+     "source": "prisma/cursor-plugin",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "api-database-postgresql",
+     "source": "agents-inc/skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "api-database-vercel-postgres",
+     "source": "agents-inc/skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "translate a document into French",
+   "query": "translate document",
+   "arp": [],
+   "arpMet": false,
+   "reference": [
+    {
+     "name": "translate-documents",
+     "source": "wainingceoi/skillset",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "suppr-translate",
+     "source": "skills.volces.com",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "visa-doc-translate",
+     "source": "affaan-m/ecc",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "pdf-to-html",
+     "source": "daymade/claude-code-skills",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "en-to-zh-translator",
+     "source": "seefreed/skills",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "read and edit an Excel spreadsheet",
+   "query": "excel spreadsheet",
+   "arp": [],
+   "arpMet": false,
+   "reference": [
+    {
+     "name": "excel-spreadsheets",
+     "source": "aws-samples/sample-strands-agent-with-agentcore",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "excel-spreadsheets",
+     "source": "peterbamuhigire/chwezi-dev-engine",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "lark-sheets",
+     "source": "open.feishu.cn",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "convert-documents-to-markdown",
+     "source": "firecrawl/anydoc",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "data-analysis",
+     "source": "claude-office-skills/skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "accept payments with Stripe",
+   "query": "stripe payments",
+   "arp": [],
+   "arpMet": false,
+   "reference": [
+    {
+     "name": "Stripe Payments",
+     "source": "claude-office-skills/skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "stripe-payments",
+     "source": "jezweb/claude-skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "stripe-payments",
+     "source": "eyadsibai/ltk",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "payment-security-clerk-billing-stripe",
+     "source": "harperaa/secure-claude-skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "stripe-payments",
+     "source": "peterbamuhigire/chwezi-dev-engine",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "transcribe an audio recording to text",
+   "query": "transcribe audio",
+   "arp": [],
+   "arpMet": false,
+   "reference": [
+    {
+     "name": "audio-transcribe",
+     "source": "infquest/vibe-ops-plugin",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "transcribe-audio",
+     "source": "barefootford/buttercut",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "audio-transcribe",
+     "source": "agntswrm/agent-media",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "transform-transcribe-audio-with-transloadit",
+     "source": "transloadit/skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "audio-transcribe",
+     "source": "zxkane/audio-transcriber",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "write tests for my React components",
+   "query": "react component tests",
+   "arp": [
+    {
+     "name": "remotion-render",
+     "source": "https://github.com/101-skills/superpowers?skill=remotion-render",
+     "purpose": "Render videos from React/Remotion component code via inference.sh.",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "web-artifacts-builder",
+     "source": "https://github.com/anthropics/skills?skill=web-artifacts-builder",
+     "purpose": "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind…",
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": false,
+   "reference": [
+    {
+     "name": "manage-react-component-tests",
+     "source": "talbenmoshe/zdr-tools",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "react-testing",
+     "source": "affaan-m/ecc",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "react-testing-library",
+     "source": "itechmeat/llm-code",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "ui-design",
+     "source": "mblode/agent-skills",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "senior-qa",
+     "source": "alirezarezvani/claude-skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "scrape data from a website",
+   "query": "scrape website",
+   "arp": [
+    {
+     "name": "agent-browser",
+     "source": "https://github.com/vercel-labs/agent-browser?skill=agent-browser",
+     "purpose": "Browser automation CLI for AI agents.",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "Apify",
+     "source": "https://github.com/apify/apify-mcp-server",
+     "purpose": "The Apify MCP server enables your AI agents to extract data from social media, search engines, maps, e-commerce sites, or any other website…",
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "arpMet": true,
+   "reference": [
+    {
+     "name": "agent-browser",
+     "source": "vercel-labs/agent-browser",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "firecrawl-seo-audit",
+     "source": "firecrawl/firecrawl-workflows",
+     "purpose": null,
+     "ratings": [
+      0,
+      1
+     ]
+    },
+    {
+     "name": "browser-act-skill-forge",
+     "source": "browser-act/skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "firecrawl-build",
+     "source": "firecrawl/skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "apify-lead-generation",
+     "source": "apify/agent-skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      2
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "make a slide deck from my notes",
+   "query": "slide deck",
+   "arp": [
+    {
+     "name": "pptx",
+     "source": "https://github.com/anthropics/skills?skill=pptx",
+     "purpose": "Use this skill any time a .pptx or .potx file is involved in any way — as input, output, or both.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "slideshow",
+     "source": "https://github.com/heygen-com/hyperframes?skill=slideshow",
+     "purpose": "Build a HyperFrames slideshow to present live - slides, fragment reveals, branching hotspots and presenter mode with speaker notes, served…",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "lark-apps",
+     "source": "https://github.com/larksuite/cli?skill=lark-apps",
+     "purpose": "妙搭（Spark/Miaoda）应用开发与托管：应用创建、本地全栈开发、云端生成迭代、创意设计（UI mockup / 可交互原型 / 线框图 / 落地页 / 仪表盘 / 幻灯片 deck /…",
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": true,
+   "reference": [
+    {
+     "name": "baoyu-slide-deck",
+     "source": "jimliu/baoyu-skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "deck-open-slide-canvas",
+     "source": "nexu-io/open-design",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "slide-deck",
+     "source": "coreyhaines31/makerskills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "slide-deck",
+     "source": "code-on-sunday/slide-deck-generator",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "canghe-slide-deck",
+     "source": "freestylefly/canghe-skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "fill in a PDF form",
+   "query": "pdf form",
+   "arp": [
+    {
+     "name": "arp",
+     "source": "https://github.com/intuition-box/ARP?skill=arp",
+     "purpose": "Find the skill, MCP server or API that fits a task, before you pick one yourself, and see which ones other agents actually used.",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "pdf",
+     "source": "https://github.com/anthropics/skills?skill=pdf",
+     "purpose": "Use this skill whenever the user wants to do anything with PDF files.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "docx",
+     "source": "https://github.com/anthropics/skills?skill=docx",
+     "purpose": "Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx files) or Word templates (.dotx files).",
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": true,
+   "reference": [
+    {
+     "name": "PDF Form Filler",
+     "source": "claude-office-skills/skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "pdf",
+     "source": "anthropics/skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "pdftk-server",
+     "source": "github/awesome-copilot",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "view-pdf",
+     "source": "anthropics/knowledge-work-plugins",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "pdf-converter",
+     "source": "tanis90/pdf-converter-mineru",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "deploy my web app to the cloud",
+   "query": "deploy web app",
+   "arp": [
+    {
+     "name": "higgsfield-websites",
+     "source": "https://github.com/higgsfield-ai/skills?skill=higgsfield-websites",
+     "purpose": "Build, edit, and deploy full-stack websites, apps and games via the Higgsfield CLI (`higgsfield website …`).",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "deploy-to-vercel",
+     "source": "https://github.com/vercel-labs/agent-skills?skill=deploy-to-vercel",
+     "purpose": "Deploy applications and websites to Vercel.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "firebase-app-hosting-basics",
+     "source": "https://github.com/firebase/agent-skills?skill=firebase-app-hosting-basics",
+     "purpose": "Deploys and manages full-stack web applications (Next.js, Angular) with Server-Side Rendering (SSR) using Firebase App Hosting.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "azure-resource-lookup",
+     "source": "https://github.com/microsoft/azure-skills?skill=azure-resource-lookup",
+     "purpose": "List, find, and show Azure resources across subscriptions or resource groups.",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "vercel-optimize",
+     "source": "https://github.com/vercel-labs/agent-skills?skill=vercel-optimize",
+     "purpose": "Use for Vercel cost and performance optimization on deployed projects, especially Next.js, SvelteKit, Nuxt, and limited Astro apps.",
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": true,
+   "reference": [
+    {
+     "name": "deploying-cloudflare-web-application",
+     "source": "cedmandocdoc/awesome-skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "azure-webapp-deploy",
+     "source": "adithyani/agents",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "build-and-deploy-a-web-app",
+     "source": "fulcradynamics/agent-skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "azure-resource-lookup",
+     "source": "microsoft/azure-skills",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "azure-hosted-copilot-sdk",
+     "source": "microsoft/azure-skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "review my code for security issues",
+   "query": "security review code",
+   "arp": [
+    {
+     "name": "receiving-code-review",
+     "source": "https://github.com/obra/superpowers?skill=receiving-code-review",
+     "purpose": "Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable…",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "requesting-code-review",
+     "source": "https://github.com/obra/superpowers?skill=requesting-code-review",
+     "purpose": "Use when completing tasks, implementing major features, or before merging to verify work meets requirements",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "code-review",
+     "source": "https://github.com/mattpocock/skills?skill=code-review",
+     "purpose": "Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes: Standards (does the code follow this repo's…",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "review-animations",
+     "source": "https://github.com/emilkowalski/skills?skill=review-animations",
+     "purpose": "Reviews animation and motion code against a high craft bar derived from Emil Kowalski's design engineering philosophy.",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "extension-to-functions-codebase",
+     "source": "https://github.com/firebase/agent-skills?skill=extension-to-functions-codebase",
+     "purpose": "Skill for converting an installed Firebase Extension (or extension source) into a standalone Cloud Functions for Firebase codebase or…",
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": false,
+   "reference": [
+    {
+     "name": "secure-code-review",
+     "source": "securityskills/skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "code-review-security",
+     "source": "owasp/secure-agent-playbook",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "code-review-security",
+     "source": "hieutrtr/ai1-skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "security-review",
+     "source": "getsentry/skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "code-review",
+     "source": "coderabbitai/skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "generate an image from a description",
+   "query": "generate image",
+   "arp": [
+    {
+     "name": "flux-2-klein",
+     "source": "https://github.com/prime-skills/runcomfy-agent-skills?skill=flux-2-klein",
+     "purpose": "Generate images with Flux 2 Klein (Black Forest Labs' distilled fast variant of Flux 2) on RunComfy — bundled with the model's documented…",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "image",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=image",
+     "purpose": "When the user wants to create, generate, edit, or optimize images for marketing — blog heroes, social graphics, product mockups, profile…",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "p-image",
+     "source": "https://github.com/101-skills/superpowers?skill=p-image",
+     "purpose": "Generate images with Pruna P-Image models via inference.sh CLI.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "ai-image-generation",
+     "source": "https://github.com/101-skills/superpowers?skill=ai-image-generation",
+     "purpose": "Generate AI images with GPT-Image-2, FLUX, Gemini, Grok, Seedream, Reve and 50+ models via inference.sh CLI.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "ai-image-generation",
+     "source": "https://github.com/prime-skills/runcomfy-agent-skills?skill=ai-image-generation",
+     "purpose": "Generate and edit images on RunComfy via the `runcomfy` CLI — a smart router across the full image-model catalog: FLUX 2 (Klein 9B/4B, Pro,…",
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "arpMet": true,
+   "reference": [
+    {
+     "name": "ai-video-generation",
+     "source": "101-skills/superpowers",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "ai-video-generation",
+     "source": "magentosh/superpowers",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "ai-video-generation",
+     "source": "skills-shell/superpowers",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "ai-video-generation",
+     "source": "qu-skills/superpowers",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "ai-video-generation",
+     "source": "its-a-skill-issue/superpowers",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "referenceMet": false
+  },
+  {
+   "need": "write an SEO-friendly blog post",
+   "query": "seo blog post",
+   "arp": [
+    {
+     "name": "link-building",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=link-building",
+     "purpose": "When the user wants to earn backlinks or third-party mentions that lift rankings and AI citations.",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "site-architecture",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=site-architecture",
+     "purpose": "When the user wants to plan, map, or restructure their website's page hierarchy, navigation, URL structure, or internal linking.",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "content-strategy",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=content-strategy",
+     "purpose": "When the user wants to plan a content strategy, decide what content to create, or figure out what topics to cover.",
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": false,
+   "reference": [
+    {
+     "name": "optimizing-blog-posts-for-seo",
+     "source": "wesleysmits/agent-skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "content-creation",
+     "source": "anthropics/knowledge-work-plugins",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "blog-post",
+     "source": "langchain-ai/deepagents",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "draft-content",
+     "source": "anthropics/knowledge-work-plugins",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "blog-seo-check",
+     "source": "agricidaniel/claude-blog",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "design a landing page",
+   "query": "landing page design",
+   "arp": [
+    {
+     "name": "landing-page-design",
+     "source": "https://github.com/101-skills/superpowers?skill=landing-page-design",
+     "purpose": "Landing page conversion optimization with layout rules, hero section design, and CTA psychology.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "ab-testing",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=ab-testing",
+     "purpose": "When the user wants to plan, design, or implement an A/B test or experiment, or build a growth experimentation program.",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "competitors",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=competitors",
+     "purpose": "When the user wants to create competitor comparison or alternative pages for SEO and buyer-facing use.",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "programmatic-seo",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=programmatic-seo",
+     "purpose": "When the user wants to create SEO-driven pages at scale using templates and data.",
+     "ratings": [
+      1,
+      0
+     ]
+    },
+    {
+     "name": "azure-enterprise-infra-planner",
+     "source": "https://github.com/microsoft/azure-skills?skill=azure-enterprise-infra-planner",
+     "purpose": "Architect and provision enterprise Azure infrastructure from workload descriptions.",
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": true,
+   "reference": [
+    {
+     "name": "landing-page-design",
+     "source": "101-skills/superpowers",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "landing-page-design",
+     "source": "magentosh/superpowers",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "landing-page-design",
+     "source": "skills-shell/superpowers",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "landing-page-design",
+     "source": "qu-skills/superpowers",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "landing-page-design",
+     "source": "its-a-skill-issue/superpowers",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "analyse a CSV and make charts",
+   "query": "csv charts",
+   "arp": [
+    {
+     "name": "xlsx",
+     "source": "https://github.com/anthropics/skills?skill=xlsx",
+     "purpose": "Use this skill any time a spreadsheet file is the primary input or output.",
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": false,
+   "reference": [
+    {
+     "name": "drawio",
+     "source": "bahayonghang/drawio-skills",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "animated-infographic",
+     "source": "iart-ai/data-animation-skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "xlsx",
+     "source": "appautomaton/document-skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "claude-dashboard",
+     "source": "jimliu/baoyu-design",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "agent-xlsx",
+     "source": "apetta/agent-xlsx",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "referenceMet": false
+  },
+  {
+   "need": "automate a task in a web browser",
+   "query": "browser automation",
+   "arp": [
+    {
+     "name": "agent-browser",
+     "source": "https://github.com/101-skills/superpowers?skill=agent-browser",
+     "purpose": "Browser automation for AI agents via inference.sh.",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "Vercel Labs — Agent Browser",
+     "source": "https://github.com/vercel-labs/agent-browser",
+     "purpose": "Browser automation CLI for AI agents",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "agent-browser",
+     "source": "https://github.com/vercel-labs/agent-browser?skill=agent-browser",
+     "purpose": "Browser automation CLI for AI agents.",
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "arpMet": true,
+   "reference": [
+    {
+     "name": "browser-automation",
+     "source": "sickn33/agentic-awesome-skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "browser-automation",
+     "source": "web-infra-dev/midscene-skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "Browser Automation",
+     "source": "claude-office-skills/skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "browser-automation",
+     "source": "sophieguanongit/openclaw-browser-automation",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "browser-automation",
+     "source": "zhaoxuya520/reverse-skill",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "open a pull request on GitHub with a good description",
+   "query": "github pull request",
+   "arp": [
+    {
+     "name": "public-relations",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=public-relations",
+     "purpose": "When the user wants help with public relations, earned media, press coverage, journalist outreach, or media strategy (not pull requests).",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "requesting-code-review",
+     "source": "https://github.com/obra/superpowers?skill=requesting-code-review",
+     "purpose": "Use when completing tasks, implementing major features, or before merging to verify work meets requirements",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "cold-email",
+     "source": "https://github.com/coreyhaines31/marketingskills?skill=cold-email",
+     "purpose": "Write and run B2B cold outbound that gets replies, from cold emails and follow-ups to sending setup, LinkedIn, multichannel cadences, and…",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "python-executor",
+     "source": "https://github.com/101-skills/superpowers?skill=python-executor",
+     "purpose": "Execute Python code in a safe sandboxed environment via [inference.sh](https://inference.sh).",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "azure-kusto-irql-graph",
+     "source": "https://github.com/microsoft/azure-skills?skill=azure-kusto-irql-graph",
+     "purpose": "Apply IRQL graph functions to KQL or IRQL query results for Kusto Explorer visualization.",
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": false,
+   "reference": [
+    {
+     "name": "create-github-pull-request-from-specification",
+     "source": "github/awesome-copilot",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "my-pull-requests",
+     "source": "github/awesome-copilot",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "github-pull-request-description",
+     "source": "longbridge/gpui-kit",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "code-review",
+     "source": "mattpocock/skills",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "research",
+     "source": "mattpocock/skills",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "write a Dockerfile for my project",
+   "query": "dockerfile",
+   "arp": [
+    {
+     "name": "azure-prepare",
+     "source": "https://github.com/microsoft/azure-skills?skill=azure-prepare",
+     "purpose": "Prepare azd-based Azure projects for deployment: generates azure.yaml, infrastructure (Bicep/Terraform), and Dockerfiles for the Azure…",
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "azure-app-onboard-prereq",
+     "source": "https://github.com/microsoft/azure-skills?skill=azure-app-onboard-prereq",
+     "purpose": "Assess whether source code is ready to deploy to Azure — the check BEFORE infrastructure work.",
+     "ratings": [
+      0,
+      0
+     ]
+    }
+   ],
+   "arpMet": false,
+   "reference": [
+    {
+     "name": "multi-stage-dockerfile",
+     "source": "github/awesome-copilot",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "dockerfile-validator",
+     "source": "akin-ozer/cc-devops-skills",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "dockerfile-optimizer",
+     "source": "patricio0312rev/skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "dockerfile-optimise",
+     "source": "pproenca/dot-skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    },
+    {
+     "name": "generate-dockerfile",
+     "source": "vtmocanu/skills",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    }
+   ],
+   "referenceMet": true
+  },
+  {
+   "need": "schedule meetings in my calendar",
+   "query": "calendar meetings",
+   "arp": [
+    {
+     "name": "lark-calendar",
+     "source": "https://github.com/larksuite/cli?skill=lark-calendar",
+     "purpose": "飞书日历：管理日历日程和会议室。查看/搜索日程、创建/更新日程、管理参会人、查询忙闲和推荐时段、预定会议室。当用户需要查看日程安排、创建/修改会议、查询/预定会议室时使用。不负责：查询过去的视频会议记录（走 lark-meeting）、待办任务（走 lark-task）。",
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "lark-meeting",
+     "source": "https://github.com/larksuite/cli?skill=lark-meeting",
+     "purpose": "飞书视频会议：查询会议记录与会议产物(纪要/逐字稿/妙记)、妙记搜索/上传/下载/编辑、机器人参与会议；查询进行中的会议、实时会议内容(发言/聊天/共享文档)问答(会上/会里)、发送会中聊天/表情；基于…",
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Lark CLI",
+     "source": "https://github.com/larksuite/cli",
+     "purpose": "The official Lark/飞书 CLI tool, maintained by the larksuite team — built for humans and AI Agents.",
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "arpMet": true,
+   "reference": [
+    {
+     "name": "lark-calendar",
+     "source": "open.feishu.cn",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "lark-workflow-standup-report",
+     "source": "open.feishu.cn",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "lark-calendar",
+     "source": "larksuite/cli",
+     "purpose": null,
+     "ratings": [
+      2,
+      2
+     ]
+    },
+    {
+     "name": "lark-workflow-standup-report",
+     "source": "larksuite/cli",
+     "purpose": null,
+     "ratings": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "extension-email-calendar-events",
+     "source": "caffeinelabs/skills",
+     "purpose": null,
+     "ratings": [
+      1,
+      1
+     ]
+    }
+   ],
+   "referenceMet": true
+  }
+ ]
+}
