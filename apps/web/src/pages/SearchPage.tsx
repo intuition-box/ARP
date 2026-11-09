@@ -158,17 +158,17 @@ function ToolResults({catalog, view, matches}: ReturnType<typeof useToolMatches>
     return (
         <section aria-labelledby="search-tools" className="mt-14">
             <h2 id="search-tools" className={LABEL}>
-                {view === undefined ? "Tools" : `Tools · ${matches.length.toLocaleString("en-US")}`}
+                {view === undefined ? "In ARP" : `In ARP · ${matches.length.toLocaleString("en-US")}`}
             </h2>
             {catalog.error !== null && view === undefined ? (
                 <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                     The index did not answer. Try again in a moment.
                 </p>
             ) : view === undefined ? (
-                <PageLoading label="Searching tools" />
+                <PageLoading label="Searching ARP" />
             ) : matches.length === 0 ? (
                 <p className="mt-3 text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
-                    No tool by that name.
+                    Nothing in ARP by that name.
                 </p>
             ) : (
                 // Every match: the tool index has no name filter to send the rest to.

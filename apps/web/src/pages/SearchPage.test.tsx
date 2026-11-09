@@ -103,7 +103,7 @@ describe("the search page (task 48)", () => {
         renderWithProviders(<SearchPage />);
         search("dackie");
         expect(screen.getByText("Captain Dackie")).toBeInTheDocument();
-        expect(screen.getByRole("heading", {name: "Tools · 0"})).toBeInTheDocument();
+        expect(screen.getByRole("heading", {name: "In ARP · 0"})).toBeInTheDocument();
         search("writing");
         expect(screen.getByText("writing-plans")).toBeInTheDocument();
         expect(screen.queryByText("brainstorming")).toBeNull();
