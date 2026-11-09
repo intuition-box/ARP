@@ -1,31 +1,9 @@
-import {Fragment} from "react";
-
 import {BackLink} from "../components/brand/BackLink";
 import {legalDetails} from "../lib/site-config";
-import {legalDocs, PLACEHOLDER, type LegalSlug} from "../services/legal";
+import {legalDocs, type LegalSlug} from "../services/legal";
 
 const LABEL =
     "font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]";
-
-const WHOLE_PLACEHOLDER = new RegExp(`^${PLACEHOLDER.source}$`);
-
-/** A placeholder is set in mono, so it reads as a blank to fill and not as filled text. */
-function Text({text}: {text: string}) {
-    const parts = text.split(new RegExp(`(${PLACEHOLDER.source})`));
-    return (
-        <>
-            {parts.map((part, index) =>
-                WHOLE_PLACEHOLDER.test(part) ? (
-                    <span key={index} className="font-mono text-[color:var(--color-fg)]">
-                        {part}
-                    </span>
-                ) : (
-                    <Fragment key={index}>{part}</Fragment>
-                ),
-            )}
-        </>
-    );
-}
 
 /** One of the legal pages (task 74), in English since 2026-11-09. */
 export function LegalPage({slug}: {slug: LegalSlug}) {
@@ -43,7 +21,7 @@ export function LegalPage({slug}: {slug: LegalSlug}) {
                                 key={index}
                                 className="mt-3 text-[length:var(--text-body)] text-[color:var(--color-silver)]"
                             >
-                                <Text text={block} />
+                                {block}
                             </p>
                         ) : (
                             <ul
@@ -52,7 +30,7 @@ export function LegalPage({slug}: {slug: LegalSlug}) {
                             >
                                 {block.map((item) => (
                                     <li key={item}>
-                                        <Text text={item} />
+                                        {item}
                                     </li>
                                 ))}
                             </ul>

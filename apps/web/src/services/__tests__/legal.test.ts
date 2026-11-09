@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {LEGAL_SLUGS, LEGAL_VARIABLES, legalDetailsFrom, legalDocs, remainingPlaceholders} from "../legal";
+import {LEGAL_SLUGS, legalDetailsFrom, legalDocs} from "../legal";
 
 const FILLED = {
     VITE_LEGAL_HOST_NAME: "Example Host",
@@ -23,39 +23,26 @@ describe("the legal pages (task 74)", () => {
         expect(JSON.stringify(legalDocs({}))).not.toMatch(/[àâçéèêëîïôûùüÿœÀÉ]/);
     });
 
-    it("prints one blank per unset variable, naming it, and that is what blocks a release build", () => {
-        const left = new Set(remainingPlaceholders({}));
-        expect([...left].sort()).toEqual(
-            Object.values(LEGAL_VARIABLES)
-                .map((name) => `[${name} TO BE COMPLETED]`)
-                .sort(),
-        );
+    it("with nothing set, identifies nobody, shows no blank, and sends contact to GitHub issues", () => {
+        const text = JSON.stringify(legalDocs({}));
+        expect(text).not.toMatch(/\[[^[\]"]*\]/);
+        expect(text).not.toMatch(/@/);
+        expect(text).not.toMatch(/"Host"/);
+        expect(text).toContain("https://github.com/intuition-box/ARP/issues");
     });
 
-    it("has no blank left once every variable is set, and prints what was set", () => {
-        const details = legalDetailsFrom(FILLED);
-        expect(remainingPlaceholders(details)).toEqual([]);
-        const text = JSON.stringify(legalDocs(details));
+    it("prints what was set, when it is set", () => {
+        const text = JSON.stringify(legalDocs(legalDetailsFrom(FILLED)));
         for (const value of Object.values(FILLED)) expect(text).toContain(value);
     });
 
     it("counts an empty or blank variable as unset", () => {
         expect(legalDetailsFrom({...FILLED, VITE_LEGAL_HOST_PHONE: "  "}).hostPhone).toBeUndefined();
-        expect(remainingPlaceholders(legalDetailsFrom({...FILLED, VITE_LEGAL_HOST_PHONE: ""}))).toEqual([
-            "[VITE_LEGAL_HOST_PHONE TO BE COMPLETED]",
-        ]);
     });
 
-    it("misses no bracketed blank: every [ … ] in the text is one the release check sees", () => {
-        // A blank worded so that the pattern skips it would go online printed as is.
-        const text = JSON.stringify(legalDocs({}));
-        const brackets = text.match(/\[[^[\]"]*\]/g) ?? [];
-        expect([...brackets].sort()).toEqual([...remainingPlaceholders({})].sort());
-    });
-
-    it("names no publisher: the legal notice says the host holds the identity", () => {
+    it("names no publisher", () => {
         const notice = JSON.stringify(legalDocs(legalDetailsFrom(FILLED))["legal-notice"]);
-        expect(notice).toContain("the publisher's identity is not shown here");
+        expect(notice).toContain("a private individual, on a non-professional basis");
         expect(notice).not.toMatch(/Publication director/);
     });
 });

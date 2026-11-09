@@ -4,14 +4,10 @@ The web app is a static build served by nginx, from `apps/web/Dockerfile`. Task 
 
 ## Before it goes online
 
-The publisher is anonymous (a private individual, non-professional: French LCEN, article 6, III, 2),
-so the legal pages name no publisher. They need the **host's** name, address and phone, a contact
-e-mail and how long the server keeps its logs, and these come from the five `VITE_LEGAL_*` build
-variables below, **never from git**. An unset one prints as `[VITE_LEGAL_… TO BE COMPLETED]`; a build
-with `VITE_PUBLIC_RELEASE=1` **fails** while one is unset, or while `VITE_SITE_URL` is.
-
-Anonymity holds only if the host actually keeps the publisher's identity: the host named here must
-be the one that has it.
+Nothing to fill. The legal pages identify nobody for now (the user, 2026-11-09): they say the site
+is published by a private individual on a non-professional basis, and contact goes through GitHub
+issues. The five `VITE_LEGAL_*` variables below are optional and never in git; one that is set adds
+its line, one that is not leaves it out. No build is blocked by them.
 
 ## Coolify settings
 
@@ -36,12 +32,12 @@ secret: everything here ends up in public JavaScript.
 
 | Variable | Required | What it does | When unset |
 | --- | --- | --- | --- |
-| `VITE_PUBLIC_RELEASE` | **yes, `1`** for the public site | refuses the build while a `VITE_LEGAL_*` variable or `VITE_SITE_URL` is unset | no check: fine locally, not for the public site |
-| `VITE_LEGAL_HOST_NAME` | **yes** | the host's name, on the legal notice | a visible blank, and a release build fails |
-| `VITE_LEGAL_HOST_ADDRESS` | **yes** | the host's postal address | the same |
-| `VITE_LEGAL_HOST_PHONE` | **yes** | the host's phone number | the same |
-| `VITE_LEGAL_CONTACT_EMAIL` | **yes** | the contact e-mail, on the legal notice, privacy, accessibility and contact pages | the same |
-| `VITE_LEGAL_LOG_RETENTION` | **yes** | how long the server keeps its request logs, as a phrase: `for 30 days` reads "It is kept for 30 days, then erased." | the same |
+| `VITE_PUBLIC_RELEASE` | **yes, `1`** for the public site | refuses the build while `VITE_SITE_URL` is unset | no check: fine locally |
+| `VITE_LEGAL_HOST_NAME` | no | the host's name; with it, the legal notice adds a Host section and the LCEN anonymity sentence | no Host section |
+| `VITE_LEGAL_HOST_ADDRESS` | no | the host's postal address, under its name | left out |
+| `VITE_LEGAL_HOST_PHONE` | no | the host's phone number, under its name | left out |
+| `VITE_LEGAL_CONTACT_EMAIL` | no | a contact e-mail, on the legal notice, privacy, accessibility and contact pages | contact goes through GitHub issues |
+| `VITE_LEGAL_LOG_RETENTION` | no | how long the server keeps its request logs, as a phrase: `for 30 days` reads "It is kept for 30 days, then erased." | the sentence is left out |
 | `VITE_SITE_URL` | **yes** | the site's address, `https://example.org`, no trailing slash. Writes `sitemap.xml`, the `Sitemap:` line of `robots.txt`, the canonical link and the Open Graph URL and image | no sitemap, no canonical, no `og:image` |
 | `VITE_ALLOW_MAINNET` | no, leave unset | `1` brings back the switch to Intuition mainnet, where a deposit spends real TRUST | testnet only, and the header shows no chain control |
 | `VITE_WALLETCONNECT_PROJECT_ID` | no, leave it unset | a WalletConnect (Reown) project id, for mobile wallets. This build does not ship `@walletconnect/ethereum-provider`, so the connector cannot load, and the privacy and cookies pages do not cover it: set it only after adding the package and re-checking both pages | browser-extension wallets only |

@@ -7,11 +7,11 @@
  * non-professional basis may keep their identity off the site, provided the host holds it (French
  * LCEN, article 6, III, 2). So no name, address or phone of the publisher appears here or in git.
  *
- * **The host's details, the contact e-mail and the log retention are build variables**, never
- * committed (`LEGAL_VARIABLES`). A variable left unset prints as a visible blank,
- * `[VITE_… TO BE COMPLETED]`, and `vite.config.ts` refuses a release build (`VITE_PUBLIC_RELEASE=1`)
- * while one remains. The privacy page lists what the code contacts; when a page starts calling a
- * new host, it belongs here too.
+ * **Nothing that identifies anyone is shown for now** (the user, 2026-11-09). The host's details,
+ * a contact e-mail and the log retention are optional build variables (`LEGAL_VARIABLES`), never
+ * committed: a variable left unset leaves its line out, and contact goes through GitHub issues.
+ * Nothing blocks a build. The privacy page lists what the code contacts; when a page starts calling
+ * a new host, it belongs here too.
  */
 
 export const LEGAL_SLUGS = ["legal-notice", "privacy", "cookies", "terms", "accessibility", "contact"] as const;
@@ -32,9 +32,6 @@ export const LEGAL_VARIABLES = {
 } as const;
 export type LegalDetails = Partial<Record<keyof typeof LEGAL_VARIABLES, string>>;
 
-/** What a placeholder looks like, for the release check and for the page that marks them. */
-export const PLACEHOLDER = /\[[^[\]"]*TO BE COMPLETED\]/g;
-
 /** The details out of an environment, by variable name. An empty value counts as unset. */
 export function legalDetailsFrom(env: Readonly<Record<string, string | undefined>>): LegalDetails {
     const details: LegalDetails = {};
@@ -48,10 +45,13 @@ export function legalDetailsFrom(env: Readonly<Record<string, string | undefined
 
 const REPO = "https://github.com/intuition-box/ARP";
 
-/** The six pages, with each detail filled or printed as the blank that names its variable. */
+/** The six pages. A detail that is not set leaves its line out. */
 export function legalDocs(details: LegalDetails): Record<LegalSlug, LegalDoc> {
-    const fill = (key: keyof LegalDetails) => details[key] ?? `[${LEGAL_VARIABLES[key]} TO BE COMPLETED]`;
-    const EMAIL = fill("contactEmail");
+    const ISSUES = `${REPO}/issues`;
+    const email = details.contactEmail;
+    const host = details.hostName;
+    /** Where to write: the e-mail when one is set, GitHub issues otherwise. */
+    const writeTo = email === undefined ? `opening an issue at ${ISSUES}` : `writing to ${email}`;
     return {
         "legal-notice": {
             title: "Legal notice",
@@ -59,16 +59,27 @@ export function legalDocs(details: LegalDetails): Record<LegalSlug, LegalDoc> {
                 {
                     heading: "Publisher",
                     blocks: [
-                        "This site is published by a private individual, on a non-professional basis. As French law allows (LCEN, article 6, III, 2), the publisher's identity is not shown here: it is known to the host below.",
-                        `Contact: ${EMAIL}.`,
+                        "This site is published by a private individual, on a non-professional basis.",
+                        ...(host === undefined
+                            ? []
+                            : [
+                                  "As French law allows (LCEN, article 6, III, 2), the publisher's identity is not shown here: it is known to the host below.",
+                              ]),
+                        `Contact: ${email ?? ISSUES}.`,
                     ],
                 },
-                {
-                    heading: "Host",
-                    blocks: [
-                        [fill("hostName"), fill("hostAddress"), fill("hostPhone")],
-                    ],
-                },
+                ...(host === undefined
+                    ? []
+                    : [
+                          {
+                              heading: "Host",
+                              blocks: [
+                                  [host, details.hostAddress, details.hostPhone].filter(
+                                      (line): line is string => line !== undefined,
+                                  ),
+                              ],
+                          },
+                      ]),
                 {
                     heading: "Source code",
                     blocks: [
@@ -90,7 +101,7 @@ export function legalDocs(details: LegalDetails): Record<LegalSlug, LegalDoc> {
                 },
                 {
                     heading: "Data controller",
-                    blocks: [`The site's publisher, a private individual, reachable at ${EMAIL}.`],
+                    blocks: [`The site's publisher, a private individual, reachable by ${writeTo}.`],
                 },
                 {
                     heading: "What your browser keeps",
@@ -121,13 +132,15 @@ export function legalDocs(details: LegalDetails): Record<LegalSlug, LegalDoc> {
                 {
                     heading: "The host's logs",
                     blocks: [
-                        `The server that sends these pages keeps a technical log of requests (IP address, date, page requested, browser), for security and proper operation. It is kept ${fill("logRetention")}, then erased.`,
+                        `The server that sends these pages keeps a technical log of requests (IP address, date, page requested, browser), for security and proper operation.${
+                            details.logRetention === undefined ? "" : ` It is kept ${details.logRetention}, then erased.`
+                        }`,
                     ],
                 },
                 {
                     heading: "Your rights",
                     blocks: [
-                        `You can ask to access, correct or erase data about you, or object to its processing, by writing to ${EMAIL}. You can also complain to the CNIL, the French data protection authority (cnil.fr).`,
+                        `You can ask to access, correct or erase data about you, or object to its processing, by ${writeTo}. You can also complain to the CNIL, the French data protection authority (cnil.fr).`,
                     ],
                 },
             ],
@@ -230,7 +243,7 @@ export function legalDocs(details: LegalDetails): Record<LegalSlug, LegalDoc> {
                 {
                     heading: "Report a problem",
                     blocks: [
-                        `If some content or function is inaccessible to you, write to ${EMAIL} or open an issue at ${REPO}/issues. We will look for an alternative or a fix.`,
+                        `If some content or function is inaccessible to you, let us know by ${writeTo}. We will look for an alternative or a fix.`,
                     ],
                 },
             ],
@@ -238,10 +251,7 @@ export function legalDocs(details: LegalDetails): Record<LegalSlug, LegalDoc> {
         contact: {
             title: "Contact",
             sections: [
-                {
-                    heading: "Write",
-                    blocks: [EMAIL],
-                },
+                ...(email === undefined ? [] : [{heading: "Write", blocks: [email]}]),
                 {
                     heading: "A problem or a question about ARP",
                     blocks: [`Open an issue at ${REPO}/issues.`],
@@ -249,9 +259,4 @@ export function legalDocs(details: LegalDetails): Record<LegalSlug, LegalDoc> {
             ],
         },
     };
-}
-
-/** Every placeholder still in the legal pages, for these details. Empty means they can be published. */
-export function remainingPlaceholders(details: LegalDetails): string[] {
-    return JSON.stringify(legalDocs(details)).match(PLACEHOLDER) ?? [];
 }
