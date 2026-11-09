@@ -2,6 +2,9 @@
 
 **Status:** Accepted — 2026-10-27, on the user's instruction to close everything open.
 
+> **§3 superseded 2026-11-09 by ADR `0151`:** the split nav and its centred mark are replaced by
+> the coin (`NavCoin`). The rest of this ADR stands.
+
 > Implemented end to end since it was proposed: the tokens, the type scale, the tiered radii, the
 > `SourceMark`, the `Sigil`, the `RingLoader`, the `Hint` and the split nav are all live, and
 > `check:tokens` has guarded the palette since the day it landed. Two amendments are recorded where

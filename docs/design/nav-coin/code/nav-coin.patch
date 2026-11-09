@@ -1,0 +1,771 @@
+diff --git a/app/src/components/brand/NavCoin.tsx b/app/src/components/brand/NavCoin.tsx
+new file mode 100644
+index 0000000..fcbe3b1
+--- /dev/null
++++ b/app/src/components/brand/NavCoin.tsx
+@@ -0,0 +1,206 @@
++import {useContext, useEffect, useId, useRef, useState, type ReactNode} from "react";
++import {Link, useLocation} from "react-router-dom";
++
++import {isCurrentSection, useRetractOnScroll} from "./nav-coin";
++import {TrailContext, type Trail} from "./nav-trail";
++import {SourceMark} from "./SourceMark";
++
++/**
++ * The nav: **the coin**. The Source mark in a circle set into the bar's left corner, the tabs in
++ * one track at the centre of the bar, Get started and the chain at the right end, and a path line
++ * under it.
++ *
++ * Chosen by the user on 2026-11-09, after an animated nav (rejected: _« j'aime pas l'animation »_),
++ * three static proposals, and two mixes. It **replaces ADR `0057` §3's centred mark**: the centred
++ * mark split the bar into two unequal halves (_« ça fait déséquilibré »_), so the mark moved to the
++ * left corner and the tabs to the centre. Record that in an ADR.
++ *
++ * ## The circle and the bar are one outline
++ *
++ * The coin has the bar's own background and border. A **seam** (a block of the bar's background,
++ * inside the coin, under the mark) hides the coin's right arc between the bar's top and bottom
++ * edges, so the circle's outline runs straight into the bar's: one shape, a circle drawn out into a
++ * bar. The seam's box is measured against the two sizes below; change a size and re-measure it.
++ *
++ * ## It retracts into the circle when you scroll down
++ *
++ * The one motion the user asked for (_« elle se rétracte dans le cercle de gauche quand on scroll
++ * vers le bas »_): scrolling down past 140px folds the bar back into the coin and the seam fades,
++ * so the circle closes. Scrolling up, or pressing the coin, brings it back. Under
++ * `prefers-reduced-motion` it switches without easing. Driven by scroll, never by the pointer.
++ *
++ * ## Phone
++ *
++ * Below 860px of its own width (a container query), the track folds to the current tab, the
++ * actions fold into a Menu button, and the sheet under the bar lists every tab, Get started and the
++ * chain. The sheet opens without motion, closes on Escape and on a route change, and moves focus to
++ * the current tab when it opens.
++ *
++ * Styles are plain classes in `index.css` (`.arp-coin*`), because the unlayered `a`, `a:hover` and
++ * `button` rules there beat utilities.
++ */
++
++export type NavItem = {to: string; label: string};
++
++export function NavTrailProvider({children}: {children: ReactNode}) {
++    const [trail, setTrail] = useState<Trail | null>(null);
++    return <TrailContext.Provider value={{trail, setTrail}}>{children}</TrailContext.Provider>;
++}
++
++/* ---- the component ---------------------------------------------------------------------------- */
++
++function Tab({item, pathname, className}: {item: NavItem; pathname: string; className: string}) {
++    const current = isCurrentSection(item.to, pathname);
++    return (
++        <Link
++            to={item.to}
++            className={className}
++            {...(current ? {"aria-current": "page" as const} : {})}
++        >
++            {/* The dot renders from `aria-current`: what is seen and what is announced agree. */}
++            {current ? <span aria-hidden="true" className="arp-coin-dot" /> : null}
++            {item.label}
++        </Link>
++    );
++}
++
++export function NavCoin({
++    tabs,
++    start,
++    end,
++}: {
++    /** Agents, Tools, Activity, Search, Docs. */
++    tabs: readonly NavItem[];
++    /** Get started. */
++    start: NavItem;
++    /** The chain toggle, and anything else that is state rather than a destination. */
++    end: ReactNode;
++}) {
++    const {pathname} = useLocation();
++    const {trail} = useContext(TrailContext);
++    const [retracted, setRetracted] = useRetractOnScroll();
++    // Open for the path it was opened on: a route change closes it without an effect.
++    const [openOn, setOpenOn] = useState<string | null>(null);
++    const open = openOn === pathname;
++    const setOpen = (next: boolean) => setOpenOn(next ? pathname : null);
++    const sheetId = useId();
++    const menuRef = useRef<HTMLButtonElement>(null);
++    const sheetRef = useRef<HTMLDivElement>(null);
++    const current = tabs.find((tab) => isCurrentSection(tab.to, pathname));
++
++    useEffect(() => {
++        if (!open) return;
++        const sheet = sheetRef.current;
++        (
++            sheet?.querySelector<HTMLElement>('[aria-current="page"]') ??
++            sheet?.querySelector<HTMLElement>("a")
++        )?.focus();
++        const onKey = (event: KeyboardEvent) => {
++            if (event.key !== "Escape") return;
++            setOpenOn(null);
++            menuRef.current?.focus();
++        };
++        document.addEventListener("keydown", onKey);
++        return () => document.removeEventListener("keydown", onKey);
++    }, [open]);
++
++    return (
++        <header className={`arp-coin ${retracted ? "is-retracted" : ""}`}>
++            <div className="arp-coin-bar">
++                <Link
++                    to="/"
++                    className="arp-coin-coin"
++                    aria-label={retracted ? "Show the navigation" : "ARP, home"}
++                    onClick={(event) => {
++                        // Retracted, the coin is the way back to the bar, not a link home.
++                        if (!retracted) return;
++                        event.preventDefault();
++                        setRetracted(false);
++                    }}
++                >
++                    <span className="arp-coin-seam" aria-hidden="true" />
++                    {/* Two rings, scaled up by CSS: the look the user approved. */}
++                    <span className="arp-coin-mark">
++                        <SourceMark size={56} />
++                    </span>
++                </Link>
++
++                <nav className="arp-coin-track" aria-label="Main">
++                    {tabs.map((tab) => (
++                        <Tab key={tab.to} item={tab} pathname={pathname} className="arp-coin-tab" />
++                    ))}
++                </nav>
++
++                {/* Phone: the current tab, as the segment it is in the full track. */}
++                {current === undefined ? null : (
++                    <span className="arp-coin-track arp-coin-here">
++                        <Tab item={current} pathname={pathname} className="arp-coin-tab" />
++                    </span>
++                )}
++
++                <div className="arp-coin-end">
++                    <Link to={start.to} className="arp-coin-start">
++                        {start.label}
++                    </Link>
++                    <span className="arp-coin-state">{end}</span>
++                    <button
++                        ref={menuRef}
++                        type="button"
++                        className="arp-coin-menu"
++                        aria-expanded={open}
++                        aria-controls={sheetId}
++                        onClick={() => setOpen(!open)}
++                    >
++                        <span aria-hidden="true" className="arp-coin-bars">
++                            <i />
++                            <i />
++                        </span>
++                        {open ? "Close" : "Menu"}
++                    </button>
++                </div>
++            </div>
++
++            <div ref={sheetRef} id={sheetId} className="arp-coin-sheet" hidden={!open}>
++                {tabs.map((tab) => (
++                    <Tab key={tab.to} item={tab} pathname={pathname} className="arp-coin-row" />
++                ))}
++                <Link to={start.to} className="arp-coin-row">
++                    {start.label}
++                </Link>
++                <div className="arp-coin-sheet-end">{end}</div>
++            </div>
++
++            {trail === null || trail.steps.length === 0 ? null : (
++                <nav className="arp-coin-trail" aria-label="Where you are">
++                    {trail.steps.map((step, index) => {
++                        const last = index === trail.steps.length - 1;
++                        return (
++                            <span key={`${index}-${step.label}`} className="arp-coin-step">
++                                {index > 0 ? (
++                                    <span aria-hidden="true" className="arp-coin-sep">
++                                        /
++                                    </span>
++                                ) : null}
++                                {last ? (
++                                    <b aria-current="location">{step.label}</b>
++                                ) : step.to === undefined ? (
++                                    <span>{step.label}</span>
++                                ) : (
++                                    <Link to={step.to}>{step.label}</Link>
++                                )}
++                            </span>
++                        );
++                    })}
++                    {trail.kind === undefined ? null : (
++                        <span className="arp-coin-kind">
++                            <span aria-hidden="true" className="arp-coin-sep">
++                                ·
++                            </span>
++                            {trail.kind}
++                        </span>
++                    )}
++                </nav>
++            )}
++        </header>
++    );
++}
+diff --git a/app/src/components/brand/__tests__/nav-coin.test.tsx b/app/src/components/brand/__tests__/nav-coin.test.tsx
+new file mode 100644
+index 0000000..d210a0d
+--- /dev/null
++++ b/app/src/components/brand/__tests__/nav-coin.test.tsx
+@@ -0,0 +1,95 @@
++import {act, fireEvent, render, screen} from "@testing-library/react";
++import {MemoryRouter} from "react-router-dom";
++import {describe, expect, it} from "vitest";
++
++import {NavCoin, NavTrailProvider} from "../NavCoin";
++import {isCurrentSection} from "../nav-coin";
++import {useNavTrail} from "../nav-trail";
++
++const TABS = [
++    {to: "/agents", label: "Agents"},
++    {to: "/tools", label: "Tools"},
++    {to: "/activity", label: "Activity"},
++    {to: "/search", label: "Search"},
++    {to: "/docs", label: "Docs"},
++];
++
++function Page({trail}: {trail?: boolean}) {
++    useNavTrail(
++        trail
++            ? [{label: "Agents", to: "/agents"}, {label: "Base 8453"}, {label: "vault-auditor"}]
++            : [],
++        "agent",
++    );
++    return null;
++}
++
++function renderAt(path: string, {trail = false}: {trail?: boolean} = {}) {
++    return render(
++        <MemoryRouter initialEntries={[path]}>
++            <NavTrailProvider>
++                <NavCoin
++                    tabs={TABS}
++                    start={{to: "/start", label: "Get started"}}
++                    end={<button type="button">Testnet</button>}
++                />
++                <Page trail={trail} />
++            </NavTrailProvider>
++        </MemoryRouter>,
++    );
++}
++
++/**
++ * The coin nav. What a type checker cannot see: which tab is current (the old prefix rule lit the
++ * wrong one once), that the sheet answers the keyboard, and that the bar retracts on scroll down
++ * and comes back on scroll up.
++ */
++describe("NavCoin", () => {
++    it("marks the current tab, and somebody else's agent belongs to Agents", () => {
++        renderAt("/agent/8453/6649");
++        const main = screen.getByRole("navigation", {name: "Main"});
++        const current = main.querySelector('[aria-current="page"]');
++        expect(current?.textContent).toBe("Agents");
++        expect(isCurrentSection("/agents", "/agent/8453/6649")).toBe(true);
++    });
++
++    it("opens the sheet from Menu, moves focus into it, and closes on Escape", () => {
++        const {container} = renderAt("/tools");
++        const menu = screen.getByRole("button", {name: "Menu"});
++        const sheet = container.querySelector(".arp-coin-sheet")!;
++        expect(sheet.hasAttribute("hidden")).toBe(true);
++        fireEvent.click(menu);
++        expect(sheet.hasAttribute("hidden")).toBe(false);
++        expect(menu.getAttribute("aria-expanded")).toBe("true");
++        expect(document.activeElement?.textContent).toBe("Tools");
++        fireEvent.keyDown(document, {key: "Escape"});
++        expect(sheet.hasAttribute("hidden")).toBe(true);
++        expect(document.activeElement).toBe(menu);
++    });
++
++    it("draws the path line a page sets, and none when it sets nothing", () => {
++        renderAt("/agents", {trail: true});
++        const trail = screen.getByRole("navigation", {name: "Where you are"});
++        expect(trail.textContent).toContain("vault-auditor");
++        expect(trail.querySelector('[aria-current="location"]')?.textContent).toBe("vault-auditor");
++    });
++
++    it("retracts on scroll down and comes back on scroll up or on the coin", () => {
++        const {container} = renderAt("/tools");
++        const header = container.querySelector(".arp-coin")!;
++        const scrollTo = (y: number) =>
++            act(() => {
++                Object.defineProperty(window, "scrollY", {value: y, configurable: true});
++                window.dispatchEvent(new Event("scroll"));
++            });
++        scrollTo(400);
++        expect(header.classList.contains("is-retracted")).toBe(true);
++        scrollTo(300);
++        expect(header.classList.contains("is-retracted")).toBe(false);
++        scrollTo(600);
++        const coin = screen.getByRole("link", {name: "Show the navigation"});
++        fireEvent.click(coin);
++        expect(header.classList.contains("is-retracted")).toBe(false);
++        scrollTo(0);
++    });
++});
+diff --git a/app/src/components/brand/__tests__/sigil-geometry.test.ts b/app/src/components/brand/__tests__/sigil-geometry.test.ts
+index e3705a7..b3c7b41 100644
+--- a/app/src/components/brand/__tests__/sigil-geometry.test.ts
++++ b/app/src/components/brand/__tests__/sigil-geometry.test.ts
+@@ -104,9 +104,7 @@ describe("sigilDots", () => {
+     it("grows the dots below the large threshold, because the smallest tier vanishes at row size", () => {
+         const large = sigilDots("0xagent", MODULES, LARGE_FROM);
+         const small = sigilDots("0xagent", MODULES, LARGE_FROM - 1);
+-        expect(Math.min(...large.map((d) => d.r))).toBeLessThan(
+-            Math.min(...small.map((d) => d.r)),
+-        );
++        expect(Math.min(...large.map((d) => d.r))).toBeLessThan(Math.min(...small.map((d) => d.r)));
+         // Same cells, different radii — the placement must not move with the size.
+         expect(large.map((d) => [d.cx, d.cy])).toEqual(small.map((d) => [d.cx, d.cy]));
+     });
+diff --git a/app/src/components/brand/nav-coin.ts b/app/src/components/brand/nav-coin.ts
+new file mode 100644
+index 0000000..66c2d80
+--- /dev/null
++++ b/app/src/components/brand/nav-coin.ts
+@@ -0,0 +1,33 @@
++import {useEffect, useState} from "react";
++
++import {SECTION_PATHS} from "./NavSplit";
++
++/** Whether `to` is the section `pathname` belongs to. Same rule as the old nav. */
++export function isCurrentSection(to: string, pathname: string): boolean {
++    const section = SECTION_PATHS[to];
++    if (section !== undefined) return section(pathname);
++    if (to === "/") return pathname === "/";
++    return pathname === to || pathname.startsWith(`${to}/`);
++}
++
++export const RETRACT_AFTER_PX = 140;
++const SCROLL_NOISE_PX = 6;
++
++/** Down past the threshold retracts; any move up expands. Small jitters are ignored. */
++export function useRetractOnScroll(): [boolean, (retracted: boolean) => void] {
++    const [retracted, setRetracted] = useState(false);
++    useEffect(() => {
++        let last = window.scrollY;
++        const onScroll = () => {
++            const y = window.scrollY;
++            const delta = y - last;
++            if (Math.abs(delta) < SCROLL_NOISE_PX) return;
++            if (delta > 0 && y > RETRACT_AFTER_PX) setRetracted(true);
++            else if (delta < 0) setRetracted(false);
++            last = y;
++        };
++        window.addEventListener("scroll", onScroll, {passive: true});
++        return () => window.removeEventListener("scroll", onScroll);
++    }, []);
++    return [retracted, setRetracted];
++}
+diff --git a/app/src/components/brand/nav-trail.ts b/app/src/components/brand/nav-trail.ts
+new file mode 100644
+index 0000000..444be2a
+--- /dev/null
++++ b/app/src/components/brand/nav-trail.ts
+@@ -0,0 +1,31 @@
++import {createContext, useContext, useEffect} from "react";
++
++/**
++ * The path line under the nav (`NavCoin`): each page says where it is, the nav draws it.
++ */
++export type TrailStep = {label: string; to?: string};
++
++export type Trail = {steps: readonly TrailStep[]; kind?: string};
++export const TrailContext = createContext<{
++    trail: Trail | null;
++    setTrail: (trail: Trail | null) => void;
++}>({
++    trail: null,
++    setTrail: () => undefined,
++});
++
++/**
++ * Called by a page to fill the path line, for example
++ * `useNavTrail([{label: "Agents", to: "/agents"}, {label: "Base 8453"}, {label: name}], "agent")`.
++ * A page that does not call it shows no path line.
++ */
++export function useNavTrail(steps: readonly TrailStep[], kind?: string): void {
++    const {setTrail} = useContext(TrailContext);
++    const key = JSON.stringify([steps, kind]);
++    useEffect(() => {
++        setTrail({steps, ...(kind === undefined ? {} : {kind})});
++        return () => setTrail(null);
++        // `key` stands for `steps` and `kind`, whose identity changes on every render.
++        // eslint-disable-next-line react-hooks/exhaustive-deps
++    }, [key, setTrail]);
++}
+diff --git a/app/src/index.css b/app/src/index.css
+index 67bebd5..7eec360 100644
+--- a/app/src/index.css
++++ b/app/src/index.css
+@@ -608,6 +608,362 @@ summary:focus-visible,
+     }
+ }
+ 
++/* ---- the nav: the coin (NavCoin.tsx) ------------------------------------- */
++
++/* Plain classes on purpose: the unlayered `a`, `a:hover` and `button` rules
++   above beat utilities. Every class is scoped under `.arp-coin`, which also
++   gives it the specificity to win over `a:hover`. Sizes are the reference's;
++   the seam box is measured against them, so change both together. */
++.arp-coin {
++    container-type: inline-size;
++    position: sticky;
++    top: 0;
++    z-index: 20;
++    background: var(--color-ground);
++    padding: 20px 22px 14px 26px;
++}
++
++.arp-coin .arp-coin-bar {
++    position: relative;
++    display: grid;
++    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
++    align-items: center;
++    gap: 16px;
++    width: 100%;
++    max-width: 1320px;
++    height: 58px;
++    margin: 0 auto;
++    padding: 0 10px 0 64px;
++    border: 1px solid var(--color-rule-strong);
++    border-radius: 14px;
++    background: var(--color-bg);
++    transition: width 380ms var(--ease-out-quart);
++}
++
++/* The circle: the bar's own background and border, a little taller than it. */
++.arp-coin .arp-coin-coin {
++    position: absolute;
++    top: 50%;
++    left: -14px;
++    z-index: 2;
++    display: grid;
++    place-items: center;
++    width: 80px;
++    height: 80px;
++    margin-top: -40px;
++    border: 1px solid var(--color-rule-strong);
++    border-radius: 999px;
++    background: var(--color-bg);
++}
++
++/* Hides the circle's right arc between the bar's top and bottom edges, so the
++   two outlines read as one. Measured: the bar's edges cross the circle at
++   y = 11 and y = 69 of its 80px box. */
++.arp-coin .arp-coin-seam {
++    position: absolute;
++    top: 11px;
++    left: 39px;
++    width: 44px;
++    height: 56px;
++    background: var(--color-bg);
++    transition: opacity 200ms 180ms;
++}
++
++.arp-coin .arp-coin-mark {
++    position: relative;
++    display: grid;
++    place-items: center;
++}
++
++.arp-coin .arp-coin-mark svg {
++    width: 76px;
++    height: 76px;
++}
++
++.arp-coin .arp-coin-track {
++    grid-column: 2;
++    display: flex;
++    align-items: center;
++    gap: 10px;
++    padding: 4px 6px;
++    border: 1px solid var(--color-rule);
++    border-radius: 10px;
++    background: var(--color-ground);
++}
++
++.arp-coin .arp-coin-tab {
++    display: inline-flex;
++    align-items: center;
++    gap: 8px;
++    height: 32px;
++    padding: 0 18px;
++    border-radius: 7px;
++    font-size: 13.5px;
++    font-weight: 500;
++    white-space: nowrap;
++    color: var(--color-steel);
++}
++
++.arp-coin .arp-coin-tab:hover {
++    color: var(--color-fg);
++}
++
++.arp-coin .arp-coin-tab[aria-current="page"] {
++    background: var(--color-raised-2);
++    color: var(--color-fg);
++}
++
++.arp-coin .arp-coin-dot {
++    flex: none;
++    width: 6px;
++    height: 6px;
++    border-radius: 999px;
++    background: var(--color-accent);
++}
++
++.arp-coin .arp-coin-here {
++    display: none;
++}
++
++.arp-coin .arp-coin-end {
++    grid-column: 3;
++    justify-self: end;
++    display: flex;
++    align-items: center;
++    gap: 8px;
++}
++
++.arp-coin .arp-coin-start {
++    display: inline-flex;
++    align-items: center;
++    height: 40px;
++    padding: 0 14px;
++    border: 1px solid var(--color-rule);
++    border-radius: 9px;
++    font-size: 13.5px;
++    font-weight: 500;
++    white-space: nowrap;
++    color: var(--color-silver);
++}
++
++.arp-coin .arp-coin-start:hover {
++    border-color: var(--color-rule-strong);
++    color: var(--color-fg);
++}
++
++.arp-coin .arp-coin-state {
++    display: flex;
++    align-items: center;
++    gap: 8px;
++}
++
++.arp-coin .arp-coin-menu {
++    display: none;
++    align-items: center;
++    gap: 8px;
++    height: 34px;
++    padding: 0 12px;
++    border-color: var(--color-rule-strong);
++    border-radius: var(--radius-control);
++    font-family: var(--font-mono);
++    font-size: 11px;
++    letter-spacing: 0.1em;
++    text-transform: uppercase;
++}
++
++.arp-coin .arp-coin-bars {
++    display: inline-grid;
++    gap: 3px;
++}
++
++.arp-coin .arp-coin-bars i {
++    display: block;
++    width: 12px;
++    height: 1px;
++    background: var(--color-fg);
++}
++
++.arp-coin .arp-coin-sheet {
++    max-width: 1320px;
++    margin: 0 auto;
++    padding: 18px 16px 20px;
++}
++
++.arp-coin .arp-coin-sheet[hidden] {
++    display: none;
++}
++
++.arp-coin .arp-coin-row {
++    display: flex;
++    align-items: center;
++    gap: 10px;
++    min-height: 48px;
++    border-bottom: 1px solid var(--color-rule);
++    font-size: 17px;
++    font-weight: 600;
++    color: var(--color-silver);
++}
++
++.arp-coin .arp-coin-row[aria-current="page"] {
++    color: var(--color-fg);
++}
++
++.arp-coin .arp-coin-sheet-end {
++    display: flex;
++    gap: 8px;
++    margin-top: 16px;
++}
++
++/* The path line, centred under the track. */
++.arp-coin .arp-coin-trail {
++    display: flex;
++    flex-wrap: wrap;
++    align-items: center;
++    justify-content: center;
++    gap: 10px;
++    max-width: 1320px;
++    margin: 0 auto;
++    padding-top: 18px;
++    font-family: var(--font-mono);
++    font-size: 11.5px;
++    color: var(--color-steel);
++}
++
++.arp-coin .arp-coin-step {
++    display: inline-flex;
++    gap: 10px;
++}
++
++.arp-coin .arp-coin-trail a {
++    color: var(--color-silver);
++}
++
++.arp-coin .arp-coin-trail a:hover {
++    color: var(--color-fg);
++}
++
++.arp-coin .arp-coin-trail b {
++    font-weight: 500;
++    color: var(--color-fg);
++}
++
++.arp-coin .arp-coin-sep,
++.arp-coin .arp-coin-kind {
++    color: var(--color-grey);
++}
++
++.arp-coin .arp-coin-kind {
++    display: inline-flex;
++    gap: 10px;
++}
++
++/* Retracted: the bar folds back into the circle and the circle closes. */
++.arp-coin.is-retracted .arp-coin-bar {
++    width: 52px;
++    margin-left: 0;
++    padding: 0;
++}
++
++.arp-coin.is-retracted .arp-coin-bar > :not(.arp-coin-coin),
++.arp-coin.is-retracted .arp-coin-sheet {
++    display: none;
++}
++
++/* Hidden, not removed: the header keeps its height, so retracting never moves
++   the page. A height change shifts the scroll position, which reads as a
++   scroll up and expands the bar again, in a loop. */
++.arp-coin.is-retracted .arp-coin-trail {
++    visibility: hidden;
++}
++
++.arp-coin.is-retracted .arp-coin-seam {
++    opacity: 0;
++}
++
++/* Phone, measured on the component's own width. */
++/* The header's own padding cannot follow its own container query: a container
++   query matches ancestors, never the container itself. The viewport stands in. */
++@media (max-width: 859px) {
++    .arp-coin {
++        padding: 16px 12px 12px 18px;
++    }
++}
++
++@container (max-width: 859px) {
++    .arp-coin .arp-coin-bar {
++        grid-template-columns: auto minmax(0, 1fr);
++        gap: 10px;
++        height: 52px;
++        padding: 0 8px 0 54px;
++    }
++
++    .arp-coin .arp-coin-coin {
++        left: -10px;
++        width: 64px;
++        height: 64px;
++        margin-top: -32px;
++    }
++
++    .arp-coin .arp-coin-seam {
++        top: 6px;
++        left: 31px;
++        width: 33px;
++        height: 50px;
++    }
++
++    .arp-coin .arp-coin-mark svg {
++        width: 61px;
++        height: 61px;
++    }
++
++    .arp-coin .arp-coin-track {
++        display: none;
++    }
++
++    .arp-coin .arp-coin-here {
++        display: flex;
++        grid-column: 1;
++        justify-self: start;
++    }
++
++    .arp-coin .arp-coin-here .arp-coin-tab {
++        height: 30px;
++        padding: 0 10px;
++    }
++
++    .arp-coin .arp-coin-end {
++        grid-column: 2;
++    }
++
++    .arp-coin .arp-coin-end > .arp-coin-start,
++    .arp-coin .arp-coin-end > .arp-coin-state {
++        display: none;
++    }
++
++    .arp-coin .arp-coin-menu {
++        display: inline-flex;
++    }
++
++    .arp-coin .arp-coin-trail {
++        justify-content: flex-start;
++        flex-wrap: nowrap;
++        overflow: hidden;
++        white-space: nowrap;
++        padding-top: 18px;
++    }
++
++    .arp-coin.is-retracted .arp-coin-bar {
++        width: 40px;
++    }
++}
++
++@media (prefers-reduced-motion: reduce) {
++    .arp-coin .arp-coin-bar,
++    .arp-coin .arp-coin-seam {
++        transition: none;
++    }
++}
++
+ /* ---- one manifesto line lighting up, scrubbed by scroll ------------------ */
+ 
+ .arp-lit {

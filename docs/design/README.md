@@ -13,6 +13,7 @@ browser; everything marked `sample` in one is invented and must never ship.
 | `cli-surfaces/`  | `arp status`, `arp init`, the session line, the badge spec                          | not built — `docs/tasks/34`                                          |
 | `cli-v0/`        | `packages/cli` week 1: hook, SQLite, `arp status`, as a patch and as plain files     | not applied — `docs/tasks/34`, and task 33 names the same package    |
 | `readme-badges/` | the README badge SVG generator, tested                                              | deferred to the production release                                   |
+| `nav-coin/`      | the nav: the mark in a coin at the bar's left, tabs centred, path line. `NAV-COIN.md` | built, task 80, ADR `0151` (replaces ADR `0057` §3's centred mark)  |
 
 `claim-field/*/` and `cli-v0/` were built against `feat/agent-panel-tabs` at `b5682d9`, before
 `app/` became `apps/web/`: their patches do not apply to the current tree as they are.

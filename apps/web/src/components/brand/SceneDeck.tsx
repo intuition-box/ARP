@@ -77,7 +77,7 @@ const STEP = {dive: 2400, seed: 2900, hash: 1700} as const;
  */
 const SETTLE = 300;
 
-/** `NavSplit`'s height. It is `sticky top-0 z-20`, so the stage reserves this band and the
+/** The nav's height (`NavCoin`). It is `sticky top-0 z-20`, so the stage reserves this band and the
  *  deck's negative margin puts band 0 at the top of the page. */
 const NAV = NAV_HEIGHT;
 

@@ -1,6 +1,7 @@
 import {Link} from "react-router-dom";
 
 import {BackLink} from "../components/brand/BackLink";
+import {useNavTrail} from "../components/brand/nav-trail";
 import type {Hex} from "viem";
 
 import {ToolWallets} from "../components/atom/ToolWallets";
@@ -48,6 +49,7 @@ export function RepoPage({
     const name = parsed?.kind === "repo" ? parsed.repo : view.title;
     const repo = owner === null ? view.title : `${owner}/${name}`;
     const host = parsed?.kind === "repo" ? parsed.host : null;
+    useNavTrail([{label: "Tools", to: "/tools"}, {label: repo}], "repo");
     // Its skills are the claims pointing at it by `source`; every other claim goes to Relations.
     const sourceGroup = view.groups.find((group) => group.label === "source") ?? null;
     const others = view.groups.filter((group) => group !== sourceGroup);

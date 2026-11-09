@@ -5,16 +5,17 @@ import {useChainChoice} from "../lib/chain-choice";
 
 import {ActivityLog} from "./brand/ActivityLog";
 import {ChainToggle} from "./brand/ChainToggle";
-import {NavAction, NavLink, NavSplit} from "./brand/NavSplit";
+import {NavCoin, NavTrailProvider} from "./brand/NavCoin";
 import {Watermark} from "./brand/Watermark";
 import {useOnboarding} from "./onboarding/onboarding-context";
 import {SiteFooterLinks} from "./site/SiteFooter";
 import {WalletConnect} from "./WalletConnect";
 
 /**
- * Layout shell. The header is the split nav from ADR `0057` §3 and both design handoffs: links
- * inward on both sides, the Source mark centred on the page, one hairline below and no decoration
- * under it. The footer ends on the wordmark at `--text-giant`, cropped by the page edge.
+ * Layout shell. The header is the coin (`NavCoin`, ADR `0151`): the Source mark in a circle at the
+ * bar's left, the tabs centred, Get started, the chain and the wallet at the end, and the path line
+ * a deep page sets under it. It replaced ADR `0057` §3's centred mark. The footer ends on the
+ * wordmark at `--text-giant`, cropped by the page edge.
  *
  * Max content width is **1320px**, which is the reference's `.wrap`, not the 1080 this shell used.
  * The listing pages are eight-column tables and 1080 squeezed them; the user's complaint that the
@@ -30,6 +31,16 @@ import {WalletConnect} from "./WalletConnect";
  * fact about where the data came from rather than a warning about it.
  */
 
+const NAV_TABS = [
+    {to: "/agents", label: "Agents"},
+    {to: "/tools", label: "Tools"},
+    // The agent's calls, declarations and stakes, and every transaction this browser sent.
+    {to: "/activity", label: "Activity"},
+    // Both indexes from one field; `/` opens it from anywhere (task 48).
+    {to: "/search", label: "Search"},
+    {to: "/docs", label: "Docs"},
+] as const;
+
 export function Layout({children}: {children: ReactNode}) {
     const chain = useChainChoice();
     const onboarding = useOnboarding();
@@ -41,86 +52,50 @@ export function Layout({children}: {children: ReactNode}) {
            page or a loading one it rode up the screen and then jumped back down when the content
            arrived (user, 2026-10-27). */
         /* `pb-9` is the collapsed activity bar's height, so the fixed bar never sits on the footer. */
-        <div className="flex min-h-screen flex-col pb-9">
-            {/*
-             * Agents · Tools · Activity on the left, Get started on the right (user, 2026-10-20,
-             * one row since 2026-10-27). The handoff's left pair is "AGENTS, MODULES"; there is
-             * no module surface — `ModuleRegistry` and its three pages went with ADR `0051`/`0055`
-             * — so Tools takes the slot, which is the live equivalent. Discover replaced Hire
-             * (ADR `0060`).
-             *
-             * Get started opens the onboarding panel, the one door for putting an agent or a tool
-             * into ARP; it replaced Register, which was a second door to the same writes (task 62,
-             * ADR `0125`).
-             *
-             * `/` is the tool catalogue, so "Tools" and the mark lead to the same place.
-             *
-             * `/profile` ("Invest") is gone: its positions are on `/activity`, and the account page
-             * is reached from the wallet menu, not the nav (user, 2026-10-30, `docs/tasks/35` §0).
-             *
-             * A "How it works" tab is part of the same structure and is not built: its content is a
-             * decision, not a layout.
-             */}
-            {/* Split around the centred mark: what you read on the left, what you *do* on the
-                right. */}
-            {/* Balanced around the centred mark, and the balance is the whole point: the right
-                column had five text items plus a two-button chain toggle plus an address, against
-                two on the left. It overflowed, wrapped the address onto a second line and shoved
-                the mark off centre (user, with a screenshot, 2026-10-27).
+        <NavTrailProvider>
+            <div className="flex min-h-screen flex-col pb-9">
+                {/* Agents, Tools, Activity, Search, Docs: `/` is the landing and the coin leads to
+                    it. Get started opens the onboarding panel, the one door for putting an agent
+                    or a tool into ARP (task 62, ADR `0125`), and is lit on the `/start/<profile>`
+                    pages it leads to. The chain and the wallet are state rather than
+                    destinations, so they sit at the end. `/profile` is gone; the account page is
+                    reached from the wallet menu (`docs/tasks/35` §0). */}
+                <NavCoin
+                    tabs={NAV_TABS}
+                    start={{label: "Get started", section: "/start", onClick: onboarding.open}}
+                    end={
+                        <>
+                            <ChainToggle />
+                            <WalletConnect />
+                        </>
+                    }
+                />
 
-                **What you read** goes left: the two indexes and `/activity`, which now carries
-                your own positions too. **What you do** goes right,
-                with the chain and the wallet after it: both are state rather than destinations, so
-                they sit at the end rather than among the links. The toggle is one button now, not
-                two (`ChainToggle`). */}
-            <NavSplit
-                left={
-                    <>
-                        <NavLink to="/agents">Agents</NavLink>
-                        <NavLink to="/tools">Tools</NavLink>
-                        {/* What happened: the agent's calls, declarations and stakes, and every
-                            transaction this browser sent (user, 2026-10-30). */}
-                        <NavLink to="/activity">Activity</NavLink>
-                        {/* Both indexes from one field; `/` opens it from anywhere (task 48). */}
-                        <NavLink to="/search">Search</NavLink>
-                        <NavLink to="/docs">Docs</NavLink>
-                    </>
-                }
-                right={
-                    <>
-                        {/* The landing's Get started, from every page: the same panel, so one
-                            door (task 62). Lit on the `/start/<profile>` pages it leads to. */}
-                        <NavAction section="/start" onClick={onboarding.open}>
-                            Get started
-                        </NavAction>
-                        <ChainToggle />
-                        <WalletConnect />
-                    </>
-                }
-            />
+                <main className="flex-1 mx-auto w-full max-w-[1320px] px-6 py-10">{children}</main>
 
-            <main className="flex-1 mx-auto w-full max-w-[1320px] px-6 py-10">{children}</main>
-
-            {/* `overflow-hidden` is what makes the wordmark's crop a crop rather than a scrollbar. */}
-            <footer className="mt-24 overflow-hidden border-t border-[color:var(--color-rule)] px-6 pt-7">
-                <div className="mx-auto w-full max-w-[1320px] flex flex-wrap items-center justify-between gap-3 text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
-                    <span>
-                        Agent Reputation Protocol —{" "}
-                        <span className="text-[color:var(--color-steel)]">{chain.chain.name}</span>
-                    </span>
-                    {/* `ModuleRegistry` used to be the first link here. The contract is retired
-                        (ADR `0051`, `0055`) and the three pages that used it are deleted, so the
-                        link advertised a surface the product no longer has. */}
-                    <SiteFooterLinks />
-                </div>
-                {/* Full bleed, so "across the whole width" means the viewport and not the
-                    1320px shell (user, 2026-10-27). The footer carries `px-6`, cancelled here by
-                    the negative inset — the mark touches both edges. */}
-                <div className="-mx-6 mt-6">
-                    <Watermark />
-                </div>
-            </footer>
-            <ActivityLog />
-        </div>
+                {/* `overflow-hidden` is what makes the wordmark's crop a crop rather than a scrollbar. */}
+                <footer className="mt-24 overflow-hidden border-t border-[color:var(--color-rule)] px-6 pt-7">
+                    <div className="mx-auto w-full max-w-[1320px] flex flex-wrap items-center justify-between gap-3 text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
+                        <span>
+                            Agent Reputation Protocol —{" "}
+                            <span className="text-[color:var(--color-steel)]">
+                                {chain.chain.name}
+                            </span>
+                        </span>
+                        {/* `ModuleRegistry` used to be the first link here. The contract is retired
+                            (ADR `0051`, `0055`) and the three pages that used it are deleted, so
+                            the link advertised a surface the product no longer has. */}
+                        <SiteFooterLinks />
+                    </div>
+                    {/* Full bleed, so "across the whole width" means the viewport and not the
+                        1320px shell (user, 2026-10-27). The footer carries `px-6`, cancelled
+                        here by the negative inset — the mark touches both edges. */}
+                    <div className="-mx-6 mt-6">
+                        <Watermark />
+                    </div>
+                </footer>
+                <ActivityLog />
+            </div>
+        </NavTrailProvider>
     );
 }

@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-147 decisions. Newest last. `choices/README.md` says when to write one.
+148 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -184,3 +184,4 @@ Read these before relying on them.
 | [0147](0147-the-evidence-ladder-is-ordered-by-who-produced-the-signal.md) | 2026-11-09 | Accepted | The evidence ladder is ordered by who produced the signal |
 | [0148](0148-the-hire-loop-reuses-and-checks-the-payment.md) | 2026-11-09 | Accepted (design; nothing built) | The hire loop reuses x402, ERC-8183 and ERC-8004, and checks the payment at read time |
 | [0149](0149-the-sponsor-is-hosted-with-its-own-key.md) | 2026-11-09 | Accepted | The sponsor is hosted, beside the site, with a key of its own |
+| [0151](0151-the-nav-is-a-coin-the-mark-leaves-the-centre.md) | 2026-11-09 | Accepted | The nav is a coin: the mark leaves the centre |

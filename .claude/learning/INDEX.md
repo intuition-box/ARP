@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-76 entries, one per completed task. Written by `task-verifier` on a pass.
+77 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -82,3 +82,4 @@
 | [67](67-the-ladder.md) | `docs/tasks/76-the-ladder.md` | PASS (round 2; round 1 FAIL on six claims items) | The evidence ladder, ordered by who produced the signal |
 | [68](68-the-hire-loop.md) | `docs/tasks/77-the-hire-loop.md` | PASS (round 2; round 1 FAIL on two scope items and four claims items) | The hire loop, as a concept |
 | [69](69-the-sponsor-hosted.md) | `docs/tasks/78-the-sponsor-hosted.md` | PASS (round 2) | The sponsor, hosted beside the site |
+| [71](71-the-nav-coin.md) | `docs/tasks/80-the-nav-coin.md` | PASS (round 3; round 1 FAIL on unported tests, a stale README status, a duplicate CSS rule; round 2 FAIL on a numbering clash) | The nav: the coin |

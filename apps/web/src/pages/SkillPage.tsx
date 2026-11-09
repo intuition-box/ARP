@@ -1,6 +1,7 @@
 import {Link} from "react-router-dom";
 
 import {BackLink} from "../components/brand/BackLink";
+import {useNavTrail} from "../components/brand/nav-trail";
 import type {Hex} from "viem";
 
 import {ClaimField} from "../components/atom/ClaimField";
@@ -58,6 +59,22 @@ export function SkillPage({
     const skill = parsed?.kind === "skill" ? parsed.skill : view.title;
     const source = view.claims.find((claim) => claim.predicate === "source") ?? null;
     const md = useSkillMd(view.label);
+    // Tools, then the repository the skill ships in, which has its own page. The domain is not a
+    // step: it is read from the attestor's claims further down, and a skill may have none.
+    useNavTrail(
+        [
+            {label: "Tools", to: "/tools"},
+            ...(repo === null
+                ? []
+                : [
+                      source === null
+                          ? {label: repo}
+                          : {label: repo, to: `/atom/${source.objectAtomId}`},
+                  ]),
+            {label: skill},
+        ],
+        "skill",
+    );
 
     return (
         <article className="mt-8">

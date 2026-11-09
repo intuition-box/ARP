@@ -5,6 +5,8 @@ import {useAccount} from "wagmi";
 import {linkClass} from "../lib/control-class";
 import {Block, Panel} from "../components/atom/AtomPageParts";
 import {BackLink} from "../components/brand/BackLink";
+import {useNavTrail} from "../components/brand/nav-trail";
+import {chainNameOf} from "../lib/chain-name";
 import {AtomMarket} from "../components/market/AtomMarket";
 import {AgentIdentityPanel, AgentSigil} from "../components/agent/AgentIdentityPanel";
 import {RatingRow} from "../components/agent/RatingRow";
@@ -139,6 +141,21 @@ function AgentTrustPanelBody() {
     const sessionQuery = useStakeSession();
     const profileQuery = useAgentProfile(ref, sessionQuery.data?.curveId);
     const view = profileQuery.data;
+    useNavTrail(
+        ref === null
+            ? []
+            : [
+                  {label: "Agents", to: "/agents"},
+                  {label: `${chainNameOf(ref.chainId)} ${ref.chainId}`},
+                  {
+                      label:
+                          view?.found === true
+                              ? (view.name ?? `Token ${ref.tokenId}`)
+                              : `Token ${ref.tokenId}`,
+                  },
+              ],
+        "agent",
+    );
     // Checked, not asserted: `atomTermId` comes off a source handle typed `string`, and a malformed
     // term id would become the address a deposit is sent to.
     const backingAtomId = asStakeTermId(view?.atomTermId ?? null);

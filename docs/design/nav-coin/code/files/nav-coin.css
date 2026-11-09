@@ -1,0 +1,356 @@
+/* ---- the nav: the coin (NavCoin.tsx) ------------------------------------- */
+
+/* Plain classes on purpose: the unlayered `a`, `a:hover` and `button` rules
+   above beat utilities. Every class is scoped under `.arp-coin`, which also
+   gives it the specificity to win over `a:hover`. Sizes are the reference's;
+   the seam box is measured against them, so change both together. */
+.arp-coin {
+    container-type: inline-size;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--color-ground);
+    padding: 20px 22px 14px 26px;
+}
+
+.arp-coin .arp-coin-bar {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 1320px;
+    height: 58px;
+    margin: 0 auto;
+    padding: 0 10px 0 64px;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: 14px;
+    background: var(--color-bg);
+    transition: width 380ms var(--ease-out-quart);
+}
+
+/* The circle: the bar's own background and border, a little taller than it. */
+.arp-coin .arp-coin-coin {
+    position: absolute;
+    top: 50%;
+    left: -14px;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 80px;
+    height: 80px;
+    margin-top: -40px;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: 999px;
+    background: var(--color-bg);
+}
+
+/* Hides the circle's right arc between the bar's top and bottom edges, so the
+   two outlines read as one. Measured: the bar's edges cross the circle at
+   y = 11 and y = 69 of its 80px box. */
+.arp-coin .arp-coin-seam {
+    position: absolute;
+    top: 11px;
+    left: 39px;
+    width: 44px;
+    height: 56px;
+    background: var(--color-bg);
+    transition: opacity 200ms 180ms;
+}
+
+.arp-coin .arp-coin-mark {
+    position: relative;
+    display: grid;
+    place-items: center;
+}
+
+.arp-coin .arp-coin-mark svg {
+    width: 76px;
+    height: 76px;
+}
+
+.arp-coin .arp-coin-track {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 6px;
+    border: 1px solid var(--color-rule);
+    border-radius: 10px;
+    background: var(--color-ground);
+}
+
+.arp-coin .arp-coin-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 18px;
+    border-radius: 7px;
+    font-size: 13.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--color-steel);
+}
+
+.arp-coin .arp-coin-tab:hover {
+    color: var(--color-fg);
+}
+
+.arp-coin .arp-coin-tab[aria-current="page"] {
+    background: var(--color-raised-2);
+    color: var(--color-fg);
+}
+
+.arp-coin .arp-coin-dot {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--color-accent);
+}
+
+.arp-coin .arp-coin-here {
+    display: none;
+}
+
+.arp-coin .arp-coin-end {
+    grid-column: 3;
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.arp-coin .arp-coin-start {
+    display: inline-flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--color-rule);
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--color-silver);
+}
+
+.arp-coin .arp-coin-start:hover {
+    border-color: var(--color-rule-strong);
+    color: var(--color-fg);
+}
+
+.arp-coin .arp-coin-state {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.arp-coin .arp-coin-menu {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 12px;
+    border-color: var(--color-rule-strong);
+    border-radius: var(--radius-control);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.arp-coin .arp-coin-bars {
+    display: inline-grid;
+    gap: 3px;
+}
+
+.arp-coin .arp-coin-bars i {
+    display: block;
+    width: 12px;
+    height: 1px;
+    background: var(--color-fg);
+}
+
+.arp-coin .arp-coin-sheet {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 18px 16px 20px;
+}
+
+.arp-coin .arp-coin-sheet[hidden] {
+    display: none;
+}
+
+.arp-coin .arp-coin-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    border-bottom: 1px solid var(--color-rule);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-silver);
+}
+
+.arp-coin .arp-coin-row[aria-current="page"] {
+    color: var(--color-fg);
+}
+
+.arp-coin .arp-coin-sheet-end {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+/* The path line, centred under the track. */
+.arp-coin .arp-coin-trail {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding-top: 18px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--color-steel);
+}
+
+.arp-coin .arp-coin-step {
+    display: inline-flex;
+    gap: 10px;
+}
+
+.arp-coin .arp-coin-trail a {
+    color: var(--color-silver);
+}
+
+.arp-coin .arp-coin-trail a:hover {
+    color: var(--color-fg);
+}
+
+.arp-coin .arp-coin-trail b {
+    font-weight: 500;
+    color: var(--color-fg);
+}
+
+.arp-coin .arp-coin-sep,
+.arp-coin .arp-coin-kind {
+    color: var(--color-grey);
+}
+
+.arp-coin .arp-coin-kind {
+    display: inline-flex;
+    gap: 10px;
+}
+
+/* Retracted: the bar folds back into the circle and the circle closes. */
+.arp-coin.is-retracted .arp-coin-bar {
+    width: 52px;
+    margin-left: 0;
+    padding: 0;
+}
+
+.arp-coin.is-retracted .arp-coin-bar > :not(.arp-coin-coin),
+.arp-coin.is-retracted .arp-coin-sheet {
+    display: none;
+}
+
+/* Hidden, not removed: the header keeps its height, so retracting never moves
+   the page. A height change shifts the scroll position, which reads as a
+   scroll up and expands the bar again, in a loop. */
+.arp-coin.is-retracted .arp-coin-trail {
+    visibility: hidden;
+}
+
+.arp-coin.is-retracted .arp-coin-seam {
+    opacity: 0;
+}
+
+/* Phone, measured on the component's own width. */
+/* The header's own padding cannot follow its own container query: a container
+   query matches ancestors, never the container itself. The viewport stands in. */
+@media (max-width: 859px) {
+    .arp-coin {
+        padding: 16px 12px 12px 18px;
+    }
+}
+
+@container (max-width: 859px) {
+    .arp-coin .arp-coin-bar {
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 10px;
+        height: 52px;
+        padding: 0 8px 0 54px;
+    }
+
+    .arp-coin .arp-coin-coin {
+        left: -10px;
+        width: 64px;
+        height: 64px;
+        margin-top: -32px;
+    }
+
+    .arp-coin .arp-coin-seam {
+        top: 6px;
+        left: 31px;
+        width: 33px;
+        height: 50px;
+    }
+
+    .arp-coin .arp-coin-mark svg {
+        width: 61px;
+        height: 61px;
+    }
+
+    .arp-coin .arp-coin-track {
+        display: none;
+    }
+
+    .arp-coin .arp-coin-here {
+        display: flex;
+        grid-column: 1;
+        justify-self: start;
+    }
+
+    .arp-coin .arp-coin-here .arp-coin-tab {
+        height: 30px;
+        padding: 0 10px;
+    }
+
+    .arp-coin .arp-coin-end {
+        grid-column: 2;
+    }
+
+    .arp-coin .arp-coin-end > .arp-coin-start,
+    .arp-coin .arp-coin-end > .arp-coin-state {
+        display: none;
+    }
+
+    .arp-coin .arp-coin-menu {
+        display: inline-flex;
+    }
+
+    .arp-coin .arp-coin-trail {
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        overflow: hidden;
+        white-space: nowrap;
+        padding-top: 18px;
+    }
+
+    .arp-coin.is-retracted .arp-coin-bar {
+        width: 40px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arp-coin .arp-coin-bar,
+    .arp-coin .arp-coin-seam {
+        transition: none;
+    }
+}
+

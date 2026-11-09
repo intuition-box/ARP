@@ -47,7 +47,7 @@ const MAX_DPR = 2;
 /** How far the dive zooms in. Exponential, so it starts slow without being eased. */
 const ZOOM_MAX = 70;
 
-/** The sticky nav's height (`NavSplit`). The field centres in what is left of the viewport. */
+/** The sticky nav's height (`NavCoin`). The field centres in what is left of the viewport. */
 const NAV = NAV_HEIGHT;
 
 /** Dot sizes in `source-field-geometry` are px at this rim, so every size scales from it. */
@@ -321,19 +321,18 @@ function drawSeeds(
         const oy = height * seed.oy;
         const start = height * seed.r0;
 
-        // The farthest **visible** corner. The nav is `sticky top-0 z-20` with an opaque
-        // `--color-ground` background and is `NAV_HEIGHT` tall, so it covers the veil's top band and a
-        // disc that reaches the real top corners has already covered more than the reader can see.
-        // Getting this wrong the other way left a dark sliver that snapped shut at the end instead
-        // of closing — and it was wrong here for a different reason until 2026-10-28, when the nav
-        // was static: the premise was false, so the cover fell 16–68px short of a top corner at
-        // the exact frame a scene swaps. **If the nav ever stops being sticky, this goes with it.**
+        // The farthest corner of the viewport, the real top included. Until 2026-11-09 this
+        // stopped at `NAV`, on the premise that an opaque sticky nav hid the band above it. The
+        // coin nav (ADR `0151`) retracts on scroll and its band goes transparent, so on the deck
+        // the top band is visible and the cover left it dark, with the top-left corner, at the
+        // frame a scene swaps. Reaching the real corners covers a band the opaque nav hides when
+        // it is expanded, which costs nothing.
         const far =
             Math.max(
                 ...(
                     [
-                        [0, NAV],
-                        [width, NAV],
+                        [0, 0],
+                        [width, 0],
                         [0, height],
                         [width, height],
                     ] as const

@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ARP Nav Coin</title>
+
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist+Mono:wght@400;500;600&display=swap">
+<!--
+  ARP · three static nav bars to choose from, for app/src/components/brand/NavSplit.tsx and Layout.tsx.
+  No animation: hover and focus change a colour or a fill, nothing moves. Same routes as Layout.tsx:
+  Agents, Tools, My profile (read) · Your agent, Add a tool (act) · chain · Connect.
+  The counts beside Agents and Tools are samples of a figure the app can read.
+-->
+<style>
+/* Layout: three numbered proposals, each shown at desktop width and inside a phone frame
+   (closed and open), all from one markup through container queries. */
+:root{
+  --ground:#0e0f10;--bg:#121314;--raised:#1b1d1f;--raised-2:#232629;--rule:#2e3134;--rule-strong:#43474b;
+  --grey:#6b7075;--steel:#8a9096;--silver:#a9aeb2;--fg:#e6e8e6;--accent:#ffb020;--accent-ink:#121314;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{background:var(--ground);color:var(--fg)}
+body{margin:0;font-family:var(--display);font-size:15px;line-height:1.5}
+:focus-visible{outline:2px solid var(--fg);outline-offset:3px;border-radius:4px}
+a{color:inherit;text-decoration:none}
+.label{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--steel)}
+.sample{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey);border:1px dashed var(--rule-strong);border-radius:6px;padding:1px 6px}
+.live{position:sticky;top:0;z-index:40;background:var(--ground);padding-bottom:14px;max-width:1240px;margin:0 auto}
+.page{max-width:1240px;margin:0 auto;padding-block:36px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--rule);margin-bottom:36px}
+h1{margin:0;font-size:clamp(36px,5.6vw,72px);font-weight:800;font-stretch:125%;letter-spacing:-.02em;line-height:.95}
+.lede{margin:14px 0 0;max-width:60ch;color:var(--silver)}
+section.prop{margin-top:80px}
+.ph{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.ph .n{font-family:var(--mono);font-size:12px;color:var(--grey)}
+.ph h2{margin:0;font-size:30px;font-weight:800;font-stretch:115%;letter-spacing:-.01em}
+.ph p{margin:0;flex-basis:100%;max-width:70ch;color:var(--steel);font-size:14px}
+.stage{border:1px solid var(--rule-strong);border-radius:14px;overflow:hidden;background:var(--ground)}
+.stage .below{height:120px;padding:28px 32px;color:var(--grey);font-family:var(--mono);font-size:12px}
+.phones{margin-top:18px;display:flex;gap:18px;flex-wrap:wrap}
+.phone{width:min(100%,360px);height:400px;border:1px solid var(--rule-strong);border-radius:26px;overflow:hidden;background:var(--ground);position:relative}
+.notes{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:0 28px}
+.notes div{padding:12px 0;border-top:1px solid var(--rule);font-size:13.5px;color:var(--steel)}
+.notes b{color:var(--fg);font-weight:600}
+
+/* shared atoms */
+.nb{container-type:inline-size}
+.mark{display:block;flex:none}
+.dot{display:inline-block;width:6px;height:6px;border-radius:999px;flex:none}
+.dot.on{background:var(--accent)}
+.dot.off{border:1px solid var(--steel)}
+.cta{height:34px;padding:0 14px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
+.menu-btn{display:none;height:34px;padding:0 12px;border-radius:8px;border:1px solid var(--rule-strong);background:none;color:var(--fg);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;align-items:center;gap:8px}
+.menu-btn .bars{display:inline-grid;gap:3px}
+.menu-btn .bars i{display:block;width:12px;height:1px;background:var(--fg)}
+.sheet{display:none}
+.mono{font-family:var(--mono)}
+
+/* ===== A · the index ===================================================== */
+.A .strip{display:flex;justify-content:space-between;gap:16px;padding:7px 28px;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey)}
+.A .strip b{color:var(--silver);font-weight:500}
+.A .strip .sep{margin:0 10px;color:var(--rule-strong)}
+.A .bar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:stretch;border-bottom:1px solid var(--rule-strong);min-height:72px}
+.A .brand{display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--rule)}
+.A .word{font-weight:800;font-stretch:125%;font-size:26px;letter-spacing:-.03em;line-height:1}
+.A .word small{display:block;font-family:var(--mono);font-weight:400;font-stretch:normal;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--steel);margin-top:5px}
+.A .links{display:flex;align-items:stretch}
+.A .links{min-width:0}
+.A .links a{display:flex;flex-direction:column;justify-content:center;gap:3px;padding:0 clamp(14px,1.8vw,24px);border-right:1px solid var(--rule);position:relative;white-space:nowrap}
+.A .links a .k{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey)}
+.A .links a .t{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600;color:var(--silver)}
+.A .links a .c{color:var(--silver);margin-left:6px}
+.A .links a:hover{background:#17191a}
+.A .links a:hover .t{color:var(--fg)}
+.A .links a[aria-current="page"]{background:var(--raised)}
+.A .links a[aria-current="page"] .t{color:var(--fg)}
+.A .links a[aria-current="page"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--fg)}
+.A .links .gap{width:0;border-right:1px solid var(--rule-strong)}
+.A .links{overflow:hidden}
+.A .end{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:0 20px 0 16px}
+.A .chain{display:inline-flex;border:1px solid var(--rule-strong);border-radius:8px;overflow:hidden;height:34px}
+.A .chain button{border:0;background:none;color:var(--steel);font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:0 8px;display:inline-flex;align-items:center;gap:7px;cursor:pointer}
+.A .chain button+button{border-left:1px solid var(--rule-strong)}
+.A .chain button[aria-pressed="true"]{background:var(--raised);color:var(--fg)}
+
+/* ===== B · the notch ===================================================== */
+.B .bar{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 132px minmax(0,1fr);align-items:center;height:84px;padding:0 28px}
+.B .bar::before,.B .bar::after{content:"";position:absolute;bottom:0;height:1px;background:var(--rule-strong)}
+.B .bar::before{left:0;right:calc(50% + 58px)}
+.B .bar::after{right:0;left:calc(50% + 58px)}
+.B .notch{position:relative;justify-self:center;align-self:stretch;width:132px;display:flex;align-items:center;justify-content:center}
+.B .notch svg.cup{position:absolute;left:0;bottom:-38px;width:132px;height:40px;overflow:visible}
+.B .notch .hubm{position:relative;top:30px;display:grid;place-items:center;width:76px;height:76px;border-radius:999px;background:var(--ground)}
+.B .half{display:flex;align-items:center;gap:6px}
+.B .half.l{justify-content:flex-end;padding-right:18px}
+.B .half.r{justify-content:flex-start;padding-left:18px}
+.B .cap{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--grey);padding:0 10px}
+.B .half.l .cap{order:9}
+.B .pill{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 13px;border-radius:999px;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--steel);white-space:nowrap;border:1px solid transparent}
+.B .pill:hover{color:var(--fg);border-color:var(--rule)}
+.B .pill[aria-current="page"]{color:var(--fg);background:var(--raised);border-color:var(--rule-strong)}
+.B .end{margin-left:auto;display:flex;align-items:center;gap:10px}
+.B .chain{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--rule-strong);background:none;color:var(--fg);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.B .cta{border-radius:999px}
+
+/* ===== C · the console ==================================================== */
+.C{padding:14px 18px 0}
+.C .bar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:18px;height:60px;padding:0 10px 0 16px;border:1px solid var(--rule-strong);border-radius:14px;background:var(--bg)}
+.C .brand{display:flex;align-items:center;gap:10px}
+.C .word{font-weight:800;font-stretch:125%;font-size:19px;letter-spacing:-.02em}
+.C .ver{font-family:var(--mono);font-size:10px;color:var(--grey);border:1px solid var(--rule);border-radius:6px;padding:1px 6px}
+.C .links{justify-self:center;display:flex;align-items:center;gap:2px;padding:4px;border-radius:10px;background:var(--ground);border:1px solid var(--rule)}
+.C .links a{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:7px;font-size:13.5px;font-weight:500;color:var(--steel);white-space:nowrap}
+.C .links a:hover{color:var(--fg)}
+.C .links a[aria-current="page"]{background:var(--raised-2);color:var(--fg)}
+.C .links .div{width:1px;height:18px;background:var(--rule-strong);margin:0 6px}
+.C .end{display:flex;align-items:center;gap:8px}
+.C .chain{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 11px;border-radius:8px;border:1px solid var(--rule);background:var(--ground);color:var(--fg);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.C .crumb{display:flex;align-items:center;gap:10px;padding:10px 18px 0;font-family:var(--mono);font-size:11.5px;color:var(--steel)}
+.C .crumb a{color:var(--silver)}
+.C .crumb a:hover{color:var(--fg)}
+.C .crumb .s{color:var(--grey)}
+.C .crumb b{color:var(--fg);font-weight:500}
+
+
+/* ===== D · notch + console ================================================ */
+.D{padding:14px 18px 0}
+.D .bar{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 120px minmax(0,1fr);align-items:center;height:64px;padding:0 10px;border:1px solid var(--rule-strong);border-bottom-color:transparent;border-radius:14px;background:var(--bg)}
+/* the frame's bottom edge, drawn in two halves and a cup, so the seal sits in a notch of the console */
+.D .bar::before,.D .bar::after{content:"";position:absolute;bottom:-1px;height:1px;background:var(--rule-strong)}
+.D .bar::before{left:14px;right:calc(50% + 52px)}
+.D .bar::after{right:14px;left:calc(50% + 52px)}
+.D .corner{position:absolute;bottom:-1px;width:14px;height:14px;border:1px solid var(--rule-strong);border-top:0;pointer-events:none}
+.D .corner.l{left:-1px;border-right:0;border-radius:0 0 0 14px}
+.D .corner.r{right:-1px;border-left:0;border-radius:0 0 14px 0}
+.D .notch{position:relative;align-self:stretch;display:flex;justify-content:center}
+.D .notch svg.cup{position:absolute;left:50%;bottom:-31px;width:120px;height:32px;margin-left:-60px;overflow:visible}
+.D .notch svg.cup path.fill{fill:var(--bg)}
+.D .seal{position:relative;top:22px;display:grid;place-items:center;width:62px;height:62px;border-radius:999px}
+.D .half{display:flex;align-items:center;gap:10px;min-width:0}
+.D .half.l{justify-content:flex-end;padding-right:14px}
+.D .half.r{justify-content:flex-start;padding-left:14px}
+.D .cap{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--grey)}
+.D .track{display:flex;align-items:center;gap:2px;padding:4px;border-radius:10px;background:var(--ground);border:1px solid var(--rule)}
+.D .track a{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 13px;border-radius:7px;font-size:13.5px;font-weight:500;color:var(--steel);white-space:nowrap}
+.D .track a:hover{color:var(--fg)}
+.D .track a[aria-current="page"]{background:var(--raised-2);color:var(--fg)}
+.D .end{display:flex;align-items:center;gap:8px}
+.D.open .sheet{padding-top:30px;margin-top:-1px}
+.D .chain{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 11px;border-radius:8px;border:1px solid var(--rule);background:var(--ground);color:var(--fg);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.D .start{display:inline-flex;align-items:center;height:40px;padding:0 14px;border-radius:9px;border:1px solid var(--rule);font-size:13.5px;font-weight:500;color:var(--silver);white-space:nowrap}
+.D .start:hover{color:var(--fg);border-color:var(--rule-strong)}
+.D .half.r{gap:12px}
+.D .here{display:none}
+.D .crumb{display:flex;align-items:center;gap:10px;padding:12px 18px 0;font-family:var(--mono);font-size:11.5px;color:var(--steel)}
+.D .crumb a{color:var(--silver)}
+.D .crumb .s{color:var(--grey)}
+.D .crumb b{color:var(--fg);font-weight:500}
+@container (max-width:860px){
+  .D{padding:10px 10px 0}
+  .D .bar{grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr);height:56px;padding:0 8px}
+  .D .bar::before{right:calc(50% + 40px)}
+  .D .bar::after{left:calc(50% + 40px)}
+  .D .notch svg.cup{width:92px;margin-left:-46px;bottom:-25px;height:26px}
+  .D .seal{width:48px;height:48px;top:18px}
+  .D .seal svg{width:38px;height:38px}
+  .D .half .track:not(.here),.D .half .start,.D .end .chain{display:none}
+  .D .here{display:flex}
+  .D .end{margin-left:auto}
+  .D .here.track a{height:30px;padding:0 10px}
+  .D .crumb{padding:32px 10px 0}
+}
+
+
+/* ===== E · the coin: the mark in a circle set into the bar's left corner ===== */
+.E{padding:20px 22px 0 26px}
+.E .bar{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:16px;height:58px;padding:0 10px 0 64px;border:1px solid var(--rule-strong);border-radius:14px;background:var(--bg)}
+.E .coin{position:absolute;left:-14px;top:50%;width:80px;height:80px;margin-top:-40px;display:grid;place-items:center;border-radius:999px;border:1px solid var(--rule-strong);background:var(--bg);z-index:2}
+/* the seam hides the circle's right arc inside the bar, so circle and bar read as one outline */
+.E .coin .seam{position:absolute;left:39px;top:11px;width:44px;height:56px;background:var(--bg);transition:opacity 200ms 180ms}
+.E .coin .mark{position:relative;width:76px;height:76px}
+/* retracting on scroll down: the bar folds back into the coin, the current tab stays beside it */
+.E .bar{width:100%;transition:width 380ms cubic-bezier(0.16,1,0.3,1)}
+.E.retracted .bar{width:52px;padding:0}
+.E.retracted .bar>*:not(.coin){display:none!important}
+.E.retracted .coin .seam{opacity:0}
+.E.retracted .track:not(.here),.E.retracted .end{display:none}
+.E.retracted .crumb{visibility:hidden}
+.E .crumb{transition:visibility 0s}
+@media (prefers-reduced-motion:reduce){.E .bar{transition:none}}
+.E .word{font-weight:800;font-stretch:125%;font-size:18px;letter-spacing:-.02em;padding-left:4px}
+.E .track{display:flex;align-items:center;gap:10px;padding:4px 6px;border-radius:10px;background:var(--ground);border:1px solid var(--rule)}
+.E .track a{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 18px;border-radius:7px;font-size:13.5px;font-weight:500;color:var(--steel);white-space:nowrap}
+.E .track a:hover{color:var(--fg)}
+.E .track a[aria-current="page"]{background:var(--raised-2);color:var(--fg)}
+.E .end{display:flex;align-items:center;gap:8px;justify-self:end;grid-column:3}
+.E .track:not(.here){grid-column:2}
+.E .start{display:inline-flex;align-items:center;height:40px;padding:0 14px;border-radius:9px;border:1px solid var(--rule);font-size:13.5px;font-weight:500;color:var(--silver);white-space:nowrap}
+.E .start:hover{color:var(--fg);border-color:var(--rule-strong)}
+.E .chain{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 12px;border-radius:9px;border:1px solid var(--rule);background:var(--ground);color:var(--fg);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.E .here{display:none}
+.E .crumb{display:flex;align-items:center;justify-content:center;gap:10px;padding:18px 18px 0 18px;font-family:var(--mono);font-size:11.5px;color:var(--steel)}
+.E .crumb a{color:var(--silver)}
+.E .crumb .s{color:var(--grey)}
+.E .crumb b{color:var(--fg);font-weight:500}
+@container (max-width:860px){
+  .E{padding:16px 12px 0 18px}
+  .E .bar{height:52px;padding:0 8px 0 54px;gap:10px;grid-template-columns:auto minmax(0,1fr)}
+  .E .end{grid-column:2}
+  .E .coin{left:-10px;width:64px;height:64px;margin-top:-32px}
+  .E .coin svg.mark{width:61px;height:61px}
+  .E .coin .seam{left:31px;top:6px;width:33px;height:50px}
+  .E.retracted .bar{width:40px;padding:0}
+  .E .word,.E .track:not(.here),.E .start,.E .end .chain{display:none}
+  .E .here{display:flex;justify-self:start}
+  .E .here.track a{height:30px;padding:0 10px}
+  .E .crumb{padding:18px 6px 0 6px;white-space:nowrap;overflow:hidden;justify-content:flex-start}
+  .E.open .sheet{padding-top:18px}
+}
+
+/* ===== phones: the same markup, folded ===================================== */
+@container (max-width:760px){
+  .A .strip .wide{display:none}
+  .A .strip{padding:7px 16px}
+  .A .bar{grid-template-columns:minmax(0,1fr) auto;min-height:60px}
+  .A .brand{border-right:0;padding:0 16px}
+  .A .word{font-size:22px}
+  .A .links,.A .end .chain,.A .end .cta{display:none}
+  .A .end{padding:0 16px}
+  .menu-btn{display:inline-flex}
+  .B .bar{grid-template-columns:minmax(0,1fr) 96px minmax(0,1fr);height:68px;padding:0 16px}
+  .B .notch{width:96px}
+  .B .notch svg.cup{width:96px;bottom:-30px;height:32px}
+  .B .bar::before{right:calc(50% + 42px)}
+  .B .bar::after{left:calc(50% + 42px)}
+  .B .notch .hubm{width:58px;height:58px;top:22px}
+  .B .notch .hubm svg{width:40px;height:40px}
+  .B .half .pill,.B .half .cap,.B .end .chain,.B .end .cta{display:none}
+  .B .half.l .cur{display:inline-flex!important}
+  .C{padding:10px 10px 0}
+  .C .bar{grid-template-columns:minmax(0,1fr) auto;height:54px}
+  .C .links,.C .end .chain,.C .end .cta,.C .ver{display:none}
+  .C .crumb{padding:8px 12px 0}
+}
+.B .half.l .cur{display:none}
+/* the open sheet, shown statically in the second phone */
+.open .sheet{display:block;padding:8px 16px 20px;border-bottom:1px solid var(--rule-strong);background:var(--ground)}
+.sheet .grp{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--grey);padding:14px 0 6px}
+.sheet a.row{display:flex;justify-content:space-between;align-items:center;min-height:48px;border-bottom:1px solid var(--rule);font-size:17px;font-weight:600;color:var(--silver)}
+.sheet a.row span{display:flex;align-items:center;gap:10px}
+.sheet a.row small{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--steel)}
+.sheet a.row[aria-current="page"]{color:var(--fg)}
+.sheet .foot{display:flex;gap:8px;margin-top:16px}
+.sheet .foot .cta{flex:1;height:42px}
+.sheet .foot .chainb{height:42px;padding:0 14px;border-radius:8px;border:1px solid var(--rule-strong);background:none;color:var(--fg);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:8px}
+.B.open .sheet,.B .sheet{border-radius:0}
+</style>
+
+</head>
+<body>
+<header class="live" id="live-wrap"><div class="nb E" data-v="E" id="live"></div></header>
+<div class="page">
+  <div class="top"><span class="label">Design · nav bar · the coin</span><span class="label">Scroll down: the bar retracts into the circle. Scroll up, or tap the circle: it comes back</span></div>
+  <h1>The coin.</h1>
+  <p class="lede">Agents, Tools, Activity, Search and Docs in one track on the left; the Source mark in a circle at the left corner; Get started and the chain on the right. Hover and focus change a colour or a fill; nothing moves.</p>
+
+  <section class="prop" aria-labelledby="d-h">
+    <div class="ph"><span class="n">Nav</span><h2 id="d-h">The coin</h2>
+      <p>The mark moves to the left, in a circle set into the bar's corner like a coin pinned to it, a little taller than the bar. The tabs sit in one track at the centre of the bar; Get started and the chain close it on the right. The path line under it says where you are.</p></div>
+    <div class="stage"><div class="nb E" data-v="E"></div><div class="below" style="padding-top:28px">page content</div></div>
+    <div class="phones"><div class="phone"><div class="nb E" data-v="E"></div></div><div class="phone"><div class="nb E open" data-v="E"></div></div></div>
+    <div class="notes"><div><b>Balance</b> the heavy mark anchors the left, the actions the right, the tabs read from the mark outward.</div><div><b>From the console</b> the floating frame, the filled segment for the current page, and the path line.</div><div><b>Phone</b> the current page as a segment on the left, the seal in its notch, Menu on the right, the path line below.</div></div>
+  </section>
+
+</div>
+
+<script>
+const R={tabs:[{to:'agents',t:'Agents'},{to:'tools',t:'Tools'},{to:'activity',t:'Activity'},{to:'search',t:'Search'},{to:'docs',t:'Docs'}],start:{to:'start',t:'Get started'}};
+const CUR='agents';
+const mark=(s)=>{const rings=[{r:18,n:6,d:4.4,f:'var(--fg)'},{r:33,n:12,d:3.4,f:'var(--fg)'},{r:47,n:18,d:2.2,f:'var(--steel)'}].slice(0,s<40?1:s<64?2:3);
+  let o=`<svg class="mark" width="${s}" height="${s}" viewBox="0 0 108 108" aria-hidden="true">`;rings.forEach(g=>{for(let k=0;k<g.n;k++){const a=2*Math.PI*k/g.n-Math.PI/2;o+=`<circle cx="${(54+g.r*Math.cos(a)).toFixed(2)}" cy="${(54+g.r*Math.sin(a)).toFixed(2)}" r="${g.d}" fill="${g.f}"/>`;}});return o+`<circle cx="54" cy="54" r="6" fill="var(--accent)"/></svg>`;};
+const cur=to=>to===CUR?' aria-current="page"':'';
+const dot=to=>`<span class="dot ${to===CUR?'on':''}" aria-hidden="true"${to===CUR?'':' style="display:none"'}></span>`;
+const menuBtn=`<button class="menu-btn" type="button" aria-expanded="false" aria-label="Open the menu"><span class="bars" aria-hidden="true"><i></i><i></i></span>Menu</button>`;
+const sheet=()=>`<div class="sheet">${R.tabs.map(r=>`<a class="row" href="#"${cur(r.to)}><span>${dot(r.to)}${r.t}</span></a>`).join('')}
+  <a class="row" href="#"><span>${R.start.t}</span><small>arp init</small></a>
+  <div class="foot"><button class="chainb" type="button"><span class="dot off"></span>Testnet</button></div></div>`;
+
+const V={
+E:()=>`<div class="bar"><a class="coin" href="#" aria-label="ARP, home"><span class="seam" aria-hidden="true"></span>${mark(54)}</a>
+  <nav class="track" aria-label="Main">${R.tabs.map(r=>`<a href="#"${cur(r.to)}>${dot(r.to)}${r.t}</a>`).join('')}</nav><span class="here track"><a href="#" aria-current="page">${dot(CUR)}${R.tabs.find(r=>r.to===CUR).t}</a></span>
+  <span class="end"><a class="start" href="#">${R.start.t}</a><button class="chain" type="button" aria-label="Reading Testnet. Switch to Mainnet."><span class="dot off"></span>Testnet</button>${menuBtn}</span></div>${sheet()}
+  <nav class="crumb" aria-label="Where you are"><a href="#">Agents</a><span class="s">/</span><a href="#">Base 8453</a><span class="s">/</span><b>vault-auditor</b><span class="s">·</span><span class="s">agent</span></nav>`,
+D:()=>`<div class="bar"><span class="corner l" aria-hidden="true"></span><span class="corner r" aria-hidden="true"></span>
+  <div class="half l"><nav class="track" aria-label="Main">${R.tabs.map(r=>`<a href="#"${cur(r.to)}>${dot(r.to)}${r.t}</a>`).join('')}</nav><span class="here track"><a href="#" aria-current="page">${dot(CUR)}${R.tabs.find(r=>r.to===CUR).t}</a></span></div>
+  <div class="notch"><svg class="cup" viewBox="0 0 120 32" preserveAspectRatio="none" aria-hidden="true"><path class="fill" d="M0 0 H6 C22 0 24 31 60 31 C96 31 98 0 114 0 H120 Z"/><path d="M0 1 H6 C22 1 24 31 60 31 C96 31 98 1 114 1 H120" fill="none" stroke="var(--rule-strong)" stroke-width="1" vector-effect="non-scaling-stroke"/></svg><a class="seal" href="#" aria-label="ARP, home">${mark(50)}</a></div>
+  <div class="half r"><a class="start" href="#">${R.start.t}</a><span class="end"><button class="chain" type="button" aria-label="Reading Testnet. Switch to Mainnet."><span class="dot off"></span>Testnet</button>${menuBtn}</span></div></div>${sheet()}
+  <nav class="crumb" aria-label="Where you are"><a href="#">Agents</a><span class="s">/</span><a href="#">Base 8453</a><span class="s">/</span><b>vault-auditor</b><span class="s" style="margin-left:auto">agent</span></nav>`,
+};
+document.querySelectorAll('.nb').forEach(el=>{el.innerHTML=V[el.dataset.v]();if(el.classList.contains('open')){const b=el.querySelector('.menu-btn');b.setAttribute('aria-expanded','true');b.setAttribute('aria-label','Close the menu');b.lastChild.textContent='Close';}});
+document.querySelectorAll('.nb:not(.open) .menu-btn').forEach(b=>b.addEventListener('click',()=>{const nb=b.closest('.nb');const o=nb.classList.toggle('open');b.setAttribute('aria-expanded',String(o));b.lastChild.textContent=o?'Close':'Menu';}));
+document.querySelectorAll('.nb a').forEach(a=>a.addEventListener('click',e=>e.preventDefault()));
+/* retract on scroll down, come back on scroll up or on the coin */
+(function(){const live=document.getElementById('live');let last=scrollY;
+  addEventListener('scroll',()=>{const y=scrollY,d=y-last;if(Math.abs(d)<6)return;
+    if(d>0&&y>140)live.classList.add('retracted');else if(d<0)live.classList.remove('retracted');last=y;},{passive:true});
+  live.querySelector('.coin').addEventListener('click',e=>{if(live.classList.contains('retracted')){e.preventDefault();live.classList.remove('retracted');}});
+})();
+
+</script>
+
+</body>
+</html>

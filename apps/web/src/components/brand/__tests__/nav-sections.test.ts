@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {SECTION_PATHS} from "../NavSplit";
+import {SECTION_PATHS} from "../nav-coin";
 
 /**
  * Which nav item a path belongs to.
