@@ -1,6 +1,6 @@
 # dependencies
 node_modules/
-# Note: bun.lockb is committed intentionally — it's the lockfile for reproducible installs.
+# Note: bun.lock is committed intentionally — it's the lockfile for reproducible installs.
 
 # env
 .env
@@ -63,3 +63,7 @@ docs/reference/integration8004.txt
 
 # Claude Code agent worktrees: full checkouts of this repo, never source.
 .claude/worktrees/
+
+# Claude Code's settings are per person (permissions, local paths): .claude/settings.local.json is
+# the usual place, and this one stays out of the repository too.
+.claude/settings.json
