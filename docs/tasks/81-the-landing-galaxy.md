@@ -77,3 +77,20 @@ page, en les invitant à joindre le réseau. » Built on `fix/81-scene1-build` (
   index » is the second button, « Read the skill » a quiet link. On a phone the comparison keeps
   its « With ARP » half, and below 760 px tall it gives way to the copy.
 - Frame check at 1280 and 390, with the sample and with real data: 0 pops in 0→1, 1→2 and 4→5.
+
+## Addendum, 2026-11-09 — no accumulation in scenes 2 to 4
+
+The user: « plein de points qui se réorganisent et ça fait brouillon », then « sur la page 2 ou 3,
+ça s'accumule, plein de points arrivent, je trouve ça bizarre ». The line's dots already held their
+final slots; what moved was every other claim joining at once. Now:
+
+- **Scene 2 adds only what the loupe reads.** A read claim that is not one of scene 1's dots leaves
+  its star so that it lands as the loupe gets there (`readJoinAt`); the loupe starts at 1.9 s so
+  the first can land. Scene 2 ends with the line, at most four read claims, and your agent outside
+  the field. A claim no reading points at stays a star.
+- **Scene 3** adds only your agent, gliding into the field (onto the `used by` ring); **scene 4**
+  greys the same field.
+- **Back** 2→1 and 3→2: what joined leaves one by one, last first; the rest stays put.
+- Every atom's progress is computed before the stars are drawn, which closed a one-frame gap where a
+  returning dot and its star were both missing.
+- Scene 1's sentence glows once whole (ADR `0152` §8).

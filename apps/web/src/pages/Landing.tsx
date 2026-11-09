@@ -5,14 +5,7 @@ import type {RecentDeclaration} from "@arp-protocol/core";
 import {GalaxyField} from "../components/brand/GalaxyField";
 import {NoActivityYet} from "../components/brand/NoActivityYet";
 import {SceneDeck} from "../components/brand/SceneDeck";
-import {
-    cameraDuration,
-    cameraFor,
-    fillCount,
-    readingAt,
-    readStart,
-    WORDS_AT,
-} from "../components/brand/galaxy-geometry";
+import {cameraDuration, cameraFor, readingAt, WORDS_AT} from "../components/brand/galaxy-geometry";
 import {useDeck, useSceneTime} from "../components/brand/scene-context";
 import {useOnboarding} from "../components/onboarding/onboarding-context";
 import {useLandingField, type LandingFieldRead} from "../hooks/use-landing-field";
@@ -363,9 +356,7 @@ function SceneTravels({
     const sample = read.status === "ok" && read.sample;
     const readings = field?.readings ?? [];
     const ended = since === Infinity;
-    const reading = ended
-        ? -1
-        : readingAt(since, readings.length, deck.still, readStart(fillCount(field)));
+    const reading = ended ? -1 : readingAt(since, readings.length, deck.still);
     const tool = field?.tool?.name;
 
     return (

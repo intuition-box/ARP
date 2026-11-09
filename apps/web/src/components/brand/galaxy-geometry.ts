@@ -1,4 +1,4 @@
-import {LANDING_DOTS_PER_RING, type LandingField} from "../../services/landing-field";
+import {LANDING_DOTS_PER_RING} from "../../services/landing-field";
 import {dotDiameter, landingOffset, ringAngle, type Point} from "../atom/claim-field-geometry";
 
 /**
@@ -368,7 +368,11 @@ export function networkStars(count: number, seed = 29): number[] {
 export const WORD_LIGHTS_AFTER = 0.9;
 
 /** Scene 2: the loupe starts reading after this, and holds each claim this long. */
-export const READ = {startS: 0.6, forS: 2.8} as const;
+/**
+ * Scene 2's tour: the loupe reads one claim every `forS`, starting late enough that the first
+ * claim to join has time to land.
+ */
+export const READ = {startS: 1.9, forS: 2.8} as const;
 
 /**
  * Which reading the loupe is on, or -1 when none. Under reduced motion the end state is every
@@ -386,28 +390,21 @@ export function readingAt(
 }
 
 /**
- * Scene 2 fills the field the line left: the claims that are not the line's words join one after
- * another once the camera settles, each from its star, and leave the same way back to scene 1,
- * the last in first out. The line's dots never move: their slots are already their final ones.
- * The user, 2026-11-09: « plein de points qui se réorganisent et ça fait brouillon ».
+ * Scene 2 adds only what the loupe reads (the user, 2026-11-09: « ça s'accumule, plein de points
+ * arrivent, je trouve ça bizarre »). Each read claim that is not already one of the line's dots
+ * leaves its star so that it lands as the loupe gets there; nothing else joins. Back to scene 1,
+ * what joined leaves one by one, the last first, and the line stays put.
  */
-export const FILL = {everyS: 0.35, outEveryS: 0.18} as const;
+export const READ_JOIN = {leadS: GLIDE.inMs / 1000, outEveryS: 0.18, lateEveryS: 0.35} as const;
 
-/** How many claims join in scene 2: every drawn claim that is not one of the line's words. */
-export function fillCount(field: LandingField | null): number {
-    if (field === null) return 0;
-    const line = field.line;
-    const own = new Set([line?.keys.agent, line?.keys.context, line?.keys.outcome]);
-    return field.rings.reduce(
-        (sum, ring) => sum + ring.claims.filter((c) => !own.has(c.key)).length,
-        0,
-    );
+/** When the `i`-th reading's claim leaves its star in scene 2, so that it lands as it is read. */
+export function readJoinAt(i: number): number {
+    return READ.startS + i * READ.forS - READ_JOIN.leadS;
 }
 
-/** When the loupe starts reading in scene 2: once the last joining claim has landed. */
-export function readStart(joining: number): number {
-    if (joining === 0) return READ.startS;
-    return (joining - 1) * FILL.everyS + GLIDE.inMs / 1000 + 0.2;
+/** Your agent's place once it joins the field in scene 3: on the `used by` ring, between slots. */
+export function readerInField(drawnOnFirstRing: number): Point {
+    return slotOf(0, 0.5, Math.max(1, drawnOnFirstRing));
 }
 
 /* -------------------------------------------------------------------------- */

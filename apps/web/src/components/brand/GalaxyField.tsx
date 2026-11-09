@@ -22,13 +22,14 @@ import {
     projection,
     READER_INDEX,
     READER_SLOT,
-    FILL,
-    fillCount,
+    READ_JOIN,
+    readJoinAt,
+    readerInField,
     readingAt,
-    readStart,
     RING_NAMES,
     RING_RADII,
     slotOf,
+    smooth,
     STAR_TONES,
     starAlpha,
     starRadius,
@@ -77,6 +78,15 @@ type Atom = {
      * one of the line's words, which joins only in scene 2.
      */
     at: number | null;
+    /**
+     * For a claim that is not one of the line's words: which of scene 2's readings reads it, or
+     * `null` when none does, in which case it never leaves its star.
+     */
+    read: number | null;
+    /** Your agent's place inside the field from scene 3; `slot` is where it reads from. */
+    inField: Point | null;
+    /** How far your agent has moved from `slot` to `inField`, eased. */
+    fw: number;
     /** Gone from the data: it glides home and is dropped. */
     leaving: boolean;
     v: number;
@@ -112,11 +122,20 @@ function readPalette(): Palette {
     };
 }
 
+/** Which of scene 2's readings reads this claim, or `null`. */
+function readingOf(field: LandingField | null, key: string): number | null {
+    const i = (field?.readings ?? []).findIndex((reading) => reading.claimKey === key);
+    return i < 0 ? null : i;
+}
+
 /** The atoms the field asks for, in the order scene 1 writes them. */
 function atomsFor(
     field: LandingField | null,
-): Omit<Atom, "v" | "from" | "to" | "t0" | "dur" | "hl" | "labelA" | "leaving">[] {
-    const out: Omit<Atom, "v" | "from" | "to" | "t0" | "dur" | "hl" | "labelA" | "leaving">[] = [];
+): Omit<Atom, "v" | "from" | "to" | "t0" | "dur" | "hl" | "labelA" | "leaving" | "fw">[] {
+    const out: Omit<
+        Atom,
+        "v" | "from" | "to" | "t0" | "dur" | "hl" | "labelA" | "leaving" | "fw"
+    >[] = [];
     out.push({
         key: "tool",
         k: 0,
@@ -127,6 +146,8 @@ function atomsFor(
         positions: 0,
         slot: SUBJECT,
         at: WORDS_AT.tool,
+        read: null,
+        inField: null,
     });
     const rings = field?.rings ?? [];
     const placed = new Map<
@@ -175,6 +196,8 @@ function atomsFor(
             positions: where.claim.positions,
             slot: slotOf(where.ring, where.position, where.drawn),
             at,
+            read: at === null ? readingOf(field, key) : null,
+            inField: null,
         });
     });
     out.push({
@@ -187,6 +210,8 @@ function atomsFor(
         positions: 0,
         slot: READER_SLOT,
         at: 0,
+        read: null,
+        inField: readerInField(rings[0]?.claims.length ?? 1),
     });
     return out;
 }
@@ -289,6 +314,7 @@ export function GalaxyField({
                               dur: 1,
                               hl: 0,
                               labelA: 0,
+                              fw: 0,
                           }
                         : {...known, ...def, k: known.k, leaving: false},
                 );
@@ -402,40 +428,53 @@ export function GalaxyField({
             // the same frame's state: a star is hidden exactly while its atom is drawn, never one
             // frame without either.
             const n = atoms.length;
-            // Scene 2's fill order: the claims that are not the line's words, then your agent.
-            const fills = atoms.filter(
-                (a) => !a.leaving && ((a.kind === "claim" && a.at === null) || a.kind === "reader"),
-            );
-            const fillOf = new Map(fills.map((a, j) => [a.key, j]));
-            const arrival = arrivalOf(deck);
+            // What joins after scene 1 leaves first on the way back, the last to join first.
+            const lastRead = Math.max(-1, ...atoms.map((a) => a.read ?? -1));
             for (const [order, atom] of atoms.entries()) {
                 let target = 0;
                 if (!atom.leaving) {
                     if (atom.kind === "reader") target = current >= 2 && current <= 4 ? 1 : 0;
-                    else if (current === 1)
-                        target =
-                            atom.at !== null && (still || deck.previous >= 2 || since > atom.at)
-                                ? 1
-                                : 0;
-                    else if (current >= 2 && current <= 4) target = 1;
+                    else if (atom.at !== null) {
+                        // The line's dots: written in scene 1, kept through scene 4.
+                        if (current === 1)
+                            target = still || deck.previous >= 2 || since > atom.at ? 1 : 0;
+                        else if (current >= 2 && current <= 4) target = 1;
+                    } else if (atom.read !== null) {
+                        // A claim the loupe reads: it joins in scene 2 as the loupe comes to it.
+                        // Back from scene 3, it was read already and stays.
+                        if (current === 2)
+                            target =
+                                still || deck.previous >= 3 || since > readJoinAt(atom.read)
+                                    ? 1
+                                    : 0;
+                        else if (current === 3 || current === 4) target = 1;
+                    }
                 }
                 if (target !== atom.to) {
                     atom.from = atom.v;
                     atom.to = target;
-                    const j = fillOf.get(atom.key);
-                    if (still) atom.t0 = now;
-                    else if (j !== undefined && target === 1 && current === 2)
-                        // Into scene 2: one after another once the camera has settled.
-                        atom.t0 = arrival + j * FILL.everyS * 1000;
-                    else if (j !== undefined && target === 0 && current === 1)
-                        // Back to scene 1: the last to join leaves first; the line stays put.
-                        atom.t0 = now + (fills.length - 1 - j) * FILL.outEveryS * 1000;
+                    const joined = atom.kind === "reader" || atom.read !== null;
+                    if (still || (target === 1 && current === 2)) atom.t0 = now;
+                    else if (target === 1 && joined)
+                        // Reached scene 3 or 4 before its reading: one after another, not at once.
+                        atom.t0 = now + (atom.read ?? 0) * READ_JOIN.lateEveryS * 1000;
+                    else if (target === 0 && current === 1 && joined)
+                        // Back to scene 1: your agent first, then the last read first; the line
+                        // stays put.
+                        atom.t0 =
+                            now +
+                            (atom.read === null ? 0 : lastRead - atom.read + 1) *
+                                READ_JOIN.outEveryS *
+                                1000;
                     else
                         // By place in the list, last written first. Not by `k`: your agent's slot
                         // is the last index, and a delay below zero would start it half way home.
                         atom.t0 = now + (target === 0 ? (n - 1 - order) * GLIDE.staggerMs : 0);
                     atom.dur = target === 1 ? GLIDE.inMs : GLIDE.outMs;
                 }
+                // Your agent joins the field in scene 3, and leaves it again before scene 2.
+                const inside = current === 3 || current === 4 ? 1 : 0;
+                atom.fw = still ? inside : lerp(atom.fw, inside, ease(2.5));
                 const q = still ? 1 : clamp((now - atom.t0) / atom.dur);
                 atom.v = lerp(atom.from, atom.to, cameraEase(q));
             }
@@ -509,10 +548,7 @@ export function GalaxyField({
             ctx.globalAlpha = 1;
 
             const readings = field?.readings ?? [];
-            const reading =
-                current === 2
-                    ? readingAt(since, readings.length, still, readStart(fillCount(field)))
-                    : -1;
+            const reading = current === 2 ? readingAt(since, readings.length, still) : -1;
             const readKey = reading >= 0 ? readings[reading]?.claimKey : undefined;
 
             const where = new Map<string, {x: number; y: number; r: number}>();
@@ -522,8 +558,15 @@ export function GalaxyField({
                 const star = stars[starOf[atom.k] ?? -1];
                 if (star === undefined) continue;
                 const e = atom.v;
-                const X = view.x(lerp(star.x, atom.slot.x, e));
-                const Y = view.y(lerp(star.y, atom.slot.y, e));
+                const slot =
+                    atom.inField === null
+                        ? atom.slot
+                        : {
+                              x: lerp(atom.slot.x, atom.inField.x, smooth(atom.fw)),
+                              y: lerp(atom.slot.y, atom.inField.y, smooth(atom.fw)),
+                          };
+                const X = view.x(lerp(star.x, slot.x, e));
+                const Y = view.y(lerp(star.y, slot.y, e));
                 const look = claimLook(e);
                 const starR = starRadius(star, view.near);
                 const starTone = STAR_TONES[star.t];

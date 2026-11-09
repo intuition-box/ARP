@@ -59,9 +59,13 @@ says what reduced motion does ("every scene jumps to its end state").
    user's request after watching it). Scene 1 shows the tool, then the agent and its ring, then
    the context, then the outcome, its panel growing with each; nothing else joins there. Scene 5
    lights one star per agent that declared the tool and invites the reader to join (« Join the
-   network », the onboarding). Task 81's addendum has the details. Scene 2 fills the field one
-   claim after another once the camera settles, and empties it the same way back to scene 1; the
-   line's dots never move (« plein de points qui se réorganisent et ça fait brouillon »).
+   network », the onboarding). Task 81's addendum has the details. The line's dots never move
+   (« plein de points qui se réorganisent et ça fait brouillon »). **Scene 2 adds only what the
+   loupe reads** (« ça s'accumule, plein de points arrivent, je trouve ça bizarre », same day):
+   each read claim that is not already one of the line's dots leaves its star so that it lands as
+   the loupe reaches it, so scene 2 ends with the line, at most four read claims and your agent
+   outside the field. Scene 3 adds only your agent, moving into the field; scene 4 greys the same
+   field. Going back, what joined leaves one by one, the last first, and the rest stays put.
 8. **The sentence glows once it is whole** (amended 2026-11-09, the user: « mettre un effet de
    glow sur la phrase en bas à droite une fois qu'elle est pleinement construite »). When scene 1's
    outcome has landed, the panel's sentence fades in a soft `text-shadow` from `--color-fg` at low

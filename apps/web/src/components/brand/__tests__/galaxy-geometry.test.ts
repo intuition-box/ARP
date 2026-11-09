@@ -1,7 +1,6 @@
 import {describe, expect, it} from "vitest";
 
 import {dotDiameter} from "../../atom/claim-field-geometry";
-import {SAMPLE_FIELD} from "../../../services/landing-sample";
 import {
     assignStars,
     atomAlpha,
@@ -12,10 +11,10 @@ import {
     cameraDuration,
     cameraFor,
     claimLook,
-    fillCount,
-    FILL,
     networkAt,
-    readStart,
+    readJoinAt,
+    READ,
+    READ_JOIN,
     networkStars,
     NETWORK,
     WORDS_AT,
@@ -118,8 +117,8 @@ describe("the field", () => {
 
     it("tours the readings 2.8 s each, and tours nothing under reduced motion", () => {
         expect(readingAt(0.1, 4, false)).toBe(-1);
-        expect(readingAt(0.7, 4, false)).toBe(0);
-        expect(readingAt(0.6 + 2.8 * 5 + 0.1, 4, false)).toBe(1);
+        expect(readingAt(READ.startS + 0.1, 4, false)).toBe(0);
+        expect(readingAt(READ.startS + 2.8 * 5 + 0.1, 4, false)).toBe(1);
         expect(readingAt(99, 4, true)).toBe(-1);
         expect(readingAt(5, 0, false)).toBe(-1);
     });
@@ -165,17 +164,11 @@ describe("the camera", () => {
     });
 });
 
-describe("scene 2's fill", () => {
-    it("counts every drawn claim that is not one of the line's words", () => {
-        // The sample: 5 + 3 + 3 drawn claims, three of them the line's words.
-        expect(fillCount(SAMPLE_FIELD)).toBe(8);
-        expect(fillCount(null)).toBe(0);
+describe("scene 2's reading", () => {
+    it("lands each read claim as the loupe reaches it, the first after the line is in place", () => {
+        for (let i = 0; i < 4; i += 1) {
+            expect(readJoinAt(i) + READ_JOIN.leadS).toBeCloseTo(READ.startS + i * READ.forS);
+        }
+        expect(readJoinAt(0)).toBeGreaterThan(0);
     });
-
-    it("starts the loupe only once the last claim has landed", () => {
-        const joining = 8;
-        expect(readStart(joining)).toBeGreaterThan((joining - 1) * FILL.everyS + 1.3);
-        expect(readStart(0)).toBe(0.6);
-    });
-
 });
