@@ -57,6 +57,7 @@ import {
 import { type JsonRpcId, type Rpc, result, fail } from './rpc.js';
 import { toolReputation } from './handlers/reputation.js';
 import { declareUsed, declareSession } from './handlers/declare.js';
+import { proposeCategory } from './handlers/category.js';
 import { stakeOnUsed, takePosition, exitPosition } from './handlers/positions.js';
 import { agentEndpoints, identity, findAgents } from './handlers/agents.js';
 import { probe, recordReachable } from './handlers/reachability.js';
@@ -179,6 +180,8 @@ async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefin
         return await toolReputation(id, args);
       case 'arp_declare_used':
         return await declareUsed(id, args);
+      case 'arp_propose_category':
+        return await proposeCategory(id, args);
       case 'arp_stake_on_used':
         return await stakeOnUsed(id, args);
       case 'arp_take_position':

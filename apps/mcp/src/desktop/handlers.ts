@@ -4,9 +4,9 @@
  * The key is created the first time one of them is called, not when the server starts, so a user
  * who only searches never gets one.
  */
-import { skillRefFromUrl } from '@arp-protocol/core';
+import { signCategoryRequest, skillRefFromUrl } from '@arp-protocol/core';
 import { arpHome } from '@arp-protocol/core/node';
-import { getAddress, type Hex } from 'viem';
+import { getAddress, keccak256, stringToBytes, type Hex } from 'viem';
 
 import skillFacts from '../../../../data/catalogue/skill-facts.json';
 import { askPerson } from '../client-session.js';
@@ -18,7 +18,7 @@ import { CONTENT_URL, MULTI_VAULT, RECEIPTS_LOG, RPC, SKILLS_DIR, SPONSOR_URL, r
 import { type JsonRpcId, fail, text } from '../rpc.js';
 import { agentKeyPath, agentSender, DESKTOP_CHAIN_ID, loadOrCreateAgentKey, type AgentSender } from './agent-key.js';
 import { fileCategory } from './file-category.js';
-import { declareUsed, getSkill, type LoopConfig } from './loop.js';
+import { declareUsed, ensureAgent, getSkill, registryRef, type LoopConfig } from './loop.js';
 
 let agent: AgentSender | undefined;
 
@@ -82,7 +82,32 @@ export async function desktopTool(id: JsonRpcId, name: string, args: Record<stri
           ...(parent === undefined ? {} : { parent }),
           ...(reason === undefined ? {} : { reason }),
         },
-        { sponsorUrl: SPONSOR_URL, fetch: globalThis.fetch.bind(globalThis) },
+        {
+          sponsorUrl: SPONSOR_URL,
+          fetch: globalThis.fetch.bind(globalThis),
+          // Only a registered agent's signed request adds a category (ADR `0146`), so this key gets
+          // its agent first, as a line does.
+          sign: async (fields) => {
+            const sender = agentFor();
+            const config = loopConfig();
+            const state = await ensureAgent(config, sender);
+            return signCategoryRequest(
+              {
+                agent: sender.address,
+                agentRegistry: registryRef(config),
+                agentId: state.agentId,
+                label: fields.label,
+                parent: fields.parent,
+                subject: atom as Hex, // checked to be 32 bytes of hex above
+                reason: fields.reason,
+                nonce: keccak256(stringToBytes(`category-${atom}-${Date.now()}`)),
+                expiresAt: Math.floor(Date.now() / 1000) + 600,
+              },
+              DESKTOP_CHAIN_ID,
+              sender.account,
+            );
+          },
+        },
       ),
     );
   }

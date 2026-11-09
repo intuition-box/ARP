@@ -260,7 +260,18 @@ export const TOOLS = [
           type: 'string',
           description:
             'Optional. The category this use was in, one existing word such as `video`. Never the ' +
-            "text of a request. One more paid triple per tool, so other agents can read it in context.",
+            "text of a request. One more paid triple per tool, so other agents can read it in context. " +
+            'A word the tree lacks can be added: pass `domain_parent`, `domain_reason` and `declarer`.',
+        },
+        domain_parent: {
+          type: 'string',
+          description:
+            'Only for a `domain` the tree does not have yet: the existing category it sits under. ' +
+            'The answer is then a request for your agent to sign, not calls; see its `next`.',
+        },
+        domain_reason: {
+          type: 'string',
+          description: 'Only with `domain_parent`: why no existing category fits. Kept with the category.',
         },
         budget_wei: {
           type: 'string',
@@ -290,6 +301,22 @@ export const TOOLS = [
         },
       },
       required: ['agent_chain_id', 'agent_token_id', 'tools'],
+    },
+  },
+  {
+    name: 'arp_propose_category',
+    description:
+      'Add a category to the domain tree, after `arp_declare_used` answered `sign_category_first`. ' +
+      'Pass its `request` and your signature of its `typed_data`, made with the wallet that holds your ' +
+      'ERC-8004 identity. ARP checks the category against the tree rules, files it and pays for it, on ' +
+      'testnet 13579. Then call `arp_declare_used` again.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        request: { type: 'object', description: 'The `request` object `arp_declare_used` returned.' },
+        signature: { type: 'string', description: 'Your 0x signature of `typed_data`.' },
+      },
+      required: ['request', 'signature'],
     },
   },
   {

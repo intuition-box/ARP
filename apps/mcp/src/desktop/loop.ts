@@ -112,7 +112,7 @@ export type ServedSkill = {
 
 type ReceiptLine = { atom: Hex; url: string; skill: string | null; receipt: SignedContentReceipt };
 
-const registryRef = (config: LoopConfig) => `eip155:${DESKTOP_CHAIN_ID}:${getAddress(config.registry)}`;
+export const registryRef = (config: LoopConfig) => `eip155:${DESKTOP_CHAIN_ID}:${getAddress(config.registry)}`;
 
 async function json(response: Response): Promise<Record<string, unknown>> {
   // Every route of both services answers JSON, an error included.
@@ -242,7 +242,7 @@ export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex
 }
 
 /** This key's agent id: read from `~/.arp`, or minted with gas the sponsor sends once. */
-async function ensureAgent(config: LoopConfig, agent: AgentSender): Promise<AgentState> {
+export async function ensureAgent(config: LoopConfig, agent: AgentSender): Promise<AgentState> {
   const known = readAgent(config);
   if (known !== null) return known;
   // Signed by this key: the sponsor sends mint gas only to the address that asked for it (ADR `0116`).
