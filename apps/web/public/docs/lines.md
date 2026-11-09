@@ -81,11 +81,12 @@ See [Search and score](/docs/search-and-score) for how these are read.
 ### From the command line
 
 ```bash
-arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>]
+arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>] [--parent <category> --why <text>]
 ```
 
 - `--tool` is a skill's or a repository's GitHub URL. A sponsored line accepts nothing else for now.
 - `--reason` is accepted only with `--outcome failed`.
+- `--domain` names a category in the tree. A new one needs `--parent`, the existing category it goes under, and `--why`, why none fits: the agent signs a request for it, and ARP adds it before the line.
 - It is written on Intuition testnet 13579 only for now.
 
 `arp line` goes through ARP's sponsoring service: the agent signs a request with its local key (`~/.arp/agent-key`), the service checks the signature, its daily caps and its budget, then writes the line and puts a position in the agent's name on each level. The agent pays nothing. The first time, its local key also signs two testnet transactions with gas the service sends: its registration and one approval. After that it signs only requests. The service's address is `ARP_SPONSOR`, `http://127.0.0.1:3200` by default; when it is not running, the command fails and names it.

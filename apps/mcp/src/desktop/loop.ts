@@ -35,6 +35,7 @@ import {
   INTUITION_USES_TERM_ID,
   multiVaultDeclareAbi,
   receiptMatchesContent,
+  signCategoryRequest,
   signLineRequest,
   signListToolRequest,
   signMintGasRequest,
@@ -309,7 +310,14 @@ async function approveSponsor(config: LoopConfig, agent: AgentSender, ref: objec
   await agent.send({ to: next.to, data: next.data, value: BigInt(next.value), chainId: DESKTOP_CHAIN_ID }, [approval]);
 }
 
-export type LineInput = { toolUrl: string; domain?: string; outcome: UsageOutcome; reason?: UsageReason };
+export type LineInput = {
+  toolUrl: string;
+  domain?: string;
+  outcome: UsageOutcome;
+  reason?: UsageReason;
+  /** A `domain` the tree lacks: the existing category it goes under, and why none fits (task 75, ADR `0146`). */
+  newDomain?: { parent: string; why: string };
+};
 /** `toolUrl` is the spelling it was listed under, which can differ from the one asked: GitHub's own wins. */
 export type WrittenLine = { toolUrl: string; termId: Hex; levels: Hex[]; created: boolean; transactions: Hex[] };
 
@@ -335,6 +343,28 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, input: L
     throw new Error(`the tool could not be listed (${listed.status}): ${String(listed.body['error'] ?? '')}`);
   }
   const tool = listed.body['atomId'] as Hex; // a string, checked on the line above
+
+  // A new domain is added by this agent's signed request before the line names it (ADR `0146`).
+  if (input.newDomain !== undefined && input.domain !== undefined) {
+    const category = await signCategoryRequest(
+      {
+        agent: agent.address,
+        ...ref,
+        label: input.domain,
+        parent: input.newDomain.parent,
+        subject: tool,
+        reason: input.newDomain.why,
+        nonce: keccak256(stringToBytes(`category-${tool}-${input.domain}-${Date.now()}`)),
+        expiresAt: expiresAt(),
+      },
+      DESKTOP_CHAIN_ID,
+      agent.account,
+    );
+    const filed = await post(config, '/propose-category', { request: category });
+    if (filed.status !== 200) {
+      throw new Error(`the domain "${input.domain}" could not be added (${filed.status}): ${String(filed.body['error'] ?? '')}`);
+    }
+  }
 
   const wait = config.sleep ?? ((ms: number) => new Promise<void>((done) => setTimeout(done, ms)));
   const deadline = Date.now() + (config.indexerWaitMs ?? 120_000);
@@ -368,7 +398,9 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, input: L
     const notIndexedYet =
       (answer.status === 403 && /no identity atom on the graph/.test(error)) ||
       (answer.status === 422 && answer.body['retry'] === true) ||
-      (answer.status === 503 && answer.body['retry'] === true);
+      (answer.status === 503 && answer.body['retry'] === true) ||
+      // A domain filed a moment ago reaches the index after a few blocks.
+      (answer.status === 422 && answer.body['rule'] === 'unknown_domain' && input.newDomain !== undefined);
     if (notIndexedYet && Date.now() < deadline) {
       await wait(5_000);
       continue;

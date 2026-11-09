@@ -33719,6 +33719,22 @@ async function writeLine(config, agent, input) {
     throw new Error(`the tool could not be listed (${listed.status}): ${String(listed.body["error"] ?? "")}`);
   }
   const tool = listed.body["atomId"];
+  if (input.newDomain !== undefined && input.domain !== undefined) {
+    const category = await signCategoryRequest({
+      agent: agent.address,
+      ...ref,
+      label: input.domain,
+      parent: input.newDomain.parent,
+      subject: tool,
+      reason: input.newDomain.why,
+      nonce: keccak256(stringToBytes(`category-${tool}-${input.domain}-${Date.now()}`)),
+      expiresAt: expiresAt()
+    }, DESKTOP_CHAIN_ID, agent.account);
+    const filed = await post2(config, "/propose-category", { request: category });
+    if (filed.status !== 200) {
+      throw new Error(`the domain "${input.domain}" could not be added (${filed.status}): ${String(filed.body["error"] ?? "")}`);
+    }
+  }
   const wait2 = config.sleep ?? ((ms) => new Promise((done) => setTimeout(done, ms)));
   const deadline = Date.now() + (config.indexerWaitMs ?? 120000);
   let approved = false;
@@ -33744,7 +33760,7 @@ async function writeLine(config, agent, input) {
       };
     }
     const error = String(answer.body["error"] ?? "");
-    const notIndexedYet = answer.status === 403 && /no identity atom on the graph/.test(error) || answer.status === 422 && answer.body["retry"] === true || answer.status === 503 && answer.body["retry"] === true;
+    const notIndexedYet = answer.status === 403 && /no identity atom on the graph/.test(error) || answer.status === 422 && answer.body["retry"] === true || answer.status === 503 && answer.body["retry"] === true || answer.status === 422 && answer.body["rule"] === "unknown_domain" && input.newDomain !== undefined;
     if (notIndexedYet && Date.now() < deadline) {
       await wait2(5000);
       continue;
@@ -33954,6 +33970,12 @@ __export(exports_line, {
   lineFromArgs: () => lineFromArgs
 });
 function lineFromArgs(args) {
+  if (args.parent === undefined !== (args.why === undefined))
+    return new Error("--parent and --why go together");
+  if (args.parent !== undefined && args.domain === undefined)
+    return new Error("--parent and --why add a --domain");
+  if (args.why !== undefined && args.why.trim() === "")
+    return new Error("--why says why no category fits");
   if (!isUsageOutcome2(args.outcome))
     return new Error("--outcome must be worked or failed");
   if (args.reason !== undefined && !isUsageReason2(args.reason)) {
@@ -33965,15 +33987,28 @@ function lineFromArgs(args) {
     toolUrl: args.toolUrl,
     outcome: args.outcome,
     ...args.domain === undefined ? {} : { domain: args.domain },
-    ...args.reason === undefined ? {} : { reason: args.reason }
+    ...args.reason === undefined ? {} : { reason: args.reason },
+    ...args.parent === undefined || args.why === undefined ? {} : { newDomain: { parent: args.parent, why: args.why.trim() } }
   };
 }
 async function writeLineChecked(steps, input) {
-  if (input.domain !== undefined && !await steps.isCategory(input.domain.trim().toLowerCase())) {
-    throw new Error(`"${input.domain}" is not a category under tool`);
+  let line = input;
+  if (input.domain !== undefined) {
+    const domain = normaliseCategoryLabel(input.domain);
+    if (await steps.isCategory(domain)) {
+      const { newDomain: _unused, ...rest } = input;
+      line = { ...rest, domain };
+    } else if (input.newDomain === undefined) {
+      throw new Error(`"${input.domain}" is not a category under tool; add it with --parent <category> --why <reason>`);
+    } else {
+      const parent = normaliseCategoryLabel(input.newDomain.parent);
+      if (!await steps.isCategory(parent))
+        throw new Error(`--parent "${input.newDomain.parent}" is not a category under tool`);
+      line = { ...input, domain, newDomain: { parent, why: input.newDomain.why } };
+    }
   }
   await sponsorApproval(steps.config);
-  return (steps.write ?? writeLine)(steps.config, steps.agent(), input);
+  return (steps.write ?? writeLine)(steps.config, steps.agent(), line);
 }
 async function writeLineHere(input) {
   if (chainId !== 13579)
@@ -39104,12 +39139,20 @@ async function run(argv) {
       const outcome = flag("outcome");
       if (toolUrl === undefined || outcome === undefined) {
         process.stderr.write(`usage: arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>]
+       [--parent <category> --why <text>]   adds a --domain the tree lacks, under --parent
 `);
         return EXIT2.usage;
       }
       process.env["ARP_TARGET"] ??= "testnet";
       const { lineFromArgs: lineFromArgs2, writeLineHere: writeLineHere2 } = await Promise.resolve().then(() => (init_line2(), exports_line));
-      const input = lineFromArgs2({ toolUrl, outcome, domain: flag("domain"), reason: flag("reason") });
+      const input = lineFromArgs2({
+        toolUrl,
+        outcome,
+        domain: flag("domain"),
+        reason: flag("reason"),
+        parent: flag("parent"),
+        why: flag("why")
+      });
       if (input instanceof Error) {
         process.stderr.write(`arp line: ${input.message}
 `);

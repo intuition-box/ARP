@@ -2,7 +2,7 @@ import {mkdtempSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 
-import {verifyLineRequest, type SignedLineRequest} from "@arp-protocol/core";
+import {verifyCategoryRequest, verifyLineRequest, type SignedCategoryRequest, type SignedLineRequest} from "@arp-protocol/core";
 import type {Hex} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 import {afterEach, describe, expect, it} from "vitest";
@@ -21,7 +21,11 @@ afterEach(() => {
     for (const dir of dirs.splice(0)) rmSync(dir, {recursive: true, force: true});
 });
 
-function setup(line: (body: {request: SignedLineRequest}, calls: number) => {status: number; body: unknown}) {
+function setup(
+    line: (body: {request: SignedLineRequest}, calls: number) => {status: number; body: unknown},
+    category: {status: number; body: unknown} = {status: 200, body: {label: "slides", newCategory: true, created: true}},
+) {
+    const categories: SignedCategoryRequest[] = [];
     const stateDir = mkdtempSync(join(tmpdir(), "arp-line-"));
     dirs.push(stateDir);
     writeFileSync(join(stateDir, "agent.json"), JSON.stringify({agentId: "7", identityAtom: `0x${"5b".repeat(32)}`}));
@@ -35,6 +39,10 @@ function setup(line: (body: {request: SignedLineRequest}, calls: number) => {sta
         if (path === "/") return Response.json({multiVault: MULTI_VAULT, sponsor: SPONSOR});
         if (path === "/list-tool") return Response.json({url: "https://github.com/canonical/repo?skill=s", atomId: ATOM});
         if (path === "/gas") return Response.json({next: {to: MULTI_VAULT, data: "0x", value: "0"}});
+        if (path === "/propose-category") {
+            categories.push((body as {request: SignedCategoryRequest}).request);
+            return Response.json(category.body, {status: category.status});
+        }
         const answer = line(body as {request: SignedLineRequest}, (lines += 1));
         return Response.json(answer.body, {status: answer.status});
     }) as typeof fetch; // the subset of fetch this module calls
@@ -56,7 +64,7 @@ function setup(line: (body: {request: SignedLineRequest}, calls: number) => {sta
         fetch: fake,
         sleep: async () => undefined,
     };
-    return {config, agent, asked, sent};
+    return {config, agent, asked, sent, categories};
 }
 
 const ok = {status: 200, body: {termId: ATOM, levels: [ATOM], created: true, transactions: []}};
@@ -115,6 +123,34 @@ describe("writeLine", () => {
     });
 });
 
+describe("writeLine with a domain the tree lacks", () => {
+    const NEW = {...INPUT, domain: "slides", newDomain: {parent: "design", why: "no deck category"}};
+
+    it("files the domain with the agent's signature before the line names it", async () => {
+        const {config, agent, asked, categories} = setup(() => ok);
+        await writeLine(config, agent, NEW);
+        expect(asked).toEqual(["/", "/list-tool", "/propose-category", "/line"]);
+        expect(categories[0]?.request).toMatchObject({label: "slides", parent: "design", subject: ATOM, reason: "no deck category", agentId: "7"});
+        expect(await verifyCategoryRequest(categories[0], Math.floor(Date.now() / 1000))).toEqual({status: "valid", address: account.address});
+    });
+
+    it("waits while the new domain reaches the index", async () => {
+        const {config, agent} = setup((_body, calls) => (calls === 1 ? {status: 422, body: {error: '"slides" is not a category', rule: "unknown_domain"}} : ok));
+        await expect(writeLine(config, agent, NEW)).resolves.toMatchObject({termId: ATOM});
+    });
+
+    it("does not wait on an unknown domain it did not file", async () => {
+        const {config, agent} = setup(() => ({status: 422, body: {error: '"slides" is not a category', rule: "unknown_domain"}}));
+        await expect(writeLine(config, agent, {...INPUT, domain: "slides"})).rejects.toThrow("is not a category");
+    });
+
+    it("stops, and writes no line, when the sponsor refuses the domain", async () => {
+        const {config, agent, asked} = setup(() => ok, {status: 429, body: {error: "3 new categories a day for 0x…, reached", rule: "limit"}});
+        await expect(writeLine(config, agent, NEW)).rejects.toThrow('the domain "slides" could not be added (429)');
+        expect(asked).not.toContain("/line");
+    });
+});
+
 describe("lineFromArgs", () => {
     const args = {toolUrl: "https://github.com/a/b?skill=s", domain: undefined, reason: undefined};
 
@@ -125,6 +161,16 @@ describe("lineFromArgs", () => {
             reason: "missing-key",
             domain: "video",
         });
+    });
+
+    it("takes --parent and --why together, for a --domain", () => {
+        expect(lineFromArgs({...args, outcome: "worked", domain: "slides", parent: "design", why: " no deck category "})).toMatchObject({
+            domain: "slides",
+            newDomain: {parent: "design", why: "no deck category"},
+        });
+        expect(lineFromArgs({...args, outcome: "worked", domain: "slides", parent: "design"})).toBeInstanceOf(Error);
+        expect(lineFromArgs({...args, outcome: "worked", parent: "design", why: "x"})).toBeInstanceOf(Error);
+        expect(lineFromArgs({...args, outcome: "worked", domain: "slides", parent: "design", why: "  "})).toBeInstanceOf(Error);
     });
 
     it("refuses anything else", () => {
@@ -145,6 +191,32 @@ describe("writeLineChecked", () => {
         await expect(writeLineChecked(steps, {...INPUT, domain: "zzz"})).rejects.toThrow('"zzz" is not a category under tool');
         expect(asked).toEqual([]);
         expect(keys).toBe(0);
+    });
+
+    it("says how to add an unknown domain, and refuses a parent the tree lacks", async () => {
+        const {config} = setup(() => ok);
+        const steps = {config, isCategory: async (label: string) => label === "design", agent: () => {
+            throw new Error("no key in this test");
+        }};
+        await expect(writeLineChecked(steps, {...INPUT, domain: "slides"})).rejects.toThrow("--parent <category> --why <reason>");
+        await expect(
+            writeLineChecked(steps, {...INPUT, domain: "slides", newDomain: {parent: "nowhere", why: "x"}}),
+        ).rejects.toThrow('--parent "nowhere" is not a category');
+    });
+
+    it("hands the writer one normalised word, and drops --parent when the domain exists", async () => {
+        const {config, agent} = setup(() => ok);
+        const seen: unknown[] = [];
+        const write = (async (_config: unknown, _agent: unknown, input: unknown) => {
+            seen.push(input);
+            return {toolUrl: "", termId: ATOM, levels: [], created: true, transactions: []};
+        }) as Parameters<typeof writeLineChecked>[0]["write"];
+        const steps = {config, isCategory: async (label: string) => label === "design" || label === "video", agent: () => agent, write};
+        await writeLineChecked(steps, {...INPUT, domain: " Slides ", newDomain: {parent: "Design", why: "decks"}});
+        await writeLineChecked(steps, {...INPUT, domain: "Video", newDomain: {parent: "design", why: "decks"}});
+        expect(seen[0]).toMatchObject({domain: "slides", newDomain: {parent: "design", why: "decks"}});
+        expect(seen[1]).toMatchObject({domain: "video"});
+        expect(seen[1]).not.toHaveProperty("newDomain");
     });
 
     it("makes no key when the sponsor does not answer", async () => {

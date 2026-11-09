@@ -174,12 +174,22 @@ async function run(argv: readonly string[]): Promise<number> {
       const toolUrl = flag('tool');
       const outcome = flag('outcome');
       if (toolUrl === undefined || outcome === undefined) {
-        process.stderr.write('usage: arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>]\n');
+        process.stderr.write(
+          'usage: arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>]\n' +
+            '       [--parent <category> --why <text>]   adds a --domain the tree lacks, under --parent\n',
+        );
         return EXIT.usage;
       }
       process.env['ARP_TARGET'] ??= 'testnet';
       const { lineFromArgs, writeLineHere } = await import('@arp/mcp/line');
-      const input = lineFromArgs({ toolUrl, outcome, domain: flag('domain'), reason: flag('reason') });
+      const input = lineFromArgs({
+        toolUrl,
+        outcome,
+        domain: flag('domain'),
+        reason: flag('reason'),
+        parent: flag('parent'),
+        why: flag('why'),
+      });
       if (input instanceof Error) {
         process.stderr.write(`arp line: ${input.message}\n`);
         return EXIT.usage;

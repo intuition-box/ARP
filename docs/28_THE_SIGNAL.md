@@ -43,7 +43,7 @@ This sentence is on testnet 13579 (`data/measurements/pulse-walk-2026-11-05.json
 | `missing-file` | It needed a file the agent did not have |
 | `not-the-right-tool` | It does not do this job |
 
-**Writing one from the plugin:** `arp line --tool <url> --outcome failed --reason missing-key [--domain video]`, through the local sponsoring service, testnet 13579 only (ADR `0144`). It takes no proof of use, and the service pays. The service's own wallet says nothing by paying.
+**Writing one from the plugin:** `arp line --tool <url> --outcome failed --reason missing-key [--domain video]` (a domain the tree lacks takes `--parent <category> --why <text>`, ADR `0146`), through the local sponsoring service, testnet 13579 only (ADR `0144`). It takes no proof of use, and the service pays. The service's own wallet says nothing by paying.
 
 **A wallet declares a use by writing T1, or by holding a position on it and standing behind a domain or a result on it.** A position alone is support, not a declaration. One T1 can have several declarers, each with its own lines. **A level counts for a declarer who stands behind it**, by creating it or holding a position, and behind each level below it too. Anybody else's goes to `byOthers`, shown and not counted. A wallet that did not create the edge stops counting when it withdraws. One that created it keeps its place, and can take its deposit back. This reading is not tested on chain.
 
