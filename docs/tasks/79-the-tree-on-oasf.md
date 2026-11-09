@@ -25,6 +25,19 @@ written on chain: the correspondence waits for the user's review.
   662 categorised skills, 493 sit in categories with an OASF equivalent and 169 in categories to split or
   keep as an ARP node.
 
+## The per-skill proposal
+
+`data/catalogue/oasf-skill-tags-proposal-13579.json`: the 662 categorised skills, each at the finest OASF
+node, by reading its description, under the rules the user approved on 2026-11-09 (by what it does; `design`
+and `card` the only ARP nodes; no sub-domain seeded, a `suggestedWord` kept on low rows). Four batches,
+merged and checked: every skill once, every id in the taxonomy, identical copies aligned.
+
+- Confidence: 325 high, 269 medium, 68 low. 290 skills land outside their old category's OASF subtree.
+- 179 OASF leaf nodes used, 242 with their ancestors: what the rewrite would write.
+- `design` on 37 skills, `card` on none (no categorised skill moves money).
+- Recurring gaps in OASF, from the low rows: generic multi-model runners (`inference`, 13), storyboards,
+  pricing, diagrams, research reproduction, skill routers.
+
 ## Funding the attestor, 2026-11-09
 
 The user asked for it (« envoie-lui-même 2 »), under ADR `0037`'s three conditions: the treasury key
