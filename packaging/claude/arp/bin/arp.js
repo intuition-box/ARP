@@ -25931,6 +25931,61 @@ var init_category2 = __esm(() => {
   };
 });
 
+// ../../packages/protocol/dist/skills-index.js
+function skillUrlOf(source, skill) {
+  if (!OWNER_REPO.test(source) || !SKILL_NAME.test(skill))
+    return null;
+  return `https://github.com/${source}?skill=${skill}`;
+}
+function parseSkillsIndex(body) {
+  const rows = body !== null && typeof body === "object" ? body.skills : undefined;
+  if (!Array.isArray(rows))
+    return [];
+  const out = [];
+  const seen = new Set;
+  for (const row of rows) {
+    if (row === null || typeof row !== "object")
+      continue;
+    const record = row;
+    const source = typeof record["source"] === "string" ? record["source"].trim() : "";
+    const skill = typeof record["skillId"] === "string" ? record["skillId"].trim() : typeof record["name"] === "string" ? record["name"].trim() : "";
+    if (source === "" || skill === "")
+      continue;
+    const key = `${source.toLowerCase()}@${skill.toLowerCase()}`;
+    if (seen.has(key))
+      continue;
+    seen.add(key);
+    const installs = typeof record["installs"] === "number" && Number.isFinite(record["installs"]) ? record["installs"] : null;
+    out.push({ source, skill, installs, url: skillUrlOf(source, skill) });
+  }
+  return out;
+}
+async function searchSkillsIndex(query, options = {}) {
+  const words = query.trim();
+  if (words === "")
+    return { status: "ok", skills: [] };
+  const limit = Math.min(50, Math.max(1, Math.floor(options.limit ?? 20)));
+  const base2 = (options.baseUrl ?? SKILLS_INDEX_URL).replace(/\/+$/, "");
+  const fetchLike = options.fetch ?? fetch;
+  const params = new URLSearchParams({ q: words.slice(0, 200), limit: String(limit) });
+  try {
+    const response = await fetchLike(`${base2}/api/search?${params.toString()}`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(options.timeoutMs ?? 8000)
+    });
+    if (!response.ok)
+      return { status: "unavailable", reason: `skills.sh answered ${response.status}` };
+    return { status: "ok", skills: parseSkillsIndex(await response.json()) };
+  } catch (error) {
+    return { status: "unavailable", reason: error instanceof Error ? error.message : String(error) };
+  }
+}
+var SKILLS_INDEX_URL = "https://skills.sh", OWNER_REPO, SKILL_NAME;
+var init_skills_index = __esm(() => {
+  OWNER_REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+  SKILL_NAME = /^[A-Za-z0-9_.:-]+$/;
+});
+
 // ../../packages/protocol/dist/index.js
 var init_dist2 = __esm(() => {
   init_client2();
@@ -25971,6 +26026,7 @@ var init_dist2 = __esm(() => {
   init_list_tool();
   init_line();
   init_category2();
+  init_skills_index();
 });
 
 // ../node/src/node-key.ts
@@ -33113,7 +33169,7 @@ function domainWalk() {
     attestor: DOMAIN_ATTESTORS
   };
 }
-var PORT, RECEIPT_SIGNER, DESKTOP, SKILLS_DIR, READ_ONLY, CONTENT_URL, SPONSOR_URL, SESSION_LOG, RECEIPTS_LOG, TARGETS, targetName, chainId, recorded, record, sessionCatalogue, accepted = null, GRAPHQL_URL, RPC_URL, MULTI_VAULT_RAW, GRAPHQL, RPC, MULTI_VAULT, reads, toolAtoms, DOMAIN_ROOT = "tool", REACHABLE_ATOM = "0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805", DOMAIN_ATTESTORS, directory, IN_CONTEXT_OF, LINE_PAYERS;
+var PORT, RECEIPT_SIGNER, DESKTOP, SKILLS_DIR, READ_ONLY, CONTENT_URL, SPONSOR_URL, SESSION_LOG, RECEIPTS_LOG, TARGETS, targetName, chainId, recorded, record, sessionCatalogue, accepted = null, GRAPHQL_URL, RPC_URL, MULTI_VAULT_RAW, GRAPHQL, SKILLS_INDEX, RPC, MULTI_VAULT, reads, toolAtoms, DOMAIN_ROOT = "tool", REACHABLE_ATOM = "0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805", DOMAIN_ATTESTORS, directory, IN_CONTEXT_OF, LINE_PAYERS;
 var init_config = __esm(() => {
   init_dist2();
   init__esm();
@@ -33153,6 +33209,12 @@ var init_config = __esm(() => {
   RPC_URL = process.env.INTUITION_RPC_URL ?? record.chain?.rpcUrl;
   MULTI_VAULT_RAW = process.env.ARP_MULTI_VAULT ?? record.intuition?.multiVault;
   GRAPHQL = required(GRAPHQL_URL, "a graphqlUrl");
+  SKILLS_INDEX = (() => {
+    const raw2 = process.env.ARP_SKILLS_INDEX_URL?.trim() ?? "";
+    if (raw2 === "off")
+      return null;
+    return raw2 === "" ? "https://skills.sh" : raw2;
+  })();
   RPC = required(RPC_URL, "an rpcUrl");
   MULTI_VAULT = required(MULTI_VAULT_RAW, "a multiVault");
   reads = multiVaultReads({ address: MULTI_VAULT, chainId, rpcUrl: RPC });
@@ -33430,6 +33492,26 @@ function pageOf(entries, offset, limit) {
     total: entries.length,
     nextOffset: offset + limit < entries.length ? offset + limit : null
   };
+}
+function mergeIndexed(matched, indexed, options) {
+  const out = [];
+  const taken = new Set;
+  const add = (entry) => {
+    const key = options.keyOf(entry);
+    if (key !== null) {
+      if (taken.has(key))
+        return;
+      taken.add(key);
+    }
+    out.push(entry);
+  };
+  for (const entry of matched)
+    if (options.leads(entry))
+      add(entry);
+  indexed.forEach(({ key }, index2) => add(options.held(key) ?? options.make(index2)));
+  for (const entry of matched)
+    add(entry);
+  return out;
 }
 var PURPOSE_MAX = 140, FILLER;
 var init_tool_search = __esm(() => {
@@ -34082,7 +34164,7 @@ var init_tools = __esm(() => {
     },
     {
       name: "arp_find_tools",
-      description: "Search the ARP registry for a skill, a tool, an MCP server or an API that fits a need, " + "BEFORE you pick one yourself or search the web. Pass `query`, a few words for the need " + '("video editing", "convert web page to markdown"): a result holds every word, or all but ' + "one from three words on, and those holding every word come first. Or pass `domain`, " + "one broad word (`marketing`, `payment`), or both. Each result is short: `name`, `purpose` (one sentence), `url` (the source to read " + "before you use it, not something to call), `declarations` (how many agents said they used " + "it) and, for a skill, `installs` and, when its file shows one, `requires`: the CLI it " + "declares, the commands its instructions run and a login line it mentions. Read `requires` " + "before you pick: a skill that needs a program or an account the person does not have is " + "not the right one, so check for the program first. `file_not_read` means nobody read its " + "file, so what it needs is unknown. `not_fetchable` means `arp_get_skill` will refuse it, so " + "pick another. Results come best match first, 25 at a time: when " + "`next_offset` is not null, pass it as `offset` to see more. If a `domain` matches " + "nothing, `domains_available` lists the words the registry uses. " + '`detail: "full"` adds everything else the registry holds about each result. `id` is what ' + "`arp_tool_reputation` takes. An empty result means the registry has nothing for that need, " + "not that nothing exists: answer from what you know rather than searching it again.",
+      description: "Search the ARP registry for a skill, a tool, an MCP server or an API that fits a need, " + "BEFORE you pick one yourself or search the web. Pass `query`, a few words for the need " + `("video editing", "convert web page to markdown"): it searches the ARP registry and skills.sh's whole index, ` + "the one `npx skills find` reads. Skills agents declared using come first, then the index's order. " + "A result with `in_registry: false` has no ARP entry yet, so nobody declared it here and its file was not read: " + "call `arp_pulse` with the same words to read what it needs. Or pass `domain`, " + "one broad word (`marketing`, `payment`), or both. Each result is short: `name`, `purpose` (one sentence), `url` (the source to read " + "before you use it, not something to call), `declarations` (how many agents said they used " + "it) and, for a skill, `installs` and, when its file shows one, `requires`: the CLI it " + "declares, the commands its instructions run and a login line it mentions. Read `requires` " + "before you pick: a skill that needs a program or an account the person does not have is " + "not the right one, so check for the program first. `file_not_read` means nobody read its " + "file, so what it needs is unknown. `not_fetchable` means `arp_get_skill` will refuse it, so " + "pick another. Results come best match first, 25 at a time: when " + "`next_offset` is not null, pass it as `offset` to see more. If a `domain` matches " + "nothing, `domains_available` lists the words the registry uses. " + '`detail: "full"` adds everything else the registry holds about each result. `id` is what ' + "`arp_tool_reputation` takes. An empty result means the registry has nothing for that need, " + "not that nothing exists: answer from what you know rather than searching it again.",
       inputSchema: {
         type: "object",
         properties: {
@@ -36219,7 +36301,45 @@ async function findTools(id, args) {
   ];
   const described = rows.filter((row) => !isGone(row.label) && !isOnlyASkillsRepository(row.label, row.declarations)).map((row) => ({ row, about: describe2(row.label, CATALOGUE, SKILLS) }));
   const matched = query === null ? described : described.map((entry) => ({ ...entry, ...matchOf(query, entry.about) })).filter((entry) => entry.score > 0).map((entry) => ({ ...entry, rank: rankOf(entry.score, entry.row.declarations ?? 0) })).sort((a, b) => Number(isNotFetchable(a.row.label)) - Number(isNotFetchable(b.row.label)) || a.missed - b.missed || b.rank - a.rank);
-  const listed = detailRaw === "full" ? matched.map((entry) => ({ ...entry, copies: 1 })) : collapseCopies(matched, (entry) => entry.row.declarations ?? 0);
+  const index2 = query === null || domainRaw !== undefined || SKILLS_INDEX === null ? null : await readIndex(query);
+  const byKey = new Map(described.filter((entry) => entry.row.label !== null).map((entry) => [keyOf(entry.row.label ?? ""), entry]));
+  const indexed = (index2?.status === "ok" ? index2.skills : []).filter((skill) => skill.url !== null && !isGone(skill.url)).map((skill) => ({ key: keyOf(skill.url ?? ""), skill }));
+  const found2 = matched.map((entry) => ({
+    row: entry.row,
+    about: entry.about,
+    missed: "missed" in entry && typeof entry.missed === "number" ? entry.missed : 0
+  }));
+  const searched = index2 === null ? found2 : mergeIndexed(found2, indexed, {
+    keyOf: (entry) => entry.row.label === null ? null : keyOf(entry.row.label),
+    held: (key) => {
+      const hit = byKey.get(key);
+      return hit === undefined ? undefined : { row: hit.row, about: hit.about, missed: 0 };
+    },
+    make: (at) => {
+      const { key, skill } = indexed[at] ?? { key: "", skill: null };
+      const about = describe2(key, CATALOGUE, SKILLS);
+      return {
+        row: {
+          tool_atom_id: null,
+          label: key,
+          provenance: "skills.sh",
+          title: null,
+          purpose: null,
+          hosted_at: skill?.url ?? null,
+          atom_uri: null,
+          declarations: 0,
+          paid_declarations: null,
+          support_assets_wei: null,
+          oppose_assets_wei: null,
+          position_count: null
+        },
+        about: { ...about, installs: about.installs ?? skill?.installs ?? null },
+        missed: 0
+      };
+    },
+    leads: (entry) => entry.missed === 0 && (entry.row.declarations ?? 0) > 0
+  });
+  const listed = detailRaw === "full" ? searched.map((entry) => ({ ...entry, copies: 1 })) : collapseCopies(searched, (entry) => entry.row.declarations ?? 0);
   const { rows: pageRows, total, nextOffset } = pageOf(listed, offsetRaw, limitRaw);
   const domainsAvailable = domainTree !== null && total === 0 && domainRaw !== undefined ? domainTree.subtree(DOMAIN_ROOT).filter((name) => name !== DOMAIN_ROOT).sort() : null;
   const truncated = page.truncated || registered.truncated;
@@ -36227,7 +36347,8 @@ async function findTools(id, args) {
     total,
     offset: offsetRaw,
     next_offset: nextOffset,
-    ...query === null ? {} : { query }
+    ...query === null ? {} : { query },
+    ...index2?.status === "unavailable" ? { skills_index: "unavailable" } : {}
   };
   if (detailRaw === "short") {
     return text(id, {
@@ -36243,6 +36364,7 @@ async function findTools(id, args) {
         declarations: row.declarations,
         ...about.installs === null ? {} : { installs: about.installs },
         ...requiresFor(row.label),
+        ...row.provenance === "skills.sh" ? { in_registry: false } : {},
         ...copies > 1 ? { copies } : {}
       }))
     });
@@ -36271,7 +36393,7 @@ async function findTools(id, args) {
     }))
   });
 }
-var CATALOGUE, ABOUT, SKILLS, GONE, REQUIRES, READ, NOT_FETCHABLE, SKILL_REPOSITORIES, LISTINGS_TTL_MS = 60000, readListings;
+var CATALOGUE, ABOUT, SKILLS, GONE, REQUIRES, READ, NOT_FETCHABLE, SKILL_REPOSITORIES, LISTINGS_TTL_MS = 60000, readListings, readIndex;
 var init_find_tools = __esm(() => {
   init_tools2();
   init_skill_facts();
@@ -36305,6 +36427,7 @@ var init_find_tools = __esm(() => {
       listRegisteredTools({ graphqlUrl: GRAPHQL, ...curve })
     ]);
   });
+  readIndex = cachedFor(LISTINGS_TTL_MS, (query) => searchSkillsIndex(query, { limit: 20, baseUrl: SKILLS_INDEX ?? undefined }));
 });
 
 // ../mcp/src/pulse-cache.ts
