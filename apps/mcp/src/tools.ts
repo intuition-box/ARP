@@ -146,7 +146,7 @@ export const TOOLS = [
     name: 'arp_pulse',
     description:
       'Before installing a skill: search with `npx skills find` and read what each result implies, from its own ' +
-      'files, with what agents wrote about it. Pass `queries`, 3 short phrases worded differently. In a host where ' +
+      'files, with what agents wrote about it. Pass `queries`, up to 4 short phrases worded differently. In a host where ' +
       '`npx` does not run, pass the command\'s text as `search_output`. Each result gives what its file ' +
       'mentions (key names, a login, paid words, hosts), the CLI it declares and commands it runs, its size and scripts, ' +
       'which other repositories hold the same content with their install figures, and `usage`: the ' +
@@ -210,7 +210,7 @@ export const TOOLS = [
       properties: {
         tool_atom_id: {
           type: 'string',
-          description: 'The `atom_id` from `arp_pulse`, or the `tool_atom_id` from `arp_find_tools` (0x + 32 bytes).',
+          description: 'The `atom_id` from `arp_pulse`, or, where `arp_find_tools` is served, a tool\'s `id` (`tool_atom_id` in its full detail). 0x + 32 bytes.',
         },
         attested_by: {
           type: 'string',
@@ -430,7 +430,7 @@ export const TOOLS = [
         term_id: {
           type: 'string',
           description:
-            'The id of the tool or agent, 0x + 32 bytes — `tool_atom_id` from `arp_find_tools`, ' +
+            'The id of the tool or agent, 0x + 32 bytes — `id` from `arp_find_tools` (`tool_atom_id` in its full detail), ' +
             'or `identity_atom` from `arp_identity`.',
         },
         amount_wei: {
@@ -555,7 +555,7 @@ export const TOOLS = [
         url: { type: 'string', description: 'The http(s) endpoint you called.' },
         tool_atom_id: {
           type: 'string',
-          description: "The tool's id, 0x + 32 bytes — `tool_atom_id` in `arp_find_tools`.",
+          description: "The tool's id, 0x + 32 bytes — `id` in `arp_find_tools` (`tool_atom_id` in its full detail).",
         },
         receiver: {
           type: 'string',

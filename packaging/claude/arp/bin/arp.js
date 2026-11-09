@@ -34077,7 +34077,7 @@ var init_tools = __esm(() => {
     },
     {
       name: "arp_pulse",
-      description: "Before installing a skill: search with `npx skills find` and read what each result implies, from its own " + "files, with what agents wrote about it. Pass `queries`, 3 short phrases worded differently. In a host where " + "`npx` does not run, pass the command's text as `search_output`. Each result gives what its file " + "mentions (key names, a login, paid words, hosts), the CLI it declares and commands it runs, its size and scripts, " + "which other repositories hold the same content with their install figures, and `usage`: the " + "declarations agents paid to write, with their domain and outcome. `status` other than `read` means " + "it was not read, so what it needs is unknown. Pass `constraints`: they stay in this call. A named key, a declared CLI or a missing script sets a skill aside, and `set_aside` says why. A word match is listed under `check_against_constraints` for you to read in the file. " + " Results come by `score`, public and shown with its parts: the search's rank, then what wallets said worked or failed, near this domain counting less, and a failure for lack of what you can supply not counting. Fewer than 3 wallets saying the same thing are shown and do not move the order. The amount deposited never counts. It ranks and does not say a skill works. `domain` is read from your words when you leave it out. " + "`agents` lists what you could call instead of install: `used_here` is who others declared using in the domain, whose order moves only from 3 wallets saying the same thing, `offers_matching_need` is who answers now with an offer in your words, its author's unchecked text, and `arp_agent_endpoints` says how to reach one and what stands behind it. " + "`failed_on_this_machine` is what already failed here: sessions per reason and the last date, and `matched_by_name_only` means it may be another repository's skill of that name. Check it before installing or running the skill again. Nothing here is a verdict, and nothing is written.",
+      description: "Before installing a skill: search with `npx skills find` and read what each result implies, from its own " + "files, with what agents wrote about it. Pass `queries`, up to 4 short phrases worded differently. In a host where " + "`npx` does not run, pass the command's text as `search_output`. Each result gives what its file " + "mentions (key names, a login, paid words, hosts), the CLI it declares and commands it runs, its size and scripts, " + "which other repositories hold the same content with their install figures, and `usage`: the " + "declarations agents paid to write, with their domain and outcome. `status` other than `read` means " + "it was not read, so what it needs is unknown. Pass `constraints`: they stay in this call. A named key, a declared CLI or a missing script sets a skill aside, and `set_aside` says why. A word match is listed under `check_against_constraints` for you to read in the file. " + " Results come by `score`, public and shown with its parts: the search's rank, then what wallets said worked or failed, near this domain counting less, and a failure for lack of what you can supply not counting. Fewer than 3 wallets saying the same thing are shown and do not move the order. The amount deposited never counts. It ranks and does not say a skill works. `domain` is read from your words when you leave it out. " + "`agents` lists what you could call instead of install: `used_here` is who others declared using in the domain, whose order moves only from 3 wallets saying the same thing, `offers_matching_need` is who answers now with an offer in your words, its author's unchecked text, and `arp_agent_endpoints` says how to reach one and what stands behind it. " + "`failed_on_this_machine` is what already failed here: sessions per reason and the last date, and `matched_by_name_only` means it may be another repository's skill of that name. Check it before installing or running the skill again. Nothing here is a verdict, and nothing is written.",
       inputSchema: {
         type: "object",
         properties: {
@@ -34128,7 +34128,7 @@ var init_tools = __esm(() => {
         properties: {
           tool_atom_id: {
             type: "string",
-            description: "The `atom_id` from `arp_pulse`, or the `tool_atom_id` from `arp_find_tools` (0x + 32 bytes)."
+            description: "The `atom_id` from `arp_pulse`, or, where `arp_find_tools` is served, a tool's `id` (`tool_atom_id` in its full detail). 0x + 32 bytes."
           },
           attested_by: {
             type: "string",
@@ -34278,7 +34278,7 @@ var init_tools = __esm(() => {
         properties: {
           term_id: {
             type: "string",
-            description: "The id of the tool or agent, 0x + 32 bytes — `tool_atom_id` from `arp_find_tools`, " + "or `identity_atom` from `arp_identity`."
+            description: "The id of the tool or agent, 0x + 32 bytes — `id` from `arp_find_tools` (`tool_atom_id` in its full detail), " + "or `identity_atom` from `arp_identity`."
           },
           amount_wei: {
             type: "string",
@@ -34356,7 +34356,7 @@ var init_tools = __esm(() => {
           url: { type: "string", description: "The http(s) endpoint you called." },
           tool_atom_id: {
             type: "string",
-            description: "The tool's id, 0x + 32 bytes — `tool_atom_id` in `arp_find_tools`."
+            description: "The tool's id, 0x + 32 bytes — `id` in `arp_find_tools` (`tool_atom_id` in its full detail)."
           },
           receiver: {
             type: "string",

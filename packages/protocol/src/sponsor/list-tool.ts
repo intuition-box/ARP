@@ -46,8 +46,8 @@ export type ToolListingPlan = {
  * A GitHub URL is rebuilt the way the seed scripts build theirs (`scripts/seed/seed-skills.ts`):
  * `https://github.com/<owner>/<repo>`, with `?skill=<s>` for a skill and nothing else. A path such
  * as `/tree/main` and any other query parameter are dropped. `repoFullName` is the spelling to list
- * under, from {@link chooseRepoSpelling}. `normaliseToolUrl` keeps path case, so `wieedze/arp` and
- * `Wieedze/ARP` would otherwise be two atoms. Any other URL is `normaliseToolUrl`'s output.
+ * under, from {@link chooseRepoSpelling}. `normaliseToolUrl` keeps path case, so `intuition-box/arp` and
+ * `intuition-box/ARP` would otherwise be two atoms. Any other URL is `normaliseToolUrl`'s output.
  */
 export function canonicalToolUrl(url: string, repoFullName?: string): string {
     const normalised = normaliseToolUrl(url);
