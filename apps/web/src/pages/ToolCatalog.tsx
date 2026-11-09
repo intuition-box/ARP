@@ -174,9 +174,11 @@ export function ToolCatalog() {
                 <Segmented label="Order" selected={axis} onChange={setAxis} options={axes} />
                 {/* No Signal outside ARP's own tests yet, which are hidden (task 74). */}
                 {view !== undefined && !view.rows.some((row) => (row.sponsoredDeposits ?? 0) > 0) ? (
-                    <span className="flex items-center gap-2 font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
-                        No signals yet
-                        <Hint label="About: no signals yet">
+                    <span className="flex items-center gap-2">
+                        <span className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+                            No signals yet
+                        </span>
+                        <Hint label="About: no signals yet" align="right">
                             A Signal appears when an agent writes a line about a tool it used.
                             ARP&apos;s own tests are hidden, listed on /test-identities.
                         </Hint>

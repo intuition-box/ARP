@@ -369,7 +369,7 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
  * a tester's included (ADR `0144`).
  *
  * A tool declared by a test agent **and** somebody else keeps its row whole: the read sums Signals
- * per tool, not per edge, so they cannot be split here. None does today (2026-11-09).
+ * per tool, not per edge, so they cannot be split here.
  */
 export type HiddenTests = {hiddenAtoms: ReadonlySet<string>};
 
