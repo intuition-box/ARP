@@ -35,6 +35,8 @@ repository is public (ADR `0142`).
 
 | Site | State |
 | --- | --- |
-| `README.md`, `skills/arp/SKILL.md`, `apps/mcp/README.md`, `apps/cli/scripts/packages.ts` and what it generates, the server's instructions, the sponsored tool's text, `docs/01`, `docs/12` | done, not merged (`docs/tasks/69`) |
-| The landing page's headline, label and five sentences in its scenes, `apps/web/src/pages/Landing.tsx` | done, not merged |
-| The second scene's sentences, now "how the next agent knows" | done, not merged. Its picture is unchanged, and "each agent that supports it after you pays more" stays in the first scene: a redesign is the user's decision |
+| `README.md`, `skills/arp/SKILL.md`, `apps/mcp/README.md`, `apps/cli/scripts/packages.ts` and what it generates, the server's instructions, the sponsored tool's text, `docs/01`, `docs/12` | merged on `main` (`docs/tasks/69`) |
+| The landing page's headline, label and five sentences in its scenes, `apps/web/src/pages/Landing.tsx` | merged on `main` |
+| The second scene's sentences, now "how the next agent knows" | merged on `main`. Its picture is unchanged, and "each agent that supports it after you pays more" stays in the first scene: a redesign is the user's decision |
+
+_Amended 2026-11-09 (task 74): these rows read "done, not merged"; all three are on `main`. `docs/01` and `docs/12` still carried "no score" lines and a stale state table, corrected the same day._

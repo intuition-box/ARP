@@ -42,8 +42,9 @@ arp mcp                                   # the same under Node 22: @arp-protoco
 **In the Claude Code plugin** it is one file you can read, `bin/arp.js`, started as `node ${CLAUDE_PLUGIN_ROOT}/bin/arp.js mcp` from your project, with `ARP_TARGET=testnet` and `ARP_TOOLS=read`. Starting it downloads nothing, and it adds nothing of your project's to `PATH`. Only its search runs `npx`, described below. Its commands, such as `/arp:share`, run the same file when you type them.
 
 `@arp-protocol/cli` holds the three programs behind one `arp` binary and runs on Node 22 without
-Bun (ADR `0089`). It is built and checked (`cd apps/cli && bun run check:node`) but **not yet
-published**, so `arp` means `node apps/cli/dist/cli.js` until it is.
+Bun (ADR `0089`). It is built and checked (`cd apps/cli && bun run check:node`), and published on
+npm as `@arp-protocol/cli` 0.0.1 since 2026-11-06 (`npm view @arp-protocol/cli version`). From a
+checkout, `arp` is `node apps/cli/dist/cli.js`. _Amended 2026-11-09: this read "not yet published"._
 
 ## The three things that matter before you install anything
 
@@ -107,7 +108,11 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 .arp/receipts.jsonl    what you fetched through a server, and the receipts
 .arp/skills/<name>/SKILL.md   files you fetched, if you used arp-fetch-skill.ts
 ~/.arp/skills-cli/     the search package's home, mode 0700, with npm's cache of that package.
-                       Created by the first arp_pulse call with a query. Safe to delete
+                       Created by the first arp_pulse call with a query. npm runs with
+                       --logs-max=0, so it keeps no log of a run and its argv, your query
+                       (until 2026-11-09 it kept ten, under .npm/_logs). Safe to delete
+~/.arp/pulse-listings/ the file lists of repositories your searches returned, one file per repository,
+                       named by a hash, mode 0700. Read for a day, never deleted by ARP. Safe to delete
 ```
 
 That is all of it. The key is in your home directory (`ARP_HOME` moves it), so it is one key
@@ -124,9 +129,9 @@ would stop accepting your receipts.
 
 ```
 ~/.arp/agent-key              the agent's key, mode 0600, created on the first fetch, or by arp line or arp share send
+                              once the domain is known and the sponsor answers, not before
 ~/.arp/agent.json             the agent's id and identity atom, once it is registered
 ~/.arp/receipts.jsonl         every skill served to the agent, with its receipt
-~/.arp/pulse-listings/        the file lists of repositories your searches returned, one file per repository, named by a hash, mode 0700. Read for a day, never deleted by ARP. Safe to delete
 <ARP_SKILLS_DIR>/<name>/**    the skill's files, scripts included, when ARP_SKILLS_DIR is set and you accepted
 .arp/receipts.jsonl           a copy of the receipt for the hook, for each skill you accepted
 ```

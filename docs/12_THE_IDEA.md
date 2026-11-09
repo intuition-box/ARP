@@ -37,9 +37,11 @@ A sponsored deposit costs the agent nothing, so there the cost sits in the **pro
 - **Not a registry.** ARP mints into ERC-8004's registry and reads from it; it never keeps an identity namespace of its own. Being an on-ramp to the standard is being its client, not its competitor.
 - **Not a marketplace.** `/hire` was a demo that the index works; it was never finished and is now removed. Hiring is `docs/tasks/25`, and the delegation there caps the **buyer's** own spend so the seller needs no relationship with ARP.
 - **Not B2B first.** Its first users are people who use an agent — Claude users, agent builders, tool authors — and the agent itself, which reads ARP mid-task. Aggregators and publishers may become business customers later (ADR `0120`).
-- ~~**Not a scorer.**~~ **Amended 2026-11-05 by the user (ADR `0137`): ARP will compute a score. Its design is open and nothing
-  ships yet.** Until it does, this still describes the product: ARP publishes no score, rating or assessment of any agent. It
-  makes staking possible and reads the result; every figure it surfaces is a deposit somebody else made (ADR `0046`).
+- ~~**Not a scorer.**~~ **Amended 2026-11-05 by the user (ADR `0137`): ARP will compute a score.** ~~Its design is open and nothing
+  ships yet. Until it does, this still describes the product: ARP publishes no score,~~ **Amended 2026-11-09: it ships.**
+  `arp_pulse` orders a search on a score and returns its parts (`packages/protocol/src/pulse-score.ts`, ADRs `0138`, `0143`).
+  ARP publishes no rating or assessment of any agent. It makes staking possible and reads the result; every other figure it
+  surfaces is a deposit somebody else made (ADR `0046`).
 - **Not in the path of a request.** ARP ships a node the operator runs; it never hosts one they have
   to reach. The test is mechanical, which is why it replaced an earlier wording that was not: unplug
   ARP's servers, and every declaration, every stake and every agent-to-agent call still completes.
@@ -73,16 +75,18 @@ Written down because this document exists to stop a specific failure, which has 
 
 | Piece                                                           | Status                                                                         |
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `ModuleRegistry` — modules with domain + schema                 | built, deployed                                                                |
+| `ModuleRegistry` — modules with domain + schema                 | ~~built, deployed~~ still deployed on testnet 13579, its source deleted in `59ac83a` (ADR `0055`); nothing uses it |
 | `declareUsesTriple` — `(agent, uses, tool)`                     | built                                                                          |
 | `stakeOnUsedMethodologies` — stake on what was actually used    | built                                                                          |
-| `DomainScopeEnforcer`, `TrustStakeCapEnforcer` — the guard rail | built, deployed on testnet 13579                                               |
+| `DomainScopeEnforcer`, `TrustStakeCapEnforcer` — the guard rail | deployed on testnet 13579, and on mainnet 1155 since 2026-09-16, where neither had fired by 2026-10-27 (`scripts/measure/enforcer-events.ts`); `DomainScopeEnforcer`'s source deleted (ADR `0055`); set aside with delegations, 2026-11-03 |
 | Tool and agent reputation surfaced in the UI                    | built                                                                          |
 | **Adoption of an existing ERC-8004 agent**                      | **missing — the whole gap**                                                    |
-| **The guard rail on the chain where the agents are**            | **missing — enforcers are on testnet, agents are not**                         |
+| ~~**The guard rail on the chain where the agents are**~~        | ~~**missing — enforcers are on testnet, agents are not**~~ set aside: the user set delegations aside on 2026-11-03, and the enforcers have been on mainnet 1155 since 2026-09-16 (`data/deployments/1155.json`) |
 | Install handshake, the endpoint bound to the ERC-8004 token     | built, task 39 (ADR `0095`)                                                    |
 | A proof as the condition of a sponsored deposit                 | built for hire proofs, and for content receipts on testnet 13579 (ADR `0109`); running locally; first sponsored walks 2026-11-02, agents 9 and 10 (`docs/tasks/50` §6) |
 | Revenue: x402 in USDC                                           | mainnet only, ADR `0102` — testnet is free                                     |
+
+_Amended 2026-11-09 (task 74): the struck-through cells were false. What is at the centre today is the search and the line it reads (ADRs `0136`, `0144`), not a delegation; `.claude/STATE.md` holds the state of each piece._
 
 The mechanism works today for agents ARP mints. It does not work for the agents that already exist — **28,720** reachable out of a registry whose next id is **444,562**, measured 2026-10-21 — and those are the population, so that gap is what stands between this and a live system. Worse than it reads: the mirror has not moved since 2026-09-16 while the registry kept going, so for roughly **fourteen agents in fifteen** the identity atom does **not exist** and has to be written (`scripts/agent/agent-identity-atom.ts`, ADR `0047`). `/agent/import` writes it now rather than waiting.
 

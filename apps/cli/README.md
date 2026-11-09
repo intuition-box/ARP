@@ -26,13 +26,15 @@ All three run on your machine, and none of them signs a transaction.
 The plugin carries this program as one file, `bin/arp.js`, so it needs Node 22 and nothing from npm:
 
 ```
-claude plugin marketplace add <a checkout of this repo, or owner/repo>
+claude plugin marketplace add intuition-box/ARP
 claude plugin install arp@arp
 ```
 
-With no `arp` on `PATH`, its commands stand in for `arp share` and `arp line`. A person types them, and the model cannot invoke them:
+The agent reaches for ARP when you name it: "find me a skill for X with ARP". A search reads skills.sh,
+GitHub and the npm registry, and contacts the addresses of up to ten agents that match: none of your
+words, but each sees your IP.
 
-A session that allows `Bash` can still run the file itself: that rests on your permissions.
+With no `arp` on `PATH`, its commands stand in for `arp share` and `arp line`. A person types them, and the model cannot invoke them:
 
 ```
 /arp:share         what would be public, and what stays here. Sends nothing
@@ -41,6 +43,8 @@ A session that allows `Bash` can still run the file itself: that rests on your p
 /arp:share-send    write the shared failures as public lines on testnet. Needs a sponsoring service
 /arp:line          write one public line on testnet: --tool <url> --outcome worked|failed
 ```
+
+A session that allows `Bash` can still run the file itself: that rests on your permissions.
 
 The search in `arp_pulse` still runs `npx skills`: `npx` comes with Node, and that package comes from the npm registry. Installed from a local path, the plugin is read from that path, so keep the folder where it is.
 
@@ -66,4 +70,11 @@ arp uninstall          removes what init added, and nothing else
 npm uninstall -g @arp-protocol/cli
 ```
 
-The `.arp/` directory in each project is the hook's log. Delete it if you want it gone.
+Installed with `npx -y @arp-protocol/cli init`, there is no `arp` on `PATH`: run
+`npx -y @arp-protocol/cli uninstall` (and `doctor`) the same way. The plugin goes with
+`claude plugin uninstall arp@arp` and `claude plugin marketplace remove arp`.
+
+Neither removes what ARP wrote while it ran. `~/.arp/` holds the keys it made (`receipt-key`, and
+`agent-key` if you wrote a line), your failures, your sharing choice and the search package's cache;
+`.arp/` in each project is the hook's log. Delete both if you want them gone: `rm -rf ~/.arp`, and
+`.arp/` in each project.

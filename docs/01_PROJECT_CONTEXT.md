@@ -2,10 +2,14 @@
 
 ## One-liner
 
-**Your agent finds the right skill, tool or agent for you, and shows which ones other agents
-actually use.**
+**Your agent finds the right skill, tool or agent for you, and shows what other agents declared
+about it.**
 
-> Stars show who looked. ARP shows who used it.
+> Stars show who looked. ARP shows what agents declared.
+
+_Amended 2026-11-09 (task 74): these two lines read "which ones other agents actually use" and "ARP
+shows who used it", which `docs/30` rules out — a line is a declaration, and nothing says a use
+happened._
 
 **In public, since 2026-11-05:** "The public pulse for skills and autonomous agents", with "Check
 before your agent installs or pays" beside it. `docs/30` holds what may be claimed today (ADR `0142`): the line
@@ -22,7 +26,7 @@ there: today no money reaches a tool, and the one measured result is discovery, 
 | What a user does | Search by need. See what answers, and who paid to stand behind it.     |
 
 The category is **a reputation layer** and, said to someone outside crypto, **a public usage
-record**. The table above comes from the presentation kit (`Wieedze/ARP-business-dev`,
+record** — of declared use, which is all it holds today (`docs/30`). The table above comes from the presentation kit (`Wieedze/ARP-business-dev`,
 `pitch/kit-de-presentation.md`, which carries the new one-liner since `f2f425a`); where a text
 about ARP contradicts it, the text is corrected.
 
@@ -93,8 +97,10 @@ sponsored declaration.
 
 ### Three words this positioning may never use
 
-`best`, `score`, and `verified` about a usage. ARP composes no ranking of quality (ADR `0046`), and
-the only thing it verifies is reachability. The discipline that follows is cheap: **there is no need
+`best`, `score`, and `verified` about a usage. ARP rates no agent's or tool's quality, and the only
+thing it verifies is reachability. It does order a search: `arp_pulse` computes a score and returns
+its parts (ADR `0137`, which superseded ADR `0046`'s no-score rule; `packages/protocol/src/pulse-score.ts`).
+_Amended 2026-11-09: this read "ARP composes no ranking of quality (ADR `0046`)"._ The discipline that follows is cheap: **there is no need
 to say "this is not proof" if the word "proof" is never used.**
 
 ADR `0075` carries the decision and what it trades away.
@@ -103,9 +109,13 @@ Calibration is out, not deferred (ADR `0049`): it is a score that needs ground t
 
 ## What ARP is
 
-ARP (Agent Reputation Protocol) is a permissionless, modular reputation protocol for autonomous AI agents. It sits on top of ERC-8004 (the Ethereum agent identity standard) and uses Intuition's semantic graph as its ontology layer.
+In public ARP is **the public pulse for skills and autonomous agents** (`docs/30`, ADR `0142`). Underneath,
+ARP (Agent Reputation Protocol) is a permissionless reputation protocol for autonomous AI agents. It sits on top of ERC-8004 (the Ethereum agent identity standard) and uses Intuition's semantic graph as its ontology layer.
 
-The core innovation is that **the input costs money**. An agent declares the tools it used and deposits TRUST on that declaration, under a cap its operator signed. Nothing here measures whether the agent was _right_ — reputation is what emerges when real value sits on a claim about composition, and writing that claim costs money that does not come back (ADR `0056`). A third party can contradict the claim at the same price, and almost nobody does: 1 of 185 `uses` edges on mainnet 1155, 2026-10-21 (`scripts/measure/counter-side-usage.ts`).
+The core innovation is that **the input costs money**. An agent declares the tools it used and its wallet holds a deposit on that declaration (on testnet
+13579, ARP's sponsor pays for it, ADR `0144`). _Amended 2026-11-09: this read "under a cap its operator
+signed"; delegations and their caps were set aside on 2026-11-03, and spending limits are not a feature
+(`docs/30`)._ Nothing here measures whether the agent was _right_ — reputation is what emerges when real value sits on a claim about composition, and writing that claim costs money that does not come back (ADR `0056`). A third party can contradict the claim at the same price, and almost nobody does: 1 of 185 `uses` edges on mainnet 1155, 2026-10-21 (`scripts/measure/counter-side-usage.ts`).
 
 The case against free ratings is measured, not asserted: ERC-8004's Reputation Registry holds **569,148** feedback entries on Base 8453 with a **mean score of 95.09 / 100** (`scripts/measure/erc8004-feedback.ts`, 2026-10-20). Free ratings converge on excellent and stop distinguishing anything.
 
@@ -117,10 +127,12 @@ The case against free ratings is measured, not asserted: ERC-8004's Reputation R
 - ARP is **not a directory competing on search**. skills.sh, Glama, Smithery and the official MCP
   registry list tools; ARP reuses their descriptions and install counts and adds what none of them
   has, a record of use. On search alone skills.sh is better today (above).
-- ARP is **not a scoring platform at all** — not merely a non-proprietary one. ARP publishes no
-  score, rating or assessment of any agent; it makes staking possible and reads the result. Every
-  figure it surfaces is a deposit somebody else made, so ARP cannot be wrong about an agent — the
-  market can. ADR `0046`.
+- ARP is **not a rating platform**. It publishes no rating or assessment of any agent; it makes
+  staking possible and reads the result. It computes one score, `arp_pulse`'s order for a search,
+  and shows its parts (ADR `0137`); every other figure it surfaces is a deposit somebody else made.
+  _Amended 2026-11-09: this read "not a scoring platform at all … ARP publishes no score … so ARP
+  cannot be wrong about an agent" (ADR `0046`). ADR `0137` superseded that rule, and says ARP can now
+  be wrong._
 - ARP is **not B2B first**. Its first users are people who use an agent — Claude users, agent builders, tool authors — and the agent itself, which reads ARP mid-task. Aggregators and publishers may become business customers later, through the data licence (ADRs `0112`, `0120`).
 - ARP is **not where a reputation lives**. The reputation is **portable**: atoms, triples and
   positions on a public graph, plus an ERC-8004 identity. Nothing is in an ARP database, so an
@@ -144,7 +156,7 @@ This positioning means ARP should never feel like a competing vision. It is an i
 
 The reputation layer for ERC-8004 agents is not empty. Known competitors:
 
-- **8004scan** (AltLayer) — launched October 2025. Composes a 7-dimension score from free inputs. ARP scores nothing, so it can supply 8004scan the usage data rather than compete with its score.
+- **8004scan** (AltLayer) — launched October 2025. Composes a 7-dimension score from free inputs. ARP rates no agent (its one score orders a search, ADR `0137`), so it can supply 8004scan the declared-use data rather than compete with its score.
 - **Agentscan** (Alias) — agent economy search engine.
 - **Agent Arena** — indexes 22,000+ agents across 16 chains, composite scoring, buyer reputation protocol.
 - **Theagora** — per-function reputation, 4-tier cryptographic verification.
