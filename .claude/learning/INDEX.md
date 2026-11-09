@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-77 entries, one per completed task. Written by `task-verifier` on a pass.
+78 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -83,3 +83,4 @@
 | [68](68-the-hire-loop.md) | `docs/tasks/77-the-hire-loop.md` | PASS (round 2; round 1 FAIL on two scope items and four claims items) | The hire loop, as a concept |
 | [69](69-the-sponsor-hosted.md) | `docs/tasks/78-the-sponsor-hosted.md` | PASS (round 2) | The sponsor, hosted beside the site |
 | [71](71-the-nav-coin.md) | `docs/tasks/80-the-nav-coin.md` | PASS (round 3; round 1 FAIL on unported tests, a stale README status, a duplicate CSS rule; round 2 FAIL on a numbering clash) | The nav: the coin |
+| [72](72-the-landing-galaxy.md) | `docs/tasks/81-the-landing-galaxy.md` | PASS (round 3) | The landing: one camera through the registry |

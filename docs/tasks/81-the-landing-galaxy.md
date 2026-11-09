@@ -1,6 +1,7 @@
 # Task 81 — The landing: one camera through the registry
 
-**Status:** to do.
+**Status:** done 2026-11-09, verified (PASS, round 3), `9bb9d8b` on `feat/81-landing-galaxy`
+(not pushed), post-mortem `.claude/learning/72-the-landing-galaxy.md`, ADR `0152`.
 **Rules:** `code.md`, `ui.md`, `workflow.md`, `claims.md`.
 **Design:** `docs/design/landing-galaxy/LANDING-GALAXY.md` and `landing-galaxy-reference.html`.
 Read both before writing code; open the reference at 1280 and 390 px and play every scene.
