@@ -67,3 +67,6 @@ docs/reference/integration8004.txt
 # Claude Code's settings are per person (permissions, local paths): .claude/settings.local.json is
 # the usual place, and this one stays out of the repository too.
 .claude/settings.json
+
+# Third parties' stated contacts, for the user to decide on (task 87). Never committed: the repo is public.
+data/outreach/

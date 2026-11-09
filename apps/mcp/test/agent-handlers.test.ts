@@ -266,3 +266,19 @@ describe('arp_find_agents with a domain', () => {
     vi.doUnmock('../src/config.js');
   });
 });
+
+describe('arp_find_agents answers-now (task 87)', () => {
+  it('answers on the chain the sieve walked (this suite runs as 13579): rung 3 and above, dated', async () => {
+    const out = await findAgents(1, { order: 'answers-now', limit: 100 }).then(answer);
+    const agents = out['agents'] as { rung: number }[];
+    expect(agents.every((agent) => agent.rung >= 3)).toBe(true);
+    expect(out['total']).toBe(agents.length);
+    expect(Number.isNaN(Date.parse(String(out['checked'])))).toBe(false);
+  });
+
+  it('names the new order among the accepted ones', async () => {
+    const response = await findAgents(1, { order: 'by-score' });
+    const body = (await response.json()) as { error?: { message: string } }; // a JSON-RPC error
+    expect(body.error?.message).toMatch(/answers-now/);
+  });
+});

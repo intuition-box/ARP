@@ -97,12 +97,12 @@ Who declared using one tool. Returns each declaration with the agent that made i
 
 ### arp_find_agents
 
-Agents listed in ARP, a page at a time. Neither order is a score. `total` is the size of the whole list. An agent linked to more than one identity comes back as ambiguous. With `domain`, it returns the agents somebody declared using in that domain or under it, those whose wallets stated it worked first.
+Agents listed in ARP, a page at a time. No order is a score. `total` is the size of the whole list. An agent linked to more than one identity comes back as ambiguous. Each agent carries its `rung` from the last walk of [the 8004 sieve](/docs/the-sieve) when the walk read it. With `domain`, it returns the agents somebody declared using in that domain or under it, those whose wallets stated it worked first.
 
 | Input | Type | Description |
 | --- | --- | --- |
 | `domain` | string | A category of the tree, such as `document authoring` |
-| `order` | `evidence-quantity` \| `economic-conviction` | By how many public statements exist, or by how much is behind it. Defaults to `evidence-quantity` |
+| `order` | `evidence-quantity` \| `economic-conviction` \| `answers-now` | By how many public statements exist, by how much is behind it, or only the agents that answered the sieve's last walk, highest rung first, with its date. Defaults to `evidence-quantity` |
 | `limit` | number | 1 to 100. Defaults to 25 |
 | `offset` | number | Defaults to 0 |
 

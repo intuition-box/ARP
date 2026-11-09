@@ -26,10 +26,13 @@ import {
   type SubjectControl,
   WALLETS_TO_MOVE,
   walletControlsSubject,
+  RUNG_NAMES,
+  type Rung,
 } from '@arp-protocol/core';
 import { createPublicClient, getAddress, http, parseAbi, stringToHex } from 'viem';
 
 import { chainId, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, RPC, directory, domainWalk, reads, record } from '../config.js';
+import sieveReading from '../../../../data/catalogue/agent-sieve-13579.json';
 import { hostGuard, type HostGuard } from '../host-guard.js';
 import { readRegistrationDocument, type RegistrationDocument } from '../registration-document.js';
 import { type JsonRpcId, fail, text, isAddress } from '../rpc.js';
@@ -577,15 +580,58 @@ export async function identity(id: JsonRpcId, args: Record<string, unknown>) {
   }
 }
 
+type SievedAgent = { chainId: number; registry: string; tokenId: string; name: string | null; rung: Rung; couldNotSay: boolean; proofUrl: string | null; at: string };
+// The shape `scripts/build/build-agent-sieve.ts` writes (task 87). It is ARP's directory on 13579
+// only: on another chain no agent here has a rung, rather than one chain's rungs on another's list.
+const SIEVE = sieveReading as { directoryChainId: number; checkedTo: string | null; agents: SievedAgent[] };
+const SIEVE_HERE = SIEVE.directoryChainId === chainId;
+const RUNGS = new Map(SIEVE.agents.map((agent) => [`eip155:${agent.chainId}/${agent.tokenId}`, agent]));
+
+/** An agent's rung from the sieve's last walk, keyed without the registry, as ids are per chain. */
+function rungOf(caip19: string | null): { rung: number; rung_name: string; could_not_say: boolean } | null {
+  if (!SIEVE_HERE || caip19 === null) return null;
+  const match = /^eip155:(\d+)\/erc721:0x[0-9a-fA-F]{40}\/(\d+)$/.exec(caip19);
+  const hit = match === null ? undefined : RUNGS.get(`eip155:${match[1]}/${match[2]}`);
+  return hit === undefined ? null : { rung: hit.rung, rung_name: RUNG_NAMES[hit.rung], could_not_say: hit.couldNotSay };
+}
+
+/**
+ * The agents that answered the sieve's last walk, highest rung first (task 87). Read from the dated
+ * file, not live: one call would otherwise probe every agent. `checked` says when.
+ */
+function answersNow(id: JsonRpcId, limit: number, offset: number) {
+  if (!SIEVE_HERE) {
+    return fail(id, -32602, `answers-now is read on chain ${SIEVE.directoryChainId} only; this server reads ${chainId}`);
+  }
+  const answering = SIEVE.agents.filter((agent) => agent.rung >= 3).sort((a, b) => b.rung - a.rung);
+  return text(id, {
+    order: 'answers-now',
+    checked: SIEVE.checkedTo,
+    limit,
+    offset,
+    total: answering.length,
+    in_directory: SIEVE.agents.length,
+    agents: answering.slice(offset, offset + limit).map((agent) => ({
+      caip19: `eip155:${agent.chainId}/erc721:${agent.registry}/${agent.tokenId}`,
+      name: agent.name,
+      rung: agent.rung,
+      rung_name: RUNG_NAMES[agent.rung],
+      // The request that proved it, for `arp_probe_endpoint` to check again now.
+      answered_at: agent.proofUrl,
+    })),
+  });
+}
+
 /**
  * The directory: agents the graph holds, in the order the caller asks for.
  *
- * Two orders, and the names say what they measure rather than implying a ranking: how **many**
- * statements a source holds about an agent, or how much TRUST sits on its own atom. Neither is a
- * score and this tool composes none — a caller that wants one has the parts.
+ * Three orders, and the names say what they measure rather than implying a ranking: how **many**
+ * statements a source holds about an agent, how much TRUST sits on its own atom, or (`answers-now`,
+ * task 87) only the agents that answered the sieve's last walk, highest rung first. None is a score
+ * and this tool composes none — a caller that wants one has the parts.
  *
  * `total` is the cohort's size from the source's own aggregate, never `agents.length`, so a page of
- * 25 out of 28,648 cannot read as 25 agents existing.
+ * 25 out of 28,648 cannot read as 25 agents existing. Under `answers-now` it is the count that answered.
  */
 export async function findAgents(id: JsonRpcId, args: Record<string, unknown>) {
   const domainRaw = args['domain'];
@@ -596,8 +642,8 @@ export async function findAgents(id: JsonRpcId, args: Record<string, unknown>) {
     return findAgentsByNeed(id, domainRaw.trim().toLowerCase());
   }
   const orderRaw = args['order'] ?? 'evidence-quantity';
-  if (orderRaw !== 'evidence-quantity' && orderRaw !== 'economic-conviction') {
-    return fail(id, -32602, "order must be 'evidence-quantity' or 'economic-conviction'");
+  if (orderRaw !== 'evidence-quantity' && orderRaw !== 'economic-conviction' && orderRaw !== 'answers-now') {
+    return fail(id, -32602, "order must be 'evidence-quantity', 'economic-conviction' or 'answers-now'");
   }
   const limitRaw = args['limit'] ?? 25;
   if (
@@ -612,6 +658,8 @@ export async function findAgents(id: JsonRpcId, args: Record<string, unknown>) {
   if (typeof offsetRaw !== 'number' || !Number.isInteger(offsetRaw) || offsetRaw < 0) {
     return fail(id, -32602, 'offset must be a non-negative integer');
   }
+
+  if (orderRaw === 'answers-now') return answersNow(id, limitRaw, offsetRaw);
 
   const page = await listAgents(directory, {
     order: orderRaw as AgentListOrder,
@@ -629,6 +677,8 @@ export async function findAgents(id: JsonRpcId, args: Record<string, unknown>) {
     agents: page.agents.map((agent) => ({
       source_handle: agent.sourceHandle,
       caip19: agent.ref === null ? null : toCaip19(agent.ref),
+      // The sieve's last walk, when it read this agent (task 87). Absent, not zero, when it did not.
+      ...(rungOf(agent.ref === null ? null : toCaip19(agent.ref)) ?? {}),
       // Said rather than resolved: several `same as` edges means there is no single agent to
       // point at, and naming one would be a guess with a permanent reader.
       identity_ambiguous: agent.isIdentityAmbiguous,

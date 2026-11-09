@@ -67,7 +67,7 @@ The facts about one skill on one URL: what its files name (commands, keys, a log
 
 ### `/agents`
 
-Every agent the graph holds, as ERC-8004 identities. Two orders: by how many public statements exist about each, or by how much people put behind it. Neither is a rating. Selecting one opens its page.
+Every agent the graph holds, as ERC-8004 identities. It opens on **Reachable**: the agents that answered the last walk of [the 8004 sieve](/docs/the-sieve), highest rung first, each with its rung, and the date of the walk in the header. **All** lists the whole index in two orders: by how many public statements exist about each, or by how much people put behind it. Agents with no registration file that resolves are hidden behind a count that shows them. None of it is a rating. Selecting one opens its page.
 
 ### `/agent/:chainId/:tokenId` — one agent
 

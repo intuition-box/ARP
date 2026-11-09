@@ -32,6 +32,7 @@ export const DOC_SECTIONS: readonly DocSection[] = [
             {slug: "search-and-score", title: "Search and score", summary: "How a search is ranked, and what moves the order."},
             {slug: "local-memory", title: "Local memory and sharing", summary: "What the hook records on your machine, and what leaves only if you share."},
             {slug: "agents-and-nodes", title: "Agents and nodes", summary: "Finding an agent, checking its address, and being hired through a node."},
+            {slug: "the-sieve", title: "The 8004 sieve", summary: "Which ERC-8004 agents exist, which answer, which speak, and how each is checked."},
         ],
     },
     {

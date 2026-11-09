@@ -78,6 +78,17 @@ export function AgentDirectory() {
     const cohortQuery = useAgentCohort(order, offset);
     const view = cohortQuery.data;
     const isFiltered = filter.trim().length > 0;
+    // Shells, rung 0 of the sieve (task 87), are hidden from the full list behind a count: an
+    // identity with no registration file that resolves has nothing on its page to read.
+    const [showShells, setShowShells] = useState(false);
+    const shellRows =
+        view === undefined || reachable === null
+            ? []
+            : view.rows.filter((row) => row.href !== null && reachable.shells.has(row.href.replace(/^\/agent\//, "")));
+    const listed: typeof view =
+        view === undefined || showShells || shellRows.length === 0
+            ? view
+            : {...view, rows: view.rows.filter((row) => !shellRows.includes(row))};
 
     function search(value: string) {
         const ref = agentRefOf(value);
@@ -121,7 +132,7 @@ export function AgentDirectory() {
                     {reachable === null ? null : (
                         <Fact
                             label="Reachable"
-                            hint={`Answered one request on an endpoint it declared, ${readingDay(reachable.measuredAt)}.`}
+                            hint={`Answered a request on an endpoint it declared, or was used by another wallet, checked ${readingDay(reachable.measuredAt)}.`}
                         >
                             {reachable.agents.length.toLocaleString("en-US")}
                         </Fact>
@@ -160,7 +171,7 @@ export function AgentDirectory() {
                 <PageLoading label="Reading the cohort" />
             ) : (
                 <>
-                    <CohortList view={view} />
+                    {listed === undefined ? null : <CohortList view={listed} />}
                     <nav
                         aria-label="Cohort pages"
                         className="mt-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3"
@@ -176,6 +187,21 @@ export function AgentDirectory() {
                                     <Link to="/test-identities" className={linkClass}>
                                         ARP test {view.hiddenCount === 1 ? "identity" : "identities"} hidden
                                     </Link>
+                                </>
+                            )}
+                            {shellRows.length === 0 ? null : (
+                                <>
+                                    {` · ${shellRows.length} on this page registered without a description · `}
+                                    <button
+                                        type="button"
+                                        aria-pressed={showShells}
+                                        aria-label={`${showShells ? "hide them" : "show them"}: the agents registered without a description`}
+                                        onClick={() => setShowShells(!showShells)}
+                                        // The base layer's `button` border would box this inline link.
+                                        className={`${linkClass} border-transparent! bg-transparent p-0 font-mono`}
+                                    >
+                                        {showShells ? "hide them" : "show them"}
+                                    </button>
                                 </>
                             )}
                             {cohortQuery.isPlaceholderData ? " · reading…" : ""}

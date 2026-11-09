@@ -22,7 +22,8 @@ const RPC: Record<string, string> = {
   '1': 'https://ethereum-rpc.publicnode.com',
 };
 // Only what another agent can call. A website, an X profile or a GitHub link answering a GET is not
-// an agent answering, and counted as one it took the figure from 32 to 128 on the first run.
+// an agent answering. The first run of 2026-11-09 counted them, and was not kept; the committed run
+// is `directory-reachable-2026-11-09T1440.json`.
 const PROTOCOLS = new Set(['mcp', 'a2a', 'openai', 'rest', 'api', 'jsonrpc', 'grpc']);
 const UA = 'ARP-verifier/0.0 (+https://github.com/intuition-box/ARP) measurement';
 const client = createErc8004Client({ sources: [intuitionSource({ graphqlUrl: GRAPHQL })] });

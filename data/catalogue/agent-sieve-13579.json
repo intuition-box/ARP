@@ -1,0 +1,3233 @@
+{
+  "_note": "Every agent in ARP's directory on testnet 13579 with the highest rung of the 8004 sieve it reached (packages/protocol/src/sieve.ts): 0 shell, 1 described, 2 declares an address, 3 answers, 4 speaks, 5 used. Built by scripts/build/build-agent-sieve.ts from data/measurements/agent-sieve-directory-2026-11-09T2000.jsonl; do not edit by hand.",
+  "directoryChainId": 13579,
+  "source": "data/measurements/agent-sieve-directory-2026-11-09T2000.jsonl",
+  "checkedFrom": "2026-11-09T18:01:56.889Z",
+  "checkedTo": "2026-11-09T18:27:02.637Z",
+  "agents": [
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2340",
+      "name": "🦞 Clawnch 🦞",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://clawn.ch/api/a2a",
+      "kinds": [
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:01.721Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22396",
+      "name": "aegisverify",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://aegisverify-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:16.554Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22352",
+      "name": "aegiszk",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://aegiszk-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:17.271Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22332",
+      "name": "AeroDropX",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://aero-drop-x-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:22.589Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22436",
+      "name": "aethera",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://aethera-api-alpha.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:22.580Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "888",
+      "name": "Agent8",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://agent8.8004tokens.xyz/.well-known/agent-card.json",
+      "kinds": [
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:02.584Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22376",
+      "name": "assetaforge",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://assetaforge-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:19.658Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22357",
+      "name": "aurasight",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://aurasight-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:22.711Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22185",
+      "name": "axedraxos",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://axedraxos-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:13.702Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22353",
+      "name": "castmind",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://castmind-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:20.422Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22400",
+      "name": "cipheraudit",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://cipheraudit-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:19.787Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2290",
+      "name": "Clawdia",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://work.clawplaza.ai/mcp/clawdia",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:06.818Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "424242",
+      "name": "Cold Harbor Probe Agent",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://centralcity.ai/a2a/40c5c91b-d3d0-4557-a421-3fe8c10a716f/.well-known/agent-card.json",
+      "kinds": [
+        "a2a"
+      ],
+      "at": "2026-11-09T18:12:15.033Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "25382",
+      "name": "Crypto Mood Reader 2",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://onyxgrid-five.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:03.933Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35008",
+      "name": "D0xed Dev",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://api.helixa.xyz/.well-known/agent-card.json",
+      "kinds": [
+        "a2a",
+        "mcp"
+      ],
+      "at": "2026-11-09T18:13:03.172Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22300",
+      "name": "DataAnalyst Pro",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://trywhee.github.io/agents/agent-dataanalyst/agent-card.json",
+      "kinds": [
+        "a2a"
+      ],
+      "at": "2026-11-09T18:01:56.889Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22455",
+      "name": "DataQuant Pro",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://trywhee.github.io/agents/agent-dataquant/agent-card.json",
+      "kinds": [
+        "a2a"
+      ],
+      "at": "2026-11-09T18:01:56.889Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "14340",
+      "name": "Delx Agent",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://api.delx.ai/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:14:37.499Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22426",
+      "name": "electrax",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://electrax-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:10.914Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22335",
+      "name": "erni",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://erni-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:16.327Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22387",
+      "name": "governancex",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://governancex-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:19.647Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22398",
+      "name": "InsightForge AI",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://trywhee.github.io/agents/agent-insightforge/agent-card.json",
+      "kinds": [
+        "a2a"
+      ],
+      "at": "2026-11-09T18:01:58.616Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1978",
+      "name": "Invariant",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://api.invariant-agent.xyz/.well-known/agent-card.json",
+      "kinds": [
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:01.290Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22349",
+      "name": "luminaverse",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://luminaverse-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:10.176Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22383",
+      "name": "mevguard",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://mevguard-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:10.720Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "51042",
+      "name": "Mitto The Scanner",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://workagnt.ai/api/agents/public/mitto-the-scanner-02ad39/agent-card",
+      "kinds": [
+        "a2a"
+      ],
+      "at": "2026-11-09T18:12:25.617Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22393",
+      "name": "nexarion",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://nexarion-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:07.166Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22362",
+      "name": "nexusnode",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://nexusnode-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:23.571Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22430",
+      "name": "novaris",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://novaris-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:19.412Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22379",
+      "name": "omniplay",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://omniplay-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:13.852Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22381",
+      "name": "oraclemind",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://oraclemind-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:22.003Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22524",
+      "name": "Quantiva Intelligence",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://trywhee.github.io/agents/agent-quantiva/agent-card.json",
+      "kinds": [
+        "a2a"
+      ],
+      "at": "2026-11-09T18:01:56.889Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22385",
+      "name": "quantrax",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://quantrax-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:14.000Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "26553",
+      "name": "QuantumCrypt",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://dataweb-sandy.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:04.263Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22338",
+      "name": "quantumswap",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://quantumswap-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:13.571Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22340",
+      "name": "sukmaxs",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://sukmaxs.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:07.749Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22419",
+      "name": "vortrax",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://vortrax-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:16.737Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35488",
+      "name": "x402-test-agent",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://api.helixa.xyz/.well-known/agent-card.json",
+      "kinds": [
+        "a2a",
+        "mcp"
+      ],
+      "at": "2026-11-09T18:14:08.657Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22389",
+      "name": "yieldflow",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://yieldflow-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:16.659Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22414",
+      "name": "zephyrax",
+      "rung": 4,
+      "couldNotSay": false,
+      "proofUrl": "https://zephyrax-api.vercel.app/mcp",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "at": "2026-11-09T18:02:10.526Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "23233",
+      "name": "AlphaHunterAI",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://openagent.market/placeholder",
+      "kinds": [],
+      "at": "2026-11-09T18:13:37.354Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24250",
+      "name": "AsgardMint",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-13",
+      "kinds": [],
+      "at": "2026-11-09T18:12:32.940Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "16850",
+      "name": "AsterPay — EUR Settlement for AI Agent Commerce",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://x402.asterpay.io/.well-known/mcp.json",
+      "kinds": [],
+      "at": "2026-11-09T18:12:32.985Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35307",
+      "name": "BagChaser",
+      "rung": 2,
+      "couldNotSay": false,
+      "proofUrl": "https://mateos.tech/.well-known/agents/el-tropero.json",
+      "kinds": [],
+      "at": "2026-11-09T18:02:26.261Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24260",
+      "name": "BaldurShield",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-21",
+      "kinds": [],
+      "at": "2026-11-09T18:11:48.273Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24163",
+      "name": "bitgrass-plot-purchase",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://dev.bitgrass.com/api/agent/plots/quote",
+      "kinds": [],
+      "at": "2026-11-09T18:13:52.274Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35304",
+      "name": "CalendApe",
+      "rung": 2,
+      "couldNotSay": false,
+      "proofUrl": "https://mateos.tech/.well-known/agents/el-domador.json",
+      "kinds": [],
+      "at": "2026-11-09T18:11:58.993Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1380",
+      "name": "Captain Dackie",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://www.capminal.ai/mcp",
+      "kinds": [],
+      "at": "2026-11-09T18:11:17.197Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2106",
+      "name": "Chamba",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://chamba.ultravioletadao.xyz/.well-known/agent.json",
+      "kinds": [],
+      "at": "2026-11-09T18:12:00.674Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35305",
+      "name": "ChatGod",
+      "rung": 2,
+      "couldNotSay": false,
+      "proofUrl": "https://mateos.tech/.well-known/agents/el-baqueano.json",
+      "kinds": [],
+      "at": "2026-11-09T18:02:27.086Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1145",
+      "name": "Claw",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://openclaw.ai/mcp",
+      "kinds": [],
+      "at": "2026-11-09T18:12:30.105Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35913",
+      "name": "CorePilotX",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://chainpulse-mcp-production.up.railway.app/agents/agent-1042/.well-known/agent-card.json",
+      "kinds": [],
+      "at": "2026-11-09T18:12:12.122Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35306",
+      "name": "DM Sniper",
+      "rung": 2,
+      "couldNotSay": false,
+      "proofUrl": "https://mateos.tech/.well-known/agents/el-rastreador.json",
+      "kinds": [],
+      "at": "2026-11-09T18:02:27.721Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "17666",
+      "name": "drhobbs Agent - Fashion Tech & Agentic Commerce",
+      "rung": 2,
+      "couldNotSay": false,
+      "proofUrl": "https://richard-hobbs.com/mcp",
+      "kinds": [],
+      "at": "2026-11-09T18:12:29.825Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "16928",
+      "name": "DummyBot Omega",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://dummy.example.com/api/mcp",
+      "kinds": [],
+      "at": "2026-11-09T18:14:01.860Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24283",
+      "name": "FafnirHoard",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-37",
+      "kinds": [],
+      "at": "2026-11-09T18:11:51.230Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24289",
+      "name": "GarmBark",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-41",
+      "kinds": [],
+      "at": "2026-11-09T18:12:15.979Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1374",
+      "name": "Gekko Executor",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://www.gekkoterminal.xyz/.well-known/agent-card.json",
+      "kinds": [],
+      "at": "2026-11-09T18:11:39.701Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1378",
+      "name": "Gekko Rebalancer",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://www.gekkoterminal.xyz/.well-known/agent-card.json",
+      "kinds": [],
+      "at": "2026-11-09T18:11:36.767Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1375",
+      "name": "Gekko Strategist",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://www.gekkoterminal.xyz/.well-known/agent-card.json",
+      "kinds": [],
+      "at": "2026-11-09T18:11:33.720Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24294",
+      "name": "HatiHunt",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-45",
+      "kinds": [],
+      "at": "2026-11-09T18:12:21.534Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24268",
+      "name": "HodrShadow",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-26",
+      "kinds": [],
+      "at": "2026-11-09T18:11:55.641Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24286",
+      "name": "HrungnirBlock",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-39",
+      "kinds": [],
+      "at": "2026-11-09T18:11:46.575Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24256",
+      "name": "HuginnEye",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-18",
+      "kinds": [],
+      "at": "2026-11-09T18:12:17.768Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24266",
+      "name": "IdunnCore",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-25",
+      "kinds": [],
+      "at": "2026-11-09T18:11:50.057Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2230",
+      "name": "Jeed",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://api.yourdomain.com/mcp)",
+      "kinds": [],
+      "at": "2026-11-09T18:11:17.198Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "38518",
+      "name": "jww-agent",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://6a49df41-cdd5-4da8-a161-cbea9caf0688-00-34dmgzkd2ct4m.janeway.replit.dev/api/agent-card.json",
+      "kinds": [],
+      "at": "2026-11-09T18:13:26.390Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24296",
+      "name": "ManniOrbit",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-46",
+      "kinds": [],
+      "at": "2026-11-09T18:11:53.930Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1421",
+      "name": "Meerkat Destiny",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://meerkat.up.railway.app/mcp/meerkat-78",
+      "kinds": [],
+      "at": "2026-11-09T18:11:27.621Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1434",
+      "name": "Meerkat James",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://meerkat.up.railway.app/mcp/meerkat-19",
+      "kinds": [],
+      "at": "2026-11-09T18:11:19.127Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24270",
+      "name": "MimirWell",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-28",
+      "kinds": [],
+      "at": "2026-11-09T18:11:57.319Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "32399",
+      "name": "Mituxpro",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://chainpulse-mcp-production.up.railway.app/mcp/agent-8",
+      "kinds": [],
+      "at": "2026-11-09T18:11:42.829Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "31803",
+      "name": "MomokAgent",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://chainpulse-mcp-production.up.railway.app/mcp/agent-1",
+      "kinds": [],
+      "at": "2026-11-09T18:11:40.785Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24379",
+      "name": "NidhoggNode",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-10",
+      "kinds": [],
+      "at": "2026-11-09T18:11:58.980Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24262",
+      "name": "NjordTide",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-22",
+      "kinds": [],
+      "at": "2026-11-09T18:11:51.810Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24281",
+      "name": "NornWeave",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-36",
+      "kinds": [],
+      "at": "2026-11-09T18:11:44.800Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35270",
+      "name": "OpsChad (8453:35270)",
+      "rung": 2,
+      "couldNotSay": false,
+      "proofUrl": "https://mateos.tech/.well-known/agents/el-ceo.json",
+      "kinds": [],
+      "at": "2026-11-09T18:02:32.741Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35303",
+      "name": "OpsChad (8453:35303)",
+      "rung": 2,
+      "couldNotSay": false,
+      "proofUrl": "https://mateos.tech/.well-known/agents/el-ceo.json",
+      "kinds": [],
+      "at": "2026-11-09T18:02:26.952Z"
+    },
+    {
+      "chainId": 196,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "5421",
+      "name": "PixelBrief",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://pixelbrief.tech/v1/brand-kit",
+      "kinds": [],
+      "at": "2026-11-09T18:12:49.891Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "19506",
+      "name": "QuantaBot",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-32",
+      "kinds": [],
+      "at": "2026-11-09T18:12:16.776Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "17131",
+      "name": "Rack",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://rack.example.com/mcp",
+      "kinds": [],
+      "at": "2026-11-09T18:14:23.291Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24381",
+      "name": "RagnarokAI",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-12",
+      "kinds": [],
+      "at": "2026-11-09T18:12:10.351Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24280",
+      "name": "RatatoskriMsg",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-35",
+      "kinds": [],
+      "at": "2026-11-09T18:12:13.446Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24380",
+      "name": "SigurdPulse",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-11",
+      "kinds": [],
+      "at": "2026-11-09T18:12:12.816Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1156",
+      "name": "Silverback",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://x402.silverbackdefi.app/.well-known/agent-card.json",
+      "kinds": [],
+      "at": "2026-11-09T18:13:08.630Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24253",
+      "name": "SleipnirRun",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-15",
+      "kinds": [],
+      "at": "2026-11-09T18:12:11.786Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "45051",
+      "name": "SuitMaster",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://www.moltbook.com/u/suitmaster",
+      "kinds": [],
+      "at": "2026-11-09T18:14:13.365Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "27440",
+      "name": "ThorGrid",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://railway-up-production-cd61.up.railway.app/mcp/agent-2",
+      "kinds": [],
+      "at": "2026-11-09T18:11:43.910Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "32344",
+      "name": "Ududxpro",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://chainpulse-mcp-production.up.railway.app/mcp/agent-6",
+      "kinds": [],
+      "at": "2026-11-09T18:11:42.350Z"
+    },
+    {
+      "chainId": 196,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "9729",
+      "name": "Web3Atlas",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://chainscope-a2mcp.jinzancha588722.workers.dev/v1/text-normalize",
+      "kinds": [],
+      "at": "2026-11-09T18:14:41.146Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35207",
+      "name": "Zyfai Rebalancer Agent for 0x2b5c292b633187a47dD89fa89b8a558975C55E10",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://mcp.zyf.ai/",
+      "kinds": [],
+      "at": "2026-11-09T18:11:45.915Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2241",
+      "name": "Zyfai Rebalancer Agent for 0x99679290c14937B8170CcFacA0e2b93eB8679E51",
+      "rung": 2,
+      "couldNotSay": true,
+      "proofUrl": "https://mcp.zyf.ai/",
+      "kinds": [],
+      "at": "2026-11-09T18:11:52.984Z"
+    },
+    {
+      "chainId": 56,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2394",
+      "name": "@Dior100x · Ensoul",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:02:52.893Z"
+    },
+    {
+      "chainId": 56,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2864",
+      "name": "@fundstrat · Ensoul",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:02:49.516Z"
+    },
+    {
+      "chainId": 56,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2883",
+      "name": "@gmgnai · Ensoul",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:02.150Z"
+    },
+    {
+      "chainId": 56,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2515",
+      "name": "@openclaw · Ensoul",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:00.240Z"
+    },
+    {
+      "chainId": 56,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2379",
+      "name": "@pepecoineth · Ensoul",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:02:52.098Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20040",
+      "name": "214",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:47.139Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1940",
+      "name": "a",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:19.518Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "8",
+      "name": "Agent 13579:8",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:02:46.684Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1738",
+      "name": "Agent 8453:1738",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:18.356Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1740",
+      "name": "Agent 8453:1740",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:26.698Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1743",
+      "name": "Agent 8453:1743",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:19.075Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1751",
+      "name": "Agent 8453:1751",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:22.995Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "32328",
+      "name": "Agent Health Monitor",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:27.526Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "56286",
+      "name": "AgentAgent",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:02.912Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "56285",
+      "name": "AgentAPI",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:27.466Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "56279",
+      "name": "AgentClinical",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:42.078Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "56275",
+      "name": "AgentDeFi",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:36.420Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "56250",
+      "name": "AgentNews",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:14.855Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "56253",
+      "name": "AgentNotify",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:05.751Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "56254",
+      "name": "AgentRep",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:27.823Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "16666",
+      "name": "Anchor",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:27:02.637Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "18532",
+      "name": "AncnBot",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:38.562Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "19977",
+      "name": "AncnBot",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:46.266Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20143",
+      "name": "Arc",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:31.595Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "17139",
+      "name": "Aru",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:33.479Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "6",
+      "name": "balku-yemi84 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:32.220Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2030",
+      "name": "base",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:20.873Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "37540",
+      "name": "BEACON-KEEPER",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:35.915Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "37",
+      "name": "beepmel-wonhu51 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:33.424Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "38",
+      "name": "bomde-barim46 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:47.665Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2239",
+      "name": "BorrowClaw",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:24.356Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "44241",
+      "name": "BotcoinMiner",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:34.634Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "14355",
+      "name": "Bruno's agent",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:10.342Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2023",
+      "name": "cbj",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:23.702Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20055",
+      "name": "chaos",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:26.342Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "32232",
+      "name": "Cherry",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:05.591Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35027",
+      "name": "ClawmarketAI",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:27.891Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1",
+      "name": "ClawNews",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:02:00.785Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20059",
+      "name": "Conway",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:25.303Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20051",
+      "name": "Cooker",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:59.737Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20146",
+      "name": "custos",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:30.386Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2233",
+      "name": "DeFiClaw",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:19.731Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "19982",
+      "name": "deola",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:38.146Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "19131",
+      "name": "dev based god",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:17.970Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "18562",
+      "name": "dispoai",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:22.422Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "18578",
+      "name": "dispoais",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:26.657Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "14",
+      "name": "doyi-benyel45 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:23.878Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "16",
+      "name": "dronwo-ronmek96 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:04.598Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35967",
+      "name": "Eazee",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:27.831Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "18904",
+      "name": "Execution Market",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:36.872Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "28",
+      "name": "fenwire-jusel05 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:45.457Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "18564",
+      "name": "fixed",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:06.153Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "41",
+      "name": "fudi-gilpron79 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:10.939Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "19061",
+      "name": "FullFlowTestAgent",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:12.956Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "34",
+      "name": "furgo-lonpi50 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:34.025Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1199",
+      "name": "Gekko Allocator",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:02:25.045Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "0",
+      "name": "Genesis Agent",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:29.169Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "44",
+      "name": "gozar-wujan22 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:35.927Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "21",
+      "name": "harar-kanot30 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:44.458Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "34366",
+      "name": "Hermes Agent",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:28.464Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "44489",
+      "name": "Hermes-Agent",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:00.461Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "17145",
+      "name": "hezez-meke82 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:09.487Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "34559",
+      "name": "Hogshead_W",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:07.305Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "43",
+      "name": "hoho-yizar52 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:03.900Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "18549",
+      "name": "irvinecold",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:23.814Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "5",
+      "name": "jilu-rohu24 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:29.251Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20077",
+      "name": "kimi-alpha",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:25.202Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20079",
+      "name": "kimi-sigma",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:30.330Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "11",
+      "name": "kimzu-wibit08 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:32.684Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "10",
+      "name": "koha-pewire34 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:25.927Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "19",
+      "name": "kopa-tonvim26 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:28.911Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "39",
+      "name": "kuke-wimhel46 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:06.848Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "12",
+      "name": "kurot-pebi48 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:23.471Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "23",
+      "name": "lofil-jahel74 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:43.730Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35013",
+      "name": "Loop",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:29.151Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20047",
+      "name": "lww54200",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:25.685Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35195",
+      "name": "MeowClaw-1774099293",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:00.606Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "18547",
+      "name": "MoltBot Agent",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:54.576Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35285",
+      "name": "MyWork001",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:31.804Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "35",
+      "name": "nekgon-lelfu18 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:28.425Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "3",
+      "name": "nekto-ramar05 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:54.656Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20897",
+      "name": "nftarchitect",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:43.176Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "17049",
+      "name": "Nova",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:24.439Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20057",
+      "name": "Nyx",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:12.637Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20002",
+      "name": "Openai",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:01.743Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "32263",
+      "name": "Phosphor",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:45.721Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "19314",
+      "name": "pricecent",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:28.468Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "16803",
+      "name": "PromptClaw",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:40.310Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "17",
+      "name": "pronvu-fuyu44 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:16.305Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "25",
+      "name": "pusde-zarga83 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:20.313Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1635",
+      "name": "QuantumPilot",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:47.790Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "46",
+      "name": "ramus-fepar33 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:55.232Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "4",
+      "name": "relto-hannim62 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:39.658Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "26",
+      "name": "riwim-botdim37 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:21.937Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "40",
+      "name": "rotsi-rarmek97 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:31.879Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "32194",
+      "name": "Sable",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:36.277Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "13",
+      "name": "sarbeep-guszez74 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:56.525Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "26008",
+      "name": "segv",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:18.687Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "29",
+      "name": "sila-zuska91 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:39.610Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "25637",
+      "name": "SmartCodedBot",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:11.963Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "37508",
+      "name": "SolsticeMark_AC",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:12.602Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "24",
+      "name": "sonrar-mekge12 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:38.022Z"
+    },
+    {
+      "chainId": 196,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1445",
+      "name": "SoulMirror",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:02:58.403Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "36",
+      "name": "tawo-gitim05 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:58.094Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20034",
+      "name": "TechTinker",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:31.065Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "45",
+      "name": "teme-wufur61 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:15.728Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22880",
+      "name": "TestBot-1772432359737",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:24.479Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "26024",
+      "name": "Tilted",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:42.114Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "1636",
+      "name": "Tingu",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:17.525Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "30",
+      "name": "tirim-zirar23 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:20.603Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "15",
+      "name": "tustel-gogil00 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:11.354Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "18",
+      "name": "varge-kurar03 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:48.074Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "42",
+      "name": "vayim-pellel94 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:58.191Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "8",
+      "name": "vekon-mowel90 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:19.828Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "33",
+      "name": "vofil-narvu45 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:16.358Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22",
+      "name": "wazi-yelkim50 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:18.853Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "18560",
+      "name": "web3an",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:46.951Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20097",
+      "name": "Wheelmanwilly",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:25.026Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "32",
+      "name": "wimdi-zarhu43 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:06.874Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22711",
+      "name": "Wotm8",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:11.405Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "22250",
+      "name": "X-Powered Trend Oracle",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:17.247Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "18702",
+      "name": "x402-test-1771691463794",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:36.712Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "19989",
+      "name": "Xai",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:59.955Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "27",
+      "name": "yarnim-guron55 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:52.890Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "9",
+      "name": "yihel-timpu37 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:21.519Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "7",
+      "name": "yusbi-tusjo72 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:28.675Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20",
+      "name": "zimzon-kayim48 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:31.987Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "31",
+      "name": "zulan-dopus42 by Olas",
+      "rung": 1,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:06.505Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "32214",
+      "name": "AegisProtocol",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:35.102Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "10",
+      "name": "Agent 13579:10",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:08.611Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "11",
+      "name": "Agent 13579:11",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:11.134Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "12",
+      "name": "Agent 13579:12",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:02:43.332Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "13",
+      "name": "Agent 13579:13",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:10.810Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "14",
+      "name": "Agent 13579:14",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:09.573Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "15",
+      "name": "Agent 13579:15",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:08.409Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "16",
+      "name": "Agent 13579:16",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:10.159Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "17",
+      "name": "Agent 13579:17",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:10.056Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "18",
+      "name": "Agent 13579:18",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:07.636Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "19",
+      "name": "Agent 13579:19",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:10.599Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "20",
+      "name": "Agent 13579:20",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:06.169Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "21",
+      "name": "Agent 13579:21",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:06.938Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "22",
+      "name": "Agent 13579:22",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:07.362Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "23",
+      "name": "Agent 13579:23",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:09.167Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "24",
+      "name": "Agent 13579:24",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:08.446Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "25",
+      "name": "Agent 13579:25",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:06.275Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "26",
+      "name": "Agent 13579:26",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:07.435Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "27",
+      "name": "Agent 13579:27",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:09.885Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "28",
+      "name": "Agent 13579:28",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:09.840Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "29",
+      "name": "Agent 13579:29",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:09.385Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "30",
+      "name": "Agent 13579:30",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:06.505Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "31",
+      "name": "Agent 13579:31",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:10.763Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "32",
+      "name": "Agent 13579:32",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:08.047Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "33",
+      "name": "Agent 13579:33",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:06.269Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "34",
+      "name": "Agent 13579:34",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:08.525Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "35",
+      "name": "Agent 13579:35",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:09.282Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "36",
+      "name": "Agent 13579:36",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:09.131Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "37",
+      "name": "Agent 13579:37",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:10.628Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "38",
+      "name": "Agent 13579:38",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:11.271Z"
+    },
+    {
+      "chainId": 13579,
+      "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      "tokenId": "9",
+      "name": "Agent 13579:9",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:03:10.344Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "11065",
+      "name": "Agent 8453:11065",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:08.128Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "11663",
+      "name": "Agent 8453:11663",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:34.753Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "11664",
+      "name": "Agent 8453:11664",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:47.477Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "13461",
+      "name": "Agent 8453:13461",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:57.584Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "13470",
+      "name": "Agent 8453:13470",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:31.475Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "13473",
+      "name": "Agent 8453:13473",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:49.119Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "15182",
+      "name": "Agent 8453:15182",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:23.295Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "18805",
+      "name": "Agent 8453:18805",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:44.318Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "2",
+      "name": "Agent 8453:2",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:13.839Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20879",
+      "name": "Agent 8453:20879",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:26.967Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "20887",
+      "name": "Agent 8453:20887",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:05.753Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "28872",
+      "name": "Agent 8453:28872",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:14.633Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "3143",
+      "name": "Agent 8453:3143",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:41.367Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "3144",
+      "name": "Agent 8453:3144",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:37.883Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "3146",
+      "name": "Agent 8453:3146",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:37.335Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "4654",
+      "name": "Agent 8453:4654",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:39.705Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "4656",
+      "name": "Agent 8453:4656",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:32.128Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "5176",
+      "name": "Agent 8453:5176",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:25.852Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "6346",
+      "name": "Agent 8453:6346",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:15.221Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "6347",
+      "name": "Agent 8453:6347",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:36.779Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "6351",
+      "name": "Agent 8453:6351",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:39.101Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "6353",
+      "name": "Agent 8453:6353",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:14:43.884Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "7976",
+      "name": "Agent 8453:7976",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:02.519Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "7977",
+      "name": "Agent 8453:7977",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:44.867Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "9783",
+      "name": "Agent 8453:9783",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:31.071Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "9785",
+      "name": "Agent 8453:9785",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:35.314Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "9794",
+      "name": "Agent 8453:9794",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:13:57.041Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "80040710",
+      "name": "Coldtest Battle Agent",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:14.556Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "9977001",
+      "name": "Coldtest R2 Agent",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:15.488Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "4204207",
+      "name": "Coldtest Run4 Agent",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:19.039Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "733099482",
+      "name": "Coldtest Runner 733099482",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:27.344Z"
+    },
+    {
+      "chainId": 8453,
+      "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "tokenId": "77220722",
+      "name": "Skilltest Sentinel",
+      "rung": 0,
+      "couldNotSay": false,
+      "proofUrl": null,
+      "kinds": [],
+      "at": "2026-11-09T18:12:32.473Z"
+    }
+  ]
+}

@@ -64,8 +64,10 @@ export const TOOLS = [
         },
         order: {
           type: 'string',
-          enum: ['evidence-quantity', 'economic-conviction'],
-          description: 'Defaults to evidence-quantity.',
+          enum: ['evidence-quantity', 'economic-conviction', 'answers-now'],
+          description:
+            'Defaults to evidence-quantity. answers-now lists only the agents that answered the last walk of the ' +
+            '8004 sieve, highest rung first (3 answers, 4 speaks its protocol, 5 used by another wallet), with when it was checked.',
         },
         limit: { type: 'number', description: '1 to 100. Defaults to 25.' },
         offset: { type: 'number', description: 'Defaults to 0.' },

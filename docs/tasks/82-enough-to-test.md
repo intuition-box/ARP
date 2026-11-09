@@ -43,7 +43,9 @@ Before a tester round, the user asked whether there was enough for a person or a
 4. The site: `/skills-index/api/search` is proxied by `apps/web/nginx.conf` in production and by
    `vite.config.ts` in dev. `/search` has an "On skills.sh" section linking each result to its pulse
    page.
-5. `scripts/measure/directory-reachable.ts` and `scripts/build/build-agents-reachable.ts` write
+5. **Superseded by task 87 (ADR `0156`):** `/agents` now reads the 8004 sieve's walk,
+   `data/catalogue/agent-sieve-13579.json`, and the build script and JSON below are removed. As built here:
+   `scripts/measure/directory-reachable.ts` and `scripts/build/build-agents-reachable.ts` write
    `apps/web/src/data/agents-reachable.json`. `/agents` opens on "Reachable", with "All" for the
    whole index, and a header figure whose `Hint` gives the reading's date.
 

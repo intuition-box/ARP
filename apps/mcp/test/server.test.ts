@@ -471,6 +471,22 @@ describe("arp_tool_reputation", () => {
     });
 });
 
+describe("arp_find_agents answers-now, on testnet 13579 (task 87)", () => {
+    it("lists the sieve's agents at rung 3 and above, highest first, with the date of the walk", async () => {
+        const body = (await rpc("tools/call", {name: "arp_find_agents", arguments: {order: "answers-now", limit: 100}})).body!;
+        const answer = JSON.parse((body["result"] as {content: {text: string}[]}).content[0]!.text) as {
+            checked: string | null;
+            total: number;
+            agents: {rung: number; caip19: string}[];
+        };
+        const rungs = answer.agents.map((agent) => agent.rung);
+        expect(rungs.every((rung) => rung >= 3)).toBe(true);
+        expect([...rungs].sort((a, b) => b - a)).toEqual(rungs);
+        expect(answer.total).toBe(answer.agents.length);
+        expect(Number.isNaN(Date.parse(answer.checked ?? ""))).toBe(false);
+    });
+});
+
 describe("arp_find_tools, outside the plugin's set", () => {
     it("answers a word the registry does not use with the words it does", async () => {
         // "business" was the word a live run used on 2026-11-02, and it found nothing. The answer

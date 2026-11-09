@@ -29,6 +29,7 @@
  *  2026-10-27 — so the reason is the rule here, not the proportion.
  */
 import { highestTokenId } from '../helpers/erc8004-population.js';
+import { fetchDocument, tokenUri } from '../helpers/registration-document.js';
 
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -45,7 +46,6 @@ import {
   type ProbeOutcome,
 } from '../../packages/protocol/src/index.js';
 
-const TOKEN_URI = '0xc87b56dd';
 
 /**
  * The registries this walker knows, selected with `--target`.
@@ -91,12 +91,7 @@ function pickTarget(): (typeof TARGETS)[TargetName] & { name: TargetName } {
   return { ...TARGETS[name], name };
 }
 
-/** Gateways tried in order for an `ipfs://` URI. ipfs.io rate-limits hard under a walk. */
-const IPFS_GATEWAYS = [
-  'https://ipfs.io/ipfs/',
-  'https://dweb.link/ipfs/',
-  'https://w3s.link/ipfs/',
-];
+
 
 type AgentResult = {
   tokenId: string;
@@ -175,153 +170,17 @@ const countingFetch = async (
   return globalThis.fetch(input, init);
 };
 
-async function tokenUri(id: number): Promise<string | null> {
-  const data = TOKEN_URI + BigInt(id).toString(16).padStart(64, '0');
-  const response = await countingFetch(TARGET.rpc, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'eth_call',
-      params: [{ to: TARGET.registry, data }, 'latest'],
-    }),
-    signal: AbortSignal.timeout(20_000),
-  });
-  const json = (await response.json()) as { result?: string; error?: unknown };
-  if (json.error || !json.result || json.result === '0x') return null;
-  const hex = json.result.slice(2);
-  const length = parseInt(hex.slice(64, 128), 16);
-  if (!Number.isFinite(length) || length === 0) return null;
-  const bytes = hex.slice(128, 128 + length * 2).match(/../g) ?? [];
-  return new TextDecoder().decode(new Uint8Array(bytes.map((b) => parseInt(b, 16))));
-}
-
-function decodeDataUri(uri: string): string {
-  const payload = uri.slice(uri.indexOf(',') + 1);
-  return uri.includes(';base64,')
-    ? Buffer.from(payload, 'base64').toString('utf8')
-    : decodeURIComponent(payload);
-}
-
-async function fetchDocument(
-  uri: string,
-  limiter: HostLimiter,
-): Promise<{ outcome: DocumentOutcome; body: string | null }> {
-  if (uri.startsWith('data:')) {
-    // Decode AND parse. The `catch` used to cover only the decode, so a `data:` URI holding
-    // non-JSON returned `status: 'read'` with an unparseable body — and `JSON.parse` downstream
-    // then threw inside a `Promise.all`, killing a 100-agent walk on one malformed document. The
-    // HTTP branch below has always validated the parse; this one did not, and that asymmetry is
-    // what the gate found.
-    try {
-      const body = decodeDataUri(uri);
-      JSON.parse(body);
-      return { outcome: { status: 'read', url: uri, httpStatus: 200 }, body };
-    } catch (error) {
-      return {
-        outcome: {
-          status: 'unreachable',
-          code: 'not-json',
-          url: uri,
-          httpStatus: null,
-          detail: `data: URI did not decode to JSON (${String(error).slice(0, 80)})`,
-        },
-        body: null,
-      };
-    }
-  }
-
-  const candidates = uri.startsWith('ipfs://')
-    ? IPFS_GATEWAYS.map((gateway) => gateway + uri.slice(7))
-    : /^https?:\/\//.test(uri)
-      ? [uri]
-      : [];
-
-  if (candidates.length === 0) {
-    return {
-      outcome: {
-        status: 'unreachable',
-        code: 'unresolvable-scheme',
-        url: uri,
-        httpStatus: null,
-        detail: 'the tokenURI is neither http(s), ipfs:// nor data:',
-      },
-      body: null,
-    };
-  }
-
-  let last: DocumentOutcome | null = null;
-  for (const url of candidates) {
-    const result = await limiter.run(url, async () => {
-      try {
-        const response = await countingFetch(url, {
-          headers: { 'user-agent': DEFAULT_USER_AGENT },
-          signal: AbortSignal.timeout(DEFAULT_PROBE_TIMEOUT_MS * 2),
-        });
-        return { response, body: await response.text() };
-      } catch (error) {
-        return { error };
-      }
-    });
-    if ('error' in result) {
-      last = {
-        status: 'unreachable',
-        code: 'transport-error',
-        url,
-        httpStatus: null,
-        detail: String(result.error).slice(0, 120),
-      };
-      continue;
-    }
-    const { response, body } = result;
-    if (response.status === 429 || response.status === 503) {
-      limiter.backOff(url, response.headers.get('retry-after'));
-      last = {
-        status: 'unreachable',
-        code: 'http-error',
-        url,
-        httpStatus: response.status,
-        detail: `gateway asked us to back off (HTTP ${response.status})`,
-      };
-      continue;
-    }
-    if (!response.ok) {
-      last = {
-        status: 'unreachable',
-        code: 'http-error',
-        url,
-        httpStatus: response.status,
-        detail: `HTTP ${response.status}`,
-      };
-      continue;
-    }
-    try {
-      JSON.parse(body);
-    } catch {
-      last = {
-        status: 'unreachable',
-        code: 'not-json',
-        url,
-        httpStatus: response.status,
-        detail: 'answered, but the body is not JSON',
-      };
-      continue;
-    }
-    return { outcome: { status: 'read', url, httpStatus: response.status }, body };
-  }
-  return { outcome: last!, body: null };
-}
-
 // ----------------------------------------------------------------------- walk --
 
 async function verifyAgent(id: number, limiter: HostLimiter): Promise<AgentResult> {
   const base = { tokenId: String(id), chainId: TARGET.chainId };
-  const uri = await tokenUri(id).catch(() => null);
+  const uri = await tokenUri({ rpc: TARGET.rpc, registry: TARGET.registry, id, fetch: countingFetch }).catch(
+    () => null,
+  );
   if (!uri) {
     return { ...base, document: { status: 'no-token-uri' }, documentHash: null, endpoints: [] };
   }
-  const { outcome, body } = await fetchDocument(uri, limiter);
+  const { outcome, body } = await fetchDocument(uri, limiter, countingFetch);
   if (outcome.status !== 'read' || body === null) {
     return { ...base, document: outcome, documentHash: null, endpoints: [] };
   }

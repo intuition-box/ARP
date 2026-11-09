@@ -3,7 +3,7 @@ import {describe, expect, it, vi} from "vitest";
 
 import type {CohortRow, CohortView} from "../services/agent-cohort";
 import {renderWithProviders} from "../test/render";
-import {reachableReading} from "../services/agents-reachable";
+import type {SieveReading} from "../services/agents-reachable";
 import {AgentDirectory} from "./AgentDirectory";
 
 const navigate = vi.fn();
@@ -44,12 +44,29 @@ const VIEW: CohortView = {
         row({
             key: "b",
             name: "Jeed",
+            href: "/agent/8453/2",
             marketCap: "<0.00000001 TRUST",
             positions: "0 supports",
             isUnsupported: true,
         }),
+        row({key: "c", name: "Shelly", href: "/agent/8453/3"}),
     ],
 };
+
+const SIEVE: SieveReading = {
+    directoryChainId: 13579,
+    checkedFrom: "2026-11-09T19:00:00.000Z",
+    checkedTo: "2026-11-09T20:00:00.000Z",
+    agents: [
+        {chainId: 8453, registry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432", tokenId: "7", name: "Speaker", rung: 4, couldNotSay: false, proofUrl: "https://a.example/.well-known/agent-card.json", kinds: ["a2a"], at: ""},
+        {chainId: 8453, registry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432", tokenId: "8", name: null, rung: 3, couldNotSay: false, proofUrl: "https://b.example/api", kinds: [], at: ""},
+        {chainId: 8453, registry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432", tokenId: "3", name: "Shelly", rung: 0, couldNotSay: false, proofUrl: null, kinds: [], at: ""},
+    ],
+};
+vi.mock("../services/agents-reachable", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("../services/agents-reachable")>();
+    return {...actual, reachableReading: () => actual.readingOf(SIEVE)};
+});
 
 vi.mock("../hooks/use-agent-cohort", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../hooks/use-agent-cohort")>()),
@@ -112,18 +129,15 @@ describe("the agent index", () => {
     });
 });
 
-describe("reachable first (task 82)", () => {
-    it("opens on the agents that answered, each linking to its page, with the reading's count", () => {
+describe("the sieve orders the directory (tasks 82, 87)", () => {
+    it("opens on rung 3 and above, highest first, each with its rung and linking to its page", () => {
         renderWithProviders(<AgentDirectory />);
         expect(screen.getByRole("button", {name: "Reachable"})).toHaveAttribute("aria-pressed", "true");
-        const reading = reachableReading();
-        expect(screen.getAllByText(reading.agents.length.toLocaleString("en-US")).length).toBeGreaterThan(0);
-        const first = reading.agents[0];
-        if (first === undefined) return;
-        expect(screen.getAllByRole("link", {name: new RegExp(first.name)})[0]).toHaveAttribute(
-            "href",
-            `/agent/${first.chainId}/${first.tokenId}`,
-        );
+        expect(screen.getAllByText("2").length).toBeGreaterThan(0);
+        const links = screen.getAllByRole("link").filter((link) => link.getAttribute("href")?.startsWith("/agent/8453/") === true);
+        expect(links.map((link) => link.getAttribute("href"))).toEqual(["/agent/8453/7", "/agent/8453/8"]);
+        expect(links[0]?.textContent).toMatch(/Speaks · A2A/i);
+        expect(links[1]?.textContent).toMatch(/Agent 8453:8/);
     });
 
     it("shows the whole index and its order control under All", () => {
@@ -133,10 +147,20 @@ describe("reachable first (task 82)", () => {
         expect(screen.getByRole("group", {name: "Order the index"})).toBeInTheDocument();
     });
 
+    it("hides a shell from the full list behind a count, and shows it on request", () => {
+        renderWithProviders(<AgentDirectory />);
+        fireEvent.click(screen.getByRole("button", {name: "All"}));
+        expect(screen.queryByText("Shelly")).toBeNull();
+        expect(screen.getByText(/1 on this page registered without a description/)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", {name: /^show them/}));
+        expect(screen.getByText("Shelly")).toBeInTheDocument();
+    });
+
     it("lists the whole index on a chain the reading was not taken on, with no reachable figure", () => {
         renderWithProviders(<AgentDirectory />, {mainnet: true});
         expect(screen.queryByRole("button", {name: "Reachable"})).toBeNull();
         expect(screen.queryByText("Reachable")).toBeNull();
         expect(screen.getByRole("group", {name: "Order the index"})).toBeInTheDocument();
+        expect(screen.getByText("Shelly")).toBeInTheDocument();
     });
 });
