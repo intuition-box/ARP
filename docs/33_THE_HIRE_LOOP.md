@@ -1,8 +1,8 @@
 # 33 — The hire loop
 
-**Status:** concept, not commitment. Written 2026-11-09 at the user's request (« créer le concept de
+**Status:** concept, not commitment; the five choices of §5 are decided (ADR `0148`). Written 2026-11-09 at the user's request (« créer le concept de
 cette boucle… éviter de refaire quelque chose qui est déjà fait par tout le monde »). Nothing here is
-built or decided beyond ADR `0147`. It is the hire column of `docs/32`.
+built. It is the hire column of `docs/32`.
 
 **What it answers:** which actors and which actions it takes for one agent to hire another for a
 specialised task, how they pay each other, and which parts already exist elsewhere so ARP does not
@@ -90,22 +90,25 @@ sequenceDiagram
 A record that names a payment it did not make is refused at the observed tier by checking the tx: its
 sender is the line's writer, its recipient the provider's payee, its amount the offer's.
 
-## 5. The questions it leaves open
+## 5. The five choices, decided 2026-11-09
 
-1. **Pay first, or escrow?** x402 pays first, so a bad delivery is found after the money moved.
-   ERC-8183 escrows behind an evaluator. Escrow fits tasks that take time; it costs an evaluator nobody
-   trusts yet. Both can feed the same ARP line.
-2. **Which chain pays, which chain records.** x402 settles mostly in USDC on Base; the lines are on
-   Intuition. A proof on one chain checked from another is the join `portability.md` rule 2 warns
-   about: it must be built for two chains even where testnet has one.
-3. **Delegation or a signature per call.** A delegation bounds a whole period; x402's own flow signs
-   each payment. Which one an operator wants is untested.
-4. **Mirror to ERC-8004 feedback?** Writing the same outcome to 8004's Reputation Registry, with its
-   `proofOfPayment`, would put ARP's record where 8004 readers already look. It costs a second write and
-   says less (no domain, no reason).
-5. **An outside reader.** A pre-pay checker such as x402 Doctor could show ARP's records as an info line
-   ("N buyers paid, M got nothing back"). That needs records on x402 endpoints, so it waits for action 4
-   of §3. Whether Fizzl wants it is a conversation, not a fact here (`FUTURE.md`).
+The user's answers, ADR `0148`. Still a concept: nothing below is built.
+
+| # | Question | Choice | Why |
+| --- | --- | --- | --- |
+| 1 | Pay first, or escrow? | **x402, paying first, by default. ERC-8183 escrow above a price or duration threshold.** ARP writes no escrow contract | every x402 seller already accepts the first; the second exists. ARP reads an 8183 evaluator's attestation as one more signal |
+| 2 | Pay on one chain, record on another | **No bridge, no oracle: the line carries the payment's reference, in ERC-8004's `proofOfPayment` shape (`chainId`, `txHash`, `fromAddress`, `toAddress`), and the reader checks it on the paying chain** — sender is the line's writer, recipient the provider's payee, amount the offer's. The result is a dated fact, never on chain, as the probe is (ADR `0093`) | works for any chain; a line without a proof that checks stays declared |
+| 3 | Delegation or a signature per call | **Both, by who is in charge.** An autonomous agent pays under a per-period delegation (`erc20PeriodTransfer` in USDC, `TrustStakeCapEnforcer` for native TRUST). With a person in the loop, or for a first run, x402's own per-payment signature | the seller receives an ordinary x402 payment either way; no ARP code in the payment |
+| 4 | Mirror to ERC-8004 feedback | **Yes, observed lines only**: the client's agent also calls `giveFeedback`, with `proofOfPayment` and a URI pointing at the ARP line, which keeps the domain and the reason | puts the record where 8004's readers already look, with ARP as the source |
+| 5 | An outside reader | **A dated, signed read API**, per endpoint and domain ("N payers, M failed, these reasons"), open to any reader. ARP also reads what others publish (a pre-pay checker's index under its licence, 8004 feedback, 8183 attestations) as dated facts, each with its source named | one record, readable by every checker or directory, instead of each keeping its own |
+
+**What choice 2 still has to solve:** an agent that pays from a smart account under a delegation pays
+from an address that is not the key that writes the line. The link between that account and the
+ERC-8004 identity has to be checkable (the registry's agent wallet, or a signed statement), or the
+check in choice 2 cannot pass.
+
+**What choice 4 costs:** one more write per hire, on the chain the registry is on, signed by the
+client. Mirroring only observed lines keeps a free rating from carrying ARP's name.
 
 ## 6. What it would cost to build, roughly
 
