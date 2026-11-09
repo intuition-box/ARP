@@ -37,7 +37,7 @@ Walk through each item for every contract change. Document the result (clean pas
 ### Signature replay
 
 - If signatures are used (EIP-712, EIP-1271), they include a nonce + chainId + verifying contract.
-- Signatures are in use, so this section applies. Eleven sites: `contracts/src/erc8004/IdentityRegistry.sol`
+- Signatures are in use, so this section applies. Twelve sites: `contracts/src/erc8004/IdentityRegistry.sol`
   (ARP's testnet deployment of the reference registry, which verifies signatures); MetaMask
   Delegation Framework delegations (EIP-712, signed in the app, verified by `apps/sponsor` before
   it publishes one); the operator's EIP-712 statement on import
@@ -48,7 +48,7 @@ Walk through each item for every contract change. Document the result (clean pas
   (`packages/protocol/src/sponsor/mint-gas.ts`, ADR `0116`), which carries no verifying contract
   because no contract checks it, and whose nonce the sponsoring service spends once; the address's
   list-tool request (`packages/protocol/src/sponsor/list-tool.ts`, ADR `0123`), the same shape
-  with the URL in the signed message; the agent's line request (`packages/protocol/src/sponsor/line.ts`, ADR `0144`), the same shape with the line in the signed message, and since version 2 the x402 payment the line claims (ADR `0159`); the agent's category request (`packages/protocol/src/sponsor/category.ts`, ADR `0146`), the same shape with the category, its parent, the subject and the reason in the signed message; and `ReceiptEnforcer`
+  with the URL in the signed message; the agent's line request (`packages/protocol/src/sponsor/line.ts`, ADR `0144`), the same shape with the line in the signed message, and since version 2 the x402 payment the line claims (ADR `0159`); the agent's category request (`packages/protocol/src/sponsor/category.ts`, ADR `0146`), the same shape with the category, its parent, the subject and the reason in the signed message; the agent's EIP-3009 `TransferWithAuthorization` on Base Sepolia (`scripts/demo/x402-e2e.ts`, task 91, ADR `0160`), signed by Coinbase's `@x402/evm` 2.28.0 with USDC's own EIP-712 domain (chain id and verifying contract) and a random 32-byte nonce the token spends once, demo only and refused for any network, asset, payee or amount but the fake seller's; and `ReceiptEnforcer`
   (`contracts/src/enforcers/ReceiptEnforcer.sol`, task 43, not deployed), which verifies that hire
   receipt on chain. The content receipt and the sponsor request carry no verifying contract. For the
   content receipt the cause still holds: no contract checks it. The sponsor request's nonce is the
@@ -141,6 +141,7 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   | ARP's own                                               | a human in the panel                 | yes, ADR `0017`, seven safeguards                        |
   | **An agent operator's**, under a delegation they signed | the agent                            | yes **after the path is proven on testnet** — ADR `0036` |
   | An agent operator's                                     | an agent session with their raw key  | **testnet 13579 only** — ADR `0037`                      |
+  | An agent operator's                                     | `scripts/demo/x402-e2e.ts` with the agent's key, one EIP-3009 authorisation of 0.001 test USDC to the demo seller, on the user's request | **Base Sepolia 84532 only** — ADR `0160`                 |
   | ARP's own                                               | the sponsor relay, within its limits | **testnet 13579 only** — ADR `0092`                      |
   | ARP's own                                               | the sponsoring service, for a deposit that carries a verified proof, within the same limits | **testnet 13579 only** — ADR `0094`                      |
   | ARP's own                                               | the sponsoring service, for a new agent's mint gas, its identity atoms and its first `uses` triple, within the same budget | **testnet 13579 only** — ADR `0110`                      |
