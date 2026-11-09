@@ -1,5 +1,6 @@
 /**
- * The site's legal pages, in French (task 74): legal notice, privacy, terms, contact.
+ * The site's legal pages, in French (task 74): legal notice, privacy, cookies, terms, accessibility,
+ * contact (cookies and accessibility added in task 76).
  *
  * Every personal or host detail is a visible placeholder, `[… À COMPLÉTER]`. `vite.config.ts`
  * refuses a release build (`VITE_PUBLIC_RELEASE=1`) while one remains, so the site cannot go
@@ -7,7 +8,14 @@
  * calling a new host, it belongs here too.
  */
 
-export const LEGAL_SLUGS = ["mentions-legales", "confidentialite", "conditions", "contact"] as const;
+export const LEGAL_SLUGS = [
+    "mentions-legales",
+    "confidentialite",
+    "cookies",
+    "conditions",
+    "accessibilite",
+    "contact",
+] as const;
 export type LegalSlug = (typeof LEGAL_SLUGS)[number];
 
 /** A paragraph, or a list when it is an array. */
@@ -119,6 +127,37 @@ export const LEGAL: Record<LegalSlug, LegalDoc> = {
             },
         ],
     },
+    cookies: {
+        title: "Cookies",
+        english: "Cookies, in French.",
+        sections: [
+            {
+                heading: "Aucun cookie",
+                blocks: [
+                    "Ce site ne dépose aucun cookie. Il n'utilise ni mesure d'audience, ni publicité, ni bouton de réseau social, ni aucun autre traceur. C'est pourquoi il ne vous demande pas votre consentement : il n'y a rien à accepter ni à refuser.",
+                ],
+            },
+            {
+                heading: "Le stockage local de votre navigateur",
+                blocks: [
+                    "Pour se souvenir de vos choix, le site écrit quelques valeurs dans le stockage local de votre navigateur. Elles restent sur votre appareil, ne sont envoyées à personne et ne servent qu'au fonctionnement que vous avez demandé :",
+                    [
+                        "le parcours choisi dans « Get started » ;",
+                        "la barre d'activité, ouverte ou fermée ;",
+                        "si vous connectez un portefeuille : l'état de la connexion, gardé par la bibliothèque de connexion, et les délégations que vous signez ;",
+                        "si vous connectez un portefeuille mobile par WalletConnect : la session de connexion, gardée par WalletConnect.",
+                    ],
+                    "Ces valeurs sont strictement nécessaires au service que vous demandez ; elles ne requièrent pas de consentement. Vous pouvez les effacer à tout moment en supprimant les données de ce site dans les réglages de votre navigateur.",
+                ],
+            },
+            {
+                heading: "Les sites tiers",
+                blocks: [
+                    "Les services que votre navigateur contacte pour afficher les pages sont listés dans la page Confidentialité. Aucun d'eux n'est appelé pour vous suivre.",
+                ],
+            },
+        ],
+    },
     conditions: {
         title: "Conditions d'utilisation",
         english: "Terms of use, in French.",
@@ -150,6 +189,48 @@ export const LEGAL: Record<LegalSlug, LegalDoc> = {
             {
                 heading: "Droit applicable",
                 blocks: ["Ces conditions sont régies par le droit français."],
+            },
+        ],
+    },
+    accessibilite: {
+        title: "Accessibilité",
+        english: "Accessibility statement, in French.",
+        sections: [
+            {
+                heading: "État de conformité",
+                blocks: [
+                    "Ce site n'a pas fait l'objet d'un audit de conformité au référentiel général d'amélioration de l'accessibilité (RGAA). Il n'est donc pas déclaré conforme. C'est un site de test, édité par une personne physique.",
+                ],
+            },
+            {
+                heading: "Ce qui est fait",
+                blocks: [
+                    [
+                        "les couleurs du texte respectent le contraste AA des WCAG sur fond sombre, vérifié par un script du code source ;",
+                        "tous les éléments interactifs sont atteignables au clavier, avec un indicateur de focus visible ;",
+                        "les aides « ? » s'ouvrent au survol et au focus clavier ;",
+                        "les champs de formulaire ont une étiquette et les boutons à icône un nom accessible ;",
+                        "les animations s'arrêtent quand votre système demande moins de mouvement ;",
+                        "les pages de documentation existent aussi en texte brut (/llms.txt), avec les schémas sous forme de texte.",
+                    ],
+                ],
+            },
+            {
+                heading: "Limites connues",
+                blocks: [
+                    [
+                        "la page d'accueil fait défiler des scènes au rythme de la molette ; elle reste lisible en défilement normal quand votre système demande moins de mouvement, ou sur un petit écran ;",
+                        "les schémas de la documentation sont des images sans description longue : leur texte source est dans la version brute ;",
+                        "le site n'existe qu'en thème sombre ;",
+                        "les pages juridiques sont en français, le reste du site en anglais.",
+                    ],
+                ],
+            },
+            {
+                heading: "Signaler un problème",
+                blocks: [
+                    `Si un contenu ou une fonction vous est inaccessible, écrivez à ${EMAIL} ou ouvrez une issue sur ${REPO}/issues. Nous chercherons une alternative ou une correction.`,
+                ],
             },
         ],
     },

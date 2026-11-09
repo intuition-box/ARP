@@ -26,6 +26,20 @@ describe("the site's own pages (task 74)", () => {
         expect(screen.getByText("[NOM ET PRÉNOM DE L'ÉDITEUR À COMPLÉTER]")).toBeTruthy();
     });
 
+    it("says there is no cookie, and says what the browser keeps instead", async () => {
+        renderAt("/cookies");
+        expect(await screen.findByRole("heading", {name: "Cookies"})).toBeTruthy();
+        expect(screen.getByRole("heading", {name: "Aucun cookie"})).toBeTruthy();
+        expect(screen.getByRole("heading", {name: "Le stockage local de votre navigateur"})).toBeTruthy();
+    });
+
+    it("states plainly that accessibility was not audited, and how to report a problem", async () => {
+        renderAt("/accessibilite");
+        expect(await screen.findByRole("heading", {name: "Accessibilité"})).toBeTruthy();
+        expect(screen.getByText(/n'a pas fait l'objet d'un audit/)).toBeTruthy();
+        expect(screen.getByRole("heading", {name: "Signaler un problème"})).toBeTruthy();
+    });
+
     it("prints the public list of what is hidden, from the file the filter reads", async () => {
         renderAt("/test-identities");
         expect(await screen.findByRole("heading", {name: "Hidden here"})).toBeTruthy();
@@ -33,7 +47,7 @@ describe("the site's own pages (task 74)", () => {
         expect(screen.getByText("13579:1 to 13579:38")).toBeTruthy();
     });
 
-    it("links the docs, the code on intuition-box, and the four legal pages from the footer", () => {
+    it("links the docs, the code on intuition-box, and the six legal pages from the footer", () => {
         renderWithProviders(<SiteFooterLinks />);
         const href = (name: string) => screen.getByRole("link", {name}).getAttribute("href");
         expect(href("Docs")).toBe("/docs");
@@ -41,7 +55,9 @@ describe("the site's own pages (task 74)", () => {
         expect(href("GitHub")).toBe("https://github.com/intuition-box/ARP");
         expect(href("Legal notice")).toBe("/mentions-legales");
         expect(href("Privacy")).toBe("/confidentialite");
+        expect(href("Cookies")).toBe("/cookies");
         expect(href("Terms")).toBe("/conditions");
+        expect(href("Accessibility")).toBe("/accessibilite");
         expect(href("Contact")).toBe("/contact");
     });
 });

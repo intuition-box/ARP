@@ -15,7 +15,9 @@ const SITE: readonly {label: string; to: string}[] = [
 const LEGAL: readonly {label: string; to: string}[] = [
     {label: "Legal notice", to: "/mentions-legales"},
     {label: "Privacy", to: "/confidentialite"},
+    {label: "Cookies", to: "/cookies"},
     {label: "Terms", to: "/conditions"},
+    {label: "Accessibility", to: "/accessibilite"},
     {label: "Contact", to: "/contact"},
 ];
 

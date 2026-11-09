@@ -23,3 +23,7 @@ The user's name, address or e-mail, and the host's identity: the legal pages hol
 ## Evidence ladder
 
 None directly: it makes the test round possible, which is the only way a third party's line, and so tier 3, can happen.
+
+## Follow-up, 2026-11-09: cookies and accessibility
+
+The user asked for both in the footer (« il manque un footer aussi avec accessibilité », « mention légale, cookie ? »). Two more French pages in `apps/web/src/services/legal.ts`, routed and in the footer: `/cookies` (no cookie, no tracker, so no consent banner; what the browser's local storage keeps and why it needs no consent) and `/accessibilite` (not audited against the RGAA so not declared conforming, what is done, known limits, how to report). Branch `feat/76-footer-a11y`.
