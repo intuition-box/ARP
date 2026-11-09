@@ -2,6 +2,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 import {screen, waitFor, within} from "@testing-library/react";
 import type {PulseUsage, RecentDeclaration, ToolListing} from "@arp-protocol/core";
 
+import {OnboardingContext} from "../components/onboarding/onboarding-context";
 import {renderWithProviders} from "../test/render";
 import {Landing} from "./Landing";
 
@@ -195,6 +196,8 @@ describe("Landing", () => {
     });
 
     it("shows the sample, said to be one, when the chain answers with nothing", async () => {
+        // Scene 1 builds its line only while it is on screen; reduced motion shows its end state.
+        reduceMotion(true);
         // The user, 2026-11-09: on testnet every real line is ARP's own hidden test, so the
         // landing falls back to the reference's sample, and every panel showing it says so.
         const {container} = renderWithProviders(<Landing />);
@@ -239,6 +242,8 @@ describe("Landing", () => {
     });
 
     it("writes the most declared tool's latest line, word by word, from the chain", async () => {
+        // Scene 1 builds its line only while it is on screen; reduced motion shows its end state.
+        reduceMotion(true);
         withRealLine();
         const {container} = renderWithProviders(<Landing />);
         const written = scene(container, 1);
@@ -247,7 +252,8 @@ describe("Landing", () => {
                 "transcribe used by 13579:812 in context of research has outcome failed: missing-key",
             ),
         );
-        expect(written.textContent).toContain("1 agent writing into them");
+        // No accumulation in scene 1 any more (the user, 2026-11-09): the line, and nothing else.
+        expect(written.textContent).not.toContain("writing into");
 
         const reads = scene(container, 2);
         await waitFor(() => expect(reads.querySelectorAll(".arp-gx-reads li")).toHaveLength(3));
@@ -268,6 +274,8 @@ describe("Landing", () => {
     });
 
     it("leaves ARP's own test identities out", async () => {
+        // Scene 1 builds its line only while it is on screen; reduced motion shows its end state.
+        reduceMotion(true);
         withRealLine();
         vi.mocked(hiddenAtomIds).mockResolvedValue(new Set([AGENT_ID]));
         const {container} = renderWithProviders(<Landing />);
@@ -280,6 +288,8 @@ describe("Landing", () => {
     });
 
     it("drops the sample as soon as the chain has a real line, in every panel", async () => {
+        // Scene 1 builds its line only while it is on screen; reduced motion shows its end state.
+        reduceMotion(true);
         withRealLine();
         const {container} = renderWithProviders(<Landing />);
         await waitFor(() => expect(scene(container, 1).textContent).toContain("13579:812"));
@@ -341,6 +351,30 @@ describe("Landing", () => {
         expect(container.textContent).not.toMatch(/\d{2} \/ \d{2}/);
     });
 
+    it("builds scene 1 only on screen: off screen, no piece of the line is drawn in advance", async () => {
+        withRealLine();
+        const {container} = renderWithProviders(<Landing />);
+        await waitFor(() => expect(container.querySelector(".arp-deck-pinned")).not.toBeNull());
+        await waitFor(() => expect(listTools).toHaveBeenCalled());
+        // Scene 0 is on; scene 1's panel appears with its first element, not before.
+        expect(scene(container, 1).querySelector(".arp-gx-sentence")).toBeNull();
+        expect(scene(container, 1).querySelector(".arp-gx-steps")).toBeNull();
+    });
+
+    it("ends on the network: one line of invitation, and Join the network opens the onboarding", async () => {
+        const open = vi.fn();
+        const {container} = renderWithProviders(
+            <OnboardingContext.Provider value={{open, landed: () => undefined}}>
+                <Landing />
+            </OnboardingContext.Provider>,
+        );
+        await waitFor(() => expect(listTools).toHaveBeenCalled());
+        const build = scene(container, 5);
+        expect(build.textContent).toContain("Every line your agent writes, the next agent reads.");
+        within(build).getByRole("button", {name: "Join the network", hidden: true}).click();
+        expect(open).toHaveBeenCalledTimes(1);
+    });
+
     it("under reduced motion, shows every scene at its end state", async () => {
         reduceMotion(true);
         withRealLine();
@@ -351,9 +385,11 @@ describe("Landing", () => {
                 scene(container, 1).querySelectorAll(".arp-gx-sentence span").length,
             ).toBeGreaterThan(0),
         );
-        for (const word of scene(container, 1).querySelectorAll(".arp-gx-sentence span")) {
-            expect(word.getAttribute("data-on")).toBe("true");
-        }
+        expect(
+            [...scene(container, 1).querySelectorAll(".arp-gx-steps em")].map(
+                (em) => em.textContent,
+            ),
+        ).toEqual(["identity", "context", "outcome"]);
         for (const line of scene(container, 4).querySelectorAll(".arp-gx-lines li")) {
             expect(line.getAttribute("data-on")).toBe("true");
         }

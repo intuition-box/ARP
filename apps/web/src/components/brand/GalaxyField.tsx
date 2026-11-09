@@ -14,7 +14,8 @@ import {
     clamp,
     fieldVisibility,
     GLIDE,
-    joinAt,
+    networkAt,
+    networkStars,
     lerp,
     mixHex,
     PHONE_MAX_WIDTH,
@@ -68,8 +69,11 @@ type Atom = {
     ring: number;
     positions: number;
     slot: Point;
-    /** When it joins in scene 1, in seconds after the camera settles. */
-    at: number;
+    /**
+     * When it joins in scene 1, in seconds after the camera settles; `null` for a claim that is not
+     * one of the line's words, which joins only in scene 2.
+     */
+    at: number | null;
     /** Gone from the data: it glides home and is dropped. */
     leaving: boolean;
     v: number;
@@ -155,8 +159,6 @@ function atomsFor(
             if (claim !== undefined) order.push([claim.key, null]);
         }
     }
-    const others = order.filter(([, at]) => at === null).length;
-    let j = 0;
     order.forEach(([key, at], index) => {
         const where = placed.get(key);
         if (where === undefined) return;
@@ -169,9 +171,8 @@ function atomsFor(
             ring: where.ring,
             positions: where.claim.positions,
             slot: slotOf(where.ring, where.position, where.drawn),
-            at: at ?? (line === null ? WORDS_AT.context + 0.5 * j : joinAt(j, others)),
+            at,
         });
-        if (at === null) j += 1;
     });
     out.push({
         key: "reader",
@@ -225,6 +226,8 @@ export function GalaxyField({
         const stars = buildStars();
         const starOf = assignStars(stars);
         const beat = new Float32Array(stars.length);
+        /** Scene 5's network: how lit each joining agent's star is, eased so nothing pops. */
+        const joined = new Float32Array(stars.length);
 
         let width = 0;
         let height = 0;
@@ -384,6 +387,14 @@ export function GalaxyField({
                 beat[Math.floor(Math.random() * stars.length)] = 1;
             }
 
+            // Scene 5, the network: one star per agent that declared the tool, lighting up one
+            // after another and staying lit while the scene is on.
+            const network = networkStars(field?.agents ?? 0);
+            network.forEach((index, j) => {
+                const want = current === 5 ? (still ? 1 : clamp((since - networkAt(j)) / 0.5)) : 0;
+                joined[index] = lerp(joined[index] ?? 0, want, ease(6));
+            });
+
             // Which stars are away, being atoms right now.
             const away = new Set<number>();
             for (const atom of atoms) if (atom.v > 0.001) away.add(starOf[atom.k] ?? -1);
@@ -396,6 +407,12 @@ export function GalaxyField({
                 let r = starRadius(star, view.near);
                 let colour: string = STAR_TONES[star.t];
                 let a = sA;
+                const n = joined[i] ?? 0;
+                if (n > 0.001) {
+                    r *= 1 + n * 1.4;
+                    colour = mixHex(STAR_TONES[star.t], palette.fg, n);
+                    a = Math.max(a, n);
+                }
                 const b = beat[i] ?? 0;
                 if (b > 0) {
                     r *= 1 + b * 1.6;
@@ -416,16 +433,16 @@ export function GalaxyField({
             const cy = view.y(SUBJECT.y);
             const claims = atoms.filter((atom) => atom.kind === "claim" && !atom.leaving);
 
-            // The rings, as their atoms arrive. With no claim at all, the empty field: one dashed
-            // ring, as `ClaimField`'s `arp-cf-zero` draws it.
-            const ringA =
-                clamp(
-                    Math.max(0, ...atoms.filter((a) => a.kind === "claim").map((a) => a.v)) * 1.2,
-                ) * vis;
+            // Each ring as its first atom arrives, and only then: the ring is whole by half the
+            // atom's trip, so the dot lands on a ring already there. With no claim at all, the
+            // empty field: one dashed ring, as `ClaimField`'s `arp-cf-zero` draws it.
             ctx.strokeStyle = palette.track;
             ctx.lineWidth = 1;
             RING_RADII.forEach((r, ring) => {
-                if (!atoms.some((a) => a.kind === "claim" && a.ring === ring)) return;
+                const onRing = atoms.filter((a) => a.kind === "claim" && a.ring === ring);
+                if (onRing.length === 0) return;
+                const ringA = clamp(Math.max(...onRing.map((a) => a.v)) * 2) * vis;
+                if (ringA <= 0.005) return;
                 ctx.globalAlpha = ringA;
                 ctx.beginPath();
                 ctx.arc(cx, cy, r * view.scale, 0, Math.PI * 2);
@@ -457,7 +474,10 @@ export function GalaxyField({
                 if (!atom.leaving) {
                     if (atom.kind === "reader") target = current >= 2 && current <= 4 ? 1 : 0;
                     else if (current === 1)
-                        target = still || deck.previous >= 2 || since > atom.at ? 1 : 0;
+                        target =
+                            atom.at !== null && (still || deck.previous >= 2 || since > atom.at)
+                                ? 1
+                                : 0;
                     else if (current >= 2 && current <= 4) target = 1;
                 }
                 if (target !== atom.to) {
@@ -485,7 +505,11 @@ export function GalaxyField({
                 const lit =
                     !mono &&
                     atom.kind === "claim" &&
-                    ((current === 1 && !still && since > atom.at + 0.6 && since < atom.at + 1.8) ||
+                    ((current === 1 &&
+                        !still &&
+                        atom.at !== null &&
+                        since > atom.at + 0.6 &&
+                        since < atom.at + 1.8) ||
                         (readKey !== undefined && readKey === atom.key));
                 atom.hl += ((lit ? 1 : 0) - atom.hl) * ease(7);
                 const r = atomRadius(e, starR, {

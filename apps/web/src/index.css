@@ -1671,13 +1671,66 @@ a.arp-cf-card:hover {
     overflow-wrap: anywhere;
 }
 
-.arp-gx-sentence span {
-    opacity: 0.12;
-    transition: opacity 500ms var(--ease-gx-in);
+/* Scene 1's panel grows with the line (the user, 2026-11-09): each piece arrives as its dot
+   lands, and nothing is drawn for a piece that has not arrived. Keyframes, not transitions,
+   because a piece is mounted when it arrives and has no earlier state to transition from. */
+.arp-gx-arrive {
+    animation: arp-gx-arrive var(--gx-in) var(--ease-gx-in) both;
 }
 
-.arp-gx-sentence span[data-on="true"] {
-    opacity: 1;
+.arp-gx-word {
+    animation: arp-gx-word var(--gx-in) var(--ease-gx-in) both;
+}
+
+.arp-gx-grow {
+    overflow: hidden;
+    animation: arp-gx-grow var(--gx-travel) var(--ease-gx-in) both;
+}
+
+@keyframes arp-gx-arrive {
+    from {
+        opacity: 0;
+        translate: 0 var(--gx-rise);
+        filter: blur(var(--gx-blur));
+    }
+}
+
+@keyframes arp-gx-word {
+    from {
+        opacity: 0;
+        filter: blur(var(--gx-blur));
+    }
+}
+
+@keyframes arp-gx-grow {
+    from {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        opacity: 0;
+    }
+    to {
+        max-height: 4em;
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arp-gx-arrive,
+    .arp-gx-word,
+    .arp-gx-grow {
+        animation: none;
+    }
+}
+
+/* Scene 5's one line of invitation, under the heading. */
+.arp-gx-invite {
+    margin: 18px 0 0;
+    max-width: 30rem;
+    font-size: clamp(17px, 1.6vw, 21px);
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--color-fg);
 }
 
 .arp-gx-sentence .is-pr {
@@ -1703,7 +1756,7 @@ a.arp-cf-card:hover {
     transition: color 400ms ease;
 }
 
-.arp-gx-steps li[data-on="true"],
+.arp-gx-steps li,
 .arp-gx-reads li[data-on="true"] {
     color: var(--color-fg);
 }
@@ -1720,7 +1773,6 @@ a.arp-cf-card:hover {
 }
 
 /* The row being read is the selected state: Saffron, as the claim it reads. */
-.arp-gx-steps li[data-on="true"] em,
 .arp-gx-reads li[data-on="true"] em {
     color: var(--color-accent);
 }

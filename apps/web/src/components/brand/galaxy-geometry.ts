@@ -329,16 +329,37 @@ export function fieldVisibility(camera: Camera): number {
 /* Scene 1's schedule, and scene 2's tour                                     */
 /* -------------------------------------------------------------------------- */
 
-/** Seconds after the camera settles: the identity, the tool, the context, the outcome. */
-export const WORDS_AT = {agent: 0.4, tool: 1.6, context: 2.8, outcome: 4.0} as const;
+/**
+ * Scene 1 builds the line one element at a time, about 1.2 s apart, in seconds after the camera
+ * settles: the tool alone at the centre, then the agent that used it (with the `used by` ring),
+ * then the context (its ring), then the outcome (its ring). Nothing else joins in scene 1: the
+ * user, 2026-11-09, « je ne veux pas l'accumulation à la fin ». The other claims join in scene 2.
+ */
+export const WORDS_AT = {tool: 0.4, agent: 1.6, context: 2.8, outcome: 4.0} as const;
 
-/** Then the other agents' words join, about one every half second, until 8.8 s. */
-export const JOIN = {from: 5.4, every: 0.5, until: 8.8} as const;
+/**
+ * Scene 5, the network: agents join the galaxy one after another, a star lighting up for each and
+ * staying lit. Seconds after the camera settles.
+ */
+export const NETWORK = {from: 0.4, every: 0.45, most: 24} as const;
 
-/** When the `j`-th of `n` other atoms joins in scene 1. */
-export function joinAt(j: number, n: number): number {
-    const every = n <= 1 ? JOIN.every : Math.min(JOIN.every, (JOIN.until - JOIN.from) / (n - 1));
-    return JOIN.from + j * every;
+/** When the `j`-th agent joins in scene 5. */
+export function networkAt(j: number): number {
+    return NETWORK.from + j * NETWORK.every;
+}
+
+/**
+ * The star each joining agent lights in scene 5: spread over the disc, the same on every load.
+ * Indices into `buildStars()`'s disc stars.
+ */
+export function networkStars(count: number, seed = 29): number[] {
+    const rnd = seededRandom(seed);
+    const out: number[] = [];
+    while (out.length < Math.min(count, NETWORK.most)) {
+        const index = Math.floor(rnd() * DISC_STARS);
+        if (!out.includes(index)) out.push(index);
+    }
+    return out;
 }
 
 /** A word lights in the panel this long after its atom leaves its star. */

@@ -11,8 +11,10 @@ import {
     cameraDuration,
     cameraFor,
     claimLook,
-    joinAt,
-    JOIN,
+    networkAt,
+    networkStars,
+    NETWORK,
+    WORDS_AT,
     projection,
     readingAt,
     RING_RADII,
@@ -95,10 +97,19 @@ describe("the field", () => {
         expect(angle(one)).not.toBeCloseTo(angle(two));
     });
 
-    it("lets the other agents join about every half second, and no later than 8.8 s", () => {
-        expect(joinAt(0, 5)).toBe(JOIN.from);
-        expect(joinAt(1, 5) - joinAt(0, 5)).toBeCloseTo(0.5);
-        expect(joinAt(17, 18)).toBeLessThanOrEqual(JOIN.until + 1e-9);
+    it("builds scene 1 one element at a time, about 1.2 s apart, the tool first", () => {
+        const times = [WORDS_AT.tool, WORDS_AT.agent, WORDS_AT.context, WORDS_AT.outcome];
+        for (let i = 1; i < times.length; i += 1) {
+            expect(times[i]! - times[i - 1]!).toBeCloseTo(1.2);
+        }
+    });
+
+    it("lets the network's agents join one after another, each on its own star", () => {
+        expect(networkAt(1) - networkAt(0)).toBeCloseTo(NETWORK.every);
+        const stars = networkStars(10);
+        expect(new Set(stars).size).toBe(10);
+        expect(networkStars(10)).toEqual(stars);
+        expect(networkStars(500)).toHaveLength(NETWORK.most);
     });
 
     it("tours the readings 2.8 s each, and tours nothing under reduced motion", () => {

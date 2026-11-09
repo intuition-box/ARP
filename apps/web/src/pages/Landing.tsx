@@ -5,15 +5,9 @@ import type {RecentDeclaration} from "@arp-protocol/core";
 import {GalaxyField} from "../components/brand/GalaxyField";
 import {NoActivityYet} from "../components/brand/NoActivityYet";
 import {SceneDeck} from "../components/brand/SceneDeck";
-import {
-    cameraDuration,
-    cameraFor,
-    JOIN,
-    readingAt,
-    WORD_LIGHTS_AFTER,
-    WORDS_AT,
-} from "../components/brand/galaxy-geometry";
+import {cameraDuration, cameraFor, readingAt, WORDS_AT} from "../components/brand/galaxy-geometry";
 import {useDeck, useSceneTime} from "../components/brand/scene-context";
+import {useOnboarding} from "../components/onboarding/onboarding-context";
 import {useLandingField, type LandingFieldRead} from "../hooks/use-landing-field";
 import {useRecentDeclarations} from "../hooks/use-recent-declarations";
 import {useChainChoice} from "../lib/chain-choice";
@@ -224,109 +218,118 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
 /* 1 · Written                                                                 */
 /* -------------------------------------------------------------------------- */
 
-const WORD_TIMES = [WORDS_AT.agent, WORDS_AT.tool, WORDS_AT.context, WORDS_AT.outcome] as const;
+/**
+ * Scene 1 builds one line, one element at a time (the user, 2026-11-09): the tool alone, then who
+ * used it, then what for, then how it went, each with its ring in the field and its piece of the
+ * panel. A piece appears as its dot reaches the ring, not before: no empty slot shown in advance.
+ */
+const STAGES = [WORDS_AT.tool, WORDS_AT.agent, WORDS_AT.context, WORDS_AT.outcome] as const;
 
-const STEPS = [
-    {name: "identity", line: "an ERC-8004 agent"},
-    {name: "action", line: "what it used"},
-    {name: "context", line: "what for"},
-    {name: "outcome", line: "how it went"},
-] as const;
+/** A piece of the panel appears this long after its atom leaves its star: as it lands. */
+const PIECE_AFTER = 0.6;
 
 function SceneWritten({read}: {read: LandingFieldRead}) {
     const since = useSceneTime(1);
     const deck = useDeck();
-    // Coming back from scene 2, the words are already written.
+    // Coming back from scene 2, the line is already written.
     const written = deck.previous >= 2 && deck.current === 1 ? Infinity : since;
-    const lit = (word: number) => written > (WORD_TIMES[word] ?? 0) + WORD_LIGHTS_AFTER;
+    const reached = (stage: number) => written > (STAGES[stage] ?? 0) + PIECE_AFTER;
     const field = read.status === "ok" ? read.field : null;
     const sample = read.status === "ok" && read.sample;
     const line = field?.line ?? null;
-    // A part the line does not have stays unlit: a line can stop at any level (docs/28).
-    const present = (part: number) =>
-        part === 2 ? line?.context !== null : part === 3 ? line?.outcome !== null : true;
-    const total = field?.agents ?? 0;
-    // The count climbs as the other agents' words join, then rests on the chain's figure.
-    const joined =
-        written >= JOIN.until + 1
-            ? total
-            : Math.min(
-                  total,
-                  1 +
-                      Math.max(
-                          0,
-                          Math.floor((written - JOIN.from + WORD_LIGHTS_AFTER) / JOIN.every) + 1,
-                      ),
-              );
+    const label = `A line, word by word${sample ? " · sample" : ""}`;
 
-    return (
-        <>
-            <Panel
-                label={`A line, word by word${sample ? " · sample" : ""}`}
-                className="arp-gx-subject arp-gx-feed"
-                index={1}
-            >
-                {line === null ? (
+    if (line === null) {
+        return (
+            <>
+                <Panel label={label} className="arp-gx-subject arp-gx-feed" index={1}>
                     <NotYet
                         read={linesOf(read)}
                         empty={<NoActivityYet what="No line written here yet." />}
                     />
-                ) : (
-                    <>
-                        <p className="arp-gx-sentence">
-                            {/* Tool first, then who used it (the user, 2026-11-09: « hyperframes
-                                used by agent 1, c'est plus compréhensible »). The graph's triple is
-                                still `agent uses tool`; this reads it from the tool's side. */}
-                            <span data-on={lit(1)}>{line.tool}</span>{" "}
-                            <span data-on={lit(0)} className="is-pr">
-                                used by
-                            </span>{" "}
-                            <span data-on={lit(0)} className={line.agentIsId ? "is-id" : ""}>
-                                {line.agent}
+                </Panel>
+                <SceneWrittenCopy />
+            </>
+        );
+    }
+
+    // A line can stop at any level (docs/28): a part it does not have never appears.
+    const showAgent = reached(1);
+    const showContext = reached(2) && line.context !== null;
+    const showOutcome = reached(3) && line.outcome !== null;
+    return (
+        <>
+            {reached(0) ? (
+                <div
+                    data-panel
+                    role="group"
+                    aria-label={label}
+                    className="arp-gx-panel arp-gx-subject arp-gx-feed arp-gx-arrive"
+                >
+                    <div className="arp-gx-panel-head">
+                        <i aria-hidden="true" />
+                        {label}
+                    </div>
+                    <p className="arp-gx-sentence">
+                        {/* Tool first, then who used it (the user, 2026-11-09: « hyperframes
+                            used by agent 1, c'est plus compréhensible »). The graph's triple is
+                            still `agent uses tool`; this reads it from the tool's side. */}
+                        <span className="arp-gx-word">{line.tool}</span>
+                        {showAgent ? (
+                            <span className="arp-gx-word">
+                                {" "}
+                                <span className="is-pr">used by</span>{" "}
+                                <span className={line.agentIsId ? "is-id" : ""}>{line.agent}</span>
                             </span>
-                            {line.context === null ? null : (
-                                <>
-                                    {" "}
-                                    <span data-on={lit(2)} className="is-pr">
-                                        in context of
-                                    </span>{" "}
-                                    <span data-on={lit(2)}>{line.context}</span>
-                                </>
-                            )}
-                            {line.outcome === null ? null : (
-                                <>
-                                    {" "}
-                                    <span data-on={lit(3)} className="is-pr">
-                                        has outcome
-                                    </span>{" "}
-                                    <span data-on={lit(3)}>{line.outcome}</span>
-                                </>
-                            )}
-                        </p>
+                        ) : null}
+                        {showContext ? (
+                            <span className="arp-gx-word">
+                                {" "}
+                                <span className="is-pr">in context of</span> {line.context}
+                            </span>
+                        ) : null}
+                        {showOutcome ? (
+                            <span className="arp-gx-word">
+                                {" "}
+                                <span className="is-pr">has outcome</span> {line.outcome}
+                            </span>
+                        ) : null}
+                    </p>
+                    {showAgent ? (
                         <ol className="arp-gx-steps">
-                            {STEPS.map((step, index) => (
-                                <li key={step.name} data-on={lit(index) && present(index)}>
-                                    <em>{step.name}</em>
-                                    {step.line}
+                            <li className="arp-gx-grow">
+                                <em>identity</em>an ERC-8004 agent
+                            </li>
+                            {showContext ? (
+                                <li className="arp-gx-grow">
+                                    <em>context</em>what for
                                 </li>
-                            ))}
+                            ) : null}
+                            {showOutcome ? (
+                                <li className="arp-gx-grow">
+                                    <em>outcome</em>how it went
+                                </li>
+                            ) : null}
                         </ol>
-                        <p className="arp-gx-foot">
-                            {joined} {joined === 1 ? "agent" : "agents"} writing into them
-                            {sample ? ". Sample." : ""}
-                        </p>
-                    </>
-                )}
-            </Panel>
-            <div className="arp-gx-copy">
-                <h2 {...rv(0)}>
-                    An agent writes down what it used.{" "}
-                    <span className="arp-gx-dim">
-                        With its identity, into words every agent shares.
-                    </span>
-                </h2>
-            </div>
+                    ) : null}
+                    {sample ? <p className="arp-gx-foot">Sample.</p> : null}
+                </div>
+            ) : null}
+            <SceneWrittenCopy />
         </>
+    );
+}
+
+function SceneWrittenCopy() {
+    return (
+        <div className="arp-gx-copy">
+            <h2 {...rv(0)}>
+                An agent writes down what it used.{" "}
+                <span className="arp-gx-dim">
+                    With its identity, into words every agent shares.
+                </span>
+            </h2>
+        </div>
     );
 }
 
@@ -501,6 +504,7 @@ const WITH_ARP = [
 ] as const;
 
 function SceneBuild() {
+    const onboarding = useOnboarding();
     const piece = rv(3);
     return (
         <>
@@ -540,15 +544,25 @@ function SceneBuild() {
                         It lives on a public chain, not on our servers.
                     </span>
                 </h2>
-                <div {...rv(1)} className="arp-gx-rv arp-gx-ctas">
-                    <Link to="/agents" className={heroControlClass}>
+                {/* The network effect, said once, here (the user, 2026-11-09: « il faut juste
+                    comprendre l'effet de réseau en dernière page, en les invitant à joindre le
+                    réseau »). A mechanism, not an outcome: `arp_pulse` reads every line on the next
+                    search, and nothing here says a line is true (docs/30). */}
+                <p {...rv(1)} className="arp-gx-rv arp-gx-invite">
+                    Every line your agent writes, the next agent reads.
+                </p>
+                <div {...rv(2)} className="arp-gx-rv arp-gx-ctas">
+                    <button type="button" onClick={onboarding.open} className={heroControlClass}>
+                        Join the network
+                    </button>
+                    <Link to="/agents" className="arp-gx-btn">
                         Open the agent index
                     </Link>
                     <a
                         href="https://github.com/intuition-box/ARP/blob/main/skills/arp/SKILL.md"
                         target="_blank"
                         rel="noreferrer"
-                        className="arp-gx-btn"
+                        className={`arp-gx-quiet-link ${linkClass}`}
                     >
                         Read the skill
                     </a>
