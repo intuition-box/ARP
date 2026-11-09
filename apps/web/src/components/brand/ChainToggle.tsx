@@ -1,4 +1,7 @@
+import {Link} from "react-router-dom";
+
 import {useChainChoice, useSetChain} from "../../lib/chain-choice";
+import {allowsMainnet} from "../../lib/site-config";
 
 /**
  * Which chain the page reads and writes. ADR `0059`, widened to writes by ADR `0061`.
@@ -21,6 +24,31 @@ import {useChainChoice, useSetChain} from "../../lib/chain-choice";
  * what it will do, not just which chain is current.
  */
 export function ChainToggle() {
+    return allowsMainnet() ? <Toggle /> : <TestnetOnly />;
+}
+
+/**
+ * Where mainnet is not allowed (task 74), the control is a statement instead: this is a test, on
+ * testnet, with test money. It leads to the terms, which say what that means.
+ */
+function TestnetOnly() {
+    return (
+        <Link
+            to="/conditions"
+            title="A test on Intuition testnet. Its token, tTRUST, has no value."
+            // Banged: the unlayered `a` rule in `index.css` beats an unbanged colour utility.
+            className="inline-flex h-7 items-center gap-2 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] px-2.5 font-mono text-[11px] uppercase tracking-[0.1em] text-[color:var(--color-fg)]! no-underline!"
+        >
+            <span
+                aria-hidden="true"
+                className="h-[6px] w-[6px] rounded-full border border-[color:var(--color-steel)]"
+            />
+            Testnet · test money
+        </Link>
+    );
+}
+
+function Toggle() {
     const {isMainnet, label} = useChainChoice();
     const setMainnet = useSetChain();
     const other = isMainnet ? "Testnet" : "Mainnet";

@@ -6,6 +6,7 @@ import {
     choiceFor,
     readStored,
 } from "./chain-choice";
+import {allowsMainnet} from "./site-config";
 
 /**
  * Holds which chain the page reads from. The logic, the types and the hooks are in
@@ -14,9 +15,11 @@ import {
  */
 export function ChainChoiceProvider({children}: {children: ReactNode}) {
 
-    const [isMainnet, setIsMainnet] = useState(readStored);
+    // A stored "mainnet" from an earlier build is ignored where mainnet is not allowed (task 74).
+    const [isMainnet, setIsMainnet] = useState(() => allowsMainnet() && readStored());
 
     const setMainnet = useCallback((next: boolean) => {
+        if (next && !allowsMainnet()) return;
         setIsMainnet(next);
         try {
             localStorage.setItem(CHAIN_STORAGE_KEY, next ? "mainnet" : "testnet");
