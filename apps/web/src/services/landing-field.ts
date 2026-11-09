@@ -22,7 +22,7 @@ import {truncateMiddle} from "./trust-format";
  * **Real or absent.** Every name, id and count here comes from the chain the reader chose, with
  * ARP's own test identities left out (`services/test-identities.ts`). A reading with nothing
  * behind it is left out, not invented; when no tool has a declaration the field is empty and the
- * page says so. The reference's samples (`8453:3107`, `video`, `missing-key`…) never reach here.
+ * page falls back to `landing-sample.ts`, marked « Sample ». Nothing sampled reaches this module.
  */
 
 /**

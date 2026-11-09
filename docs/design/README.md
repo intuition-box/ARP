@@ -1,8 +1,10 @@
 # docs/design
 
 One folder per thing designed. Every reference page is a self-contained HTML file to open in a
-browser; everything marked `sample` in one is invented and must never ship — with one exception,
-the landing's sample, shown and marked « Sample » while the chain has nothing (ADR `0152`).
+browser; everything marked `sample` in one must never ship — with one exception, the landing's
+sample, shown and marked « Sample » while the chain has nothing (ADR `0152`). Marked `sample` is
+not the same as invented: `landing-galaxy/`'s sample agent ids are real agents on Base
+(`scripts/measure/reference-sample-ids.ts`), which is why the landing renames them.
 
 | folder            | what it is                                                                              | state                                                                                            |
 | ----------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |

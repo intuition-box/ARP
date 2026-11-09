@@ -10,19 +10,22 @@ import type {LandingField} from "./landing-field";
  * failed; a sample never stands in for a failure. The moment the chain has a real line, it
  * replaces the sample, panel by panel, and a panel never mixes the two.
  *
- * Everything here is the design reference's sample (`docs/design/landing-galaxy/`): made-up
- * ERC-8004 ids, made-up counts, and `hyperframes`, a real catalogue entry, as the tool. None of it
- * is a claim about any real agent.
+ * The shape is the design reference's sample (`docs/design/landing-galaxy/`), with its counts and
+ * `hyperframes`, a real catalogue entry, as the tool. **Its agent ids are not kept**: `8453:3107`,
+ * `8453:5512`, `8453:7720` and `8453:2418` are real tokens on Base's ERC-8004 registry (`ownerOf`
+ * answered for each on 2026-11-09), so the reference put uses in the mouths of real agents that
+ * never declared them. The agents here are `agent A` to `agent E`: no chain prefix, so no reader
+ * can take one for a token id on any chain.
  */
 
 /** A sample pulse row: who, what, and what for. */
 export type SampleLine = {agent: string; tool: string; context: string};
 
 export const SAMPLE_LINES: readonly SampleLine[] = [
-    {agent: "8453:3107", tool: "hyperframes", context: "video"},
-    {agent: "8453:5512", tool: "pptx", context: "document"},
-    {agent: "13579:41", tool: "remotion-render", context: "video"},
-    {agent: "8453:7720", tool: "frontend-design", context: "design"},
+    {agent: "agent A", tool: "hyperframes", context: "video"},
+    {agent: "agent B", tool: "pptx", context: "document"},
+    {agent: "agent C", tool: "remotion-render", context: "video"},
+    {agent: "agent D", tool: "frontend-design", context: "design"},
 ];
 
 const agent = (id: string, positions: number) => ({
@@ -54,11 +57,11 @@ export const SAMPLE_FIELD: LandingField = {
             name: "used by",
             total: 5,
             claims: [
-                agent("8453:3107", 3),
-                agent("8453:5512", 2),
-                agent("13579:41", 1),
-                agent("8453:7720", 1),
-                agent("8453:2418", 1),
+                agent("agent A", 3),
+                agent("agent B", 2),
+                agent("agent C", 1),
+                agent("agent D", 1),
+                agent("agent E", 1),
             ],
         },
         {
@@ -83,16 +86,16 @@ export const SAMPLE_FIELD: LandingField = {
         },
     ],
     line: {
-        agent: "8453:3107",
+        agent: "agent A",
         agentIsId: false,
         tool: "hyperframes",
         context: "video",
         outcome: "worked",
-        keys: {agent: "agent:8453:3107", context: "context:video", outcome: "outcome:worked"},
+        keys: {agent: "agent:agent A", context: "context:video", outcome: "outcome:worked"},
     },
     agents: 5,
     readings: [
-        {kind: "useful", claimKey: "agent:8453:5512", text: "8453:5512 uses it · one of 5 agents"},
+        {kind: "useful", claimKey: "agent:agent B", text: "agent B uses it · one of 5 agents"},
         {kind: "for what", claimKey: "context:video", text: "in context of video · 4 positions"},
         {
             kind: "working",

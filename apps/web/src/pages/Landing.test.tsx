@@ -10,8 +10,9 @@ import {Landing} from "./Landing";
  *
  * - **The copy is the design file's**, to the word, with no kicker above a heading and no lede
  *   under the hero (the user removed both).
- * - **Real data or a sentence saying there is none.** The reference is filled with samples
- *   (`8453:3107`, `video`, `missing-key`…) that must never reach the app.
+ * - **Real data, or the sample said to be one** (the user, 2026-11-09). The reference's sample
+ *   agent ids (`8453:3107`…) are real agents on Base and never reach the app; the landing's sample
+ *   names `agent A` to `agent E`, and only while the chain answers with nothing.
  * - **ARP's own test identities are left out**, as on every other page.
  * - **A failed read says it failed**, never that the chain is empty.
  * - **Reduced motion** shows every scene at its end state.
@@ -201,7 +202,7 @@ describe("Landing", () => {
         const written = scene(container, 1);
         await waitFor(() =>
             expect(written.querySelector(".arp-gx-sentence")?.textContent).toBe(
-                "8453:3107 uses hyperframes in context of video has outcome worked",
+                "agent A uses hyperframes in context of video has outcome worked",
             ),
         );
         expect(within(written).getByText("A line, word by word · sample")).toBeTruthy();
@@ -213,6 +214,8 @@ describe("Landing", () => {
         expect(reads.querySelectorAll(".arp-gx-reads li")).toHaveLength(4);
         expect(reads.textContent).toContain("Sample.");
         expect(screen.queryByText("No activity yet.")).toBeNull();
+        // The reference's sample ids are real agents on Base: none of them is named here.
+        expect(container.textContent).not.toMatch(/\b(8453|13579):\d+/);
     });
 
     it("says the read failed rather than claiming the chain is empty", async () => {
