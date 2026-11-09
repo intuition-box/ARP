@@ -83,7 +83,7 @@ export function Landing() {
             <SceneTravels read={field} rowRef={rowRef} />
             <ScenePlugIn />
             <SceneNoGrade />
-            <SceneBuild />
+            <SceneBuild sample={field.status === "ok" && field.sample} />
         </SceneDeck>
     );
 }
@@ -503,7 +503,7 @@ const WITH_ARP = [
     "The raw record, no opinion",
 ] as const;
 
-function SceneBuild() {
+function SceneBuild({sample}: {sample: boolean}) {
     const onboarding = useOnboarding();
     const piece = rv(3);
     return (
@@ -552,6 +552,8 @@ function SceneBuild() {
                     Every line your agent writes, the next agent reads.
                 </p>
                 <div {...rv(2)} className="arp-gx-rv arp-gx-ctas">
+                    {/* A `<button>`: the unlayered `button {}` base rule sets its border, so
+                        `.arp-gx-ctas button` in `index.css` sets the Saffron one explicitly. */}
                     <button type="button" onClick={onboarding.open} className={heroControlClass}>
                         Join the network
                     </button>
@@ -567,6 +569,9 @@ function SceneBuild() {
                         Read the skill
                     </a>
                 </div>
+                {/* The stars lighting up are the field's agents; while the field is the sample,
+                    they are the sample's, and said so like every other panel showing it. */}
+                {sample ? <p className="arp-gx-netnote">Lit stars: sample.</p> : null}
             </div>
         </>
     );

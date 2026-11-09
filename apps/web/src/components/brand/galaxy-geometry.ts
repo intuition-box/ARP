@@ -341,6 +341,7 @@ export const WORDS_AT = {tool: 0.4, agent: 1.6, context: 2.8, outcome: 4.0} as c
  * Scene 5, the network: agents join the galaxy one after another, a star lighting up for each and
  * staying lit. Seconds after the camera settles.
  */
+/** `most` is a visual cap on the stars drawn, not a count: no figure is printed from it. */
 export const NETWORK = {from: 0.4, every: 0.45, most: 24} as const;
 
 /** When the `j`-th agent joins in scene 5. */

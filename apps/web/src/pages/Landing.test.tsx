@@ -216,6 +216,7 @@ describe("Landing", () => {
         ).toBeTruthy();
         expect(reads.querySelectorAll(".arp-gx-reads li")).toHaveLength(4);
         expect(reads.textContent).toContain("Sample.");
+        expect(scene(container, 5).textContent).toContain("Lit stars: sample.");
         expect(screen.queryByText("No activity yet.")).toBeNull();
         // The reference's sample ids are real agents on Base: none of them is named here.
         expect(container.textContent).not.toMatch(/\b(8453|13579):\d+/);
@@ -293,6 +294,7 @@ describe("Landing", () => {
         withRealLine();
         const {container} = renderWithProviders(<Landing />);
         await waitFor(() => expect(scene(container, 1).textContent).toContain("13579:812"));
+        expect(scene(container, 5).textContent).not.toContain("sample");
         const text = container.textContent ?? "";
         for (const sample of [
             "8453:3107",

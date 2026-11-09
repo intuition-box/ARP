@@ -1510,11 +1510,17 @@ a.arp-cf-card:hover {
     justify-content: center;
 }
 
+.arp-gx-ctas button {
+    border-color: var(--color-accent);
+}
+
+.arp-gx-ctas button,
 .arp-gx-ctas a {
     transition: transform 160ms var(--ease-gx-in);
 }
 
 .arp-gx-ctas a:active,
+.arp-gx-ctas button:active,
 .arp-gx-copy-btn:active {
     transform: scale(0.97);
 }
@@ -1721,6 +1727,14 @@ a.arp-cf-card:hover {
     .arp-gx-grow {
         animation: none;
     }
+}
+
+.arp-gx-netnote {
+    margin: 12px 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    letter-spacing: 0.06em;
+    color: var(--color-steel);
 }
 
 /* Scene 5's one line of invitation, under the heading. */
@@ -2005,12 +2019,24 @@ a.arp-cf-card:hover {
         gap: 12px;
     }
 
+    /* Scene 5's copy grew by the invitation (task 81 follow-up): on a phone the comparison keeps
+       its « With ARP » half, and on a short phone it gives way to the copy entirely. */
+    .arp-deck-pinned .arp-gx-compare > div:first-child {
+        display: none;
+    }
+
     /* On a phone the comparison sits over the galaxy, so it gets a panel's ground. */
     .arp-deck-pinned .arp-gx-compare {
         padding: 14px 16px;
         border: 1px solid var(--color-rule-strong);
         border-radius: var(--radius-card);
         background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+    }
+}
+
+@media (max-width: 820px) and (max-height: 760px) {
+    .arp-deck-pinned .arp-gx-compare {
+        display: none;
     }
 }
 
