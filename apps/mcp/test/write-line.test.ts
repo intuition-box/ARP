@@ -2,7 +2,7 @@ import {mkdtempSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 
-import {verifyCategoryRequest, verifyLineRequest, type SignedCategoryRequest, type SignedLineRequest} from "@arp-protocol/core";
+import {verifyCategoryRequest, verifyLineRequest, type DomainResolution, type SignedCategoryRequest, type SignedLineRequest} from "@arp-protocol/core";
 import type {Hex} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 import {afterEach, describe, expect, it} from "vitest";
@@ -217,6 +217,24 @@ describe("writeLineChecked", () => {
         expect(seen[0]).toMatchObject({domain: "slides", newDomain: {parent: "design", why: "decks"}});
         expect(seen[1]).toMatchObject({domain: "video"});
         expect(seen[1]).not.toHaveProperty("newDomain");
+    });
+
+    it("takes a word people use for a node, and names the closest nodes for an unknown one (task 84)", async () => {
+        const {config, agent} = setup(() => ok);
+        const seen: unknown[] = [];
+        const write = (async (_c: unknown, _a: unknown, input: unknown) => {
+            seen.push(input);
+            return {toolUrl: "", termId: ATOM, levels: [], created: true, transactions: []};
+        }) as Parameters<typeof writeLineChecked>[0]["write"];
+        const resolve = async (word: string): Promise<DomainResolution> =>
+            word === "slides"
+                ? {status: "node", label: "presentation authoring", via: "alias"}
+                : {status: "unknown", word, suggestions: ["presentation authoring", "video editing"]};
+        const steps = {config, isCategory: async () => false, resolve, agent: () => agent, write};
+        await writeLineChecked(steps, {...INPUT, domain: "Slides", newDomain: {parent: "design", why: "x"}});
+        expect(seen[0]).toMatchObject({domain: "presentation authoring"});
+        expect(seen[0]).not.toHaveProperty("newDomain");
+        await expect(writeLineChecked(steps, {...INPUT, domain: "decks"})).rejects.toThrow("Closest: presentation authoring, video editing.");
     });
 
     it("makes no key when the sponsor does not answer", async () => {

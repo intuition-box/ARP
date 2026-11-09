@@ -10,10 +10,13 @@ import {
   isUsageReason,
   normaliseCategoryLabel,
   readDomainTree,
+  resolveDomain,
+  type DomainResolution,
   USAGE_REASONS,
 } from '@arp-protocol/core';
 
 import { chainId, domainWalk } from './config.js';
+import { domainWords } from './domain-words.js';
 import type { AgentSender } from './desktop/agent-key.js';
 import { agentFor, loopConfig } from './desktop/handlers.js';
 import { sponsorApproval, writeLine, type LineInput, type LoopConfig, type WrittenLine } from './desktop/loop.js';
@@ -50,6 +53,8 @@ export function lineFromArgs(args: {
 export type LineSteps = {
   config: LoopConfig;
   isCategory: (label: string) => Promise<boolean>;
+  /** A word people use ("slides") to the node it names, or the closest nodes (task 84). Optional in tests. */
+  resolve?: (word: string) => Promise<DomainResolution>;
   /** Called last, so a refused line leaves no key behind (`~/.arp/agent-key`, audit 2026-11-09). */
   agent: () => AgentSender;
   write?: typeof writeLine;
@@ -61,12 +66,14 @@ export async function writeLineChecked(steps: LineSteps, input: LineInput): Prom
   if (input.domain !== undefined) {
     // The sponsor's normalisation, so the word checked, filed and written is one word.
     const domain = normaliseCategoryLabel(input.domain);
-    if (await steps.isCategory(domain)) {
-      // Already in the tree: nothing to add, whatever --parent said.
+    const resolved = (await steps.isCategory(domain)) ? null : await steps.resolve?.(domain);
+    if (resolved === null || resolved?.status === 'node') {
+      // Already in the tree, by its name or a word for it: nothing to add, whatever --parent said.
       const { newDomain: _unused, ...rest } = input;
-      line = { ...rest, domain };
+      line = { ...rest, domain: resolved?.status === 'node' ? resolved.label : domain };
     } else if (input.newDomain === undefined) {
-      throw new Error(`"${input.domain}" is not a category under tool; add it with --parent <category> --why <reason>`);
+      const closest = resolved?.status === 'unknown' && resolved.suggestions.length > 0 ? ` Closest: ${resolved.suggestions.join(', ')}.` : '';
+      throw new Error(`"${input.domain}" is not a category under tool.${closest} Pick one, or add it with --parent <category> --why <reason>`);
     } else {
       const parent = normaliseCategoryLabel(input.newDomain.parent);
       if (!(await steps.isCategory(parent))) throw new Error(`--parent "${input.newDomain.parent}" is not a category under tool`);
@@ -84,6 +91,7 @@ export async function writeLineHere(input: LineInput): Promise<WrittenLine> {
     {
       config: loopConfig(),
       isCategory: async (label) => isCategoryIn(await readDomainTree(domainWalk()))(label),
+      resolve: async (word) => resolveDomain(word, domainWords(await readDomainTree(domainWalk()))),
       agent: agentFor,
     },
     input,

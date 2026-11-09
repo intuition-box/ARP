@@ -149,7 +149,7 @@ Plan the public declaration that an agent used a set of tools, attached to its E
 | `agent_token_id` | string, required | Your token id, as a decimal string |
 | `registry` | string | The identity registry, when not the canonical one |
 | `tools` | string[], required | Tool URIs: a schema URI, an MCP endpoint, an `ipfs://` document. The id derives from the URI |
-| `domain` | string | An existing category, such as `video`. Never the text of a request |
+| `domain` | string | An existing category, such as `video`, or a word for one, such as `slides`. An unknown word is refused with the closest categories. Never the text of a request |
 | `outcome` | `worked` \| `failed` | How this use went, in your own name. Never a verdict on the tool |
 | `reason` | `missing-key` \| `missing-program` \| `missing-file` \| `not-the-right-tool` | With `outcome: failed` only |
 | `budget_wei` | string | What you have left to spend. A plan costing more is refused, with its total |

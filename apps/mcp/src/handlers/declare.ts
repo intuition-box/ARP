@@ -3,6 +3,7 @@ import {
   corroborationOf,
   isUsageOutcome,
   normaliseCategoryLabel,
+  resolveDomain,
   parseSessionLog,
   prepareDeclareUsed,
   budgetRefusal,
@@ -31,6 +32,7 @@ import {
   record,
   toolAtoms,
 } from '../config.js';
+import { domainWords } from '../domain-words.js';
 import { categoryToSign } from './category.js';
 import { type JsonRpcId, fail, text, isAddress } from '../rpc.js';
 import { UNSIGNED_CAVEAT, serialiseDeclarePlan } from '../serialise.js';
@@ -155,7 +157,15 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
   // ADR `0135`: a qualifier is a triple about the edge, so it is planned after the edge's own call.
   const tree = domainRaw === undefined ? null : await readDomainTree(domainWalk());
   // The sponsor's own normalisation (NFKC, accents, spaces), so the word checked, signed and written is one word.
-  const domain = domainRaw === undefined ? undefined : normaliseCategoryLabel(domainRaw);
+  let domain = domainRaw === undefined ? undefined : normaliseCategoryLabel(domainRaw);
+  // A word people use ("slides") names the node that means it, so the line lands there instead of a new
+  // sub-domain beside it (task 84, ADR `0155`). Matched here, on this machine.
+  let suggestions: string[] = [];
+  if (tree !== null && domain !== undefined && !tree.pathToRoot(domain).found) {
+    const resolved = resolveDomain(domain, domainWords(tree));
+    if (resolved.status === 'node') domain = resolved.label;
+    else suggestions = resolved.suggestions;
+  }
   if (tree !== null && domain !== undefined && !tree.pathToRoot(domain).found) {
     const parent = args['domain_parent'];
     const domainReason = args['domain_reason'];
@@ -163,7 +173,7 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
       return fail(
         id,
         -32602,
-        `"${domain}" is not a category under tool. Pick an existing one, or pass domain_parent and domain_reason to add it`,
+        `"${domain}" is not a category under tool.${suggestions.length === 0 ? '' : ` Closest: ${suggestions.join(', ')}.`} Pick an existing one, or pass domain_parent and domain_reason to add it`,
       );
     }
     if (typeof parent !== 'string' || parent.trim() === '' || typeof domainReason !== 'string' || domainReason.trim() === '') {

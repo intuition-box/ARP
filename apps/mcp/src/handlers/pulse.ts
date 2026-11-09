@@ -14,7 +14,6 @@ import {
   unconfirmedNote,
   type Capability,
   HAS_OUTCOME_LABEL,
-  inferDomain,
   type LocalFailure,
   parseLocalFailures,
   parseSkillsFind,
@@ -33,9 +32,11 @@ import {
   workedInDomain,
   yourFailures,
 } from '@arp-protocol/core';
+import { domainInText, resolveDomain } from '@arp-protocol/core';
 import { arpHome } from '@arp-protocol/core/node';
 import { stringToHex } from 'viem';
 
+import { domainWords } from '../domain-words.js';
 import { diskListingCache } from '../pulse-cache.js';
 import { readWindow } from '../pulse-window.js';
 import { openCall, runSearch, withoutPaths } from '../search-run.js';
@@ -501,7 +502,13 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
     const { near } = draft;
     if (scored) {
       const tree = await readDomainTree(domainWalk());
-      if (domain === null && phrases.length > 0) domain = inferDomain(phrases.join(' '), tree.subtree(DOMAIN_ROOT));
+      const words = domainWords(tree, DOMAIN_ROOT);
+      // A domain given by name or by a word people use ("slides") is the node it names (task 84).
+      if (domain !== null) {
+        const resolved = resolveDomain(domain, words);
+        if (resolved.status === 'node') domain = resolved.label;
+      }
+      if (domain === null && phrases.length > 0) domain = domainInText(phrases.join(' '), words);
       draft.domain = domain;
       if (domain !== null) {
         scope = new Set(tree.subtree(domain).concat(domain));

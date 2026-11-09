@@ -23747,142 +23747,53 @@ var init_pulse = __esm(() => {
   PLACEHOLDER = /(^|\/)(path|your|my|foo|example|script|file|input|output)(\/|\.|$)/i;
 });
 
-// ../../packages/protocol/dist/skill-domains.js
-function classifySkill(skill, description) {
-  const name = ` ${skill.replace(/-/g, " ").toLowerCase()} `;
-  const both = `${name}${description.toLowerCase()}`;
-  const hit = SKILL_DOMAINS.find((rule) => rule.words.some((word) => both.includes(word)) || (rule.nameWords ?? []).some((word) => name.includes(` ${word}`)));
-  return hit?.domain ?? null;
+// ../../packages/protocol/dist/domain-words.js
+function tokens(text) {
+  return normaliseCategoryLabel(text).split(/[^a-z0-9]+/).filter((t) => t.length > 1);
 }
-var SKILL_DOMAINS;
-var init_skill_domains = __esm(() => {
-  SKILL_DOMAINS = [
-    {
-      domain: "payment",
-      parent: "tool",
-      words: ["payment", "stripe", "paypal", "invoice", "checkout", "billing", "paywall"]
-    },
-    {
-      domain: "video",
-      parent: "tool",
-      words: ["video", "remotion", "hyperframes", "keyframe", "footage", "youtube"],
-      nameWords: ["render", "caption", "motion", "title", "carousel", "cursor", "frame", "overlay", "shard", "animation", "avatar", "clip"]
-    },
-    {
-      domain: "image",
-      parent: "tool",
-      words: ["image generation", "inpainting", "outpainting", "flux", "midjourney", "stable diffusion", "nano banana"],
-      nameWords: ["image", "photo", "relight", "upscale", "thumbnail", "imagegen"]
-    },
-    {
-      domain: "audio",
-      parent: "tool",
-      words: ["elevenlabs", "music generation", "text to speech", "voiceover", "sound effect", "instrumental"],
-      nameWords: ["audio", "music", "voice", "speech", "sound"]
-    },
-    {
-      domain: "document",
-      parent: "tool",
-      words: ["pptx", "docx", "xlsx", "powerpoint", "spreadsheet", ".potx", "pdf file"],
-      nameWords: ["pdf", "docx", "pptx", "xlsx", "document", "slide", "markdown"]
-    },
-    {
-      domain: "scraping",
-      parent: "tool",
-      words: ["scrap", "crawl", "firecrawl", "apify"],
-      nameWords: ["extract", "scrape"]
-    },
-    {
-      domain: "browser",
-      parent: "tool",
-      words: ["playwright", "puppeteer", "headless browser", "selenium"],
-      nameWords: ["browser", "chrome"]
-    },
-    {
-      domain: "database",
-      parent: "tool",
-      words: ["database", "postgres", "prisma", "supabase", "mongo", " sql"],
-      nameWords: ["schema", "query", "migration", "sql"]
-    },
-    {
-      domain: "design",
-      parent: "tool",
-      words: ["figma", "typograph", "design system", "design token"],
-      nameWords: ["design", "ux", "colour", "color", "layout", "logo", "icon", "theme"]
-    },
-    {
-      domain: "collaboration",
-      parent: "tool",
-      words: ["slack", "notion", "jira", "linear", "atlassian", "monday", "飞书", "obsidian"],
-      nameWords: ["lark", "calendar", "whiteboard", "meeting"]
-    },
-    {
-      domain: "marketing",
-      parent: "tool",
-      words: ["marketing", "seo", "campaign", "copywriting", "newsletter", "onboarding", "referral", "product hunt"],
-      nameWords: ["cro", "launch", "photography", "signup", "popup", "ads", "audience", "growth", "brand"]
-    },
-    {
-      domain: "blockchain",
-      parent: "tool",
-      words: ["blockchain", "onchain", "on-chain", "ethereum", "solidity", "web3", "smart contract", "erc-20", "erc-721"],
-      nameWords: ["wallet", "crypto", "nft", "defi"]
-    },
-    {
-      domain: "infrastructure",
-      parent: "tool",
-      words: ["deploy", "docker", "kubernetes", "terraform", "cloudflare", "aws", "azure", "serverless", "ci/cd", "firebase", "hosting", "vercel"],
-      nameWords: ["infra", "cli"]
-    },
-    {
-      domain: "observability",
-      parent: "tool",
-      words: ["observab", "logging", "grafana", "sentry", "telemetry"],
-      nameWords: ["monitor", "metric", "trace", "alert", "log"]
-    },
-    {
-      domain: "quality",
-      parent: "tool",
-      words: ["linting", "unit test", "code coverage", "static analysis"],
-      nameWords: ["test", "lint", "review", "debug", "audit", "coverage", "quality", "refactor", "eval"]
-    },
-    {
-      domain: "writing",
-      parent: "tool",
-      words: ["cold email", "pr body", "commit message", "conventional commits"],
-      nameWords: ["writing", "write", "article", "prose", "caveman", "cave", "edit"]
-    },
-    {
-      domain: "method",
-      parent: "tool",
-      words: ["handoff", "hand the current", "implementation plan", "subagent", "superpowers", "overbuilding", "chief of staff", "retrospective", "acceptance condition", "router over", "re-pitch"],
-      nameWords: ["handoff", "triage", "retro", "brainstorm", "spec", "prd", "questionnaire", "plan", "implement", "dispatch", "execute", "executing", "investigate", "wayfinder", "decision", "teach", "verify", "verification", "authoring", "template", "zoom", "wait", "grill", "ask", "manage", "optimize", "worktree", "lean", "sensei", "help", "ticket", "issue"]
-    },
-    {
-      domain: "website",
-      parent: "tool",
-      words: ["landing page", "static site", "next.js", "nextjs", "tailwind"],
-      nameWords: ["website", "html", "css", "landing", "frontend", "react"]
-    },
-    {
-      domain: "api",
-      parent: "tool",
-      words: ["rest api", "graphql", "webhook", "openapi", "postman"],
-      nameWords: ["api", "endpoint", "rest"]
-    },
-    {
-      domain: "automation",
-      parent: "tool",
-      words: ["zapier", "cron", "orchestrat"],
-      nameWords: ["automation", "workflow", "schedule", "pipeline"]
-    },
-    {
-      domain: "development",
-      parent: "tool",
-      words: ["typescript", "python", "rust ", "sdk"],
-      nameWords: ["code", "compile", "library", "framework", "git"]
-    }
-  ];
+function resolveDomain(raw, words) {
+  const word = normaliseCategoryLabel(raw);
+  if (words.labels.includes(word))
+    return { status: "node", label: word, via: "label" };
+  const alias = words.aliases[word];
+  if (alias !== undefined && words.labels.includes(alias))
+    return { status: "node", label: alias, via: "alias" };
+  return { status: "unknown", word, suggestions: suggestNodes(word, words) };
+}
+function suggestNodes(word, words, limit = SUGGESTIONS) {
+  const asked = new Set(tokens(word));
+  if (asked.size === 0)
+    return [];
+  const score = new Map;
+  const add = (label, points) => score.set(label, Math.max(score.get(label) ?? 0, points));
+  for (const label of words.labels) {
+    const shared = tokens(label).filter((t) => asked.has(t)).length;
+    if (shared > 0)
+      add(label, shared * 2);
+    else if (label.includes(word) || word.includes(label))
+      add(label, 1);
+  }
+  for (const [alias, label] of Object.entries(words.aliases)) {
+    if (!words.labels.includes(label))
+      continue;
+    const shared = tokens(alias).filter((t) => asked.has(t)).length;
+    if (shared > 0)
+      add(label, shared * 2 + 1);
+  }
+  return [...score.entries()].sort((a, b) => b[1] - a[1] || a[0].length - b[0].length || a[0].localeCompare(b[0])).slice(0, limit).map(([label]) => label);
+}
+function domainInText(text, words) {
+  const padded = ` ${tokens(text).join(" ")} `;
+  const hit = (phrase) => padded.includes(` ${tokens(phrase).join(" ")} `);
+  const label = [...words.labels].filter((l) => tokens(l).length > 0 && hit(l)).sort((a, b) => b.length - a.length)[0];
+  if (label !== undefined)
+    return label;
+  const alias = Object.keys(words.aliases).filter((a) => words.labels.includes(words.aliases[a]) && hit(a)).sort((a, b) => b.length - a.length)[0];
+  return alias === undefined ? null : words.aliases[alias];
+}
+var SUGGESTIONS = 5;
+var init_domain_words = __esm(() => {
+  init_category();
 });
 
 // ../../packages/protocol/dist/declare/usage-context.js
@@ -24198,11 +24109,6 @@ function scoreSkill(input) {
     failed: input.failed,
     version: SCORE_VERSION
   };
-}
-function inferDomain(query, labels) {
-  const words = ` ${query.toLowerCase().replace(/[^a-z0-9-]+/g, " ").trim()} `;
-  const matches = labels.filter((label) => words.includes(` ${label.toLowerCase()} `));
-  return [...matches].sort((a, b) => b.length - a.length)[0] ?? null;
 }
 var SCORE_VERSION = "pulse-score-3", PRIOR_TOP = 0.8, PRIOR_BOTTOM = 0.2, WALLETS_TO_MOVE = 3, NEEDS, SIGNAL_WEIGHTS;
 var init_pulse_score = __esm(() => {
@@ -26006,7 +25912,7 @@ var init_dist2 = __esm(() => {
   init_discover();
   init_pulse();
   init_skill_requires();
-  init_skill_domains();
+  init_domain_words();
   init_local_failures();
   init_share_failures();
   init_pulse_score();
@@ -33235,6 +33141,131 @@ var init_config = __esm(() => {
   })();
 });
 
+// ../../data/catalogue/domain-aliases.json
+var domain_aliases_default;
+var init_domain_aliases = __esm(() => {
+  domain_aliases_default = {
+    _note: "Words a person or an agent uses, mapped to a node of ARP's domain tree (OASF 1.1.0 names, plus ARP's own `design`), task 84. Read locally by the MCP server, the CLI and the hook: the words never leave the machine (the user, 2026-11-09). Every target is checked against data/catalogue/oasf-1.1.0-skills.json by packages/protocol/test/domain-words.test.ts. ARP's old category words map to the one node that held them; the split ones (method, quality) have no alias, and a refusal suggests nodes instead.",
+    oasfVersion: "1.1.0",
+    aliases: {
+      ads: "advertising",
+      advertising: "advertising",
+      agent: "agent application building",
+      agents: "agent orchestration",
+      android: "mobile development",
+      animation: "web animation",
+      api: "api development",
+      audio: "audio & speech processing",
+      automation: "tool use and automation",
+      backend: "backend development",
+      blockchain: "blockchain and web3",
+      brand: "branding",
+      browser: "browser automation",
+      captions: "video editing",
+      chart: "chart generation",
+      charts: "chart generation",
+      chat: "team messaging",
+      collaboration: "collaboration and communication",
+      commit: "commit authoring",
+      copywriting: "copywriting",
+      crawl: "web crawling",
+      cro: "conversion optimization",
+      dashboard: "dashboard building",
+      database: "databases",
+      debug: "code debugging",
+      debugging: "code debugging",
+      deck: "presentation authoring",
+      deploy: "deployment and release management",
+      development: "software engineering",
+      docker: "containerization",
+      docs: "technical writing",
+      document: "document authoring",
+      documentation: "project documentation",
+      docx: "document authoring",
+      editing: "video editing",
+      email: "email marketing",
+      excel: "spreadsheet authoring",
+      frontend: "frontend development",
+      git: "git workflow",
+      illustration: "image generation",
+      image: "computer vision",
+      infrastructure: "devops and cloud infrastructure",
+      ios: "mobile development",
+      issues: "issue tracking",
+      kubernetes: "container orchestration",
+      landing: "conversion optimization",
+      layout: "design",
+      logo: "branding",
+      logs: "logging and log analysis",
+      marketing: "content, writing and marketing",
+      mcp: "agent tool building",
+      meeting: "meeting intelligence",
+      meetings: "meeting intelligence",
+      mobile: "mobile development",
+      monitoring: "monitoring and alerting",
+      montage: "video editing",
+      music: "text to audio",
+      newsletter: "email marketing",
+      notes: "note-taking",
+      payment: "payments integration",
+      pdf: "pdf manipulation",
+      pentest: "penetration testing",
+      postgres: "relational database operations",
+      powerpoint: "presentation authoring",
+      pptx: "presentation authoring",
+      pr: "pull request management",
+      prd: "requirements and prd authoring",
+      presentation: "presentation authoring",
+      prompt: "prompt design",
+      rag: "retrieval-augmented generation",
+      research: "research and scholarship",
+      review: "code review",
+      scrape: "web scraping",
+      scraping: "web data acquisition",
+      search: "web search research",
+      security: "cybersecurity",
+      seo: "search engine optimization",
+      slide: "presentation authoring",
+      slides: "presentation authoring",
+      "smart contract": "smart contract development",
+      social: "social media marketing",
+      solidity: "smart contract development",
+      spec: "requirements and prd authoring",
+      spreadsheet: "spreadsheet authoring",
+      sql: "relational database operations",
+      subtitles: "video editing",
+      summarize: "text summarization",
+      summary: "text summarization",
+      tdd: "software testing",
+      test: "software testing",
+      testing: "software testing",
+      tests: "software testing",
+      thumbnail: "image generation",
+      tickets: "issue tracking",
+      trading: "defi and crypto trading",
+      transcription: "automatic speech recognition",
+      translate: "translation",
+      tts: "text to speech",
+      typography: "design",
+      ui: "design",
+      ux: "design",
+      voice: "text to speech",
+      wallet: "crypto wallet operations",
+      website: "web development",
+      writing: "content writing",
+      xlsx: "spreadsheet authoring"
+    }
+  };
+});
+
+// ../mcp/src/domain-words.ts
+function domainWords(tree, root2 = "tool") {
+  return { labels: tree.subtree(root2), aliases: domain_aliases_default.aliases };
+}
+var init_domain_words2 = __esm(() => {
+  init_domain_aliases();
+});
+
 // ../../data/catalogue/skill-facts.json
 var skill_facts_default;
 var init_skill_facts = __esm(() => {
@@ -33976,11 +34007,21 @@ async function desktopTool(id, name, args) {
     return fail(id, -32602, "id must be the 0x + 32 bytes id from arp_find_tools");
   }
   if (name === "arp_file_category") {
-    const category = args["category"];
-    if (typeof category !== "string" || category.trim().length === 0) {
+    const asked = args["category"];
+    if (typeof asked !== "string" || asked.trim().length === 0) {
       return fail(id, -32602, "category must be a category name");
     }
     const parent = typeof args["parent"] === "string" ? args["parent"] : undefined;
+    let category = asked;
+    const resolved = resolveDomain(asked, domainWords(await readDomainTree(domainWalk())));
+    if (resolved.status === "node")
+      category = resolved.label;
+    else if (parent === undefined) {
+      return text(id, {
+        refused: "unknown_category",
+        detail: `"${asked}" is not a category.${resolved.suggestions.length === 0 ? "" : ` Closest: ${resolved.suggestions.join(", ")}.`} Pick one, or pass parent and reason to add it.`
+      });
+    }
     const reason = typeof args["reason"] === "string" ? args["reason"] : undefined;
     return text(id, await fileCategory({
       id: atom,
@@ -34046,6 +34087,7 @@ var init_handlers = __esm(() => {
   init_data2();
   init_tool_search();
   init_config();
+  init_domain_words2();
   init_agent_key();
   init_loop();
   INSTALLS = new Map(Object.entries(skill_facts_default.facts).map(([label, fact]) => [keyOf(label), fact.installs]));
@@ -34084,11 +34126,13 @@ async function writeLineChecked(steps, input) {
   let line = input;
   if (input.domain !== undefined) {
     const domain = normaliseCategoryLabel(input.domain);
-    if (await steps.isCategory(domain)) {
+    const resolved = await steps.isCategory(domain) ? null : await steps.resolve?.(domain);
+    if (resolved === null || resolved?.status === "node") {
       const { newDomain: _unused, ...rest } = input;
-      line = { ...rest, domain };
+      line = { ...rest, domain: resolved?.status === "node" ? resolved.label : domain };
     } else if (input.newDomain === undefined) {
-      throw new Error(`"${input.domain}" is not a category under tool; add it with --parent <category> --why <reason>`);
+      const closest = resolved?.status === "unknown" && resolved.suggestions.length > 0 ? ` Closest: ${resolved.suggestions.join(", ")}.` : "";
+      throw new Error(`"${input.domain}" is not a category under tool.${closest} Pick one, or add it with --parent <category> --why <reason>`);
     } else {
       const parent = normaliseCategoryLabel(input.newDomain.parent);
       if (!await steps.isCategory(parent))
@@ -34105,12 +34149,14 @@ async function writeLineHere(input) {
   return writeLineChecked({
     config: loopConfig(),
     isCategory: async (label) => isCategoryIn(await readDomainTree(domainWalk()))(label),
+    resolve: async (word) => resolveDomain(word, domainWords(await readDomainTree(domainWalk()))),
     agent: agentFor
   }, input);
 }
 var init_line2 = __esm(() => {
   init_dist2();
   init_config();
+  init_domain_words2();
   init_handlers();
   init_loop();
 });
@@ -34149,7 +34195,7 @@ var init_tools = __esm(() => {
         properties: {
           domain: {
             type: "string",
-            description: "A category of the tree, an OASF name such as `video` or `presentation authoring`."
+            description: "A category of the tree, an OASF name such as `video` or `presentation authoring`, or a word people use for one (`slides`)."
           },
           order: {
             type: "string",
@@ -34287,7 +34333,7 @@ var init_tools = __esm(() => {
           },
           domain: {
             type: "string",
-            description: "Optional. The category this use was in, an existing one such as `video`. Never the " + "text of a request. One more paid triple per tool, so other agents can read it in context. " + "A word the tree lacks can be added: pass `domain_parent`, `domain_reason` and `declarer`."
+            description: "Optional. The category this use was in, an existing one such as `video`, or a word for one (`slides`). Never the " + "text of a request. One more paid triple per tool, so other agents can read it in context. " + "A word the tree lacks can be added: pass `domain_parent`, `domain_reason` and `declarer`."
           },
           domain_parent: {
             type: "string",
@@ -34844,12 +34890,20 @@ async function declareUsed2(id, args) {
     return text(id, overBudget(plan.totalValue) ?? serialiseDeclarePlan(plan));
   }
   const tree = domainRaw === undefined ? null : await readDomainTree(domainWalk());
-  const domain = domainRaw === undefined ? undefined : normaliseCategoryLabel(domainRaw);
+  let domain = domainRaw === undefined ? undefined : normaliseCategoryLabel(domainRaw);
+  let suggestions = [];
+  if (tree !== null && domain !== undefined && !tree.pathToRoot(domain).found) {
+    const resolved = resolveDomain(domain, domainWords(tree));
+    if (resolved.status === "node")
+      domain = resolved.label;
+    else
+      suggestions = resolved.suggestions;
+  }
   if (tree !== null && domain !== undefined && !tree.pathToRoot(domain).found) {
     const parent = args["domain_parent"];
     const domainReason = args["domain_reason"];
     if (parent === undefined && domainReason === undefined) {
-      return fail(id, -32602, `"${domain}" is not a category under tool. Pick an existing one, or pass domain_parent and domain_reason to add it`);
+      return fail(id, -32602, `"${domain}" is not a category under tool.${suggestions.length === 0 ? "" : ` Closest: ${suggestions.join(", ")}.`} Pick an existing one, or pass domain_parent and domain_reason to add it`);
     }
     if (typeof parent !== "string" || parent.trim() === "" || typeof domainReason !== "string" || domainReason.trim() === "") {
       return fail(id, -32602, "a new domain needs domain_parent, an existing category, and domain_reason, why none fits");
@@ -35013,6 +35067,7 @@ async function declareSession(id, args) {
 var init_declare2 = __esm(() => {
   init_dist2();
   init_config();
+  init_domain_words2();
   init_category3();
   init_serialise();
 });
@@ -36980,8 +37035,14 @@ async function answer(id, args, budget, cancelled) {
     const { near: near3 } = draft;
     if (scored) {
       const tree = await readDomainTree(domainWalk());
+      const words = domainWords(tree, DOMAIN_ROOT);
+      if (domain2 !== null) {
+        const resolved = resolveDomain(domain2, words);
+        if (resolved.status === "node")
+          domain2 = resolved.label;
+      }
       if (domain2 === null && phrases.length > 0)
-        domain2 = inferDomain(phrases.join(" "), tree.subtree(DOMAIN_ROOT));
+        domain2 = domainInText(phrases.join(" "), words);
       draft.domain = domain2;
       if (domain2 !== null) {
         scope = new Set(tree.subtree(domain2).concat(domain2));
@@ -37132,8 +37193,10 @@ async function answer(id, args, budget, cancelled) {
 var DEFAULT_LIMIT3 = 5, MAX_LIMIT = 20, MAX_PHRASES = 4, SKILLS_CLI = "skills@1.7.6", PULSE_BUDGET, PROBE_MS = 3000, bounded = (words) => words.slice(0, 30).map((word) => word.slice(0, 80));
 var init_pulse2 = __esm(() => {
   init_dist2();
+  init_dist2();
   init_node2();
   init__esm();
+  init_domain_words2();
   init_pulse_cache();
   init_pulse_window();
   init_search_run();
@@ -37449,6 +37512,773 @@ function appendOwn(path, text2) {
 }
 var init_append = () => {};
 
+// ../../data/catalogue/skill-nodes-13579.json
+var skill_nodes_13579_default;
+var init_skill_nodes_13579 = __esm(() => {
+  skill_nodes_13579_default = {
+    _note: "For the hook, which reads no network (task 84): the nodes of ARP's testnet tree as written by task 79 (data/catalogue/oasf-tree-13579.json), and the node each skill name is filed at, when the name is filed at one node only. Generated from data/catalogue/oasf-skill-tags-proposal-13579.json, rows not reviewed out.",
+    chainId: 13579,
+    oasfVersion: "1.1.0",
+    nodes: [
+      "ad copywriting",
+      "ad creative production",
+      "advertising",
+      "agent application building",
+      "agent evaluation",
+      "agent orchestration",
+      "agent tool building",
+      "agentic workflow orchestration",
+      "ai agent development",
+      "ai safety and guardrails",
+      "ai/ml engineering",
+      "answer engine optimization",
+      "api development",
+      "api schema understanding",
+      "app store release",
+      "architecture patterns",
+      "architecture review",
+      "article and blog writing",
+      "audio & speech processing",
+      "audio generation",
+      "audio to audio",
+      "authentication implementation",
+      "authorization and access control",
+      "benchmark execution",
+      "branding",
+      "browser automation",
+      "build, packaging and dev tooling",
+      "business and professional",
+      "business and professional writing",
+      "business operations",
+      "business strategy",
+      "calendar and scheduling",
+      "campaign planning",
+      "ci/cd configuration",
+      "ci/cd pipelines",
+      "cli and terminal app development",
+      "cloud architecture design",
+      "cloud cost optimization",
+      "cloud networking",
+      "cloud platform operations",
+      "cloud resource management",
+      "code comprehension",
+      "code debugging",
+      "code generation",
+      "code migration and modernization",
+      "code quality and maintenance",
+      "code refactoring and optimization",
+      "code review",
+      "collaboration and communication",
+      "commit authoring",
+      "competitive analysis",
+      "competitive intelligence",
+      "compliance assessment",
+      "computer vision",
+      "configuration management",
+      "container orchestration",
+      "container workload management",
+      "containerization",
+      "content strategy",
+      "content writing",
+      "content, writing and marketing",
+      "context window management",
+      "controllable image generation",
+      "conversion optimization",
+      "copy editing",
+      "copywriting",
+      "crm management",
+      "cross-platform mobile development",
+      "customer support and success",
+      "cybersecurity",
+      "data analytics",
+      "data engineering and analytics",
+      "data modeling",
+      "data modeling and design",
+      "data pipelines",
+      "data visualization",
+      "data warehousing",
+      "databases",
+      "deep learning training",
+      "deep research",
+      "dependency management",
+      "deployment and release management",
+      "deployment orchestration",
+      "design",
+      "dev environment setup",
+      "devops and cloud infrastructure",
+      "document authoring",
+      "document collaboration",
+      "document or database question answering",
+      "document processing",
+      "editing and proofreading",
+      "email campaign creation",
+      "email management",
+      "email marketing",
+      "employee lifecycle",
+      "end-to-end and ui testing",
+      "error handling implementation",
+      "experiment tracking",
+      "face swapping",
+      "frontend development",
+      "full-stack development",
+      "game development",
+      "git workflow",
+      "governance, compliance and ethics",
+      "graph database operations",
+      "growth strategy",
+      "human resources",
+      "iac authoring",
+      "identity administration",
+      "identity and access management",
+      "image editing",
+      "image generation",
+      "image inpainting",
+      "image outpainting",
+      "image to image",
+      "image to video",
+      "incident response",
+      "inference and serving",
+      "infrastructure as code",
+      "instructed image editing",
+      "interactive visualization",
+      "issue tracking",
+      "knowledge base management",
+      "knowledge management",
+      "landing page and sales copy",
+      "language generation",
+      "language processing",
+      "lead generation",
+      "llm evaluation",
+      "llm observability",
+      "llm tracing and instrumentation",
+      "logging and log analysis",
+      "logical reasoning",
+      "market and competitive intelligence",
+      "market research",
+      "marketing copywriting",
+      "marketing strategy",
+      "meeting intelligence",
+      "ml experimentation and lifecycle",
+      "mobile development",
+      "model and agent evaluation",
+      "model fine-tuning",
+      "model serving",
+      "model training and fine-tuning",
+      "monitoring and alerting",
+      "multi-agent coordination",
+      "native mobile development",
+      "network configuration",
+      "nosql database operations",
+      "note-taking",
+      "observability",
+      "observability instrumentation",
+      "office productivity",
+      "orm and data access",
+      "paid ads management",
+      "paper analysis",
+      "pdf manipulation",
+      "performance monitoring",
+      "postmortem authoring",
+      "presentation authoring",
+      "problem solving",
+      "process operations",
+      "product analytics",
+      "product management",
+      "product marketing and gtm",
+      "product strategy",
+      "production llm monitoring",
+      "project and task management",
+      "project scaffolding",
+      "prompt design",
+      "prompt engineering",
+      "prompt optimization",
+      "pull request management",
+      "quality evaluation",
+      "reasoning and planning",
+      "relational database operations",
+      "release management",
+      "requirements and prd authoring",
+      "research and scholarship",
+      "research ideation",
+      "research, knowledge and productivity",
+      "responsible ai governance",
+      "retention management",
+      "retrieval-augmented generation",
+      "roadmapping and prioritization",
+      "role assignment",
+      "root-cause debugging",
+      "runtime guardrails",
+      "sales and crm",
+      "sales enablement",
+      "sales outreach",
+      "script integration",
+      "search engine optimization",
+      "security hardening",
+      "security operations",
+      "seo auditing",
+      "seo content optimization",
+      "serverless and edge computing",
+      "serverless function development",
+      "site reliability engineering",
+      "social content creation",
+      "social media management",
+      "social media marketing",
+      "software architecture and design",
+      "software engineering",
+      "software testing",
+      "specialized application development",
+      "spreadsheet authoring",
+      "static analysis and linting",
+      "stream processing",
+      "structured data markup",
+      "styling and responsive layout",
+      "support operations",
+      "system design",
+      "talking avatar generation",
+      "task decomposition",
+      "task management",
+      "team messaging",
+      "technical writing",
+      "test strategy and tdd",
+      "text paraphrasing",
+      "text style transfer",
+      "text to audio",
+      "text to code",
+      "text to image",
+      "text to video",
+      "third-party integration",
+      "threat detection",
+      "tool use and automation",
+      "tool use planning",
+      "trace analysis and debugging",
+      "ux writing and microcopy",
+      "version control and collaboration",
+      "video",
+      "video editing",
+      "vulnerability analysis",
+      "vulnerability management",
+      "web accessibility",
+      "web animation",
+      "web development",
+      "web search",
+      "web search research",
+      "workflow automation"
+    ],
+    skills: {
+      "ab-test-setup": "product analytics",
+      "ab-testing": "product analytics",
+      "academy-guide": "support operations",
+      "ace-step": "text to audio",
+      "ad-creative": "ad copywriting",
+      adapt: "styling and responsive layout",
+      ads: "paid ads management",
+      "agent-browser": "browser automation",
+      "agent-tools": "script integration",
+      "agents-sdk": "agent application building",
+      "ai-avatar-video": "talking avatar generation",
+      "ai-image-generation": "text to image",
+      "ai-music": "text to audio",
+      "ai-paper-reproduction": "research and scholarship",
+      "ai-research-explore": "research ideation",
+      "ai-research-reproduction": "research and scholarship",
+      "ai-seo": "answer engine optimization",
+      "ai-video-generation": "text to video",
+      "airunway-aks-setup": "model serving",
+      "algorithmic-art": "image generation",
+      analytics: "product analytics",
+      "analytics-tracking": "product analytics",
+      "analyze-project": "code comprehension",
+      "analyze-test-run": "software testing",
+      animate: "web animation",
+      "animate-expo": "web animation",
+      "animation-performance": "web animation",
+      "animation-vocabulary": "web animation",
+      animejs: "web animation",
+      "app-store-screenshots": "app store release",
+      "appinsights-instrumentation": "observability instrumentation",
+      "apple-design": "design",
+      arrange: "design",
+      "ask-matt": "tool use planning",
+      "ask-sonner": "frontend development",
+      aso: "seo auditing",
+      "aso-audit": "seo auditing",
+      attribution: "product analytics",
+      audit: "web accessibility",
+      "azure-ai": "cloud platform operations",
+      "azure-aigateway": "runtime guardrails",
+      "azure-app-onboard": "deployment orchestration",
+      "azure-app-onboard-prereq": "deployment orchestration",
+      "azure-cloud-migrate": "code migration and modernization",
+      "azure-compliance": "compliance assessment",
+      "azure-compute": "cloud resource management",
+      "azure-cost": "cloud cost optimization",
+      "azure-cost-optimization": "cloud cost optimization",
+      "azure-deploy": "deployment orchestration",
+      "azure-diagnostics": "incident response",
+      "azure-enterprise-infra-planner": "cloud architecture design",
+      "azure-hosted-copilot-sdk": "agent application building",
+      "azure-kubernetes": "container workload management",
+      "azure-kusto": "logging and log analysis",
+      "azure-kusto-graph": "graph database operations",
+      "azure-kusto-irql": "threat detection",
+      "azure-kusto-irql-graph": "interactive visualization",
+      "azure-messaging": "code debugging",
+      "azure-observability": "observability",
+      "azure-postgres": "relational database operations",
+      "azure-prepare": "iac authoring",
+      "azure-quotas": "cloud resource management",
+      "azure-rbac": "authorization and access control",
+      "azure-reliability": "site reliability engineering",
+      "azure-resource-lookup": "cloud resource management",
+      "azure-resource-visualizer": "cloud architecture design",
+      "azure-storage": "cloud resource management",
+      "azure-upgrade": "code migration and modernization",
+      "azure-validate": "ci/cd configuration",
+      basin: "data warehousing",
+      "batch-grill-me": "problem solving",
+      bolder: "design",
+      brainstorming: "reasoning and planning",
+      "brand-guidelines": "branding",
+      "break-ui": "end-to-end and ui testing",
+      "building-ai-agent-on-cloudflare": "agent application building",
+      "building-mcp-server-on-cloudflare": "agent tool building",
+      "canopy-part-title": "video editing",
+      "canvas-design": "image generation",
+      "captions-overlay": "video editing",
+      cavecrew: "role assignment",
+      caveman: "text style transfer",
+      "caveman-commit": "commit authoring",
+      "caveman-compress": "context window management",
+      "caveman-discover": "llm tracing and instrumentation",
+      "caveman-es": "text style transfer",
+      "caveman-evidence-review": "trace analysis and debugging",
+      "caveman-explore": "code comprehension",
+      "caveman-help": "text style transfer",
+      "caveman-learn": "prompt optimization",
+      "caveman-manage": "release management",
+      "caveman-optimize": "llm evaluation",
+      "caveman-review": "code review",
+      "caveman-setup": "llm tracing and instrumentation",
+      "caveman-stats": "production llm monitoring",
+      "cf-cli": "cloud resource management",
+      "changelog-video": "video editing",
+      "character-design-sheet": "controllable image generation",
+      "chief-of-staff": "agentic workflow orchestration",
+      "churn-prevention": "retention management",
+      clarify: "ux writing and microcopy",
+      "claude-api": "third-party integration",
+      "claude-design-hyperframes": "video editing",
+      "claude-handoff": "multi-agent coordination",
+      cloudflare: "cloud architecture design",
+      "cloudflare-email-service": "third-party integration",
+      "cloudflare-one": "network configuration",
+      "cloudflare-one-migrations": "network configuration",
+      "co-marketing": "campaign planning",
+      "code-review": "code review",
+      "code-slice-hero": "video editing",
+      "codebase-design": "architecture patterns",
+      "codex-pet": "image to image",
+      "cold-email": "sales outreach",
+      colorize: "design",
+      "community-marketing": "growth strategy",
+      "competitor-alternatives": "landing page and sales copy",
+      "competitor-profiling": "competitive intelligence",
+      "competitor-teardown": "competitive analysis",
+      competitors: "landing page and sales copy",
+      compress: "context window management",
+      "content-strategy": "content strategy",
+      "contribute-catalog": "video editing",
+      "controlnet-pose": "image to video",
+      "conversion-tracking": "product analytics",
+      "copy-editing": "copy editing",
+      copywriting: "marketing copywriting",
+      critique: "design",
+      cro: "conversion optimization",
+      "css-animations": "web animation",
+      "cuboid-carousel": "video editing",
+      "customer-research": "market research",
+      "cut-the-curve": "video editing",
+      "decision-mapping": "task decomposition",
+      delight: "design",
+      "deploy-to-vercel": "deployment orchestration",
+      "design-an-interface": "system design",
+      "design-mobile-apps": "design",
+      "design-taste-frontend": "design",
+      "design-taste-frontend-v1": "design",
+      "design-taste-frontend-v2-experimental": "design",
+      "developing-genkit-dart": "agent application building",
+      "developing-genkit-go": "agent application building",
+      "developing-genkit-js": "agent application building",
+      "developing-genkit-python": "agent application building",
+      diagnose: "root-cause debugging",
+      "diagnosing-bugs": "root-cause debugging",
+      "diagnosing-superpowers": "trace analysis and debugging",
+      "directory-submissions": "search engine optimization",
+      "discernment-nudge": "responsible ai governance",
+      "discover-azure-skills": "tool use planning",
+      "dispatching-parallel-agents": "multi-agent coordination",
+      distill: "design",
+      "doc-coauthoring": "technical writing",
+      docx: "document authoring",
+      "domain-modeling": "data modeling",
+      "durable-objects": "serverless function development",
+      "edit-article": "editing and proofreading",
+      "elevenlabs-music-generation": "text to audio",
+      "email-sequence": "email campaign creation",
+      emails: "email campaign creation",
+      "embedded-captions": "video editing",
+      "emil-design-eng": "design",
+      "entra-agent-id": "identity administration",
+      "entra-app-registration": "authentication implementation",
+      "env-and-assets-bootstrap": "dev environment setup",
+      events: "campaign planning",
+      "executing-plans": "task management",
+      "explore-code": "deep learning training",
+      "explore-run": "experiment tracking",
+      "extension-to-functions-codebase": "code migration and modernization",
+      extract: "design",
+      "face-swap": "face swapping",
+      "faceless-explainer": "text to video",
+      figma: "video editing",
+      "file-test-bug": "issue tracking",
+      "find-animation-opportunities": "web animation",
+      "find-skills": "tool use planning",
+      "finishing-a-development-branch": "git workflow",
+      "firebase-ai-logic": "third-party integration",
+      "firebase-ai-logic-basics": "third-party integration",
+      "firebase-app-hosting-basics": "deployment orchestration",
+      "firebase-auth-basics": "authentication implementation",
+      "firebase-basics": "dev environment setup",
+      "firebase-crashlytics": "monitoring and alerting",
+      "firebase-data-connect": "relational database operations",
+      "firebase-firestore": "nosql database operations",
+      "firebase-firestore-basics": "nosql database operations",
+      "firebase-firestore-enterprise-native-mode": "nosql database operations",
+      "firebase-firestore-standard": "nosql database operations",
+      "firebase-hosting-basics": "deployment orchestration",
+      "firebase-local-env-setup": "dev environment setup",
+      "firebase-remote-config-basics": "configuration management",
+      "firebase-security-rules-auditor": "vulnerability analysis",
+      "firestore-rules-creation": "authorization and access control",
+      "firestore-security-rules-auditor": "vulnerability analysis",
+      "flux-2-klein": "text to image",
+      "flux-kontext": "instructed image editing",
+      "form-cro": "conversion optimization",
+      "free-tool-strategy": "growth strategy",
+      "free-tools": "growth strategy",
+      "frontend-design": "design",
+      "frost-sequence-camera-orbit": "video editing",
+      "full-output-enforcement": "prompt design",
+      "gateway-workers": "serverless function development",
+      "general-video": "video editing",
+      "git-guardrails-claude-code": "git workflow",
+      "glass-shard-title": "video editing",
+      "google-agents-cli-adk-code": "agent application building",
+      "google-agents-cli-deploy": "deployment orchestration",
+      "google-agents-cli-eval": "agent evaluation",
+      "google-agents-cli-observability": "llm tracing and instrumentation",
+      "google-agents-cli-publish": "release management",
+      "google-agents-cli-scaffold": "project scaffolding",
+      "google-agents-cli-workflow": "agent application building",
+      "gpt-image": "text to image",
+      "gpt-image-2": "text to image",
+      "gpt-image-edit": "instructed image editing",
+      "gpt-taste": "design",
+      "graphic-overlays": "video editing",
+      "grill-me": "problem solving",
+      "grill-with-docs": "problem solving",
+      grilling: "problem solving",
+      gsap: "web animation",
+      handoff: "context window management",
+      happyhorse: "text to video",
+      "happyhorse-1-0": "text to video",
+      harden: "error handling implementation",
+      "higgsfield-brandkit": "branding",
+      "higgsfield-faceless-video": "text to video",
+      "higgsfield-game-generation": "game development",
+      "higgsfield-generate": "text to image",
+      "higgsfield-marketplace-cards": "ad creative production",
+      "higgsfield-product-photoshoot": "text to image",
+      "higgsfield-soul-id": "model fine-tuning",
+      "higgsfield-websites": "full-stack development",
+      "higgsfield-youtube-thumbnail": "text to image",
+      "high-end-visual-design": "design",
+      hyperframes: "video",
+      "hyperframes-animation": "web animation",
+      "hyperframes-audio": "audio to audio",
+      "hyperframes-cli": "video editing",
+      "hyperframes-core": "video editing",
+      "hyperframes-creative": "video editing",
+      "hyperframes-keyframes": "video editing",
+      "hyperframes-media": "audio generation",
+      "hyperframes-read-first": "video",
+      "hyperframes-registry": "video editing",
+      "hyperframes-studio": "video editing",
+      image: "image generation",
+      "image-edit": "instructed image editing",
+      "image-inpainting": "image inpainting",
+      "image-outpainting": "image outpainting",
+      "image-taste-frontend": "design",
+      "image-to-video": "image to video",
+      impeccable: "design",
+      implement: "text to code",
+      "implement-spec": "text to code",
+      "improve-animations": "web animation",
+      "improve-codebase-architecture": "architecture review",
+      "industrial-brutalist-ui": "design",
+      "influencer-marketing": "campaign planning",
+      "infsh-cli": "script integration",
+      "internal-comms": "business and professional writing",
+      "investigate-first": "root-cause debugging",
+      k2: "stream processing",
+      "kling-3-0": "text to video",
+      "landing-page-design": "conversion optimization",
+      "lark-approval": "process operations",
+      "lark-apps": "full-stack development",
+      "lark-attendance": "employee lifecycle",
+      "lark-base": "spreadsheet authoring",
+      "lark-calendar": "calendar and scheduling",
+      "lark-contact": "team messaging",
+      "lark-doc": "document collaboration",
+      "lark-drive": "document collaboration",
+      "lark-event": "workflow automation",
+      "lark-im": "team messaging",
+      "lark-mail": "email management",
+      "lark-markdown": "document collaboration",
+      "lark-meeting": "meeting intelligence",
+      "lark-minutes": "meeting intelligence",
+      "lark-note": "meeting intelligence",
+      "lark-okr": "roadmapping and prioritization",
+      "lark-openapi-explorer": "api schema understanding",
+      "lark-shared": "authentication implementation",
+      "lark-sheets": "spreadsheet authoring",
+      "lark-skill-maker": "agent tool building",
+      "lark-slides": "presentation authoring",
+      "lark-task": "task management",
+      "lark-vc": "meeting intelligence",
+      "lark-vc-agent": "meeting intelligence",
+      "lark-whiteboard": "document collaboration",
+      "lark-whiteboard-cli": "document collaboration",
+      "lark-wiki": "knowledge base management",
+      "lark-workflow-meeting-summary": "meeting intelligence",
+      "lark-workflow-standup-report": "task management",
+      launch: "product marketing and gtm",
+      "launch-strategy": "product marketing and gtm",
+      layout: "design",
+      "lead-magnets": "lead generation",
+      "lean-build": "text to code",
+      "link-building": "search engine optimization",
+      lipsync: "talking avatar generation",
+      "loop-me": "requirements and prd authoring",
+      lottie: "web animation",
+      "markdown-token-optimizer": "context window management",
+      "marketing-council": "marketing strategy",
+      "marketing-ideas": "growth strategy",
+      "marketing-loops": "workflow automation",
+      "marketing-plan": "marketing strategy",
+      "marketing-psychology": "marketing strategy",
+      "mcp-builder": "agent tool building",
+      "media-use": "video",
+      mediabunny: "video",
+      megacave: "text style transfer",
+      "microsoft-foundry": "agent application building",
+      "migrate-to-shoehorn": "code migration and modernization",
+      migration: "code migration and modernization",
+      "minimal-run-and-audit": "benchmark execution",
+      "minimalist-ui": "design",
+      "mobile-native": "styling and responsive layout",
+      "motion-doctrine": "video editing",
+      "motion-graphics": "video editing",
+      "music-to-video": "video editing",
+      "nano-banana-2": "text to image",
+      "nano-banana-edit": "instructed image editing",
+      "nextjs-on-cloudflare": "deployment orchestration",
+      normalize: "design",
+      "obsidian-vault": "note-taking",
+      offers: "product marketing and gtm",
+      onboard: "design",
+      onboarding: "conversion optimization",
+      "onboarding-cro": "conversion optimization",
+      optimize: "code refactoring and optimization",
+      "orbit-card": "video editing",
+      overdrive: "web animation",
+      "oversized-cursor": "video editing",
+      "p-image": "text to image",
+      "p-video": "text to video",
+      "p-video-avatar": "talking avatar generation",
+      "page-cro": "conversion optimization",
+      "paid-ads": "paid ads management",
+      "paper-context-resolver": "paper analysis",
+      "paywall-upgrade-cro": "conversion optimization",
+      paywalls: "conversion optimization",
+      pdf: "pdf manipulation",
+      "pick-ui-library": "frontend development",
+      polish: "design",
+      "popup-cro": "conversion optimization",
+      popups: "conversion optimization",
+      pptx: "presentation authoring",
+      pr: "pull request management",
+      "pr-to-video": "video editing",
+      pricing: "product strategy",
+      "pricing-strategy": "product strategy",
+      "prisma-cli": "orm and data access",
+      "prisma-client-api": "orm and data access",
+      "prisma-compute": "deployment orchestration",
+      "prisma-database-setup": "orm and data access",
+      "prisma-driver-adapter-implementation": "orm and data access",
+      "prisma-mongodb-upgrade": "code migration and modernization",
+      "prisma-orm-setup": "orm and data access",
+      "prisma-postgres": "relational database operations",
+      "prisma-postgres-setup": "relational database operations",
+      "prisma-upgrade-v7": "code migration and modernization",
+      "product-hunt-launch": "product marketing and gtm",
+      "product-launch-video": "ad creative production",
+      "product-marketing": "product marketing and gtm",
+      "product-marketing-context": "product marketing and gtm",
+      "product-photography": "text to image",
+      "programmatic-seo": "seo content optimization",
+      prospecting: "lead generation",
+      "public-relations": "marketing strategy",
+      "python-appservice-deploy": "deployment orchestration",
+      "python-executor": "script integration",
+      qa: "issue tracking",
+      quieter: "design",
+      "receiving-code-review": "code review",
+      "reddit-automation": "social content creation",
+      "redesign-existing-projects": "design",
+      "referral-program": "growth strategy",
+      referrals: "growth strategy",
+      relight: "instructed image editing",
+      "remotion-best-practices": "video",
+      "remotion-captions": "video editing",
+      "remotion-create": "video",
+      "remotion-docs": "document or database question answering",
+      "remotion-interactivity": "video",
+      "remotion-maps": "video",
+      "remotion-markup": "video",
+      "remotion-multimedia": "video",
+      "remotion-render": "video",
+      "remotion-saas": "full-stack development",
+      "remotion-studio": "video",
+      "remotion-to-hyperframes": "code migration and modernization",
+      "remotion-upgrade": "dependency management",
+      "remove-animations": "web animation",
+      "repo-intake-and-plan": "code comprehension",
+      "request-refactor-plan": "code refactoring and optimization",
+      "requesting-code-review": "code review",
+      research: "deep research",
+      "resolving-merge-conflicts": "git workflow",
+      retro: "postmortem authoring",
+      review: "code review",
+      "review-animations": "web animation",
+      revops: "crm management",
+      "run-train": "deep learning training",
+      "runcomfy-cli": "script integration",
+      "safe-debug": "root-cause debugging",
+      "safe-refactor": "code refactoring and optimization",
+      "sales-enablement": "sales enablement",
+      "sandbox-migrate-to-next": "code migration and modernization",
+      "sandbox-next": "containerization",
+      "sandbox-sdk": "containerization",
+      "sandbox-stable": "containerization",
+      "scaffold-exercises": "project scaffolding",
+      schema: "structured data markup",
+      "schema-markup": "structured data markup",
+      "seam-craft": "video editing",
+      seedance: "text to video",
+      "seedance-v2": "text to video",
+      sensei: "agent tool building",
+      "seo-audit": "seo auditing",
+      "setup-matt-pocock-skills": "dev environment setup",
+      "setup-pre-commit": "dev environment setup",
+      "setup-ts-deep-modules": "static analysis and linting",
+      shape: "design",
+      signup: "conversion optimization",
+      "signup-flow-cro": "conversion optimization",
+      "site-architecture": "search engine optimization",
+      "skill-authoring": "agent tool building",
+      "skill-creator": "agent tool building",
+      "slack-gif-creator": "image generation",
+      slideshow: "presentation authoring",
+      sms: "email marketing",
+      social: "social media management",
+      "social-content": "social content creation",
+      "stitch-design-taste": "design",
+      "storyboard-creation": "video",
+      "subagent-driven-development": "agentic workflow orchestration",
+      "surgical-patch": "root-cause debugging",
+      "systematic-debugging": "root-cause debugging",
+      tailwind: "styling and responsive layout",
+      "talking-head-recut": "video editing",
+      tdd: "test strategy and tdd",
+      teach: "research and scholarship",
+      "template-skill": "agent tool building",
+      "test-driven-development": "test strategy and tdd",
+      "theme-factory": "design",
+      three: "web animation",
+      "to-issues": "issue tracking",
+      "to-prd": "requirements and prd authoring",
+      "to-questionnaire": "reasoning and planning",
+      "to-spec": "requirements and prd authoring",
+      "to-tickets": "issue tracking",
+      triage: "issue tracking",
+      "turnstile-spin": "security hardening",
+      "twitter-automation": "social media management",
+      typegpu: "web animation",
+      typeset: "design",
+      "ubiquitous-language": "data modeling",
+      ultracave: "text style transfer",
+      "using-git-worktrees": "git workflow",
+      "using-superpowers": "tool use planning",
+      "vercel-cli-with-tokens": "deployment orchestration",
+      "vercel-composition-patterns": "frontend development",
+      "vercel-deploy": "deployment orchestration",
+      "vercel-optimize": "cloud cost optimization",
+      "vercel-react-best-practices": "code refactoring and optimization",
+      "vercel-react-native-skills": "cross-platform mobile development",
+      "vercel-react-view-transitions": "web animation",
+      "verification-before-completion": "quality evaluation",
+      "verify-and-stop": "software testing",
+      video: "video",
+      "video-ad-specs": "ad creative production",
+      "video-edit": "video editing",
+      "video-extend": "video editing",
+      "video-inpainting": "video editing",
+      "video-outpainting": "video editing",
+      waapi: "web animation",
+      "wait-what": "text paraphrasing",
+      "wan-2-7": "text to video",
+      wayfinder: "task decomposition",
+      "web-artifacts-builder": "frontend development",
+      "web-design-guidelines": "design",
+      "web-perf": "code refactoring and optimization",
+      "web-search": "web search research",
+      "webapp-testing": "end-to-end and ui testing",
+      "website-to-hyperframes": "video editing",
+      "website-to-video": "video editing",
+      "wireframe-portal-title": "video editing",
+      wizard: "cli and terminal app development",
+      "workers-best-practices": "serverless function development",
+      "workers-profiling": "performance monitoring",
+      wrangler: "deployment orchestration",
+      "write-a-skill": "agent tool building",
+      "write-swift": "native mobile development",
+      "writing-beats": "content writing",
+      "writing-for-agents": "technical writing",
+      "writing-fragments": "content writing",
+      "writing-great-skills": "agent tool building",
+      "writing-guidelines": "copy editing",
+      "writing-plans": "task decomposition",
+      "writing-shape": "article and blog writing",
+      "writing-skills": "agent tool building",
+      "xcode-project-setup": "dependency management",
+      xlsx: "spreadsheet authoring",
+      "youtube-thumbnail-design": "image generation",
+      "zoom-out": "code comprehension"
+    }
+  };
+});
+
 // ../hook/src/skill-failure.ts
 import { existsSync as existsSync7, mkdirSync as mkdirSync8, readFileSync as readFileSync8 } from "node:fs";
 import { homedir as homedir5 } from "node:os";
@@ -37488,7 +38318,7 @@ function askedBySkill(command, markdown, directory2) {
   return programsOf(command).some((program) => named.has(program) || program.includes(".") && new RegExp(`(?:^|[\\s\`'"/(])${escaped(program)}(?=[\\s\`'")]|$)`, "m").test(markdown));
 }
 function contextOf(words, skill, description) {
-  return inferDomain(words, DOMAINS) ?? classifySkill(skill.split(":").pop() ?? skill, description ?? "");
+  return domainInText(words, WORDS) ?? SKILL_NODE[skill.split(":").pop() ?? skill] ?? null;
 }
 function skillDirectory(name, cwd) {
   const roots = [join11(cwd, ".claude", "skills"), join11(homedir5(), ".claude", "skills")];
@@ -37513,17 +38343,21 @@ function appendFailure(line) {
 `);
   return true;
 }
-var MISSING_KEY, MISSING_KEY_VARIABLE, MISSING_PROGRAM, MISSING_FILE, RUNNERS, escaped = (text2) => text2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), DOMAINS;
+var MISSING_KEY, MISSING_KEY_VARIABLE, MISSING_PROGRAM, MISSING_FILE, RUNNERS, escaped = (text2) => text2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), NODES, WORDS, SKILL_NODE;
 var init_skill_failure = __esm(() => {
   init_append();
   init_dist2();
+  init_domain_aliases();
+  init_skill_nodes_13579();
   init_classify();
   MISSING_KEY = /\b(api[ _-]?key|access[ _-]?token|credentials?)\b.{0,40}\b(missing|not set|not found|required|invalid|expired)\b|(?<!\bnot )\b(missing|no|invalid|expired)\b.{0,20}\b(api[ _-]?key|access[ _-]?token|credentials?)\b|\b(HTTP|status)(\/[\d.]+| code)?[ :=]*(401|403)\b|\b(401|403) (unauthori[sz]ed|forbidden)\b|\bunauthori[sz]ed\b|not authenticated|not logged in/i;
   MISSING_KEY_VARIABLE = /\b[A-Z0-9_]*(API_KEY|TOKEN|SECRET)\b.{0,30}\b(not set|missing|required|unset)\b/;
   MISSING_PROGRAM = /command not found|executable file not found|\bnot installed\b|No module named|spawn \S+ ENOENT|Cannot find module/i;
   MISSING_FILE = /No such file or directory|\bENOENT\b|file not found|\b(file|path|directory|folder)\b(?!\.).{0,80}\bdoes not exist\b/i;
   RUNNERS = new Set(["bash", "bun", "bunx", "node", "npx", "python", "python3", "sh", "uv", "uvx", "zsh"]);
-  DOMAINS = [...new Set(SKILL_DOMAINS.map((rule) => rule.domain))];
+  NODES = skill_nodes_13579_default.nodes;
+  WORDS = { labels: NODES, aliases: domain_aliases_default.aliases };
+  SKILL_NODE = skill_nodes_13579_default.skills;
 });
 
 // ../hook/src/backfill.ts

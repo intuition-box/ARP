@@ -141,12 +141,11 @@ test('with no search, the context comes from what the person asked, and their wo
   expect(JSON.stringify(failures()[0])).not.toContain('private');
 });
 
-test('the person\'s words win over the skill, and the table names what they do not', () => {
-  expect(contextOf('cut a video', 'web-to-markdown', null)).toBe('video');
-  expect(contextOf('use the skill web-to-markdown to convert https://example.com', 'web-to-markdown', null)).toBe('document');
-  expect(contextOf('do the thing', 'tools:postgres-helper', null)).toBe('database');
-  expect(contextOf('do the thing', 'gizmo', 'Reads your stripe account')).toBe('payment');
-  expect(contextOf('do the thing', 'gizmo', 'does stuff')).toBeNull();
+test('the person\'s words win, then where the skill is filed; nothing is guessed from a description (task 84)', () => {
+  expect(contextOf('cut a video', 'pdf', null)).toBe('video');
+  expect(contextOf('make slides for the board', 'gizmo', null)).toBe('presentation authoring');
+  expect(contextOf('do the thing', 'tools:pdf', null)).toBe('pdf manipulation');
+  expect(contextOf('do the thing', 'gizmo', 'Reads your stripe account')).toBeNull();
   expect(contextOf('videos', 'gizmo', null)).toBeNull();
   expect(contextOf('tool', 'gizmo', null)).toBeNull();
 });

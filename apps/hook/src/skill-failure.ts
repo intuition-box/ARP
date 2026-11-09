@@ -4,14 +4,15 @@ import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import {
-  classifySkill,
-  inferDomain,
+  domainInText,
   installedFromReceipts,
   installedFromSkillLock,
   readRequires,
-  SKILL_DOMAINS,
   type UsageReason,
 } from '@arp-protocol/core';
+
+import aliasTable from '../../../data/catalogue/domain-aliases.json';
+import skillNodes from '../../../data/catalogue/skill-nodes-13579.json';
 
 import { classifyCall, failureText } from './classify.ts';
 import type { ToolCall } from './payload.ts';
@@ -73,10 +74,13 @@ export function askedBySkill(command: string, markdown: string, directory: strin
   );
 }
 
-const DOMAIN = /^[a-z0-9][a-z0-9-]*$/;
-
-/** The categories under `tool`: the table's own, as a hook has no network to read the tree. */
-const DOMAINS = [...new Set(SKILL_DOMAINS.map((rule) => rule.domain))];
+/**
+ * The nodes of the tree as written (task 79), and the alias table: the hook reads no network, so both
+ * ship with it (task 84, ADR `0155`). A domain is one of these nodes, never anything else.
+ */
+const NODES: readonly string[] = skillNodes.nodes;
+const WORDS = { labels: NODES, aliases: aliasTable.aliases as Record<string, string> };
+const SKILL_NODE = skillNodes.skills as Record<string, string>;
 
 /** The latest words the person typed in a transcript. Only ever matched against closed words. */
 export function lastUserWords(transcript: string): string {
@@ -106,7 +110,10 @@ export function lastUserWords(transcript: string): string {
  * reproducible and invent nothing, and the person's words stay here.
  */
 export function contextOf(words: string, skill: string, description: string | null): string | null {
-  return inferDomain(words, DOMAINS) ?? classifySkill(skill.split(':').pop() ?? skill, description ?? '');
+  // First what the person asked for (a node or a word for one), then where the skill is filed. The
+  // description is no longer guessed from: a keyword table named the old categories (task 84).
+  void description;
+  return domainInText(words, WORDS) ?? SKILL_NODE[skill.split(':').pop() ?? skill] ?? null;
 }
 
 /** The JSON text of an MCP answer: Claude Code hands the hook a list of blocks (seen 2026-11-05, 2.1.318). */
@@ -141,7 +148,7 @@ export function recordSearch(call: ToolCall, cwd: string): void {
   if (call.session === null) return;
   const answer = answerOf(call.response);
   if (answer === null || !Array.isArray(answer['skills'])) return;
-  const domain = typeof answer['domain'] === 'string' && DOMAIN.test(answer['domain']) ? answer['domain'] : null;
+  const domain = typeof answer['domain'] === 'string' && NODES.includes(answer['domain']) ? answer['domain'] : null;
   const skills = (answer['skills'] as { name?: unknown; source?: unknown }[]).flatMap((row) => // read field by field
     typeof row?.name === 'string' && typeof row.source === 'string' ? [{ name: row.name, source: row.source }] : [],
   );

@@ -4,7 +4,7 @@
  * The key is created the first time one of them is called, not when the server starts, so a user
  * who only searches never gets one.
  */
-import { signCategoryRequest, skillRefFromUrl } from '@arp-protocol/core';
+import { readDomainTree, resolveDomain, signCategoryRequest, skillRefFromUrl } from '@arp-protocol/core';
 import { arpHome } from '@arp-protocol/core/node';
 import { getAddress, keccak256, stringToBytes, type Hex } from 'viem';
 
@@ -14,7 +14,8 @@ import { SKILL_PINS } from '../data.js';
 import { keyOf } from '../tool-search.js';
 import type { ReviewContext } from './skill-gate.js';
 
-import { CONTENT_URL, MULTI_VAULT, RECEIPTS_LOG, RPC, SKILLS_DIR, SPONSOR_URL, record } from '../config.js';
+import { CONTENT_URL, MULTI_VAULT, RECEIPTS_LOG, RPC, SKILLS_DIR, SPONSOR_URL, domainWalk, record } from '../config.js';
+import { domainWords } from '../domain-words.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 import { agentKeyPath, agentSender, DESKTOP_CHAIN_ID, loadOrCreateAgentKey, type AgentSender } from './agent-key.js';
 import { fileCategory } from './file-category.js';
@@ -67,11 +68,21 @@ export async function desktopTool(id: JsonRpcId, name: string, args: Record<stri
     return fail(id, -32602, 'id must be the 0x + 32 bytes id from arp_find_tools');
   }
   if (name === 'arp_file_category') {
-    const category = args['category'];
-    if (typeof category !== 'string' || category.trim().length === 0) {
+    const asked = args['category'];
+    if (typeof asked !== 'string' || asked.trim().length === 0) {
       return fail(id, -32602, 'category must be a category name');
     }
     const parent = typeof args['parent'] === 'string' ? args['parent'] : undefined;
+    // A word for a node that exists ("slides") files under that node, not a new one beside it (task 84).
+    let category = asked;
+    const resolved = resolveDomain(asked, domainWords(await readDomainTree(domainWalk())));
+    if (resolved.status === 'node') category = resolved.label;
+    else if (parent === undefined) {
+      return text(id, {
+        refused: 'unknown_category',
+        detail: `"${asked}" is not a category.${resolved.suggestions.length === 0 ? '' : ` Closest: ${resolved.suggestions.join(', ')}.`} Pick one, or pass parent and reason to add it.`,
+      });
+    }
     const reason = typeof args['reason'] === 'string' ? args['reason'] : undefined;
     return text(
       id,
