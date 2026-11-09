@@ -338,29 +338,6 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
 }
 
 /**
- * The two populations, merged into one list, with the declared row winning a collision.
- *
- * **Why two reads and not one widened filter.** `listTools` keeps only `uses` edges whose subject
- * carries a `same as` edge — the only proof on the graph that a subject is a real ERC-8004 agent,
- * since there is no flag for it. That filter is why the catalogue was empty: measured on mainnet
- * 2026-10-21, **0 of 185** `uses` edges have an identified subject, and the rest are sentences
- * anyone wrote on a shared public predicate, with platforms and book titles as objects. Widening the
- * filter fills the catalogue with those.
- *
- * **That zero is our own non-activity, not a property of the graph** (user, 2026-10-27): nobody has run this loop yet, ARP included. It is a reason to show something else today, never a reason to conclude the edge is the wrong one.
- *
- * A **registered** tool is an atom, so it never passes through that query at all, and a person can
- * create one without being an agent. Two reads, two populations, each honest about what it is.
- *
- * A collision keeps the declared row because it carries the per-edge market the page is about.
- *
- * The registered row's atom-vault figures answer the other question and are **not** reachable
- * anywhere in this app yet: `/atom/:atomId` sums the edge vaults per predicate, and nothing deposits on a tool's
- * atom. An earlier version of this sentence said they were — and the same sentence was corrected in
- * `ToolCatalogList` while this copy, the one that file imports its types from, kept the stale
- * version (`rules/claims.md` failure 5).
- */
-/**
  * What ARP's own tests left on a tool, removed (task 74, `services/test-identities.ts`).
  *
  * `hiddenAtoms` are the identity atoms of ARP's test agents. A tool whose declarers are all hidden
@@ -384,6 +361,29 @@ function withoutTests(tool: ToolListing, hidden: HiddenTests): ToolListing | nul
     };
 }
 
+/**
+ * The two populations, merged into one list, with the declared row winning a collision.
+ *
+ * **Why two reads and not one widened filter.** `listTools` keeps only `uses` edges whose subject
+ * carries a `same as` edge — the only proof on the graph that a subject is a real ERC-8004 agent,
+ * since there is no flag for it. That filter is why the catalogue was empty: measured on mainnet
+ * 2026-10-21, **0 of 185** `uses` edges have an identified subject, and the rest are sentences
+ * anyone wrote on a shared public predicate, with platforms and book titles as objects. Widening the
+ * filter fills the catalogue with those.
+ *
+ * **That zero is our own non-activity, not a property of the graph** (user, 2026-10-27): nobody has run this loop yet, ARP included. It is a reason to show something else today, never a reason to conclude the edge is the wrong one.
+ *
+ * A **registered** tool is an atom, so it never passes through that query at all, and a person can
+ * create one without being an agent. Two reads, two populations, each honest about what it is.
+ *
+ * A collision keeps the declared row because it carries the per-edge market the page is about.
+ *
+ * The registered row's atom-vault figures answer the other question and are **not** reachable
+ * anywhere in this app yet: `/atom/:atomId` sums the edge vaults per predicate, and nothing deposits on a tool's
+ * atom. An earlier version of this sentence said they were — and the same sentence was corrected in
+ * `ToolCatalogList` while this copy, the one that file imports its types from, kept the stale
+ * version (`rules/claims.md` failure 5).
+ */
 export function buildToolCatalogView(
     page: ToolListingPage,
     registered?: RegisteredToolsPage,

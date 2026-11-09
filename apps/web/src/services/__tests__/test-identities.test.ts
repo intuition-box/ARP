@@ -80,6 +80,24 @@ describe("what is left out", () => {
         ]);
     });
 
+    it("judges a redeem by its signer, whose position it was, whatever address receives it", () => {
+        const sponsor = "0xE596096F4176b682E300d73963e7B04B383C1AA1";
+        const redeem = (account: string, receiver: string): RecentStake => ({
+            id: `${account}-${receiver}`,
+            kind: "redeem",
+            at: "2026-11-09T10:00:00Z",
+            txHash: null,
+            tripleId: "0xt",
+            subject: end("0xother"),
+            object: end("0xtool"),
+            account,
+            receiver,
+            assets: 1n,
+        });
+        const rows = [redeem(sponsor, "0xabc"), redeem("0xabc", sponsor)];
+        expect(visibleStakes(rows, hidden).map((row) => row.id)).toEqual([`0xabc-${sponsor}`]);
+    });
+
     it("recomputes an atom's group from the lines left, and drops an emptied one", () => {
         const edge = (subject: string) => ({
             tripleId: subject,

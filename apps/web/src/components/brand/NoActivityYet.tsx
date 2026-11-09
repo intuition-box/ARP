@@ -12,7 +12,7 @@ export function NoActivityYet({what = "No activity yet."}: {what?: string}) {
     return (
         <span className="flex flex-col gap-1">
             <span className="text-[color:var(--color-fg)]">{what}</span>
-            <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+            <span className="text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
                 Install ARP and use a skill to write the first line:{" "}
                 <Link to="/start/claude" className={linkClass}>
                     get started

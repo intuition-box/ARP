@@ -138,7 +138,8 @@ export function visibleStakes(rows: readonly RecentStake[], hidden: ReadonlySet<
             !hiddenAtom(hidden, row.subject.atomId) &&
             !hiddenAtom(hidden, row.object.atomId) &&
             // Whose position it is decides, not who signed: the sponsor signs deposits for testers.
-            !isHiddenAddress(row.receiver ?? row.account),
+            // A redeem's position is the signer's own, whatever address receives the assets.
+            !isHiddenAddress(row.kind === "redeem" ? row.account : (row.receiver ?? row.account)),
     );
 }
 

@@ -97,7 +97,7 @@ function publicSite(env: Record<string, string>): Plugin {
             const tags =
                 siteUrl === ''
                     ? ''
-                    : `    <link rel="canonical" href="${siteUrl}/" />\n    <meta property="og:url" content="${siteUrl}/" />\n    <meta property="og:image" content="${siteUrl}/og.png" />\n    <meta name="twitter:image" content="${siteUrl}/og.png" />\n`;
+                    : `    <meta property="og:url" content="${siteUrl}/" />\n    <meta property="og:image" content="${siteUrl}/og.png" />\n    <meta name="twitter:image" content="${siteUrl}/og.png" />\n`;
             return html.replace('</head>', `${tags}  </head>`);
         },
     };

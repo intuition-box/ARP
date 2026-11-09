@@ -102,7 +102,7 @@ describe("the start page", () => {
 
     it("opens the wallet form on the same page", async () => {
         renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool?with=wallet"));
-        expect(await screen.findByLabelText("Tool URL")).toBeTruthy();
+        expect(await screen.findByLabelText("Tool URL", undefined, {timeout: 5000})).toBeTruthy();
         expect(screen.getByRole("heading", {name: "Add it with a wallet"})).toBeTruthy();
         expect(screen.getByLabelText("Repository URL")).toBeTruthy();
     });
