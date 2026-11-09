@@ -15,9 +15,7 @@ already does. Then the best option for each of five open questions; the user acc
 1. `docs/33_THE_HIRE_LOOP.md`: what exists elsewhere and what ARP takes from it, the actors, the
    actions in order with what exists today, the tier each step reaches, the five choices.
 2. ADR `0148`.
-3. Outside this repository, by the user's rule that the placement stays out of public text: the
-   business reading (ARP as the verifying aggregator, partners) as a local, uncommitted note in
-   `ARP-business-dev`, next to the placement note of 2026-11-05.
+3. A business reading, kept outside this repository by ADR `0142`.
 
 ## Do not do in this task
 

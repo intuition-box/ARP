@@ -13,7 +13,8 @@ already built and audited, build as little as possible, and rebuild only what gi
 ## Decision
 
 1. **Payment:** x402, paying first, by default; ERC-8183 escrow above a price or duration threshold. ARP
-   writes no escrow contract and reads an 8183 evaluator's attestation as a signal.
+   writes no escrow contract. An 8183 evaluator's attestation is shown as a dated fact with its source,
+   never scored (ADR `0093`; `docs/12`'s drift signal against scoring other providers' assessments).
 2. **Proof across chains:** the line carries the payment's reference in ERC-8004's `proofOfPayment`
    shape, and the reader checks it on the paying chain: the payer, read from the token transfer and never
    from `tx.from`, is the client agent's holder or its ERC-8004 `agentWallet`; the recipient is the
@@ -38,7 +39,7 @@ backs them**. That is what makes one record worth reading for every checker or d
   hire, and still one chain at a time. Checking at read time works for any chain.
 - **Delegation only** — excludes every buyer who signs x402 payments today.
 - **No 8004 mirror** — ARP's record stays where only ARP's readers look.
-- **A read API for one partner** — the same data serves every reader; one per partner is maintenance.
+- **A read API for one reader** — the same data serves every reader; one per reader is maintenance.
 
 ## Consequences
 
@@ -60,5 +61,4 @@ backs them**. That is what makes one record worth reading for every checker or d
 **Neutral (worth knowing):**
 
 - How many ERC-8004 agents set `x402Support` is not measured.
-- The business reading of this (ARP as the verifying aggregator, partners) is kept out of this public
-  repository (ADR `0142`).
+- A business reading of this is kept out of this public repository (ADR `0142`).

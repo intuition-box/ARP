@@ -19,16 +19,18 @@ Read 2026-11-09, as web pages and specifications. None of this code was run.
 | Identity and feedback | **ERC-8004** ([EIP](https://eips.ethereum.org/EIPS/eip-8004)) | An agent's identity (ERC-721), a thin Reputation Registry, a Validation Registry. Payments are out of scope, but the optional feedback file has `proofOfPayment {fromAddress, toAddress, chainId, txHash}`, "for x402 proof of payment" | The identity, already (ADR `0141`). The **`proofOfPayment` shape** for the proof attached to a hire line |
 | "I accept payment" | ERC-8004 registration file | A boolean `x402Support` ([best practices](https://github.com/erc-8004/best-practices/blob/main/Registration.md)). It says a paywall exists, not which chain, token or price | Read it as a declared fact (tier 1). ARP's own registration files set it `false` (`packages/protocol/src/registration-file.ts:137`) |
 | Payment over HTTP | **x402** | `402 Payment Required`, a signed payment, a facilitator that settles. An Offer & Receipt extension signs the seller's receipt | The payment. ARP's hire receipt v2 is already modelled on that extension (`packages/protocol/src/hire-receipt.ts:22`) |
-| Finding paid services | **x402 Bazaar** ([docs](https://docs.x402.org/extensions/bazaar.md)) | A catalogue of x402 endpoints, indexed after a first settlement. Any facilitator can run its own | Nothing to rebuild: ARP is not a catalogue of endpoints. It can read one as a source |
-| Escrow and an evaluator | **ERC-8183** ([EIP](https://eips.ethereum.org/EIPS/eip-8183), from Virtuals' ACP) | Draft. Client, provider, evaluator; funds in escrow until the evaluator accepts or rejects; a timeout refund; optional hooks, which forum proposals use to write an ERC-8004 signal on completion | If a task needs escrow, use 8183. ARP does not write an escrow contract. Its known weak point is the evaluator (bribery, collusion with the provider) |
+| Finding paid services | **x402 Bazaar** ([docs](https://docs.x402.org/extensions/bazaar.md)) | A catalogue of x402 endpoints: an endpoint is catalogued when a facilitator processes a payment carrying the `bazaar` extension, possibly later. Any facilitator can run its own | Nothing to rebuild: ARP is not a catalogue of endpoints. It can read one as a source |
+| Escrow and an evaluator | **ERC-8183** ([EIP](https://eips.ethereum.org/EIPS/eip-8183), "Agentic Commerce Protocol") | Draft. Client, provider, evaluator; funds in escrow until the evaluator accepts or rejects; a timeout refund; optional hooks, which forum proposals use to write an ERC-8004 signal on completion | If a task needs escrow, use 8183. ARP does not write an escrow contract. The EIP makes the evaluator trusted for completion and rejection, with no dispute resolution: its ruling is final |
 | Bounded spending by an agent | **MetaMask Delegation Framework** | A delegation with caveats; `erc20TransferAmount`, `erc20PeriodTransfer` for tokens (`.claude/skills/mms-smart-accounts-kit/references/delegations.md:48,109`); a buyer-with-delegations guide for x402 (cited in `.claude/rules/metamask-delegation.md`, not read again here) | The guard rail. `TrustStakeCapEnforcer` only for native TRUST (ADR `0147`) |
 | A check before paying | **Fizzl x402 Doctor** | Preflight `go`/`caution`/`no_go` for 0.001 USD, a daily Trust Index of about 40,800 services, outcome reports turning an endpoint `caution` after 3+ payers report failures (`FUTURE.md`, Fizzl section) | Do not rebuild a preflight. A checker like it could read ARP's records next to its own verdict |
 
 **What nobody in this table does:** keep, across every buyer, a public and permanent record of how a
-paid call went, **in which domain**, **why it failed** in closed words, tied to the payment, readable by
-anyone who wants to rank or refuse. ERC-8004 feedback is a score and a tag with no context, free to
-write. A checker's outcome reports stay with that checker. 8183's evaluator attests one job. That record is ARP's part, and
-only that.
+paid call went, **why it failed** in closed words, with **the payment checked when the record is read**,
+readable by anyone who wants to rank or refuse. ERC-8004 feedback comes close: on chain a score, two tags,
+an endpoint and a pointer; off chain, optional fields including `oasf.domains`, an A2A task id and
+`proofOfPayment`. What it does not have is a closed set of failure reasons, and nothing checks the
+payment when the feedback is read, so it stays free to write. A checker's outcome reports stay with that
+checker. 8183's evaluator attests one job. That record, and the check, are ARP's part, and only that.
 
 ## 2. The actors
 
@@ -75,7 +77,7 @@ sequenceDiagram
 | 2 | Find a provider for a domain | client via ARP | yes: `arp_find_agents`, `arp_agent_endpoints` (`answers_now`) |
 | 3 | Check before paying | client | ARP shows declared lines; a preflight is Fizzl's, not ours |
 | 4 | Pay | client under the delegation | native tTRUST to a node yes (`apps/node/src/task.ts`, `verifyPayment`); x402 **no**, deferred to mainnet (ADR `0102`) |
-| 5 | Deliver and sign a receipt | provider's node | yes, hire receipt v2 (ADR `0098`) |
+| 5 | Deliver and sign a receipt | provider's node | yes, hire receipt v2 (ADR `0098`, `0101`) |
 | 6 | Declare the outcome, with the proof | client | the line yes (form B, `arp line`); the proof attached as a receipt yes (`agent-pulse.ts`); the settlement tx in an 8004-shaped `proofOfPayment` **no** |
 | 7 | Read it on the next search | anyone | the score yes (`pulse-score.ts`); a reader outside ARP (Fizzl) **no** |
 
@@ -84,11 +86,12 @@ sequenceDiagram
 | Tier | In the hire column |
 | --- | --- |
 | Declared | the line alone, `((client, uses, provider), in context of, domain)` and its outcome |
-| Observed | the line carries the settlement tx, the payer is the wallet that writes the line, and the provider's receipt is attached. A record tied to a real payment and written by the paying wallet is what a seller cannot flood with good records, nor a competitor with bad ones |
+| Observed | the line carries the settlement tx, the payer — read from the token transfer — is the client agent's holder or its ERC-8004 `agentWallet`, and the provider's receipt is attached. A record tied to a real payment made by the agent that writes it is what a seller cannot flood with good records, nor a competitor with bad ones |
 | Corroborated | 3+ distinct paying wallets, same outcome, same domain (ADR `0143-the-ranking-moves-from-three-wallets`) |
 
-A record that names a payment it did not make is refused at the observed tier by checking the tx: its
-sender is the line's writer, its recipient the provider's payee, its amount the offer's.
+A record that names a payment it did not make stays at the declared tier: the check reads the token
+transfer (never `tx.from`, which is the facilitator or the delegation's redeemer), and requires its payer
+to be the client agent's holder or `agentWallet`, its recipient the provider's payee, its amount the offer's.
 
 ## 5. The five choices, decided 2026-11-09
 
@@ -96,7 +99,7 @@ The user's answers, ADR `0148`. Still a concept: nothing below is built.
 
 | # | Question | Choice | Why |
 | --- | --- | --- | --- |
-| 1 | Pay first, or escrow? | **x402, paying first, by default. ERC-8183 escrow above a price or duration threshold.** ARP writes no escrow contract | every x402 seller already accepts the first; the second exists. ARP reads an 8183 evaluator's attestation as one more signal |
+| 1 | Pay first, or escrow? | **x402, paying first, by default. ERC-8183 escrow above a price or duration threshold.** ARP writes no escrow contract | every x402 seller already accepts the first; the second exists. An 8183 evaluator's attestation is shown as a dated fact with its source, never scored (ADR `0093`; `docs/12`'s drift signal against scoring other providers' assessments) |
 | 2 | Pay on one chain, record on another | **No bridge, no oracle: the line carries the payment's reference, in ERC-8004's `proofOfPayment` shape (`chainId`, `txHash`, `fromAddress`, `toAddress`), and the reader checks it on the paying chain** — the payer is the client agent's holder or its `agentWallet`, the recipient the provider's payee, the amount the offer's. The payer is read from the token transfer itself (the `Transfer` event, or the EIP-3009 authorisation), never from `tx.from`, which is the x402 facilitator or the delegation's redeemer. The result is a dated fact, never on chain, as the probe is (ADR `0093`) | works for any chain; a line without a proof that checks stays declared |
 | 3 | Delegation or a signature per call | **Both, by who is in charge.** An autonomous agent pays under a per-period delegation (`erc20PeriodTransfer` in USDC, `TrustStakeCapEnforcer` for native TRUST). With a person in the loop, or for a first run, x402's own per-payment signature | the seller receives an ordinary x402 payment either way; no ARP code in the payment |
 | 4 | Mirror to ERC-8004 feedback | **Yes, observed lines only**: the client's agent also calls `giveFeedback`, with `proofOfPayment` and a URI pointing at the ARP line, which keeps the domain and the reason | puts the record where 8004's readers already look, with ARP as the source |
@@ -117,5 +120,5 @@ client. Mirroring only observed lines keeps a free rating from carrying ARP's na
 ## 6. What it would cost to build, roughly
 
 Most of it is wiring what exists: the delegation flow (MetaMask), x402 on the node (task 41, deferred),
-the tx in the line's proof (an 8004-shaped field), and the check of that tx when the line is read. One
-new on-chain piece at most, and only if escrow is chosen: none, since 8183 exists.
+the tx in the line's proof (an 8004-shaped field), and the check of that tx when the line is read. No new
+on-chain piece: escrow, if a task needs it, is 8183.
