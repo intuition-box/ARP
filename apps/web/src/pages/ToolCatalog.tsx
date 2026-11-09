@@ -1,8 +1,9 @@
 import {useState} from "react";
 import {Link, useSearchParams} from "react-router-dom";
 
+import {DisplayTabs} from "../components/brand/DisplayTabs";
 import {DomainRail} from "../components/tool/DomainRail";
-import {RailChoice} from "../components/tool/RailChoice";
+import {Segmented} from "../components/tool/ToolCatalogControls";
 import {controlClass, linkClass} from "../lib/control-class";
 import type {ToolListingOrder} from "@arp-protocol/core";
 
@@ -149,18 +150,13 @@ export function ToolCatalog() {
             {/* The count of what is shown, after the index and the domain filter, is the pager's
                 "1–25 of N" under the list, not a figure up here. */}
             <header className="pt-14 pb-10">
-                <h1 className="type-display">Tools</h1>
-            </header>
-
-            {/* Every control is in the rail, which holds still while the list scrolls (user,
-                2026-11-09): the index, the order and the domains read as one column. Below `md`
-                it stacks above the list, and the full domain list comes first: on a phone the
-                tools start several thousand px down. */}
-            <div className="grid gap-x-10 gap-y-8 md:grid-cols-[13rem_minmax(0,1fr)] md:items-start">
-                <div className="tool-rail flex flex-col gap-8">
+                <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
+                    <h1 className="type-display">Tools</h1>
                     {/* **Two indexes, one read.** Skills and repositories are filed in the same
-                        catalogue, and the user asked for them to read as two lists. */}
-                    <RailChoice
+                        catalogue, and the user asked for them to read as two lists. The switch
+                        sits beside the title and a little below its baseline (user, 2026-10-30),
+                        as a choice of what page you are on, not as one more toolbar control. */}
+                    <DisplayTabs
                         label="Index"
                         options={TOOL_INDEXES.map((entry) => ({
                             ...entry,
@@ -169,38 +165,41 @@ export function ToolCatalog() {
                         selected={index}
                         onChange={chooseIndex}
                     />
-                    <RailChoice
-                        label="Order"
-                        options={axes}
-                        selected={axis}
-                        onChange={setAxis}
-                        aside={
-                            // No Signal outside ARP's own tests yet, which are hidden (task 74).
-                            view !== undefined &&
-                            !view.rows.some((row) => (row.sponsoredDeposits ?? 0) > 0) ? (
-                                <Hint label="About: no signals yet" align="left">
-                                    No signals yet. A Signal appears when an agent writes a line
-                                    about a tool it used. ARP&apos;s own tests are hidden, listed on
-                                    /test-identities.
-                                </Hint>
-                            ) : null
-                        }
-                    />
-                    {/* Only the domains scroll when the rail outgrows the screen: an overflow on
-                        the whole rail would clip the Order hint, which opens upward. */}
-                    <div className="tool-rail-scroll">
-                        <DomainRail
-                            options={domains.options}
-                            selected={picked}
-                            counts={(domain) => tags.index.countFor(domain, domains.tree)}
-                            onToggle={toggleDomain}
-                            onClear={() => {
-                                setPicked(new Set());
-                                setOffset(0);
-                            }}
-                        />
-                    </div>
                 </div>
+            </header>
+
+            {/* The toolbar on its own rule, like the index's. It was inline with the `h1`, which
+                at `--text-display` put four controls against a single word. */}
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-[color:var(--color-rule)] py-3.5">
+                <Segmented label="Order" selected={axis} onChange={setAxis} options={axes} />
+                {/* No Signal outside ARP's own tests yet, which are hidden (task 74). */}
+                {view !== undefined && !view.rows.some((row) => (row.sponsoredDeposits ?? 0) > 0) ? (
+                    <span className="flex items-center gap-2">
+                        <span className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+                            No signals yet
+                        </span>
+                        <Hint label="About: no signals yet" align="right">
+                            A Signal appears when an agent writes a line about a tool it used.
+                            ARP&apos;s own tests are hidden, listed on /test-identities.
+                        </Hint>
+                    </span>
+                ) : null}
+            </div>
+
+            {/* The rail is a column, not a drawer: at 13rem it costs a fifth of the width and
+                never hides, so a reader always sees what the list is narrowed to. Below `md` it
+                stacks above the list, where it is still short enough to scroll past. */}
+            <div className="grid gap-x-10 gap-y-8 pt-6 md:grid-cols-[13rem_minmax(0,1fr)] md:items-start">
+                <DomainRail
+                    options={domains.options}
+                    selected={picked}
+                    counts={(domain) => tags.index.countFor(domain, domains.tree)}
+                    onToggle={toggleDomain}
+                    onClear={() => {
+                        setPicked(new Set());
+                        setOffset(0);
+                    }}
+                />
 
                 <div className="min-w-0">
                     {/* The list survives a failed refetch: `keepPreviousData` still holds the rows, and

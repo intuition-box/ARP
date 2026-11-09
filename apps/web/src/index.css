@@ -2146,21 +2146,6 @@ a.arp-cf-card:hover {
     color: var(--color-fg);
 }
 
-/* /tools: the rail holds every control and stays under the nav bar while the list scrolls; the
-   title scrolls away (user, 2026-11-09). 92px is the nav bar with no trail, as for `.doc-nav`. */
-@media (min-width: 768px) {
-    .tool-rail {
-        position: sticky;
-        top: calc(92px + 1.5rem);
-        max-height: calc(100vh - 92px - 1.5rem - 2.25rem);
-    }
-
-    .tool-rail-scroll {
-        min-height: 0;
-        overflow-y: auto;
-    }
-}
-
 /* The selected state is one of the three places the accent is spent. */
 .doc-nav-section a.active {
     border-left-color: var(--color-accent);
