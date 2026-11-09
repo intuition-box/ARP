@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-147 decisions. Newest last. `choices/README.md` says when to write one.
+151 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -183,4 +183,8 @@ Read these before relying on them.
 | [0146](0146-an-agent-grows-the-domain-tree.md) | 2026-11-09 | Accepted | An agent grows the domain tree, by a signed request |
 | [0147](0147-the-evidence-ladder-is-ordered-by-who-produced-the-signal.md) | 2026-11-09 | Accepted | The evidence ladder is ordered by who produced the signal |
 | [0148](0148-the-hire-loop-reuses-and-checks-the-payment.md) | 2026-11-09 | Accepted (design; nothing built) | The hire loop reuses x402, ERC-8183 and ERC-8004, and checks the payment at read time |
+| [0149](0149-the-sponsor-is-hosted-with-its-own-key.md) | 2026-11-09 | Accepted | The sponsor is hosted, beside the site, with a key of its own |
 | [0150](0150-the-tree-is-oasf-and-arp-adds-depth.md) | 2026-11-09 | Accepted | The domain tree is OASF's skills taxonomy, and ARP adds depth below it |
+| [0151](0151-the-nav-is-a-coin-the-mark-leaves-the-centre.md) | 2026-11-09 | Accepted | The nav is a coin: the mark leaves the centre |
+| [0152](0152-the-landing-is-one-camera-through-a-galaxy.md) | 2026-11-09 | Accepted | The landing is one camera through a galaxy, and the claim field is on it |
+| [0153](0153-search-reads-skills-sh-and-agents-open-on-reachable.md) | 2026-11-09 | Accepted | The search reads skills.sh's index, and the agent list opens on the reachable |

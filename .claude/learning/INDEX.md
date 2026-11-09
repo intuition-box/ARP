@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-76 entries, one per completed task. Written by `task-verifier` on a pass.
+80 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -81,4 +81,8 @@
 | [66](66-a-line-adds-its-domain.md) | `docs/tasks/75-a-line-adds-its-domain.md` | PASS | A line adds the domain it names |
 | [67](67-the-ladder.md) | `docs/tasks/76-the-ladder.md` | PASS (round 2; round 1 FAIL on six claims items) | The evidence ladder, ordered by who produced the signal |
 | [68](68-the-hire-loop.md) | `docs/tasks/77-the-hire-loop.md` | PASS (round 2; round 1 FAIL on two scope items and four claims items) | The hire loop, as a concept |
+| [69](69-the-sponsor-hosted.md) | `docs/tasks/78-the-sponsor-hosted.md` | PASS (round 2) | The sponsor, hosted beside the site |
 | [70](70-the-tree-on-oasf.md) | `docs/tasks/79-the-tree-on-oasf.md` | PASS (round 2; round 1 failed on six claims items) | The domain tree on OASF |
+| [71](71-the-nav-coin.md) | `docs/tasks/80-the-nav-coin.md` | PASS (round 3; round 1 FAIL on unported tests, a stale README status, a duplicate CSS rule; round 2 FAIL on a numbering clash) | The nav: the coin |
+| [72](72-the-landing-galaxy.md) | `docs/tasks/81-the-landing-galaxy.md` | PASS (round 3) | The landing: one camera through the registry |
+| [73](73-enough-to-test.md) | `docs/tasks/82-enough-to-test.md` | PASS (round 2; round 1 FAIL on one claim and uncommented casts) | Enough to test |
