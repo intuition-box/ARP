@@ -6,7 +6,7 @@
  *  Plans and prints. **Signs nothing and sends nothing** (ADR `0038`).
  *
  *  `seed-skills.ts` cannot do this one. It reads the skills.sh measurement, which does not list
- *  `Wieedze/ARP`, and it points `source` at repository atoms that already exist, which this one
+ *  `intuition-box/ARP` (`Wieedze/ARP` before 2026-11-09), and it points `source` at repository atoms that already exist, which this one
  *  did not. Same identifiers as the other 662 (ADR `0077`): the skill is
  *  `github.com/<owner>/<repo>?skill=<name>`, the repository is its URL, and the domain is what
  *  {@link classifySkill} reads from the SKILL.md's own description.
@@ -25,7 +25,7 @@ import {normaliseToolUrl, toolAtomUri} from "../../packages/protocol/src/declare
 import {HAS_TAG} from "../../packages/protocol/src/sources/intuition/terms.js";
 import {classifySkill} from "../../packages/protocol/src/skill-domains.js";
 
-const REPO = "Wieedze/ARP";
+const REPO = "intuition-box/ARP";
 const SKILL = "arp";
 const SKILL_FILE = "skills/arp/SKILL.md";
 

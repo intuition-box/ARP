@@ -1,0 +1,20 @@
+{
+  "_note": "ARP's own skill under its new repository, intuition-box/ARP, on Intuition testnet 13579. The skill, repository and `source` atoms were already on chain; only `has tag development` was written here. The earlier record, own-skill-13579.json, names Wieedze/ARP: those atoms stay, as Intuition has no deletion. A record, not a source of truth.",
+  "_authorisation": "Signed by the agent session using AGENT_PRIVATE_KEY on the user's explicit instruction on 2026-11-09 (« oui renomme-le »). ADR 0037's three conditions: the key was never read into the agent's context, the signer printed by the dry run was checked against AGENT_ADDRESS before --execute, and this file is the record.",
+  "_plan": "scripts/seed/seed-own-skill.ts with REPO = intuition-box/ARP, sent with scripts/agent/agent-send-plan.ts. Re-running the plan after the send printed 0 calls.",
+  "chainId": 13579,
+  "signer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+  "recordedAt": "2026-11-09",
+  "skill": {"url": "https://github.com/intuition-box/ARP?skill=arp", "atom": "0xee6f20f09cbf6623d40f22bc9f3e8574fac50e394c8f2cf7495bd7463d95242b"},
+  "repository": {"url": "https://github.com/intuition-box/ARP", "atom": "0x6c55098b3dd4758ace3fd2ca1be35ec9e06d7c77feb56304e800880dd9d32e31"},
+  "triples": {
+    "source": "0x2f10fc32bf54cdadd6b8bbe6fa246336ab79f9572bc710d640e08de3a0c5f071",
+    "hasTag": {"domain": "development", "triple": "0x1a3da8e9c13f58088b463c6207f99b09d32dc07a720e6dae1d2dc8adf769910f"}
+  },
+  "transactions": [
+    {"kind": "create-triple", "count": 1, "hash": "0xc80ea5294c74ecdeb13125f4bab46f0b1615a7d1d0e0013ceaac1b371ba7730e"}
+  ],
+  "spent": "0.002061676202",
+  "balanceBefore": "1.007240461802",
+  "balanceAfter": "1.0051787856"
+}
