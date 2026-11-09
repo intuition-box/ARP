@@ -10,7 +10,7 @@ A network is empty on its first day, so the first person who installs ARP has to
 
 The model is already told: the skill's description opens with "Check a skill, MCP server or API before you install or pay for it" (`skills/arp/SKILL.md:3`), `arp_pulse`'s description opens with "Before installing a skill" (`apps/mcp/src/tools.ts`), and the read-only instructions say "LOOK HERE FIRST" (`apps/mcp/src/server.ts`, `READ_INSTRUCTIONS`).
 
-The person is not. Read on `main` at `be3669e`, 2026-11-09:
+The person is not. Read on `main` at `79d5c92`, 2026-11-09 (rechecked after tasks 84 and 85 landed):
 
 | surface | what the person meets first | what is missing |
 | --- | --- | --- |
