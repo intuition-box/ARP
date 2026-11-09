@@ -36,7 +36,7 @@ export function DocsPage() {
 
 function DocsNav() {
     return (
-        <nav aria-label="Documentation" className="doc-nav lg:sticky lg:top-6 lg:self-start">
+        <nav aria-label="Documentation" className="doc-nav">
             {DOC_SECTIONS.map((section) => (
                 <div key={section.title} className="doc-nav-section">
                     <p className="doc-label">{section.title}</p>

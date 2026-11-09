@@ -927,6 +927,17 @@ a.arp-cf-card:hover {
     pointer-events: none;
 }
 
+/* The strip above the bar is filled, so the page does not scroll through it (user, 2026-11-09).
+   Its height is the top padding; the band beside and below the bar stays transparent. */
+.arp-coin::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 20px;
+    background: var(--color-ground);
+    pointer-events: none;
+}
+
 .arp-coin .arp-coin-bar,
 .arp-coin .arp-coin-sheet,
 .arp-coin .arp-coin-trail {
@@ -1244,6 +1255,10 @@ a.arp-cf-card:hover {
 @media (max-width: 859px) {
     .arp-coin {
         padding: 16px 12px 12px 18px;
+    }
+
+    .arp-coin::before {
+        height: 16px;
     }
 }
 
@@ -2112,6 +2127,17 @@ a.arp-cf-card:hover {
     gap: 1.75rem;
 }
 
+/* Pinned where it first renders: under the sticky nav bar (20px + 58px + 14px, no trail on /docs)
+   plus `<main>`'s `py-10`. A smaller `top` let it scroll up under the bar before it held. */
+@media (min-width: 1024px) {
+    .doc-nav {
+        position: sticky;
+        top: calc(92px + 2.5rem);
+        max-height: calc(100vh - 92px - 2.5rem - 2.25rem);
+        overflow-y: auto;
+    }
+}
+
 .doc-nav-section ul {
     margin-top: 0.6rem;
     display: flex;
@@ -2129,6 +2155,21 @@ a.arp-cf-card:hover {
 
 .doc-nav-section a:hover {
     color: var(--color-fg);
+}
+
+/* /tools: the rail holds every control and stays under the nav bar while the list scrolls; the
+   title scrolls away (user, 2026-11-09). 92px is the nav bar with no trail, as for `.doc-nav`. */
+@media (min-width: 768px) {
+    .tool-rail {
+        position: sticky;
+        top: calc(92px + 1.5rem);
+        max-height: calc(100vh - 92px - 1.5rem - 2.25rem);
+    }
+
+    .tool-rail-scroll {
+        min-height: 0;
+        overflow-y: auto;
+    }
 }
 
 /* The selected state is one of the three places the accent is spent. */
