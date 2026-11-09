@@ -1057,7 +1057,7 @@ a.arp-cf-card:hover {
     width: 6px;
     height: 6px;
     border-radius: 999px;
-    background: var(--color-steel);
+    background: var(--color-accent);
 }
 
 .arp-coin .arp-coin-here {
@@ -1582,7 +1582,7 @@ a.arp-cf-card:hover {
     width: 8px;
     height: 8px;
     border-radius: 999px;
-    background: var(--color-accent);
+    background: var(--color-steel);
 }
 
 .arp-gx-quiet,
