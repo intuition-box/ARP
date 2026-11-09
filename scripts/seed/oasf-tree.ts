@@ -109,6 +109,8 @@ for (const label of [...labels].sort()) {
 const wanted = new Set<string>();
 async function want(subject: Hex, predicate: Hex, object: Hex, why: string): Promise<void> {
   const id = await reads.tripleId(subject, predicate, object);
+  // Two catalogue URLs can name one skill atom (azure-reliability did): plan each triple once.
+  if (wanted.has(id.toLowerCase())) return;
   wanted.add(id.toLowerCase());
   if (!(await reads.termExists(id))) {
     triples.push({ kind: 'create-triple', chainId, to: multiVault, value: tripleAssets.toString(), data: encodeCreateTriple(subject, predicate, object, tripleAssets), why });
