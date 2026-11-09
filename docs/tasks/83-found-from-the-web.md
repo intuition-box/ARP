@@ -20,6 +20,8 @@ Two halves, because a page nobody wrote a line on answers nothing:
 3. Do not rebuild the site to get there (« tout changer, c'est pas intéressant »).
 4. A first service starts the system by writing what works (« un premier service qui tournerait et qui vérifierait si ça marche […] c'est le début du système »). Part B narrows it to what `docs/12`, `docs/30` and `security.md` allow; see "Do not do".
 5. Maximise this channel (« je vais vouloir maximiser ça »).
+6. From now on the first agents are real agents doing real work. Testnet data is lost at the move to mainnet, so a page does not label an agent as a test or testnet agent; the chain shown on every page is enough (« pas besoin de montrer que c'est testnet test agent, ça fait doublon »).
+7. Mainnet is production. The pages that matter are the ones that read mainnet.
 
 ## Deliverables
 
@@ -46,7 +48,7 @@ Two halves, because a page nobody wrote a line on answers nothing:
 ### B. A first agent that writes what it really used
 
 8. **One agent, operated by the user, registered as ERC-8004 on testnet 13579**, that does real work for the user (the business-development repo, the video project, Sofia). It writes form B lines with `arp line` only for what it used, with the outcome and, when it failed, the reason. Those lines are declared. Its runtime runs the hook, so its failures are also observed; a success is observed only with a content receipt (`docs/32`, skill column). On chain a hook-observed line and a written one look the same (`docs/32`, "What tier 2 does not prove"), so a page shows the tier only where a receipt is attached.
-9. **It is named for what it is.** On every page where its lines appear, its identity says it is operated by ARP's author. It does not pass for a third party; `docs/30` refuses "written by the agents themselves" until third parties report results.
+9. **No label, no claim.** Per decision 6 the agent gets no special label. What stays is `docs/30`: no page says or implies that its lines come from third parties, and "written by the agents themselves" is not used until third parties report results. Each line already shows the wallet that wrote it.
 10. **Reachability stays a dated fact, not a line.** An agent's or an MCP server's reading (`arp_agent_endpoints`, the probe of ADR `0093`) is shown on the pages as "answered on <date>"; it is not written on chain and not presented as "it works".
 
 ## Gates
@@ -71,13 +73,13 @@ Plus, on a release build with `VITE_SITE_URL` set: fetch three `/read/` pages wi
 - Sign on mainnet. Part B is testnet 13579. An agent signing with its operator's key is testnet only (`security.md`, ADR `0037`), and the delegation path is set aside except for hire (ADR `0147`).
 - Write lines for skills the agent did not use, or a "works" line from a probe answer.
 - Publish a page for a category or skill with no line.
-- Hide the agent of part B in the test-identities list while its lines are what the pages show, or show its lines without saying who operates it.
+- Put the agent of part B in the test-identities list: it is a real agent (decision 6).
 
 ## Open questions for the user
 
-1. **The agent of part B:** listed and labelled as operated by ARP's author (recommended), or hidden like the test identities, in which case the pages start empty?
-2. **Refresh:** how often a snapshot is rebuilt and redeployed (Coolify).
-3. **Which chain the pages read** once mainnet carries lines; today 13579, and a page says which.
+1. ~~The agent of part B~~: decided, a real agent with no label (decision 6).
+2. **Refresh:** a page changes only when the snapshot is rebuilt and the site redeployed. Daily is the default proposed; the user decides.
+3. ~~Which chain~~: decided, production reads mainnet (decision 7). Proposed: on testnet the pages are built for testing but left out of `sitemap.xml` and marked `noindex`, so a search engine does not index pages that disappear at the move.
 4. **A hosted read-only connector:** wanted, as its own ADR, or not now?
 
 ## Evidence ladder
