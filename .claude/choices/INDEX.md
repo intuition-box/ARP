@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-144 decisions. Newest last. `choices/README.md` says when to write one.
+145 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -180,3 +180,4 @@ Read these before relying on them.
 | [0144](0144-a-sponsored-line-asks-no-proof.md) | 2026-11-05 | Accepted | A sponsored line asks no proof of use, and its key stays out of the plugin's server |
 | [0145](0145-the-published-package-has-no-dependency.md) | 2026-11-05 | Accepted. Amended 2026-11-06 for the Claude Code plugin, at the end: it no longer goes through `npx`. | The published CLI carries viem and has no dependency |
 | [0146](0146-an-agent-grows-the-domain-tree.md) | 2026-11-09 | Accepted | An agent grows the domain tree, by a signed request |
+| [0147](0147-the-evidence-ladder-is-ordered-by-who-produced-the-signal.md) | 2026-11-09 | Accepted | The evidence ladder is ordered by who produced the signal |

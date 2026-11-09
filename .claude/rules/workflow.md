@@ -44,12 +44,13 @@ End-of-task report has three parts and no more, plus the evidence-ladder sentenc
 Every completion report answers one more question, in one sentence:
 
 ```
-**Which tier of the evidence ladder does this serve, and does it move ARP up it?**
-<one sentence: the tier from docs/09_POSITIONING_AND_PLAN.md §3, and why it moves ARP up or not.>
+**Which column and tier of the evidence ladder does this serve, and does it move ARP up it?**
+<one sentence: the column (skill, agent, hire) and the tier (declared, observed, corroborated) from
+docs/32_THE_EVIDENCE_LADDER.md, and why it moves ARP up or not.>
 ```
 
-A task that cannot name a tier has drifted and must be reviewed before merging. The `task-verifier`
-agent checks the answer is present and substantive (ADR `0022`, ADR `0117`).
+A task that cannot name a column and a tier has drifted and must be reviewed before merging. The
+`task-verifier` agent checks the answer is present and substantive (ADR `0022`, ADR `0117`, ADR `0147`).
 
 **Historical:** tasks 02b, 03b, 04b and 05b (the MetaMask Dev Cook-Off submission, closed) carried a
 hackathon-narrative question in this place. It is retired; their task files keep it as record.

@@ -2,7 +2,9 @@
 
 **Date**: 2026-09-16
 **Status**: **Analysis, dated 2026-09-16 — not commitment** (`CLAUDE.md`). **§3, the evidence
-ladder, is still in force**: every task's completion report names its tier. The rest is the
+ladder, was replaced on 2026-11-09** by `docs/32_THE_EVIDENCE_LADDER.md` (ADR `0147`): the ladder is
+now ordered by who produced a signal, not by what it cost. §3 stays below as the record; task files and
+post-mortems before that date name its tiers. The rest is the
 positioning as it stood that day, and it drifted. The current statement is `docs/12` (the mechanism)
 and `docs/01` (the positioning); the plan is `Wieedze/ARP-business-dev`, `plan/next-steps.md`.
 **Evidence base**: `docs/08_ERC8004_AGENT_LAYER_OPPORTUNITY.md`, Appendix A.

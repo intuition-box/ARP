@@ -33,7 +33,7 @@ If a rule is missing or wrong, write an ADR documenting the change.
 
 ## Evidence ladder
 
-**Which tier of the evidence ladder does this serve, and does it move ARP up it?**
+**Which column and tier of the evidence ladder does this serve, and does it move ARP up it?**
 
-<one sentence: the tier from `docs/09_POSITIONING_AND_PLAN.md` §3 (asserted, rated, staked, proven),
-and why it moves ARP up or not (`workflow.md`, ADR `0117`).>
+<one sentence: the column (skill, agent, hire) and the tier (declared, observed, corroborated) from
+`docs/32_THE_EVIDENCE_LADDER.md`, and why it moves ARP up or not (`workflow.md`, ADR `0147`).>

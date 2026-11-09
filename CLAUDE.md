@@ -65,9 +65,13 @@ See `.claude/agents/task-verifier.md` for the agent's procedure.
 
 Every completion report answers one extra question in one sentence:
 
-> _Which tier of the evidence ladder does this serve, and does it move ARP up it?_
+> _Which column and tier of the evidence ladder does this serve, and does it move ARP up it?_
 
-The ladder is `docs/09_POSITIONING_AND_PLAN.md` §3 — asserted, rated, staked, proven. ARP's position is the last two. If a task cannot name a tier, it has drifted and needs review before merging. The `task-verifier` agent enforces this.
+The ladder is `docs/32_THE_EVIDENCE_LADDER.md` (ADR `0147`): tiers declared, observed, corroborated —
+ordered by who stands behind a fact — crossed by three columns, skill, agent and hire. If a task cannot
+name a column and a tier, it has drifted and needs review before merging. The `task-verifier` agent
+enforces this. The cost ladder it replaced (asserted, rated, staked, proven) stays in `docs/09` §3 as
+record, and task files and post-mortems before 2026-11-09 name its tiers.
 
 This replaces the hackathon narrative-preservation check (ADR `0022`). Task files 02b–05b still reference the old check in their headers; they are complete and left as historical record.
 
@@ -163,6 +167,7 @@ ARP/
 │   ├── 28_THE_SIGNAL.md             (how a line is written on chain, with the schema, and what it does to a search)
 │   ├── 30_THE_POSITIONING.md        (what ARP says in public and what it may claim today)
 │   ├── 31_HOW_IT_WORKS.md           (for someone new, with diagrams: the whole picture, one failure, a line, the rank, what runs where)
+│   ├── 32_THE_EVIDENCE_LADDER.md    (the ladder every task names: declared, observed, corroborated × skill, agent, hire — ADR `0147`)
 │   ├── tasks/                       atomic task files
 │   ├── design/                      design handoffs, one folder per thing designed — its
 │   │                                `README.md` says what each is and whether it is built:
