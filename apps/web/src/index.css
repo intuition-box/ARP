@@ -1017,14 +1017,22 @@ a.arp-cf-card:hover {
 /* Plain classes on purpose: the unlayered `a`, `a:hover` and `button` rules
    above beat utilities. Every class is scoped under `.arp-coin`, which also
    gives it the specificity to win over `a:hover`. Sizes are the reference's;
-   the seam box is measured against them, so change both together. */
+   the circle's masks are measured against them, so change both together. */
 .arp-coin {
     container-type: inline-size;
     position: sticky;
     top: 0;
     z-index: 20;
-    /* No band: only the bar and its circle carry a background (user, 2026-11-09). */
+    /* No band: only the bar, its circle, the phone sheet and the path line carry a background
+       (user, 2026-11-09). The transparent padding lets clicks through to the page. */
     padding: 20px 22px 14px 26px;
+    pointer-events: none;
+}
+
+.arp-coin .arp-coin-bar,
+.arp-coin .arp-coin-sheet,
+.arp-coin .arp-coin-trail {
+    pointer-events: auto;
 }
 
 .arp-coin .arp-coin-bar {
@@ -1036,9 +1044,6 @@ a.arp-cf-card:hover {
     width: 100%;
     max-width: 1320px;
     height: 58px;
-    /* The left margin is what `auto` centring would give, written out so it
-       survives the retract: an `auto` margin going to 0 made the coin jump
-       to the header's edge on any viewport wider than the bar. */
     margin: 0 auto 0 max(0px, calc((100% - 1320px) / 2));
     padding: 0 10px 0 64px;
     border-radius: 14px;
@@ -1069,7 +1074,7 @@ a.arp-cf-card:hover {
     z-index: 1;
 }
 
-/* The circle: the bar's own background and border, a little taller than it. */
+/* The circle: the bar's glass, a little taller than it; its outline is drawn by `::before`. */
 .arp-coin .arp-coin-coin {
     position: absolute;
     top: 50%;
@@ -1242,6 +1247,10 @@ a.arp-cf-card:hover {
     margin: 0 auto;
     padding: 18px 16px 20px;
     border-bottom: 1px solid var(--color-rule-strong);
+    /* The header has no band any more, so the open sheet carries the bar's glass. */
+    background: var(--glass-bar);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    backdrop-filter: blur(14px) saturate(1.2);
 }
 
 /* The sheet's open state does not follow the viewport: opened on a phone and
@@ -1278,16 +1287,23 @@ a.arp-cf-card:hover {
     margin-top: 16px;
 }
 
-/* The path line, centred under the track. */
+/* The path line, centred under the track, in a glass pill of its own: it stays pinned with the
+   header, and the header has no band. */
 .arp-coin .arp-coin-trail {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    max-width: 1320px;
-    margin: 0 auto;
-    padding-top: 18px;
+    width: fit-content;
+    max-width: min(1320px, 100%);
+    margin: 12px auto 0;
+    padding: 6px 14px;
+    border: 1px solid var(--color-rule);
+    border-radius: 10px;
+    background: var(--glass-bar);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    backdrop-filter: blur(14px) saturate(1.2);
     font-family: var(--font-mono);
     font-size: 11.5px;
     color: var(--color-steel);
@@ -1401,7 +1417,7 @@ a.arp-cf-card:hover {
         flex-wrap: nowrap;
         overflow: hidden;
         white-space: nowrap;
-        padding-top: 18px;
+        margin-left: 0;
     }
 }
 
