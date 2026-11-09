@@ -3,16 +3,26 @@
  *      bun run scripts/seed/file-categories.ts                     # dry: prints the plan and the cost
  *      bun run scripts/seed/file-categories.ts --send              # posts to the local sponsor
  *      SPONSOR_URL=http://127.0.0.1:3200 bun run scripts/seed/file-categories.ts --send
+ *      bun run scripts/seed/file-categories.ts --send --agent 8 --key AGENT_PRIVATE_KEY --expect 0x…
  *
- *  Signs nothing and holds no key: the sponsor writes, as the attestor, under the same rules and
- *  daily caps as any proposal (ADR `0124`), so this is one more client of `/propose-category`, not
- *  a seed with its own authority. It stops at the first `limit` and can be re-run the next day:
- *  a filing that is already there comes back `created: false` and costs nothing.
+ *  The sponsor writes, as the attestor, under the same rules and daily caps as any proposal (ADR
+ *  `0124`), so this is one more client of `/propose-category`, not a seed with its own authority. It
+ *  stops at the first `limit` and can be re-run the next day: a filing that is already there comes
+ *  back `created: false` and costs nothing.
+ *
+ *  A new category is added only by a registered agent's signed request (task 73, ADR `0146`), so
+ *  `--agent`, `--key` (the NAME of the env variable holding that agent's key, never the key) and
+ *  `--expect` (the address it must sign as, checked before anything is sent) sign every filing. Without
+ *  them, only tags with an existing category are sent.
  *
  *  A new category is filed once with its parent and reason; every later skill under it is a plain
  *  tag, as the web and `arp_file_category` send it.
  */
 import {readFileSync} from "node:fs";
+
+import {signCategoryRequest} from "../../packages/protocol/src/sponsor/category.js";
+import {getAddress, keccak256, stringToBytes, type Hex} from "viem";
+import {privateKeyToAccount} from "viem/accounts";
 
 type Filing = {url: string; atom: string; category: string; parent?: string; reason?: string};
 
@@ -23,6 +33,28 @@ if (chainId !== 13579) {
     process.exit(1);
 }
 const send = process.argv.includes("--send");
+const flag = (name: string): string | undefined => {
+    const index = process.argv.indexOf(`--${name}`);
+    return index === -1 ? undefined : process.argv[index + 1];
+};
+const agentId = flag("agent");
+const keyName = flag("key");
+const expected = flag("expect");
+if ([agentId, keyName, expected].some((value) => value !== undefined) && [agentId, keyName, expected].some((value) => value === undefined)) {
+    console.error("--agent, --key and --expect go together");
+    process.exit(1);
+}
+const deployment = JSON.parse(readFileSync("data/deployments/13579.json", "utf8")) as {arp?: {identityRegistry?: string}};
+const signer = (() => {
+    if (keyName === undefined || expected === undefined || agentId === undefined) return null;
+    const key = process.env[keyName];
+    if (key === undefined || key === "") throw new Error(`${keyName} is not set`);
+    const account = privateKeyToAccount((key.startsWith("0x") ? key : `0x${key}`) as Hex); // a key is hex
+    if (account.address !== getAddress(expected)) throw new Error(`${keyName} signs as ${account.address}, not ${expected}`);
+    const registry = deployment.arp?.identityRegistry;
+    if (registry === undefined) throw new Error("data/deployments/13579.json has no identityRegistry");
+    return {account, agentId, agentRegistry: `eip155:13579:${getAddress(registry)}`};
+})();
 const sponsor = process.env["SPONSOR_URL"]?.trim() || "http://127.0.0.1:3200";
 
 const newCategories = [...new Set(filings.filter((f) => f.parent !== undefined).map((f) => f.category))];
@@ -49,9 +81,30 @@ const filed = new Set<string>();
 let done = 0;
 for (const filing of filings) {
     const first = filing.parent !== undefined && !filed.has(filing.category);
-    const body = first
-        ? {label: filing.category, parent: filing.parent, reason: filing.reason, subjectId: filing.atom}
-        : {label: filing.category, subjectId: filing.atom};
+    if (first && signer === null) {
+        console.log(`  SKIPPED ${filing.url} → ${filing.category}: a new category needs --agent, --key and --expect`);
+        continue;
+    }
+    const body =
+        signer === null
+            ? {label: filing.category, subjectId: filing.atom}
+            : {
+                  request: await signCategoryRequest(
+                      {
+                          agent: signer.account.address,
+                          agentRegistry: signer.agentRegistry,
+                          agentId: signer.agentId,
+                          label: filing.category,
+                          parent: first ? (filing.parent ?? "") : "",
+                          subject: filing.atom as Hex, // a 32-byte atom id in the committed list
+                          reason: first ? (filing.reason ?? "") : "",
+                          nonce: keccak256(stringToBytes(`file-categories-${filing.atom}-${Date.now()}`)),
+                          expiresAt: Math.floor(Date.now() / 1000) + 600,
+                      },
+                      chainId,
+                      signer.account,
+                  ),
+              };
     let response: Response;
     try {
         response = await fetch(`${sponsor}/propose-category`, {
