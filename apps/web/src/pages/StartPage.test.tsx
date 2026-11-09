@@ -56,15 +56,15 @@ describe("the start page", () => {
 
         expect(await screen.findByRole("heading", {name: "I use Claude"})).toBeTruthy();
         expect(screen.queryByText(/wallet|testnet|chain|trust/i)).toBeNull();
-        expect(screen.getAllByText("to do")).toHaveLength(3);
+        expect(screen.getAllByText("to do")).toHaveLength(2);
 
         deliver();
-        await waitFor(() => expect(screen.getAllByText("to do")).toHaveLength(2));
+        await waitFor(() => expect(screen.getAllByText("to do")).toHaveLength(1));
     });
 
     it("offers the example prompt as words to say, not a shell command", async () => {
         renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("claude"));
-        const prompt = await screen.findByText(/sourdough bread/);
+        const prompt = await screen.findByText(/with ARP\./);
         expect(prompt.textContent?.startsWith("$")).toBe(false);
     });
 
@@ -109,7 +109,7 @@ describe("the start page", () => {
 
     it("asks whether the agent has an id, and shows the steps until told yes", async () => {
         renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("agent"));
-        expect(await screen.findByText("Install ARP in your project")).toBeTruthy();
+        expect(await screen.findByText("Add ARP to your runtime")).toBeTruthy();
         expect(screen.getByRole("button", {name: "No"})).toHaveAttribute("aria-pressed", "true");
         fireEvent.click(screen.getByRole("button", {name: "Yes, it has one"}));
         // The steps would mint a second identity, so the import replaces them.
@@ -121,7 +121,7 @@ describe("the start page", () => {
                 {timeout: 5000},
             ),
         ).toBeTruthy();
-        expect(screen.queryByText("Install ARP in your project")).toBeNull();
+        expect(screen.queryByText("Add ARP to your runtime")).toBeNull();
     });
 
     it("offers the wallet mint under the agent steps", async () => {

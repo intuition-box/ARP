@@ -241,7 +241,7 @@ function StepRow({step, n}: {step: StartStep; n: number}) {
                         <Hint label={`About: ${step.title}`}>{step.hint}</Hint>
                     )}
                 </div>
-                {step.command !== undefined && <Install command={step.command} />}
+                {step.commands?.map((command) => <Install key={command} command={command} />)}
                 {step.prompt !== undefined && (
                     <p className="mt-4 border-l border-[color:var(--color-rule-strong)] pl-4 text-[15px] text-[color:var(--color-silver)]">
                         “{step.prompt}”

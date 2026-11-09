@@ -44,32 +44,46 @@ const done = (steps: ReturnType<typeof stepsFor>) =>
     Object.fromEntries(steps.map((step) => [step.id, step.done]));
 
 describe("start steps", () => {
-    it("ticks nothing before the agent is connected", () => {
+    it("shows no tick at all when no local feed is configured, as on the hosted site", () => {
         expect(done(stepsFor("claude", {feed: "off", events: []}))).toEqual({
+            connect: null,
+            ask: null,
+        });
+    });
+
+    it("ticks nothing before the agent is connected", () => {
+        expect(done(stepsFor("claude", {feed: "offline", events: []}))).toEqual({
             connect: false,
             ask: false,
-            declare: false,
         });
     });
 
     it("ticks each Claude step from what the feed recorded", () => {
-        const steps = stepsFor("claude", {
-            feed: "live",
-            events: [receipt, declaration("success")],
-        });
-        expect(done(steps)).toEqual({connect: true, ask: true, declare: true});
+        const steps = stepsFor("claude", {feed: "live", events: [receipt, declaration("success")]});
+        expect(done(steps)).toEqual({connect: true, ask: true});
     });
 
-    it("does not count a dry run or a reverted call as a declaration", () => {
-        for (const status of ["dry", "reverted"] as const) {
-            const steps = stepsFor("claude", {feed: "live", events: [declaration(status)]});
-            expect(done(steps).declare).toBe(false);
-        }
+    it("gives a stranger commands that exist, none needing ARP's sponsor (task 74)", () => {
+        const commands = [...stepsFor("claude", {feed: "off", events: []}), ...stepsFor("agent", {feed: "off", events: []})].flatMap(
+            (step) => step.commands ?? [],
+        );
+        expect(commands).toEqual([
+            "claude plugin marketplace add intuition-box/ARP",
+            "claude plugin install arp@arp",
+            "npx -y @arp-protocol/cli init",
+            "npx -y @arp-protocol/cli doctor",
+        ]);
+        expect(commands.join(" ")).not.toMatch(/--sponsored|arp status/);
     });
 
-    it("ticks the builder's run from the hook, and never claims `arp status` was run", () => {
+    it("names ARP in the example prompt, because the agent reaches for it when named", () => {
+        const ask = stepsFor("claude", {feed: "off", events: []}).find((step) => step.id === "ask");
+        expect(ask?.prompt).toMatch(/with ARP/);
+    });
+
+    it("ticks the builder's run from the hook, and never claims the check was run", () => {
         const steps = stepsFor("agent", {feed: "live", events: [invoked]});
-        expect(done(steps)).toEqual({init: true, run: true, status: null});
+        expect(done(steps)).toEqual({init: true, run: true, doctor: null});
     });
 
     it("shows the tool path's steps without a tick it cannot observe", () => {
