@@ -1,0 +1,9630 @@
+{
+ "date": "2026-11-09",
+ "what": "OASF 1.1.0 skill placement from name+description; agreement with the task-79 proposal (data/catalogue/oasf-skill-tags-proposal-13579.json) excluding reviewed=='skip'",
+ "caveat": "The reference is itself a model's reading of the same truncated descriptions; only the 62 low-confidence rows were looked at again (reviewed=ok). These numbers are agreement with that proposal, not accuracy against an independent truth. Margin thresholds are read off the same 656 rows they are measured on: no held-out split.",
+ "inputs": {
+  "repo": "/home/max/Project/ARP-tree",
+  "commit": "afca226fb1bb405909ecffe063e3d98cc55a9f7b",
+  "sha256": {
+   "oasf-1.1.0-skills.json": "03e92af94267e9cf94f6fc34190d5c2de4adebc14f118efa2191276f55b9714c",
+   "oasf-skill-tags-proposal-13579.json": "eedf7284221dd12e1194e7a5a1b49b7adb02e9528cb36d07fe7bb0c91bfc133f",
+   "skill-facts.json": "fba2e46b6e95a1ae7ea0e12d3942af9bb567a4e76e81827d071b998c315b0200"
+  }
+ },
+ "versions": {
+  "python": "3.12.3 (stdlib only)",
+  "node": "v22.21.1",
+  "@huggingface/transformers": "3.7.5 (npm, exact)",
+  "onnxruntime-node": "1.21.0 (transitive)",
+  "models": {
+   "Xenova/all-MiniLM-L6-v2": {
+    "revision": "751bff37182d3f1213fa05d7196b954e230abad9",
+    "onnx/model.onnx sha256": "759c3cd2b7fe7e93933ad23c4c9181b7396442a2ed746ec7c1d46192c469c46e",
+    "pooling": "mean",
+    "dtype": "fp32"
+   },
+   "Xenova/bge-small-en-v1.5": {
+    "revision": "ea104dacec62c0de699686887e3f920caeb4f3e3",
+    "onnx/model.onnx sha256": "828e1496d7fabb79cfa4dcd84fa38625c0d3d21da474a00f08db0f559940cf35",
+    "pooling": "cls",
+    "dtype": "fp32",
+    "queryPrefix": "Represent this sentence for searching relevant passages: "
+   }
+  },
+  "bm25": {
+   "k1": 1.2,
+   "b": 0.75,
+   "tokeniser": "lowercase [a-z0-9]+, small stopword list, suffix strip ing/ies/es/ed/s"
+  }
+ },
+ "definitions": {
+  "skillText": "name with - and _ as spaces, '. ', description from skill-facts.json",
+  "nodeText": "caption. description. ancestor captions nearest first",
+  "nodeSubtreeText": "nodeText plus every descendant caption (used only by *-subtree variants)",
+  "flat": "argmax over all 513 nodes (514 with design)",
+  "hier-stop": "pick best level-1, then best child; stop when the current node outscores every child",
+  "hier-leaf": "same, but always descend to a leaf",
+  "*-subtree": "hierarchical, each decision scored against nodeSubtreeText",
+  "design": "adds node '602+design' (child of 602), text 'Design. user interface and visual design: layout, typography, colour, polish. Web Development. Software Engineering'",
+  "sameLevel2": "prediction and reference share the ancestor at level min(2, reference level)",
+  "top3Exact": "reference in the 3 best-scoring candidates (flat: global; hierarchical: final decision step)",
+  "margin": "flat: top1-top2 score; hierarchical: smallest margin over the decision steps. Scale is per scorer (BM25 is not a cosine)",
+  "intervals": "Wilson 95%"
+ },
+ "commands": [
+  "mkdir -p <work-dir>/pkg && cd <work-dir>/pkg && npm install --save-exact @huggingface/transformers@3.7.5   # once, outside the repository",
+  "bash scripts/measure/oasf-classifier/run.sh <work-dir> data/catalogue"
+ ],
+ "determinism": "run twice; out/metrics.json byte-identical",
+ "files": {
+  "scripts": "/tmp/claude-1000/-home-max-Project-ARP/99d33be0-b575-4300-8789-888590c08f9b/scratchpad/clf/scripts/",
+  "texts": "/tmp/claude-1000/-home-max-Project-ARP/99d33be0-b575-4300-8789-888590c08f9b/scratchpad/clf/out/texts.json",
+  "perRowPredictions": "/tmp/claude-1000/-home-max-Project-ARP/99d33be0-b575-4300-8789-888590c08f9b/scratchpad/clf/out/metrics-predictions.json"
+ },
+ "notRun": [
+  "held-out split or cross-validation for margin thresholds",
+  "fusion of BM25 and embeddings",
+  "any larger or reranking model",
+  "an independent human-labelled reference"
+ ],
+ "prior": {
+  "label": "20405",
+  "exact": {
+   "k": 37,
+   "n": 656,
+   "p": 0.0564,
+   "lo": 0.0412,
+   "hi": 0.0768
+  },
+  "category": "2",
+  "sameCategory": {
+   "k": 174,
+   "n": 656,
+   "p": 0.2652,
+   "lo": 0.2329,
+   "hi": 0.3003
+  }
+ },
+ "results": {
+  "bm25/flat/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 172,
+    "n": 656,
+    "p": 0.2622,
+    "lo": 0.23,
+    "hi": 0.2972
+   },
+   "sameLevel2": {
+    "k": 240,
+    "n": 656,
+    "p": 0.3659,
+    "lo": 0.3299,
+    "hi": 0.4034
+   },
+   "sameCategory": {
+    "k": 339,
+    "n": 656,
+    "p": 0.5168,
+    "lo": 0.4785,
+    "hi": 0.5548
+   },
+   "top3Exact": {
+    "k": 268,
+    "n": 656,
+    "p": 0.4085,
+    "lo": 0.3716,
+    "hi": 0.4466
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 144,
+      "n": 325,
+      "p": 0.4431,
+      "lo": 0.39,
+      "hi": 0.4974
+     },
+     "sameLevel2": {
+      "k": 173,
+      "n": 325,
+      "p": 0.5323,
+      "lo": 0.478,
+      "hi": 0.5859
+     },
+     "sameCategory": {
+      "k": 218,
+      "n": 325,
+      "p": 0.6708,
+      "lo": 0.6179,
+      "hi": 0.7196
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 0,
+      "n": 62,
+      "p": 0.0,
+      "lo": 0.0,
+      "hi": 0.0583
+     },
+     "sameLevel2": {
+      "k": 10,
+      "n": 62,
+      "p": 0.1613,
+      "lo": 0.09,
+      "hi": 0.2721
+     },
+     "sameCategory": {
+      "k": 14,
+      "n": 62,
+      "p": 0.2258,
+      "lo": 0.1396,
+      "hi": 0.3441
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 28,
+      "n": 269,
+      "p": 0.1041,
+      "lo": 0.073,
+      "hi": 0.1463
+     },
+     "sameLevel2": {
+      "k": 57,
+      "n": 269,
+      "p": 0.2119,
+      "lo": 0.1673,
+      "hi": 0.2646
+     },
+     "sameCategory": {
+      "k": 107,
+      "n": 269,
+      "p": 0.3978,
+      "lo": 0.3411,
+      "hi": 0.4573
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 2.4676,
+    "exact": {
+     "k": 85,
+     "n": 218,
+     "p": 0.3899,
+     "lo": 0.3276,
+     "hi": 0.456
+    },
+    "category": {
+     "k": 139,
+     "n": 218,
+     "p": 0.6376,
+     "lo": 0.5719,
+     "hi": 0.6985
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.7262,
+    "exact": {
+     "k": 28,
+     "n": 218,
+     "p": 0.1284,
+     "lo": 0.0904,
+     "hi": 0.1794
+    },
+    "category": {
+     "k": 87,
+     "n": 218,
+     "p": 0.3991,
+     "lo": 0.3364,
+     "hi": 0.4653
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 6.044,
+     "exact": {
+      "k": 47,
+      "n": 66,
+      "p": 0.7121,
+      "lo": 0.5936,
+      "hi": 0.8073
+     },
+     "category": {
+      "k": 56,
+      "n": 66,
+      "p": 0.8485,
+      "lo": 0.7431,
+      "hi": 0.9156
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 4.0409,
+     "exact": {
+      "k": 72,
+      "n": 131,
+      "p": 0.5496,
+      "lo": 0.4642,
+      "hi": 0.6322
+     },
+     "category": {
+      "k": 103,
+      "n": 131,
+      "p": 0.7863,
+      "lo": 0.7084,
+      "hi": 0.8478
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 2.7858,
+     "exact": {
+      "k": 80,
+      "n": 197,
+      "p": 0.4061,
+      "lo": 0.3399,
+      "hi": 0.4758
+     },
+     "category": {
+      "k": 128,
+      "n": 197,
+      "p": 0.6497,
+      "lo": 0.5808,
+      "hi": 0.7129
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 1.993,
+     "exact": {
+      "k": 97,
+      "n": 262,
+      "p": 0.3702,
+      "lo": 0.314,
+      "hi": 0.4302
+     },
+     "category": {
+      "k": 161,
+      "n": 262,
+      "p": 0.6145,
+      "lo": 0.5543,
+      "hi": 0.6714
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 1.2445,
+     "exact": {
+      "k": 115,
+      "n": 328,
+      "p": 0.3506,
+      "lo": 0.301,
+      "hi": 0.4037
+     },
+     "category": {
+      "k": 192,
+      "n": 328,
+      "p": 0.5854,
+      "lo": 0.5314,
+      "hi": 0.6374
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.8601,
+     "exact": {
+      "k": 133,
+      "n": 394,
+      "p": 0.3376,
+      "lo": 0.2926,
+      "hi": 0.3856
+     },
+     "category": {
+      "k": 231,
+      "n": 394,
+      "p": 0.5863,
+      "lo": 0.5371,
+      "hi": 0.6339
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.5948,
+     "exact": {
+      "k": 147,
+      "n": 459,
+      "p": 0.3203,
+      "lo": 0.2792,
+      "hi": 0.3643
+     },
+     "category": {
+      "k": 262,
+      "n": 459,
+      "p": 0.5708,
+      "lo": 0.5251,
+      "hi": 0.6153
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.3736,
+     "exact": {
+      "k": 156,
+      "n": 525,
+      "p": 0.2971,
+      "lo": 0.2596,
+      "hi": 0.3376
+     },
+     "category": {
+      "k": 284,
+      "n": 525,
+      "p": 0.541,
+      "lo": 0.4982,
+      "hi": 0.5831
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.155,
+     "exact": {
+      "k": 166,
+      "n": 590,
+      "p": 0.2814,
+      "lo": 0.2466,
+      "hi": 0.319
+     },
+     "category": {
+      "k": 310,
+      "n": 590,
+      "p": 0.5254,
+      "lo": 0.4851,
+      "hi": 0.5654
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 172,
+      "n": 656,
+      "p": 0.2622,
+      "lo": 0.23,
+      "hi": 0.2972
+     },
+     "category": {
+      "k": 339,
+      "n": 656,
+      "p": 0.5168,
+      "lo": 0.4785,
+      "hi": 0.5548
+     }
+    }
+   ]
+  },
+  "bm25/flat/design": {
+   "n": 656,
+   "exact": {
+    "k": 184,
+    "n": 656,
+    "p": 0.2805,
+    "lo": 0.2475,
+    "hi": 0.3161
+   },
+   "sameLevel2": {
+    "k": 252,
+    "n": 656,
+    "p": 0.3841,
+    "lo": 0.3477,
+    "hi": 0.4219
+   },
+   "sameCategory": {
+    "k": 346,
+    "n": 656,
+    "p": 0.5274,
+    "lo": 0.4892,
+    "hi": 0.5654
+   },
+   "top3Exact": {
+    "k": 285,
+    "n": 656,
+    "p": 0.4345,
+    "lo": 0.397,
+    "hi": 0.4727
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 154,
+      "n": 325,
+      "p": 0.4738,
+      "lo": 0.4202,
+      "hi": 0.5281
+     },
+     "sameLevel2": {
+      "k": 183,
+      "n": 325,
+      "p": 0.5631,
+      "lo": 0.5087,
+      "hi": 0.616
+     },
+     "sameCategory": {
+      "k": 223,
+      "n": 325,
+      "p": 0.6862,
+      "lo": 0.6338,
+      "hi": 0.7342
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 0,
+      "n": 62,
+      "p": 0.0,
+      "lo": 0.0,
+      "hi": 0.0583
+     },
+     "sameLevel2": {
+      "k": 10,
+      "n": 62,
+      "p": 0.1613,
+      "lo": 0.09,
+      "hi": 0.2721
+     },
+     "sameCategory": {
+      "k": 14,
+      "n": 62,
+      "p": 0.2258,
+      "lo": 0.1396,
+      "hi": 0.3441
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 30,
+      "n": 269,
+      "p": 0.1115,
+      "lo": 0.0792,
+      "hi": 0.1547
+     },
+     "sameLevel2": {
+      "k": 59,
+      "n": 269,
+      "p": 0.2193,
+      "lo": 0.174,
+      "hi": 0.2725
+     },
+     "sameCategory": {
+      "k": 109,
+      "n": 269,
+      "p": 0.4052,
+      "lo": 0.3483,
+      "hi": 0.4648
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 2.5115,
+    "exact": {
+     "k": 90,
+     "n": 218,
+     "p": 0.4128,
+     "lo": 0.3495,
+     "hi": 0.4792
+    },
+    "category": {
+     "k": 143,
+     "n": 218,
+     "p": 0.656,
+     "lo": 0.5907,
+     "hi": 0.7158
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.7387,
+    "exact": {
+     "k": 30,
+     "n": 218,
+     "p": 0.1376,
+     "lo": 0.0981,
+     "hi": 0.1897
+    },
+    "category": {
+     "k": 84,
+     "n": 218,
+     "p": 0.3853,
+     "lo": 0.3232,
+     "hi": 0.4514
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 6.1423,
+     "exact": {
+      "k": 48,
+      "n": 66,
+      "p": 0.7273,
+      "lo": 0.6096,
+      "hi": 0.82
+     },
+     "category": {
+      "k": 56,
+      "n": 66,
+      "p": 0.8485,
+      "lo": 0.7431,
+      "hi": 0.9156
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 4.1056,
+     "exact": {
+      "k": 74,
+      "n": 131,
+      "p": 0.5649,
+      "lo": 0.4793,
+      "hi": 0.6467
+     },
+     "category": {
+      "k": 106,
+      "n": 131,
+      "p": 0.8092,
+      "lo": 0.7334,
+      "hi": 0.8673
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 2.8286,
+     "exact": {
+      "k": 84,
+      "n": 197,
+      "p": 0.4264,
+      "lo": 0.3594,
+      "hi": 0.4962
+     },
+     "category": {
+      "k": 131,
+      "n": 197,
+      "p": 0.665,
+      "lo": 0.5965,
+      "hi": 0.7272
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 2.1056,
+     "exact": {
+      "k": 104,
+      "n": 262,
+      "p": 0.3969,
+      "lo": 0.3396,
+      "hi": 0.4573
+     },
+     "category": {
+      "k": 169,
+      "n": 262,
+      "p": 0.645,
+      "lo": 0.5854,
+      "hi": 0.7005
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 1.2831,
+     "exact": {
+      "k": 121,
+      "n": 328,
+      "p": 0.3689,
+      "lo": 0.3185,
+      "hi": 0.4224
+     },
+     "category": {
+      "k": 197,
+      "n": 328,
+      "p": 0.6006,
+      "lo": 0.5467,
+      "hi": 0.6522
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.8888,
+     "exact": {
+      "k": 141,
+      "n": 394,
+      "p": 0.3579,
+      "lo": 0.3121,
+      "hi": 0.4064
+     },
+     "category": {
+      "k": 236,
+      "n": 394,
+      "p": 0.599,
+      "lo": 0.5499,
+      "hi": 0.6462
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.6508,
+     "exact": {
+      "k": 156,
+      "n": 459,
+      "p": 0.3399,
+      "lo": 0.298,
+      "hi": 0.3844
+     },
+     "category": {
+      "k": 268,
+      "n": 459,
+      "p": 0.5839,
+      "lo": 0.5383,
+      "hi": 0.6281
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.3775,
+     "exact": {
+      "k": 166,
+      "n": 525,
+      "p": 0.3162,
+      "lo": 0.2779,
+      "hi": 0.3572
+     },
+     "category": {
+      "k": 292,
+      "n": 525,
+      "p": 0.5562,
+      "lo": 0.5134,
+      "hi": 0.5981
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.1692,
+     "exact": {
+      "k": 178,
+      "n": 590,
+      "p": 0.3017,
+      "lo": 0.266,
+      "hi": 0.3399
+     },
+     "category": {
+      "k": 317,
+      "n": 590,
+      "p": 0.5373,
+      "lo": 0.4969,
+      "hi": 0.5772
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 184,
+      "n": 656,
+      "p": 0.2805,
+      "lo": 0.2475,
+      "hi": 0.3161
+     },
+     "category": {
+      "k": 346,
+      "n": 656,
+      "p": 0.5274,
+      "lo": 0.4892,
+      "hi": 0.5654
+     }
+    }
+   ]
+  },
+  "bm25/hier-stop/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 49,
+    "n": 656,
+    "p": 0.0747,
+    "lo": 0.057,
+    "hi": 0.0974
+   },
+   "sameLevel2": {
+    "k": 83,
+    "n": 656,
+    "p": 0.1265,
+    "lo": 0.1032,
+    "hi": 0.1542
+   },
+   "sameCategory": {
+    "k": 178,
+    "n": 656,
+    "p": 0.2713,
+    "lo": 0.2387,
+    "hi": 0.3066
+   },
+   "top3Exact": {
+    "k": 69,
+    "n": 656,
+    "p": 0.1052,
+    "lo": 0.084,
+    "hi": 0.131
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 39,
+      "n": 325,
+      "p": 0.12,
+      "lo": 0.089,
+      "hi": 0.1598
+     },
+     "sameLevel2": {
+      "k": 54,
+      "n": 325,
+      "p": 0.1662,
+      "lo": 0.1296,
+      "hi": 0.2105
+     },
+     "sameCategory": {
+      "k": 114,
+      "n": 325,
+      "p": 0.3508,
+      "lo": 0.3009,
+      "hi": 0.4041
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 0,
+      "n": 62,
+      "p": 0.0,
+      "lo": 0.0,
+      "hi": 0.0583
+     },
+     "sameLevel2": {
+      "k": 2,
+      "n": 62,
+      "p": 0.0323,
+      "lo": 0.0089,
+      "hi": 0.1102
+     },
+     "sameCategory": {
+      "k": 15,
+      "n": 62,
+      "p": 0.2419,
+      "lo": 0.1525,
+      "hi": 0.3615
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 10,
+      "n": 269,
+      "p": 0.0372,
+      "lo": 0.0203,
+      "hi": 0.0671
+     },
+     "sameLevel2": {
+      "k": 27,
+      "n": 269,
+      "p": 0.1004,
+      "lo": 0.0699,
+      "hi": 0.1421
+     },
+     "sameCategory": {
+      "k": 49,
+      "n": 269,
+      "p": 0.1822,
+      "lo": 0.1406,
+      "hi": 0.2326
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.5745,
+    "exact": {
+     "k": 31,
+     "n": 218,
+     "p": 0.1422,
+     "lo": 0.102,
+     "hi": 0.1948
+    },
+    "category": {
+     "k": 99,
+     "n": 218,
+     "p": 0.4541,
+     "lo": 0.3894,
+     "hi": 0.5204
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0,
+    "exact": {
+     "k": 0,
+     "n": 218,
+     "p": 0.0,
+     "lo": 0.0,
+     "hi": 0.0173
+    },
+    "category": {
+     "k": 21,
+     "n": 218,
+     "p": 0.0963,
+     "lo": 0.0639,
+     "hi": 0.1428
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 2.68,
+     "exact": {
+      "k": 6,
+      "n": 66,
+      "p": 0.0909,
+      "lo": 0.0423,
+      "hi": 0.1845
+     },
+     "category": {
+      "k": 26,
+      "n": 66,
+      "p": 0.3939,
+      "lo": 0.285,
+      "hi": 0.5145
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 1.2954,
+     "exact": {
+      "k": 18,
+      "n": 131,
+      "p": 0.1374,
+      "lo": 0.0887,
+      "hi": 0.2068
+     },
+     "category": {
+      "k": 66,
+      "n": 131,
+      "p": 0.5038,
+      "lo": 0.4193,
+      "hi": 0.5881
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.7389,
+     "exact": {
+      "k": 26,
+      "n": 197,
+      "p": 0.132,
+      "lo": 0.0917,
+      "hi": 0.1864
+     },
+     "category": {
+      "k": 90,
+      "n": 197,
+      "p": 0.4569,
+      "lo": 0.3888,
+      "hi": 0.5266
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.3295,
+     "exact": {
+      "k": 34,
+      "n": 262,
+      "p": 0.1298,
+      "lo": 0.0944,
+      "hi": 0.1759
+     },
+     "category": {
+      "k": 118,
+      "n": 262,
+      "p": 0.4504,
+      "lo": 0.3913,
+      "hi": 0.5109
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.1995,
+     "exact": {
+      "k": 38,
+      "n": 328,
+      "p": 0.1159,
+      "lo": 0.0856,
+      "hi": 0.155
+     },
+     "category": {
+      "k": 131,
+      "n": 328,
+      "p": 0.3994,
+      "lo": 0.3478,
+      "hi": 0.4533
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.1282,
+     "exact": {
+      "k": 45,
+      "n": 394,
+      "p": 0.1142,
+      "lo": 0.0865,
+      "hi": 0.1494
+     },
+     "category": {
+      "k": 143,
+      "n": 394,
+      "p": 0.3629,
+      "lo": 0.317,
+      "hi": 0.4115
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 49,
+      "n": 459,
+      "p": 0.1068,
+      "lo": 0.0817,
+      "hi": 0.1383
+     },
+     "category": {
+      "k": 159,
+      "n": 459,
+      "p": 0.3464,
+      "lo": 0.3043,
+      "hi": 0.391
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 49,
+      "n": 525,
+      "p": 0.0933,
+      "lo": 0.0713,
+      "hi": 0.1213
+     },
+     "category": {
+      "k": 163,
+      "n": 525,
+      "p": 0.3105,
+      "lo": 0.2724,
+      "hi": 0.3513
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 49,
+      "n": 590,
+      "p": 0.0831,
+      "lo": 0.0634,
+      "hi": 0.1081
+     },
+     "category": {
+      "k": 170,
+      "n": 590,
+      "p": 0.2881,
+      "lo": 0.2531,
+      "hi": 0.326
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 49,
+      "n": 656,
+      "p": 0.0747,
+      "lo": 0.057,
+      "hi": 0.0974
+     },
+     "category": {
+      "k": 178,
+      "n": 656,
+      "p": 0.2713,
+      "lo": 0.2387,
+      "hi": 0.3066
+     }
+    }
+   ]
+  },
+  "bm25/hier-stop/design": {
+   "n": 656,
+   "exact": {
+    "k": 49,
+    "n": 656,
+    "p": 0.0747,
+    "lo": 0.057,
+    "hi": 0.0974
+   },
+   "sameLevel2": {
+    "k": 83,
+    "n": 656,
+    "p": 0.1265,
+    "lo": 0.1032,
+    "hi": 0.1542
+   },
+   "sameCategory": {
+    "k": 178,
+    "n": 656,
+    "p": 0.2713,
+    "lo": 0.2387,
+    "hi": 0.3066
+   },
+   "top3Exact": {
+    "k": 69,
+    "n": 656,
+    "p": 0.1052,
+    "lo": 0.084,
+    "hi": 0.131
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 39,
+      "n": 325,
+      "p": 0.12,
+      "lo": 0.089,
+      "hi": 0.1598
+     },
+     "sameLevel2": {
+      "k": 54,
+      "n": 325,
+      "p": 0.1662,
+      "lo": 0.1296,
+      "hi": 0.2105
+     },
+     "sameCategory": {
+      "k": 114,
+      "n": 325,
+      "p": 0.3508,
+      "lo": 0.3009,
+      "hi": 0.4041
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 0,
+      "n": 62,
+      "p": 0.0,
+      "lo": 0.0,
+      "hi": 0.0583
+     },
+     "sameLevel2": {
+      "k": 2,
+      "n": 62,
+      "p": 0.0323,
+      "lo": 0.0089,
+      "hi": 0.1102
+     },
+     "sameCategory": {
+      "k": 15,
+      "n": 62,
+      "p": 0.2419,
+      "lo": 0.1525,
+      "hi": 0.3615
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 10,
+      "n": 269,
+      "p": 0.0372,
+      "lo": 0.0203,
+      "hi": 0.0671
+     },
+     "sameLevel2": {
+      "k": 27,
+      "n": 269,
+      "p": 0.1004,
+      "lo": 0.0699,
+      "hi": 0.1421
+     },
+     "sameCategory": {
+      "k": 49,
+      "n": 269,
+      "p": 0.1822,
+      "lo": 0.1406,
+      "hi": 0.2326
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.5745,
+    "exact": {
+     "k": 31,
+     "n": 218,
+     "p": 0.1422,
+     "lo": 0.102,
+     "hi": 0.1948
+    },
+    "category": {
+     "k": 99,
+     "n": 218,
+     "p": 0.4541,
+     "lo": 0.3894,
+     "hi": 0.5204
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0,
+    "exact": {
+     "k": 0,
+     "n": 218,
+     "p": 0.0,
+     "lo": 0.0,
+     "hi": 0.0173
+    },
+    "category": {
+     "k": 21,
+     "n": 218,
+     "p": 0.0963,
+     "lo": 0.0639,
+     "hi": 0.1428
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 2.68,
+     "exact": {
+      "k": 6,
+      "n": 66,
+      "p": 0.0909,
+      "lo": 0.0423,
+      "hi": 0.1845
+     },
+     "category": {
+      "k": 26,
+      "n": 66,
+      "p": 0.3939,
+      "lo": 0.285,
+      "hi": 0.5145
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 1.2954,
+     "exact": {
+      "k": 18,
+      "n": 131,
+      "p": 0.1374,
+      "lo": 0.0887,
+      "hi": 0.2068
+     },
+     "category": {
+      "k": 66,
+      "n": 131,
+      "p": 0.5038,
+      "lo": 0.4193,
+      "hi": 0.5881
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.7389,
+     "exact": {
+      "k": 26,
+      "n": 197,
+      "p": 0.132,
+      "lo": 0.0917,
+      "hi": 0.1864
+     },
+     "category": {
+      "k": 90,
+      "n": 197,
+      "p": 0.4569,
+      "lo": 0.3888,
+      "hi": 0.5266
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.3295,
+     "exact": {
+      "k": 34,
+      "n": 262,
+      "p": 0.1298,
+      "lo": 0.0944,
+      "hi": 0.1759
+     },
+     "category": {
+      "k": 118,
+      "n": 262,
+      "p": 0.4504,
+      "lo": 0.3913,
+      "hi": 0.5109
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.1995,
+     "exact": {
+      "k": 38,
+      "n": 328,
+      "p": 0.1159,
+      "lo": 0.0856,
+      "hi": 0.155
+     },
+     "category": {
+      "k": 131,
+      "n": 328,
+      "p": 0.3994,
+      "lo": 0.3478,
+      "hi": 0.4533
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.1282,
+     "exact": {
+      "k": 45,
+      "n": 394,
+      "p": 0.1142,
+      "lo": 0.0865,
+      "hi": 0.1494
+     },
+     "category": {
+      "k": 143,
+      "n": 394,
+      "p": 0.3629,
+      "lo": 0.317,
+      "hi": 0.4115
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 49,
+      "n": 459,
+      "p": 0.1068,
+      "lo": 0.0817,
+      "hi": 0.1383
+     },
+     "category": {
+      "k": 159,
+      "n": 459,
+      "p": 0.3464,
+      "lo": 0.3043,
+      "hi": 0.391
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 49,
+      "n": 525,
+      "p": 0.0933,
+      "lo": 0.0713,
+      "hi": 0.1213
+     },
+     "category": {
+      "k": 163,
+      "n": 525,
+      "p": 0.3105,
+      "lo": 0.2724,
+      "hi": 0.3513
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 49,
+      "n": 590,
+      "p": 0.0831,
+      "lo": 0.0634,
+      "hi": 0.1081
+     },
+     "category": {
+      "k": 170,
+      "n": 590,
+      "p": 0.2881,
+      "lo": 0.2531,
+      "hi": 0.326
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 49,
+      "n": 656,
+      "p": 0.0747,
+      "lo": 0.057,
+      "hi": 0.0974
+     },
+     "category": {
+      "k": 178,
+      "n": 656,
+      "p": 0.2713,
+      "lo": 0.2387,
+      "hi": 0.3066
+     }
+    }
+   ]
+  },
+  "bm25/hier-leaf/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 57,
+    "n": 656,
+    "p": 0.0869,
+    "lo": 0.0677,
+    "hi": 0.1109
+   },
+   "sameLevel2": {
+    "k": 96,
+    "n": 656,
+    "p": 0.1463,
+    "lo": 0.1214,
+    "hi": 0.1754
+   },
+   "sameCategory": {
+    "k": 178,
+    "n": 656,
+    "p": 0.2713,
+    "lo": 0.2387,
+    "hi": 0.3066
+   },
+   "top3Exact": {
+    "k": 74,
+    "n": 656,
+    "p": 0.1128,
+    "lo": 0.0908,
+    "hi": 0.1393
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 47,
+      "n": 325,
+      "p": 0.1446,
+      "lo": 0.1105,
+      "hi": 0.187
+     },
+     "sameLevel2": {
+      "k": 62,
+      "n": 325,
+      "p": 0.1908,
+      "lo": 0.1518,
+      "hi": 0.237
+     },
+     "sameCategory": {
+      "k": 114,
+      "n": 325,
+      "p": 0.3508,
+      "lo": 0.3009,
+      "hi": 0.4041
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 0,
+      "n": 62,
+      "p": 0.0,
+      "lo": 0.0,
+      "hi": 0.0583
+     },
+     "sameLevel2": {
+      "k": 4,
+      "n": 62,
+      "p": 0.0645,
+      "lo": 0.0254,
+      "hi": 0.1545
+     },
+     "sameCategory": {
+      "k": 15,
+      "n": 62,
+      "p": 0.2419,
+      "lo": 0.1525,
+      "hi": 0.3615
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 10,
+      "n": 269,
+      "p": 0.0372,
+      "lo": 0.0203,
+      "hi": 0.0671
+     },
+     "sameLevel2": {
+      "k": 30,
+      "n": 269,
+      "p": 0.1115,
+      "lo": 0.0792,
+      "hi": 0.1547
+     },
+     "sameCategory": {
+      "k": 49,
+      "n": 269,
+      "p": 0.1822,
+      "lo": 0.1406,
+      "hi": 0.2326
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.4282,
+    "exact": {
+     "k": 45,
+     "n": 218,
+     "p": 0.2064,
+     "lo": 0.158,
+     "hi": 0.265
+    },
+    "category": {
+     "k": 110,
+     "n": 218,
+     "p": 0.5046,
+     "lo": 0.4387,
+     "hi": 0.5703
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0,
+    "exact": {
+     "k": 0,
+     "n": 218,
+     "p": 0.0,
+     "lo": 0.0,
+     "hi": 0.0173
+    },
+    "category": {
+     "k": 22,
+     "n": 218,
+     "p": 0.1009,
+     "lo": 0.0676,
+     "hi": 0.1481
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 2.6186,
+     "exact": {
+      "k": 12,
+      "n": 66,
+      "p": 0.1818,
+      "lo": 0.1072,
+      "hi": 0.2915
+     },
+     "category": {
+      "k": 29,
+      "n": 66,
+      "p": 0.4394,
+      "lo": 0.3263,
+      "hi": 0.5592
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.9518,
+     "exact": {
+      "k": 28,
+      "n": 131,
+      "p": 0.2137,
+      "lo": 0.1522,
+      "hi": 0.2916
+     },
+     "category": {
+      "k": 58,
+      "n": 131,
+      "p": 0.4427,
+      "lo": 0.3605,
+      "hi": 0.5282
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.5701,
+     "exact": {
+      "k": 41,
+      "n": 197,
+      "p": 0.2081,
+      "lo": 0.1573,
+      "hi": 0.2701
+     },
+     "category": {
+      "k": 100,
+      "n": 197,
+      "p": 0.5076,
+      "lo": 0.4383,
+      "hi": 0.5766
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.2291,
+     "exact": {
+      "k": 47,
+      "n": 262,
+      "p": 0.1794,
+      "lo": 0.1377,
+      "hi": 0.2304
+     },
+     "category": {
+      "k": 119,
+      "n": 262,
+      "p": 0.4542,
+      "lo": 0.395,
+      "hi": 0.5147
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.1282,
+     "exact": {
+      "k": 54,
+      "n": 328,
+      "p": 0.1646,
+      "lo": 0.1284,
+      "hi": 0.2086
+     },
+     "category": {
+      "k": 135,
+      "n": 328,
+      "p": 0.4116,
+      "lo": 0.3597,
+      "hi": 0.4656
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 57,
+      "n": 394,
+      "p": 0.1447,
+      "lo": 0.1134,
+      "hi": 0.1828
+     },
+     "category": {
+      "k": 155,
+      "n": 394,
+      "p": 0.3934,
+      "lo": 0.3464,
+      "hi": 0.4424
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 57,
+      "n": 459,
+      "p": 0.1242,
+      "lo": 0.0971,
+      "hi": 0.1575
+     },
+     "category": {
+      "k": 157,
+      "n": 459,
+      "p": 0.342,
+      "lo": 0.3001,
+      "hi": 0.3866
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 57,
+      "n": 525,
+      "p": 0.1086,
+      "lo": 0.0847,
+      "hi": 0.1381
+     },
+     "category": {
+      "k": 167,
+      "n": 525,
+      "p": 0.3181,
+      "lo": 0.2797,
+      "hi": 0.3591
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 57,
+      "n": 590,
+      "p": 0.0966,
+      "lo": 0.0753,
+      "hi": 0.1231
+     },
+     "category": {
+      "k": 172,
+      "n": 590,
+      "p": 0.2915,
+      "lo": 0.2563,
+      "hi": 0.3295
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 57,
+      "n": 656,
+      "p": 0.0869,
+      "lo": 0.0677,
+      "hi": 0.1109
+     },
+     "category": {
+      "k": 178,
+      "n": 656,
+      "p": 0.2713,
+      "lo": 0.2387,
+      "hi": 0.3066
+     }
+    }
+   ]
+  },
+  "bm25/hier-leaf/design": {
+   "n": 656,
+   "exact": {
+    "k": 57,
+    "n": 656,
+    "p": 0.0869,
+    "lo": 0.0677,
+    "hi": 0.1109
+   },
+   "sameLevel2": {
+    "k": 96,
+    "n": 656,
+    "p": 0.1463,
+    "lo": 0.1214,
+    "hi": 0.1754
+   },
+   "sameCategory": {
+    "k": 178,
+    "n": 656,
+    "p": 0.2713,
+    "lo": 0.2387,
+    "hi": 0.3066
+   },
+   "top3Exact": {
+    "k": 74,
+    "n": 656,
+    "p": 0.1128,
+    "lo": 0.0908,
+    "hi": 0.1393
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 47,
+      "n": 325,
+      "p": 0.1446,
+      "lo": 0.1105,
+      "hi": 0.187
+     },
+     "sameLevel2": {
+      "k": 62,
+      "n": 325,
+      "p": 0.1908,
+      "lo": 0.1518,
+      "hi": 0.237
+     },
+     "sameCategory": {
+      "k": 114,
+      "n": 325,
+      "p": 0.3508,
+      "lo": 0.3009,
+      "hi": 0.4041
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 0,
+      "n": 62,
+      "p": 0.0,
+      "lo": 0.0,
+      "hi": 0.0583
+     },
+     "sameLevel2": {
+      "k": 4,
+      "n": 62,
+      "p": 0.0645,
+      "lo": 0.0254,
+      "hi": 0.1545
+     },
+     "sameCategory": {
+      "k": 15,
+      "n": 62,
+      "p": 0.2419,
+      "lo": 0.1525,
+      "hi": 0.3615
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 10,
+      "n": 269,
+      "p": 0.0372,
+      "lo": 0.0203,
+      "hi": 0.0671
+     },
+     "sameLevel2": {
+      "k": 30,
+      "n": 269,
+      "p": 0.1115,
+      "lo": 0.0792,
+      "hi": 0.1547
+     },
+     "sameCategory": {
+      "k": 49,
+      "n": 269,
+      "p": 0.1822,
+      "lo": 0.1406,
+      "hi": 0.2326
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.4282,
+    "exact": {
+     "k": 45,
+     "n": 218,
+     "p": 0.2064,
+     "lo": 0.158,
+     "hi": 0.265
+    },
+    "category": {
+     "k": 110,
+     "n": 218,
+     "p": 0.5046,
+     "lo": 0.4387,
+     "hi": 0.5703
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0,
+    "exact": {
+     "k": 0,
+     "n": 218,
+     "p": 0.0,
+     "lo": 0.0,
+     "hi": 0.0173
+    },
+    "category": {
+     "k": 22,
+     "n": 218,
+     "p": 0.1009,
+     "lo": 0.0676,
+     "hi": 0.1481
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 2.6186,
+     "exact": {
+      "k": 12,
+      "n": 66,
+      "p": 0.1818,
+      "lo": 0.1072,
+      "hi": 0.2915
+     },
+     "category": {
+      "k": 29,
+      "n": 66,
+      "p": 0.4394,
+      "lo": 0.3263,
+      "hi": 0.5592
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.9518,
+     "exact": {
+      "k": 28,
+      "n": 131,
+      "p": 0.2137,
+      "lo": 0.1522,
+      "hi": 0.2916
+     },
+     "category": {
+      "k": 58,
+      "n": 131,
+      "p": 0.4427,
+      "lo": 0.3605,
+      "hi": 0.5282
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.5701,
+     "exact": {
+      "k": 41,
+      "n": 197,
+      "p": 0.2081,
+      "lo": 0.1573,
+      "hi": 0.2701
+     },
+     "category": {
+      "k": 100,
+      "n": 197,
+      "p": 0.5076,
+      "lo": 0.4383,
+      "hi": 0.5766
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.2291,
+     "exact": {
+      "k": 47,
+      "n": 262,
+      "p": 0.1794,
+      "lo": 0.1377,
+      "hi": 0.2304
+     },
+     "category": {
+      "k": 119,
+      "n": 262,
+      "p": 0.4542,
+      "lo": 0.395,
+      "hi": 0.5147
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.1282,
+     "exact": {
+      "k": 54,
+      "n": 328,
+      "p": 0.1646,
+      "lo": 0.1284,
+      "hi": 0.2086
+     },
+     "category": {
+      "k": 135,
+      "n": 328,
+      "p": 0.4116,
+      "lo": 0.3597,
+      "hi": 0.4656
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 57,
+      "n": 394,
+      "p": 0.1447,
+      "lo": 0.1134,
+      "hi": 0.1828
+     },
+     "category": {
+      "k": 155,
+      "n": 394,
+      "p": 0.3934,
+      "lo": 0.3464,
+      "hi": 0.4424
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 57,
+      "n": 459,
+      "p": 0.1242,
+      "lo": 0.0971,
+      "hi": 0.1575
+     },
+     "category": {
+      "k": 157,
+      "n": 459,
+      "p": 0.342,
+      "lo": 0.3001,
+      "hi": 0.3866
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 57,
+      "n": 525,
+      "p": 0.1086,
+      "lo": 0.0847,
+      "hi": 0.1381
+     },
+     "category": {
+      "k": 167,
+      "n": 525,
+      "p": 0.3181,
+      "lo": 0.2797,
+      "hi": 0.3591
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 57,
+      "n": 590,
+      "p": 0.0966,
+      "lo": 0.0753,
+      "hi": 0.1231
+     },
+     "category": {
+      "k": 172,
+      "n": 590,
+      "p": 0.2915,
+      "lo": 0.2563,
+      "hi": 0.3295
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 57,
+      "n": 656,
+      "p": 0.0869,
+      "lo": 0.0677,
+      "hi": 0.1109
+     },
+     "category": {
+      "k": 178,
+      "n": 656,
+      "p": 0.2713,
+      "lo": 0.2387,
+      "hi": 0.3066
+     }
+    }
+   ]
+  },
+  "bm25/hier-stop-subtree/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 94,
+    "n": 656,
+    "p": 0.1433,
+    "lo": 0.1186,
+    "hi": 0.1722
+   },
+   "sameLevel2": {
+    "k": 165,
+    "n": 656,
+    "p": 0.2515,
+    "lo": 0.2198,
+    "hi": 0.2861
+   },
+   "sameCategory": {
+    "k": 295,
+    "n": 656,
+    "p": 0.4497,
+    "lo": 0.412,
+    "hi": 0.4879
+   },
+   "top3Exact": {
+    "k": 150,
+    "n": 656,
+    "p": 0.2287,
+    "lo": 0.1982,
+    "hi": 0.2623
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 63,
+      "n": 325,
+      "p": 0.1938,
+      "lo": 0.1545,
+      "hi": 0.2403
+     },
+     "sameLevel2": {
+      "k": 96,
+      "n": 325,
+      "p": 0.2954,
+      "lo": 0.2484,
+      "hi": 0.3471
+     },
+     "sameCategory": {
+      "k": 180,
+      "n": 325,
+      "p": 0.5538,
+      "lo": 0.4995,
+      "hi": 0.6069
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 5,
+      "n": 62,
+      "p": 0.0806,
+      "lo": 0.0349,
+      "hi": 0.1753
+     },
+     "sameLevel2": {
+      "k": 9,
+      "n": 62,
+      "p": 0.1452,
+      "lo": 0.0783,
+      "hi": 0.2534
+     },
+     "sameCategory": {
+      "k": 13,
+      "n": 62,
+      "p": 0.2097,
+      "lo": 0.1268,
+      "hi": 0.3264
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 26,
+      "n": 269,
+      "p": 0.0967,
+      "lo": 0.0668,
+      "hi": 0.1379
+     },
+     "sameLevel2": {
+      "k": 60,
+      "n": 269,
+      "p": 0.223,
+      "lo": 0.1774,
+      "hi": 0.2765
+     },
+     "sameCategory": {
+      "k": 102,
+      "n": 269,
+      "p": 0.3792,
+      "lo": 0.3233,
+      "hi": 0.4385
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 1.0284,
+    "exact": {
+     "k": 51,
+     "n": 218,
+     "p": 0.2339,
+     "lo": 0.1827,
+     "hi": 0.2944
+    },
+    "category": {
+     "k": 114,
+     "n": 218,
+     "p": 0.5229,
+     "lo": 0.4568,
+     "hi": 0.5883
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.3797,
+    "exact": {
+     "k": 23,
+     "n": 218,
+     "p": 0.1055,
+     "lo": 0.0713,
+     "hi": 0.1533
+    },
+    "category": {
+     "k": 96,
+     "n": 218,
+     "p": 0.4404,
+     "lo": 0.3761,
+     "hi": 0.5067
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 2.5183,
+     "exact": {
+      "k": 23,
+      "n": 66,
+      "p": 0.3485,
+      "lo": 0.2448,
+      "hi": 0.4689
+     },
+     "category": {
+      "k": 41,
+      "n": 66,
+      "p": 0.6212,
+      "lo": 0.5006,
+      "hi": 0.7285
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 1.6704,
+     "exact": {
+      "k": 39,
+      "n": 131,
+      "p": 0.2977,
+      "lo": 0.2261,
+      "hi": 0.3809
+     },
+     "category": {
+      "k": 80,
+      "n": 131,
+      "p": 0.6107,
+      "lo": 0.5252,
+      "hi": 0.6899
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 1.0593,
+     "exact": {
+      "k": 51,
+      "n": 197,
+      "p": 0.2589,
+      "lo": 0.2027,
+      "hi": 0.3242
+     },
+     "category": {
+      "k": 111,
+      "n": 197,
+      "p": 0.5635,
+      "lo": 0.4936,
+      "hi": 0.6308
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.8277,
+     "exact": {
+      "k": 57,
+      "n": 262,
+      "p": 0.2176,
+      "lo": 0.1719,
+      "hi": 0.2714
+     },
+     "category": {
+      "k": 127,
+      "n": 262,
+      "p": 0.4847,
+      "lo": 0.4249,
+      "hi": 0.545
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.6243,
+     "exact": {
+      "k": 68,
+      "n": 328,
+      "p": 0.2073,
+      "lo": 0.167,
+      "hi": 0.2545
+     },
+     "category": {
+      "k": 163,
+      "n": 328,
+      "p": 0.497,
+      "lo": 0.4432,
+      "hi": 0.5508
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.4894,
+     "exact": {
+      "k": 69,
+      "n": 394,
+      "p": 0.1751,
+      "lo": 0.1408,
+      "hi": 0.2157
+     },
+     "category": {
+      "k": 177,
+      "n": 394,
+      "p": 0.4492,
+      "lo": 0.4008,
+      "hi": 0.4986
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.3702,
+     "exact": {
+      "k": 78,
+      "n": 459,
+      "p": 0.1699,
+      "lo": 0.1383,
+      "hi": 0.207
+     },
+     "category": {
+      "k": 214,
+      "n": 459,
+      "p": 0.4662,
+      "lo": 0.4211,
+      "hi": 0.512
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.2109,
+     "exact": {
+      "k": 91,
+      "n": 525,
+      "p": 0.1733,
+      "lo": 0.1434,
+      "hi": 0.2081
+     },
+     "category": {
+      "k": 250,
+      "n": 525,
+      "p": 0.4762,
+      "lo": 0.4338,
+      "hi": 0.5189
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.1102,
+     "exact": {
+      "k": 93,
+      "n": 590,
+      "p": 0.1576,
+      "lo": 0.1305,
+      "hi": 0.1892
+     },
+     "category": {
+      "k": 281,
+      "n": 590,
+      "p": 0.4763,
+      "lo": 0.4363,
+      "hi": 0.5166
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 94,
+      "n": 656,
+      "p": 0.1433,
+      "lo": 0.1186,
+      "hi": 0.1722
+     },
+     "category": {
+      "k": 295,
+      "n": 656,
+      "p": 0.4497,
+      "lo": 0.412,
+      "hi": 0.4879
+     }
+    }
+   ]
+  },
+  "bm25/hier-stop-subtree/design": {
+   "n": 656,
+   "exact": {
+    "k": 95,
+    "n": 656,
+    "p": 0.1448,
+    "lo": 0.12,
+    "hi": 0.1738
+   },
+   "sameLevel2": {
+    "k": 165,
+    "n": 656,
+    "p": 0.2515,
+    "lo": 0.2198,
+    "hi": 0.2861
+   },
+   "sameCategory": {
+    "k": 295,
+    "n": 656,
+    "p": 0.4497,
+    "lo": 0.412,
+    "hi": 0.4879
+   },
+   "top3Exact": {
+    "k": 155,
+    "n": 656,
+    "p": 0.2363,
+    "lo": 0.2054,
+    "hi": 0.2703
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 63,
+      "n": 325,
+      "p": 0.1938,
+      "lo": 0.1545,
+      "hi": 0.2403
+     },
+     "sameLevel2": {
+      "k": 96,
+      "n": 325,
+      "p": 0.2954,
+      "lo": 0.2484,
+      "hi": 0.3471
+     },
+     "sameCategory": {
+      "k": 180,
+      "n": 325,
+      "p": 0.5538,
+      "lo": 0.4995,
+      "hi": 0.6069
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 5,
+      "n": 62,
+      "p": 0.0806,
+      "lo": 0.0349,
+      "hi": 0.1753
+     },
+     "sameLevel2": {
+      "k": 9,
+      "n": 62,
+      "p": 0.1452,
+      "lo": 0.0783,
+      "hi": 0.2534
+     },
+     "sameCategory": {
+      "k": 13,
+      "n": 62,
+      "p": 0.2097,
+      "lo": 0.1268,
+      "hi": 0.3264
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 27,
+      "n": 269,
+      "p": 0.1004,
+      "lo": 0.0699,
+      "hi": 0.1421
+     },
+     "sameLevel2": {
+      "k": 60,
+      "n": 269,
+      "p": 0.223,
+      "lo": 0.1774,
+      "hi": 0.2765
+     },
+     "sameCategory": {
+      "k": 102,
+      "n": 269,
+      "p": 0.3792,
+      "lo": 0.3233,
+      "hi": 0.4385
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 1.0284,
+    "exact": {
+     "k": 51,
+     "n": 218,
+     "p": 0.2339,
+     "lo": 0.1827,
+     "hi": 0.2944
+    },
+    "category": {
+     "k": 114,
+     "n": 218,
+     "p": 0.5229,
+     "lo": 0.4568,
+     "hi": 0.5883
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.3797,
+    "exact": {
+     "k": 24,
+     "n": 218,
+     "p": 0.1101,
+     "lo": 0.0751,
+     "hi": 0.1586
+    },
+    "category": {
+     "k": 96,
+     "n": 218,
+     "p": 0.4404,
+     "lo": 0.3761,
+     "hi": 0.5067
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 2.5183,
+     "exact": {
+      "k": 23,
+      "n": 66,
+      "p": 0.3485,
+      "lo": 0.2448,
+      "hi": 0.4689
+     },
+     "category": {
+      "k": 41,
+      "n": 66,
+      "p": 0.6212,
+      "lo": 0.5006,
+      "hi": 0.7285
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 1.6704,
+     "exact": {
+      "k": 39,
+      "n": 131,
+      "p": 0.2977,
+      "lo": 0.2261,
+      "hi": 0.3809
+     },
+     "category": {
+      "k": 80,
+      "n": 131,
+      "p": 0.6107,
+      "lo": 0.5252,
+      "hi": 0.6899
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 1.0593,
+     "exact": {
+      "k": 51,
+      "n": 197,
+      "p": 0.2589,
+      "lo": 0.2027,
+      "hi": 0.3242
+     },
+     "category": {
+      "k": 111,
+      "n": 197,
+      "p": 0.5635,
+      "lo": 0.4936,
+      "hi": 0.6308
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.8277,
+     "exact": {
+      "k": 57,
+      "n": 262,
+      "p": 0.2176,
+      "lo": 0.1719,
+      "hi": 0.2714
+     },
+     "category": {
+      "k": 127,
+      "n": 262,
+      "p": 0.4847,
+      "lo": 0.4249,
+      "hi": 0.545
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.6243,
+     "exact": {
+      "k": 68,
+      "n": 328,
+      "p": 0.2073,
+      "lo": 0.167,
+      "hi": 0.2545
+     },
+     "category": {
+      "k": 163,
+      "n": 328,
+      "p": 0.497,
+      "lo": 0.4432,
+      "hi": 0.5508
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.4894,
+     "exact": {
+      "k": 69,
+      "n": 394,
+      "p": 0.1751,
+      "lo": 0.1408,
+      "hi": 0.2157
+     },
+     "category": {
+      "k": 177,
+      "n": 394,
+      "p": 0.4492,
+      "lo": 0.4008,
+      "hi": 0.4986
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.3702,
+     "exact": {
+      "k": 78,
+      "n": 459,
+      "p": 0.1699,
+      "lo": 0.1383,
+      "hi": 0.207
+     },
+     "category": {
+      "k": 214,
+      "n": 459,
+      "p": 0.4662,
+      "lo": 0.4211,
+      "hi": 0.512
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.2109,
+     "exact": {
+      "k": 91,
+      "n": 525,
+      "p": 0.1733,
+      "lo": 0.1434,
+      "hi": 0.2081
+     },
+     "category": {
+      "k": 250,
+      "n": 525,
+      "p": 0.4762,
+      "lo": 0.4338,
+      "hi": 0.5189
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.1102,
+     "exact": {
+      "k": 94,
+      "n": 590,
+      "p": 0.1593,
+      "lo": 0.132,
+      "hi": 0.191
+     },
+     "category": {
+      "k": 281,
+      "n": 590,
+      "p": 0.4763,
+      "lo": 0.4363,
+      "hi": 0.5166
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 95,
+      "n": 656,
+      "p": 0.1448,
+      "lo": 0.12,
+      "hi": 0.1738
+     },
+     "category": {
+      "k": 295,
+      "n": 656,
+      "p": 0.4497,
+      "lo": 0.412,
+      "hi": 0.4879
+     }
+    }
+   ]
+  },
+  "bm25/hier-leaf-subtree/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 136,
+    "n": 656,
+    "p": 0.2073,
+    "lo": 0.178,
+    "hi": 0.24
+   },
+   "sameLevel2": {
+    "k": 203,
+    "n": 656,
+    "p": 0.3095,
+    "lo": 0.2753,
+    "hi": 0.3458
+   },
+   "sameCategory": {
+    "k": 295,
+    "n": 656,
+    "p": 0.4497,
+    "lo": 0.412,
+    "hi": 0.4879
+   },
+   "top3Exact": {
+    "k": 171,
+    "n": 656,
+    "p": 0.2607,
+    "lo": 0.2285,
+    "hi": 0.2956
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 108,
+      "n": 325,
+      "p": 0.3323,
+      "lo": 0.2833,
+      "hi": 0.3852
+     },
+     "sameLevel2": {
+      "k": 130,
+      "n": 325,
+      "p": 0.4,
+      "lo": 0.3482,
+      "hi": 0.4541
+     },
+     "sameCategory": {
+      "k": 180,
+      "n": 325,
+      "p": 0.5538,
+      "lo": 0.4995,
+      "hi": 0.6069
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 0,
+      "n": 62,
+      "p": 0.0,
+      "lo": 0.0,
+      "hi": 0.0583
+     },
+     "sameLevel2": {
+      "k": 9,
+      "n": 62,
+      "p": 0.1452,
+      "lo": 0.0783,
+      "hi": 0.2534
+     },
+     "sameCategory": {
+      "k": 13,
+      "n": 62,
+      "p": 0.2097,
+      "lo": 0.1268,
+      "hi": 0.3264
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 28,
+      "n": 269,
+      "p": 0.1041,
+      "lo": 0.073,
+      "hi": 0.1463
+     },
+     "sameLevel2": {
+      "k": 64,
+      "n": 269,
+      "p": 0.2379,
+      "lo": 0.1909,
+      "hi": 0.2923
+     },
+     "sameCategory": {
+      "k": 102,
+      "n": 269,
+      "p": 0.3792,
+      "lo": 0.3233,
+      "hi": 0.4385
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 1.4592,
+    "exact": {
+     "k": 87,
+     "n": 218,
+     "p": 0.3991,
+     "lo": 0.3364,
+     "hi": 0.4653
+    },
+    "category": {
+     "k": 141,
+     "n": 218,
+     "p": 0.6468,
+     "lo": 0.5813,
+     "hi": 0.7072
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.3671,
+    "exact": {
+     "k": 16,
+     "n": 218,
+     "p": 0.0734,
+     "lo": 0.0457,
+     "hi": 0.1159
+    },
+    "category": {
+     "k": 72,
+     "n": 218,
+     "p": 0.3303,
+     "lo": 0.2713,
+     "hi": 0.3952
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 3.0545,
+     "exact": {
+      "k": 26,
+      "n": 66,
+      "p": 0.3939,
+      "lo": 0.285,
+      "hi": 0.5145
+     },
+     "category": {
+      "k": 50,
+      "n": 66,
+      "p": 0.7576,
+      "lo": 0.6419,
+      "hi": 0.8449
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 2.2939,
+     "exact": {
+      "k": 65,
+      "n": 131,
+      "p": 0.4962,
+      "lo": 0.4119,
+      "hi": 0.5807
+     },
+     "category": {
+      "k": 95,
+      "n": 131,
+      "p": 0.7252,
+      "lo": 0.6432,
+      "hi": 0.7944
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 1.6132,
+     "exact": {
+      "k": 81,
+      "n": 197,
+      "p": 0.4112,
+      "lo": 0.3448,
+      "hi": 0.4809
+     },
+     "category": {
+      "k": 130,
+      "n": 197,
+      "p": 0.6599,
+      "lo": 0.5913,
+      "hi": 0.7224
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 1.1587,
+     "exact": {
+      "k": 101,
+      "n": 262,
+      "p": 0.3855,
+      "lo": 0.3286,
+      "hi": 0.4457
+     },
+     "category": {
+      "k": 163,
+      "n": 262,
+      "p": 0.6221,
+      "lo": 0.5621,
+      "hi": 0.6787
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.8164,
+     "exact": {
+      "k": 109,
+      "n": 328,
+      "p": 0.3323,
+      "lo": 0.2835,
+      "hi": 0.385
+     },
+     "category": {
+      "k": 182,
+      "n": 328,
+      "p": 0.5549,
+      "lo": 0.5008,
+      "hi": 0.6077
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.5565,
+     "exact": {
+      "k": 119,
+      "n": 394,
+      "p": 0.302,
+      "lo": 0.2588,
+      "hi": 0.3491
+     },
+     "category": {
+      "k": 207,
+      "n": 394,
+      "p": 0.5254,
+      "lo": 0.4761,
+      "hi": 0.5742
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.2717,
+     "exact": {
+      "k": 126,
+      "n": 459,
+      "p": 0.2745,
+      "lo": 0.2357,
+      "hi": 0.3171
+     },
+     "category": {
+      "k": 236,
+      "n": 459,
+      "p": 0.5142,
+      "lo": 0.4685,
+      "hi": 0.5596
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0821,
+     "exact": {
+      "k": 134,
+      "n": 525,
+      "p": 0.2552,
+      "lo": 0.2198,
+      "hi": 0.2942
+     },
+     "category": {
+      "k": 262,
+      "n": 525,
+      "p": 0.499,
+      "lo": 0.4564,
+      "hi": 0.5417
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 135,
+      "n": 590,
+      "p": 0.2288,
+      "lo": 0.1967,
+      "hi": 0.2644
+     },
+     "category": {
+      "k": 278,
+      "n": 590,
+      "p": 0.4712,
+      "lo": 0.4312,
+      "hi": 0.5115
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 136,
+      "n": 656,
+      "p": 0.2073,
+      "lo": 0.178,
+      "hi": 0.24
+     },
+     "category": {
+      "k": 295,
+      "n": 656,
+      "p": 0.4497,
+      "lo": 0.412,
+      "hi": 0.4879
+     }
+    }
+   ]
+  },
+  "bm25/hier-leaf-subtree/design": {
+   "n": 656,
+   "exact": {
+    "k": 137,
+    "n": 656,
+    "p": 0.2088,
+    "lo": 0.1795,
+    "hi": 0.2416
+   },
+   "sameLevel2": {
+    "k": 203,
+    "n": 656,
+    "p": 0.3095,
+    "lo": 0.2753,
+    "hi": 0.3458
+   },
+   "sameCategory": {
+    "k": 295,
+    "n": 656,
+    "p": 0.4497,
+    "lo": 0.412,
+    "hi": 0.4879
+   },
+   "top3Exact": {
+    "k": 177,
+    "n": 656,
+    "p": 0.2698,
+    "lo": 0.2373,
+    "hi": 0.3051
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 108,
+      "n": 325,
+      "p": 0.3323,
+      "lo": 0.2833,
+      "hi": 0.3852
+     },
+     "sameLevel2": {
+      "k": 130,
+      "n": 325,
+      "p": 0.4,
+      "lo": 0.3482,
+      "hi": 0.4541
+     },
+     "sameCategory": {
+      "k": 180,
+      "n": 325,
+      "p": 0.5538,
+      "lo": 0.4995,
+      "hi": 0.6069
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 0,
+      "n": 62,
+      "p": 0.0,
+      "lo": 0.0,
+      "hi": 0.0583
+     },
+     "sameLevel2": {
+      "k": 9,
+      "n": 62,
+      "p": 0.1452,
+      "lo": 0.0783,
+      "hi": 0.2534
+     },
+     "sameCategory": {
+      "k": 13,
+      "n": 62,
+      "p": 0.2097,
+      "lo": 0.1268,
+      "hi": 0.3264
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 29,
+      "n": 269,
+      "p": 0.1078,
+      "lo": 0.0761,
+      "hi": 0.1505
+     },
+     "sameLevel2": {
+      "k": 64,
+      "n": 269,
+      "p": 0.2379,
+      "lo": 0.1909,
+      "hi": 0.2923
+     },
+     "sameCategory": {
+      "k": 102,
+      "n": 269,
+      "p": 0.3792,
+      "lo": 0.3233,
+      "hi": 0.4385
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 1.4592,
+    "exact": {
+     "k": 87,
+     "n": 218,
+     "p": 0.3991,
+     "lo": 0.3364,
+     "hi": 0.4653
+    },
+    "category": {
+     "k": 141,
+     "n": 218,
+     "p": 0.6468,
+     "lo": 0.5813,
+     "hi": 0.7072
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.3671,
+    "exact": {
+     "k": 17,
+     "n": 218,
+     "p": 0.078,
+     "lo": 0.0493,
+     "hi": 0.1213
+    },
+    "category": {
+     "k": 72,
+     "n": 218,
+     "p": 0.3303,
+     "lo": 0.2713,
+     "hi": 0.3952
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 3.0545,
+     "exact": {
+      "k": 26,
+      "n": 66,
+      "p": 0.3939,
+      "lo": 0.285,
+      "hi": 0.5145
+     },
+     "category": {
+      "k": 50,
+      "n": 66,
+      "p": 0.7576,
+      "lo": 0.6419,
+      "hi": 0.8449
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 2.2939,
+     "exact": {
+      "k": 65,
+      "n": 131,
+      "p": 0.4962,
+      "lo": 0.4119,
+      "hi": 0.5807
+     },
+     "category": {
+      "k": 95,
+      "n": 131,
+      "p": 0.7252,
+      "lo": 0.6432,
+      "hi": 0.7944
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 1.6045,
+     "exact": {
+      "k": 81,
+      "n": 197,
+      "p": 0.4112,
+      "lo": 0.3448,
+      "hi": 0.4809
+     },
+     "category": {
+      "k": 130,
+      "n": 197,
+      "p": 0.6599,
+      "lo": 0.5913,
+      "hi": 0.7224
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 1.1587,
+     "exact": {
+      "k": 101,
+      "n": 262,
+      "p": 0.3855,
+      "lo": 0.3286,
+      "hi": 0.4457
+     },
+     "category": {
+      "k": 163,
+      "n": 262,
+      "p": 0.6221,
+      "lo": 0.5621,
+      "hi": 0.6787
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.8164,
+     "exact": {
+      "k": 109,
+      "n": 328,
+      "p": 0.3323,
+      "lo": 0.2835,
+      "hi": 0.385
+     },
+     "category": {
+      "k": 182,
+      "n": 328,
+      "p": 0.5549,
+      "lo": 0.5008,
+      "hi": 0.6077
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.5565,
+     "exact": {
+      "k": 119,
+      "n": 394,
+      "p": 0.302,
+      "lo": 0.2588,
+      "hi": 0.3491
+     },
+     "category": {
+      "k": 207,
+      "n": 394,
+      "p": 0.5254,
+      "lo": 0.4761,
+      "hi": 0.5742
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.2717,
+     "exact": {
+      "k": 126,
+      "n": 459,
+      "p": 0.2745,
+      "lo": 0.2357,
+      "hi": 0.3171
+     },
+     "category": {
+      "k": 236,
+      "n": 459,
+      "p": 0.5142,
+      "lo": 0.4685,
+      "hi": 0.5596
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0821,
+     "exact": {
+      "k": 135,
+      "n": 525,
+      "p": 0.2571,
+      "lo": 0.2216,
+      "hi": 0.2962
+     },
+     "category": {
+      "k": 262,
+      "n": 525,
+      "p": 0.499,
+      "lo": 0.4564,
+      "hi": 0.5417
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 136,
+      "n": 590,
+      "p": 0.2305,
+      "lo": 0.1983,
+      "hi": 0.2662
+     },
+     "category": {
+      "k": 278,
+      "n": 590,
+      "p": 0.4712,
+      "lo": 0.4312,
+      "hi": 0.5115
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 137,
+      "n": 656,
+      "p": 0.2088,
+      "lo": 0.1795,
+      "hi": 0.2416
+     },
+     "category": {
+      "k": 295,
+      "n": 656,
+      "p": 0.4497,
+      "lo": 0.412,
+      "hi": 0.4879
+     }
+    }
+   ]
+  },
+  "minilm/flat/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 173,
+    "n": 656,
+    "p": 0.2637,
+    "lo": 0.2314,
+    "hi": 0.2987
+   },
+   "sameLevel2": {
+    "k": 308,
+    "n": 656,
+    "p": 0.4695,
+    "lo": 0.4316,
+    "hi": 0.5078
+   },
+   "sameCategory": {
+    "k": 388,
+    "n": 656,
+    "p": 0.5915,
+    "lo": 0.5534,
+    "hi": 0.6284
+   },
+   "top3Exact": {
+    "k": 305,
+    "n": 656,
+    "p": 0.4649,
+    "lo": 0.4271,
+    "hi": 0.5032
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 127,
+      "n": 325,
+      "p": 0.3908,
+      "lo": 0.3393,
+      "hi": 0.4448
+     },
+     "sameLevel2": {
+      "k": 199,
+      "n": 325,
+      "p": 0.6123,
+      "lo": 0.5583,
+      "hi": 0.6637
+     },
+     "sameCategory": {
+      "k": 221,
+      "n": 325,
+      "p": 0.68,
+      "lo": 0.6274,
+      "hi": 0.7284
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 3,
+      "n": 62,
+      "p": 0.0484,
+      "lo": 0.0166,
+      "hi": 0.1329
+     },
+     "sameLevel2": {
+      "k": 12,
+      "n": 62,
+      "p": 0.1935,
+      "lo": 0.1143,
+      "hi": 0.3085
+     },
+     "sameCategory": {
+      "k": 21,
+      "n": 62,
+      "p": 0.3387,
+      "lo": 0.2334,
+      "hi": 0.4628
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 43,
+      "n": 269,
+      "p": 0.1599,
+      "lo": 0.1209,
+      "hi": 0.2084
+     },
+     "sameLevel2": {
+      "k": 97,
+      "n": 269,
+      "p": 0.3606,
+      "lo": 0.3055,
+      "hi": 0.4196
+     },
+     "sameCategory": {
+      "k": 146,
+      "n": 269,
+      "p": 0.5428,
+      "lo": 0.483,
+      "hi": 0.6013
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0457,
+    "exact": {
+     "k": 92,
+     "n": 218,
+     "p": 0.422,
+     "lo": 0.3584,
+     "hi": 0.4884
+    },
+    "category": {
+     "k": 150,
+     "n": 218,
+     "p": 0.6881,
+     "lo": 0.6238,
+     "hi": 0.7459
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0168,
+    "exact": {
+     "k": 23,
+     "n": 218,
+     "p": 0.1055,
+     "lo": 0.0713,
+     "hi": 0.1533
+    },
+    "category": {
+     "k": 105,
+     "n": 218,
+     "p": 0.4817,
+     "lo": 0.4162,
+     "hi": 0.5477
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.1063,
+     "exact": {
+      "k": 54,
+      "n": 66,
+      "p": 0.8182,
+      "lo": 0.7085,
+      "hi": 0.8928
+     },
+     "category": {
+      "k": 57,
+      "n": 66,
+      "p": 0.8636,
+      "lo": 0.7607,
+      "hi": 0.9266
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0617,
+     "exact": {
+      "k": 74,
+      "n": 131,
+      "p": 0.5649,
+      "lo": 0.4793,
+      "hi": 0.6467
+     },
+     "category": {
+      "k": 98,
+      "n": 131,
+      "p": 0.7481,
+      "lo": 0.6674,
+      "hi": 0.8146
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0481,
+     "exact": {
+      "k": 90,
+      "n": 197,
+      "p": 0.4569,
+      "lo": 0.3888,
+      "hi": 0.5266
+     },
+     "category": {
+      "k": 138,
+      "n": 197,
+      "p": 0.7005,
+      "lo": 0.6332,
+      "hi": 0.7601
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0364,
+     "exact": {
+      "k": 101,
+      "n": 262,
+      "p": 0.3855,
+      "lo": 0.3286,
+      "hi": 0.4457
+     },
+     "category": {
+      "k": 179,
+      "n": 262,
+      "p": 0.6832,
+      "lo": 0.6246,
+      "hi": 0.7365
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0265,
+     "exact": {
+      "k": 124,
+      "n": 328,
+      "p": 0.378,
+      "lo": 0.3273,
+      "hi": 0.4317
+     },
+     "category": {
+      "k": 222,
+      "n": 328,
+      "p": 0.6768,
+      "lo": 0.6244,
+      "hi": 0.7251
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0208,
+     "exact": {
+      "k": 141,
+      "n": 394,
+      "p": 0.3579,
+      "lo": 0.3121,
+      "hi": 0.4064
+     },
+     "category": {
+      "k": 256,
+      "n": 394,
+      "p": 0.6497,
+      "lo": 0.6014,
+      "hi": 0.6952
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0145,
+     "exact": {
+      "k": 151,
+      "n": 459,
+      "p": 0.329,
+      "lo": 0.2876,
+      "hi": 0.3732
+     },
+     "category": {
+      "k": 295,
+      "n": 459,
+      "p": 0.6427,
+      "lo": 0.5978,
+      "hi": 0.6852
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0083,
+     "exact": {
+      "k": 163,
+      "n": 525,
+      "p": 0.3105,
+      "lo": 0.2724,
+      "hi": 0.3513
+     },
+     "category": {
+      "k": 328,
+      "n": 525,
+      "p": 0.6248,
+      "lo": 0.5826,
+      "hi": 0.6651
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0039,
+     "exact": {
+      "k": 169,
+      "n": 590,
+      "p": 0.2864,
+      "lo": 0.2514,
+      "hi": 0.3242
+     },
+     "category": {
+      "k": 357,
+      "n": 590,
+      "p": 0.6051,
+      "lo": 0.5651,
+      "hi": 0.6437
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 173,
+      "n": 656,
+      "p": 0.2637,
+      "lo": 0.2314,
+      "hi": 0.2987
+     },
+     "category": {
+      "k": 388,
+      "n": 656,
+      "p": 0.5915,
+      "lo": 0.5534,
+      "hi": 0.6284
+     }
+    }
+   ]
+  },
+  "minilm/flat/design": {
+   "n": 656,
+   "exact": {
+    "k": 184,
+    "n": 656,
+    "p": 0.2805,
+    "lo": 0.2475,
+    "hi": 0.3161
+   },
+   "sameLevel2": {
+    "k": 315,
+    "n": 656,
+    "p": 0.4802,
+    "lo": 0.4422,
+    "hi": 0.5184
+   },
+   "sameCategory": {
+    "k": 394,
+    "n": 656,
+    "p": 0.6006,
+    "lo": 0.5626,
+    "hi": 0.6374
+   },
+   "top3Exact": {
+    "k": 324,
+    "n": 656,
+    "p": 0.4939,
+    "lo": 0.4558,
+    "hi": 0.5321
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 132,
+      "n": 325,
+      "p": 0.4062,
+      "lo": 0.3542,
+      "hi": 0.4603
+     },
+     "sameLevel2": {
+      "k": 201,
+      "n": 325,
+      "p": 0.6185,
+      "lo": 0.5646,
+      "hi": 0.6696
+     },
+     "sameCategory": {
+      "k": 223,
+      "n": 325,
+      "p": 0.6862,
+      "lo": 0.6338,
+      "hi": 0.7342
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 3,
+      "n": 62,
+      "p": 0.0484,
+      "lo": 0.0166,
+      "hi": 0.1329
+     },
+     "sameLevel2": {
+      "k": 12,
+      "n": 62,
+      "p": 0.1935,
+      "lo": 0.1143,
+      "hi": 0.3085
+     },
+     "sameCategory": {
+      "k": 21,
+      "n": 62,
+      "p": 0.3387,
+      "lo": 0.2334,
+      "hi": 0.4628
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 49,
+      "n": 269,
+      "p": 0.1822,
+      "lo": 0.1406,
+      "hi": 0.2326
+     },
+     "sameLevel2": {
+      "k": 102,
+      "n": 269,
+      "p": 0.3792,
+      "lo": 0.3233,
+      "hi": 0.4385
+     },
+     "sameCategory": {
+      "k": 150,
+      "n": 269,
+      "p": 0.5576,
+      "lo": 0.4979,
+      "hi": 0.6157
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0425,
+    "exact": {
+     "k": 97,
+     "n": 218,
+     "p": 0.445,
+     "lo": 0.3805,
+     "hi": 0.5113
+    },
+    "category": {
+     "k": 151,
+     "n": 218,
+     "p": 0.6927,
+     "lo": 0.6285,
+     "hi": 0.7501
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0163,
+    "exact": {
+     "k": 27,
+     "n": 218,
+     "p": 0.1239,
+     "lo": 0.0865,
+     "hi": 0.1742
+    },
+    "category": {
+     "k": 109,
+     "n": 218,
+     "p": 0.5,
+     "lo": 0.4342,
+     "hi": 0.5658
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.1036,
+     "exact": {
+      "k": 56,
+      "n": 66,
+      "p": 0.8485,
+      "lo": 0.7431,
+      "hi": 0.9156
+     },
+     "category": {
+      "k": 58,
+      "n": 66,
+      "p": 0.8788,
+      "lo": 0.7786,
+      "hi": 0.9373
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0601,
+     "exact": {
+      "k": 82,
+      "n": 131,
+      "p": 0.626,
+      "lo": 0.5406,
+      "hi": 0.7041
+     },
+     "category": {
+      "k": 102,
+      "n": 131,
+      "p": 0.7786,
+      "lo": 0.7002,
+      "hi": 0.8412
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0472,
+     "exact": {
+      "k": 91,
+      "n": 197,
+      "p": 0.4619,
+      "lo": 0.3937,
+      "hi": 0.5316
+     },
+     "category": {
+      "k": 141,
+      "n": 197,
+      "p": 0.7157,
+      "lo": 0.6491,
+      "hi": 0.7741
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0351,
+     "exact": {
+      "k": 110,
+      "n": 262,
+      "p": 0.4198,
+      "lo": 0.3617,
+      "hi": 0.4803
+     },
+     "category": {
+      "k": 184,
+      "n": 262,
+      "p": 0.7023,
+      "lo": 0.6443,
+      "hi": 0.7544
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0249,
+     "exact": {
+      "k": 130,
+      "n": 328,
+      "p": 0.3963,
+      "lo": 0.3449,
+      "hi": 0.4502
+     },
+     "category": {
+      "k": 223,
+      "n": 328,
+      "p": 0.6799,
+      "lo": 0.6276,
+      "hi": 0.728
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0202,
+     "exact": {
+      "k": 150,
+      "n": 394,
+      "p": 0.3807,
+      "lo": 0.3341,
+      "hi": 0.4296
+     },
+     "category": {
+      "k": 260,
+      "n": 394,
+      "p": 0.6599,
+      "lo": 0.6118,
+      "hi": 0.7049
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0137,
+     "exact": {
+      "k": 158,
+      "n": 459,
+      "p": 0.3442,
+      "lo": 0.3022,
+      "hi": 0.3888
+     },
+     "category": {
+      "k": 297,
+      "n": 459,
+      "p": 0.6471,
+      "lo": 0.6023,
+      "hi": 0.6894
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0079,
+     "exact": {
+      "k": 172,
+      "n": 525,
+      "p": 0.3276,
+      "lo": 0.2888,
+      "hi": 0.3689
+     },
+     "category": {
+      "k": 333,
+      "n": 525,
+      "p": 0.6343,
+      "lo": 0.5923,
+      "hi": 0.6744
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0038,
+     "exact": {
+      "k": 180,
+      "n": 590,
+      "p": 0.3051,
+      "lo": 0.2693,
+      "hi": 0.3434
+     },
+     "category": {
+      "k": 365,
+      "n": 590,
+      "p": 0.6186,
+      "lo": 0.5788,
+      "hi": 0.657
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 184,
+      "n": 656,
+      "p": 0.2805,
+      "lo": 0.2475,
+      "hi": 0.3161
+     },
+     "category": {
+      "k": 394,
+      "n": 656,
+      "p": 0.6006,
+      "lo": 0.5626,
+      "hi": 0.6374
+     }
+    }
+   ]
+  },
+  "minilm/hier-stop/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 55,
+    "n": 656,
+    "p": 0.0838,
+    "lo": 0.065,
+    "hi": 0.1075
+   },
+   "sameLevel2": {
+    "k": 113,
+    "n": 656,
+    "p": 0.1723,
+    "lo": 0.1453,
+    "hi": 0.203
+   },
+   "sameCategory": {
+    "k": 233,
+    "n": 656,
+    "p": 0.3552,
+    "lo": 0.3195,
+    "hi": 0.3926
+   },
+   "top3Exact": {
+    "k": 109,
+    "n": 656,
+    "p": 0.1662,
+    "lo": 0.1396,
+    "hi": 0.1966
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 40,
+      "n": 325,
+      "p": 0.1231,
+      "lo": 0.0917,
+      "hi": 0.1633
+     },
+     "sameLevel2": {
+      "k": 78,
+      "n": 325,
+      "p": 0.24,
+      "lo": 0.1968,
+      "hi": 0.2893
+     },
+     "sameCategory": {
+      "k": 130,
+      "n": 325,
+      "p": 0.4,
+      "lo": 0.3482,
+      "hi": 0.4541
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 2,
+      "n": 62,
+      "p": 0.0323,
+      "lo": 0.0089,
+      "hi": 0.1102
+     },
+     "sameLevel2": {
+      "k": 4,
+      "n": 62,
+      "p": 0.0645,
+      "lo": 0.0254,
+      "hi": 0.1545
+     },
+     "sameCategory": {
+      "k": 18,
+      "n": 62,
+      "p": 0.2903,
+      "lo": 0.1922,
+      "hi": 0.4129
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 13,
+      "n": 269,
+      "p": 0.0483,
+      "lo": 0.0285,
+      "hi": 0.0809
+     },
+     "sameLevel2": {
+      "k": 31,
+      "n": 269,
+      "p": 0.1152,
+      "lo": 0.0824,
+      "hi": 0.1589
+     },
+     "sameCategory": {
+      "k": 85,
+      "n": 269,
+      "p": 0.316,
+      "lo": 0.2634,
+      "hi": 0.3738
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0206,
+    "exact": {
+     "k": 24,
+     "n": 218,
+     "p": 0.1101,
+     "lo": 0.0751,
+     "hi": 0.1586
+    },
+    "category": {
+     "k": 57,
+     "n": 218,
+     "p": 0.2615,
+     "lo": 0.2076,
+     "hi": 0.3236
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0074,
+    "exact": {
+     "k": 11,
+     "n": 218,
+     "p": 0.0505,
+     "lo": 0.0284,
+     "hi": 0.0881
+    },
+    "category": {
+     "k": 90,
+     "n": 218,
+     "p": 0.4128,
+     "lo": 0.3495,
+     "hi": 0.4792
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0435,
+     "exact": {
+      "k": 5,
+      "n": 66,
+      "p": 0.0758,
+      "lo": 0.0328,
+      "hi": 0.1654
+     },
+     "category": {
+      "k": 17,
+      "n": 66,
+      "p": 0.2576,
+      "lo": 0.1675,
+      "hi": 0.3743
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0306,
+     "exact": {
+      "k": 16,
+      "n": 131,
+      "p": 0.1221,
+      "lo": 0.0766,
+      "hi": 0.1892
+     },
+     "category": {
+      "k": 44,
+      "n": 131,
+      "p": 0.3359,
+      "lo": 0.2607,
+      "hi": 0.4204
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0217,
+     "exact": {
+      "k": 17,
+      "n": 197,
+      "p": 0.0863,
+      "lo": 0.0546,
+      "hi": 0.1338
+     },
+     "category": {
+      "k": 48,
+      "n": 197,
+      "p": 0.2437,
+      "lo": 0.189,
+      "hi": 0.3081
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0184,
+     "exact": {
+      "k": 32,
+      "n": 262,
+      "p": 0.1221,
+      "lo": 0.0879,
+      "hi": 0.1673
+     },
+     "category": {
+      "k": 71,
+      "n": 262,
+      "p": 0.271,
+      "lo": 0.2208,
+      "hi": 0.3278
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0135,
+     "exact": {
+      "k": 38,
+      "n": 328,
+      "p": 0.1159,
+      "lo": 0.0856,
+      "hi": 0.155
+     },
+     "category": {
+      "k": 90,
+      "n": 328,
+      "p": 0.2744,
+      "lo": 0.2289,
+      "hi": 0.3251
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0094,
+     "exact": {
+      "k": 41,
+      "n": 394,
+      "p": 0.1041,
+      "lo": 0.0776,
+      "hi": 0.1381
+     },
+     "category": {
+      "k": 121,
+      "n": 394,
+      "p": 0.3071,
+      "lo": 0.2636,
+      "hi": 0.3543
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0068,
+     "exact": {
+      "k": 44,
+      "n": 459,
+      "p": 0.0959,
+      "lo": 0.0722,
+      "hi": 0.1262
+     },
+     "category": {
+      "k": 154,
+      "n": 459,
+      "p": 0.3355,
+      "lo": 0.2938,
+      "hi": 0.3799
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0036,
+     "exact": {
+      "k": 54,
+      "n": 525,
+      "p": 0.1029,
+      "lo": 0.0797,
+      "hi": 0.1318
+     },
+     "category": {
+      "k": 179,
+      "n": 525,
+      "p": 0.341,
+      "lo": 0.3017,
+      "hi": 0.3825
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0014,
+     "exact": {
+      "k": 55,
+      "n": 590,
+      "p": 0.0932,
+      "lo": 0.0723,
+      "hi": 0.1194
+     },
+     "category": {
+      "k": 205,
+      "n": 590,
+      "p": 0.3475,
+      "lo": 0.3101,
+      "hi": 0.3868
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 55,
+      "n": 656,
+      "p": 0.0838,
+      "lo": 0.065,
+      "hi": 0.1075
+     },
+     "category": {
+      "k": 233,
+      "n": 656,
+      "p": 0.3552,
+      "lo": 0.3195,
+      "hi": 0.3926
+     }
+    }
+   ]
+  },
+  "minilm/hier-stop/design": {
+   "n": 656,
+   "exact": {
+    "k": 55,
+    "n": 656,
+    "p": 0.0838,
+    "lo": 0.065,
+    "hi": 0.1075
+   },
+   "sameLevel2": {
+    "k": 113,
+    "n": 656,
+    "p": 0.1723,
+    "lo": 0.1453,
+    "hi": 0.203
+   },
+   "sameCategory": {
+    "k": 233,
+    "n": 656,
+    "p": 0.3552,
+    "lo": 0.3195,
+    "hi": 0.3926
+   },
+   "top3Exact": {
+    "k": 110,
+    "n": 656,
+    "p": 0.1677,
+    "lo": 0.141,
+    "hi": 0.1982
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 40,
+      "n": 325,
+      "p": 0.1231,
+      "lo": 0.0917,
+      "hi": 0.1633
+     },
+     "sameLevel2": {
+      "k": 78,
+      "n": 325,
+      "p": 0.24,
+      "lo": 0.1968,
+      "hi": 0.2893
+     },
+     "sameCategory": {
+      "k": 130,
+      "n": 325,
+      "p": 0.4,
+      "lo": 0.3482,
+      "hi": 0.4541
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 2,
+      "n": 62,
+      "p": 0.0323,
+      "lo": 0.0089,
+      "hi": 0.1102
+     },
+     "sameLevel2": {
+      "k": 4,
+      "n": 62,
+      "p": 0.0645,
+      "lo": 0.0254,
+      "hi": 0.1545
+     },
+     "sameCategory": {
+      "k": 18,
+      "n": 62,
+      "p": 0.2903,
+      "lo": 0.1922,
+      "hi": 0.4129
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 13,
+      "n": 269,
+      "p": 0.0483,
+      "lo": 0.0285,
+      "hi": 0.0809
+     },
+     "sameLevel2": {
+      "k": 31,
+      "n": 269,
+      "p": 0.1152,
+      "lo": 0.0824,
+      "hi": 0.1589
+     },
+     "sameCategory": {
+      "k": 85,
+      "n": 269,
+      "p": 0.316,
+      "lo": 0.2634,
+      "hi": 0.3738
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0206,
+    "exact": {
+     "k": 24,
+     "n": 218,
+     "p": 0.1101,
+     "lo": 0.0751,
+     "hi": 0.1586
+    },
+    "category": {
+     "k": 57,
+     "n": 218,
+     "p": 0.2615,
+     "lo": 0.2076,
+     "hi": 0.3236
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0074,
+    "exact": {
+     "k": 11,
+     "n": 218,
+     "p": 0.0505,
+     "lo": 0.0284,
+     "hi": 0.0881
+    },
+    "category": {
+     "k": 90,
+     "n": 218,
+     "p": 0.4128,
+     "lo": 0.3495,
+     "hi": 0.4792
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0435,
+     "exact": {
+      "k": 5,
+      "n": 66,
+      "p": 0.0758,
+      "lo": 0.0328,
+      "hi": 0.1654
+     },
+     "category": {
+      "k": 17,
+      "n": 66,
+      "p": 0.2576,
+      "lo": 0.1675,
+      "hi": 0.3743
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0306,
+     "exact": {
+      "k": 16,
+      "n": 131,
+      "p": 0.1221,
+      "lo": 0.0766,
+      "hi": 0.1892
+     },
+     "category": {
+      "k": 44,
+      "n": 131,
+      "p": 0.3359,
+      "lo": 0.2607,
+      "hi": 0.4204
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0217,
+     "exact": {
+      "k": 17,
+      "n": 197,
+      "p": 0.0863,
+      "lo": 0.0546,
+      "hi": 0.1338
+     },
+     "category": {
+      "k": 48,
+      "n": 197,
+      "p": 0.2437,
+      "lo": 0.189,
+      "hi": 0.3081
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0184,
+     "exact": {
+      "k": 32,
+      "n": 262,
+      "p": 0.1221,
+      "lo": 0.0879,
+      "hi": 0.1673
+     },
+     "category": {
+      "k": 71,
+      "n": 262,
+      "p": 0.271,
+      "lo": 0.2208,
+      "hi": 0.3278
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0135,
+     "exact": {
+      "k": 38,
+      "n": 328,
+      "p": 0.1159,
+      "lo": 0.0856,
+      "hi": 0.155
+     },
+     "category": {
+      "k": 90,
+      "n": 328,
+      "p": 0.2744,
+      "lo": 0.2289,
+      "hi": 0.3251
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0094,
+     "exact": {
+      "k": 41,
+      "n": 394,
+      "p": 0.1041,
+      "lo": 0.0776,
+      "hi": 0.1381
+     },
+     "category": {
+      "k": 121,
+      "n": 394,
+      "p": 0.3071,
+      "lo": 0.2636,
+      "hi": 0.3543
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0068,
+     "exact": {
+      "k": 44,
+      "n": 459,
+      "p": 0.0959,
+      "lo": 0.0722,
+      "hi": 0.1262
+     },
+     "category": {
+      "k": 154,
+      "n": 459,
+      "p": 0.3355,
+      "lo": 0.2938,
+      "hi": 0.3799
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0036,
+     "exact": {
+      "k": 54,
+      "n": 525,
+      "p": 0.1029,
+      "lo": 0.0797,
+      "hi": 0.1318
+     },
+     "category": {
+      "k": 179,
+      "n": 525,
+      "p": 0.341,
+      "lo": 0.3017,
+      "hi": 0.3825
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0014,
+     "exact": {
+      "k": 55,
+      "n": 590,
+      "p": 0.0932,
+      "lo": 0.0723,
+      "hi": 0.1194
+     },
+     "category": {
+      "k": 205,
+      "n": 590,
+      "p": 0.3475,
+      "lo": 0.3101,
+      "hi": 0.3868
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 55,
+      "n": 656,
+      "p": 0.0838,
+      "lo": 0.065,
+      "hi": 0.1075
+     },
+     "category": {
+      "k": 233,
+      "n": 656,
+      "p": 0.3552,
+      "lo": 0.3195,
+      "hi": 0.3926
+     }
+    }
+   ]
+  },
+  "minilm/hier-leaf/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 74,
+    "n": 656,
+    "p": 0.1128,
+    "lo": 0.0908,
+    "hi": 0.1393
+   },
+   "sameLevel2": {
+    "k": 138,
+    "n": 656,
+    "p": 0.2104,
+    "lo": 0.1809,
+    "hi": 0.2432
+   },
+   "sameCategory": {
+    "k": 233,
+    "n": 656,
+    "p": 0.3552,
+    "lo": 0.3195,
+    "hi": 0.3926
+   },
+   "top3Exact": {
+    "k": 111,
+    "n": 656,
+    "p": 0.1692,
+    "lo": 0.1425,
+    "hi": 0.1998
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 56,
+      "n": 325,
+      "p": 0.1723,
+      "lo": 0.1351,
+      "hi": 0.2171
+     },
+     "sameLevel2": {
+      "k": 85,
+      "n": 325,
+      "p": 0.2615,
+      "lo": 0.2167,
+      "hi": 0.3119
+     },
+     "sameCategory": {
+      "k": 130,
+      "n": 325,
+      "p": 0.4,
+      "lo": 0.3482,
+      "hi": 0.4541
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 4,
+      "n": 62,
+      "p": 0.0645,
+      "lo": 0.0254,
+      "hi": 0.1545
+     },
+     "sameLevel2": {
+      "k": 11,
+      "n": 62,
+      "p": 0.1774,
+      "lo": 0.1021,
+      "hi": 0.2904
+     },
+     "sameCategory": {
+      "k": 18,
+      "n": 62,
+      "p": 0.2903,
+      "lo": 0.1922,
+      "hi": 0.4129
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 14,
+      "n": 269,
+      "p": 0.052,
+      "lo": 0.0313,
+      "hi": 0.0855
+     },
+     "sameLevel2": {
+      "k": 42,
+      "n": 269,
+      "p": 0.1561,
+      "lo": 0.1176,
+      "hi": 0.2043
+     },
+     "sameCategory": {
+      "k": 85,
+      "n": 269,
+      "p": 0.316,
+      "lo": 0.2634,
+      "hi": 0.3738
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0213,
+    "exact": {
+     "k": 31,
+     "n": 218,
+     "p": 0.1422,
+     "lo": 0.102,
+     "hi": 0.1948
+    },
+    "category": {
+     "k": 72,
+     "n": 218,
+     "p": 0.3303,
+     "lo": 0.2713,
+     "hi": 0.3952
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0066,
+    "exact": {
+     "k": 16,
+     "n": 218,
+     "p": 0.0734,
+     "lo": 0.0457,
+     "hi": 0.1159
+    },
+    "category": {
+     "k": 77,
+     "n": 218,
+     "p": 0.3532,
+     "lo": 0.2928,
+     "hi": 0.4187
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0411,
+     "exact": {
+      "k": 11,
+      "n": 66,
+      "p": 0.1667,
+      "lo": 0.0957,
+      "hi": 0.2743
+     },
+     "category": {
+      "k": 25,
+      "n": 66,
+      "p": 0.3788,
+      "lo": 0.2715,
+      "hi": 0.4994
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0296,
+     "exact": {
+      "k": 22,
+      "n": 131,
+      "p": 0.1679,
+      "lo": 0.1136,
+      "hi": 0.2412
+     },
+     "category": {
+      "k": 51,
+      "n": 131,
+      "p": 0.3893,
+      "lo": 0.3101,
+      "hi": 0.4748
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0228,
+     "exact": {
+      "k": 24,
+      "n": 197,
+      "p": 0.1218,
+      "lo": 0.0833,
+      "hi": 0.1749
+     },
+     "category": {
+      "k": 64,
+      "n": 197,
+      "p": 0.3249,
+      "lo": 0.2634,
+      "hi": 0.3931
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0192,
+     "exact": {
+      "k": 42,
+      "n": 262,
+      "p": 0.1603,
+      "lo": 0.1208,
+      "hi": 0.2096
+     },
+     "category": {
+      "k": 86,
+      "n": 262,
+      "p": 0.3282,
+      "lo": 0.2742,
+      "hi": 0.3872
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0142,
+     "exact": {
+      "k": 45,
+      "n": 328,
+      "p": 0.1372,
+      "lo": 0.1041,
+      "hi": 0.1787
+     },
+     "category": {
+      "k": 102,
+      "n": 328,
+      "p": 0.311,
+      "lo": 0.2633,
+      "hi": 0.363
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0093,
+     "exact": {
+      "k": 54,
+      "n": 394,
+      "p": 0.1371,
+      "lo": 0.1066,
+      "hi": 0.1745
+     },
+     "category": {
+      "k": 131,
+      "n": 394,
+      "p": 0.3325,
+      "lo": 0.2878,
+      "hi": 0.3804
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0059,
+     "exact": {
+      "k": 61,
+      "n": 459,
+      "p": 0.1329,
+      "lo": 0.1049,
+      "hi": 0.167
+     },
+     "category": {
+      "k": 164,
+      "n": 459,
+      "p": 0.3573,
+      "lo": 0.3148,
+      "hi": 0.4022
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0044,
+     "exact": {
+      "k": 70,
+      "n": 525,
+      "p": 0.1333,
+      "lo": 0.1069,
+      "hi": 0.1651
+     },
+     "category": {
+      "k": 177,
+      "n": 525,
+      "p": 0.3371,
+      "lo": 0.298,
+      "hi": 0.3786
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0019,
+     "exact": {
+      "k": 72,
+      "n": 590,
+      "p": 0.122,
+      "lo": 0.098,
+      "hi": 0.1509
+     },
+     "category": {
+      "k": 203,
+      "n": 590,
+      "p": 0.3441,
+      "lo": 0.3069,
+      "hi": 0.3833
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 74,
+      "n": 656,
+      "p": 0.1128,
+      "lo": 0.0908,
+      "hi": 0.1393
+     },
+     "category": {
+      "k": 233,
+      "n": 656,
+      "p": 0.3552,
+      "lo": 0.3195,
+      "hi": 0.3926
+     }
+    }
+   ]
+  },
+  "minilm/hier-leaf/design": {
+   "n": 656,
+   "exact": {
+    "k": 74,
+    "n": 656,
+    "p": 0.1128,
+    "lo": 0.0908,
+    "hi": 0.1393
+   },
+   "sameLevel2": {
+    "k": 138,
+    "n": 656,
+    "p": 0.2104,
+    "lo": 0.1809,
+    "hi": 0.2432
+   },
+   "sameCategory": {
+    "k": 233,
+    "n": 656,
+    "p": 0.3552,
+    "lo": 0.3195,
+    "hi": 0.3926
+   },
+   "top3Exact": {
+    "k": 112,
+    "n": 656,
+    "p": 0.1707,
+    "lo": 0.1439,
+    "hi": 0.2014
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 56,
+      "n": 325,
+      "p": 0.1723,
+      "lo": 0.1351,
+      "hi": 0.2171
+     },
+     "sameLevel2": {
+      "k": 85,
+      "n": 325,
+      "p": 0.2615,
+      "lo": 0.2167,
+      "hi": 0.3119
+     },
+     "sameCategory": {
+      "k": 130,
+      "n": 325,
+      "p": 0.4,
+      "lo": 0.3482,
+      "hi": 0.4541
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 4,
+      "n": 62,
+      "p": 0.0645,
+      "lo": 0.0254,
+      "hi": 0.1545
+     },
+     "sameLevel2": {
+      "k": 11,
+      "n": 62,
+      "p": 0.1774,
+      "lo": 0.1021,
+      "hi": 0.2904
+     },
+     "sameCategory": {
+      "k": 18,
+      "n": 62,
+      "p": 0.2903,
+      "lo": 0.1922,
+      "hi": 0.4129
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 14,
+      "n": 269,
+      "p": 0.052,
+      "lo": 0.0313,
+      "hi": 0.0855
+     },
+     "sameLevel2": {
+      "k": 42,
+      "n": 269,
+      "p": 0.1561,
+      "lo": 0.1176,
+      "hi": 0.2043
+     },
+     "sameCategory": {
+      "k": 85,
+      "n": 269,
+      "p": 0.316,
+      "lo": 0.2634,
+      "hi": 0.3738
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0213,
+    "exact": {
+     "k": 31,
+     "n": 218,
+     "p": 0.1422,
+     "lo": 0.102,
+     "hi": 0.1948
+    },
+    "category": {
+     "k": 72,
+     "n": 218,
+     "p": 0.3303,
+     "lo": 0.2713,
+     "hi": 0.3952
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0066,
+    "exact": {
+     "k": 16,
+     "n": 218,
+     "p": 0.0734,
+     "lo": 0.0457,
+     "hi": 0.1159
+    },
+    "category": {
+     "k": 77,
+     "n": 218,
+     "p": 0.3532,
+     "lo": 0.2928,
+     "hi": 0.4187
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0411,
+     "exact": {
+      "k": 11,
+      "n": 66,
+      "p": 0.1667,
+      "lo": 0.0957,
+      "hi": 0.2743
+     },
+     "category": {
+      "k": 25,
+      "n": 66,
+      "p": 0.3788,
+      "lo": 0.2715,
+      "hi": 0.4994
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0296,
+     "exact": {
+      "k": 22,
+      "n": 131,
+      "p": 0.1679,
+      "lo": 0.1136,
+      "hi": 0.2412
+     },
+     "category": {
+      "k": 51,
+      "n": 131,
+      "p": 0.3893,
+      "lo": 0.3101,
+      "hi": 0.4748
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0228,
+     "exact": {
+      "k": 24,
+      "n": 197,
+      "p": 0.1218,
+      "lo": 0.0833,
+      "hi": 0.1749
+     },
+     "category": {
+      "k": 64,
+      "n": 197,
+      "p": 0.3249,
+      "lo": 0.2634,
+      "hi": 0.3931
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0192,
+     "exact": {
+      "k": 42,
+      "n": 262,
+      "p": 0.1603,
+      "lo": 0.1208,
+      "hi": 0.2096
+     },
+     "category": {
+      "k": 86,
+      "n": 262,
+      "p": 0.3282,
+      "lo": 0.2742,
+      "hi": 0.3872
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0142,
+     "exact": {
+      "k": 45,
+      "n": 328,
+      "p": 0.1372,
+      "lo": 0.1041,
+      "hi": 0.1787
+     },
+     "category": {
+      "k": 102,
+      "n": 328,
+      "p": 0.311,
+      "lo": 0.2633,
+      "hi": 0.363
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0093,
+     "exact": {
+      "k": 54,
+      "n": 394,
+      "p": 0.1371,
+      "lo": 0.1066,
+      "hi": 0.1745
+     },
+     "category": {
+      "k": 131,
+      "n": 394,
+      "p": 0.3325,
+      "lo": 0.2878,
+      "hi": 0.3804
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0059,
+     "exact": {
+      "k": 61,
+      "n": 459,
+      "p": 0.1329,
+      "lo": 0.1049,
+      "hi": 0.167
+     },
+     "category": {
+      "k": 164,
+      "n": 459,
+      "p": 0.3573,
+      "lo": 0.3148,
+      "hi": 0.4022
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0044,
+     "exact": {
+      "k": 70,
+      "n": 525,
+      "p": 0.1333,
+      "lo": 0.1069,
+      "hi": 0.1651
+     },
+     "category": {
+      "k": 177,
+      "n": 525,
+      "p": 0.3371,
+      "lo": 0.298,
+      "hi": 0.3786
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0019,
+     "exact": {
+      "k": 72,
+      "n": 590,
+      "p": 0.122,
+      "lo": 0.098,
+      "hi": 0.1509
+     },
+     "category": {
+      "k": 203,
+      "n": 590,
+      "p": 0.3441,
+      "lo": 0.3069,
+      "hi": 0.3833
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 74,
+      "n": 656,
+      "p": 0.1128,
+      "lo": 0.0908,
+      "hi": 0.1393
+     },
+     "category": {
+      "k": 233,
+      "n": 656,
+      "p": 0.3552,
+      "lo": 0.3195,
+      "hi": 0.3926
+     }
+    }
+   ]
+  },
+  "minilm/hier-stop-subtree/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 119,
+    "n": 656,
+    "p": 0.1814,
+    "lo": 0.1538,
+    "hi": 0.2127
+   },
+   "sameLevel2": {
+    "k": 204,
+    "n": 656,
+    "p": 0.311,
+    "lo": 0.2767,
+    "hi": 0.3474
+   },
+   "sameCategory": {
+    "k": 312,
+    "n": 656,
+    "p": 0.4756,
+    "lo": 0.4376,
+    "hi": 0.5139
+   },
+   "top3Exact": {
+    "k": 176,
+    "n": 656,
+    "p": 0.2683,
+    "lo": 0.2358,
+    "hi": 0.3035
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 85,
+      "n": 325,
+      "p": 0.2615,
+      "lo": 0.2167,
+      "hi": 0.3119
+     },
+     "sameLevel2": {
+      "k": 132,
+      "n": 325,
+      "p": 0.4062,
+      "lo": 0.3542,
+      "hi": 0.4603
+     },
+     "sameCategory": {
+      "k": 168,
+      "n": 325,
+      "p": 0.5169,
+      "lo": 0.4627,
+      "hi": 0.5707
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 5,
+      "n": 62,
+      "p": 0.0806,
+      "lo": 0.0349,
+      "hi": 0.1753
+     },
+     "sameLevel2": {
+      "k": 8,
+      "n": 62,
+      "p": 0.129,
+      "lo": 0.0669,
+      "hi": 0.2345
+     },
+     "sameCategory": {
+      "k": 19,
+      "n": 62,
+      "p": 0.3065,
+      "lo": 0.2058,
+      "hi": 0.4297
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 29,
+      "n": 269,
+      "p": 0.1078,
+      "lo": 0.0761,
+      "hi": 0.1505
+     },
+     "sameLevel2": {
+      "k": 64,
+      "n": 269,
+      "p": 0.2379,
+      "lo": 0.1909,
+      "hi": 0.2923
+     },
+     "sameCategory": {
+      "k": 125,
+      "n": 269,
+      "p": 0.4647,
+      "lo": 0.406,
+      "hi": 0.5244
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0237,
+    "exact": {
+     "k": 54,
+     "n": 218,
+     "p": 0.2477,
+     "lo": 0.1951,
+     "hi": 0.309
+    },
+    "category": {
+     "k": 120,
+     "n": 218,
+     "p": 0.5505,
+     "lo": 0.4841,
+     "hi": 0.6151
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0079,
+    "exact": {
+     "k": 26,
+     "n": 218,
+     "p": 0.1193,
+     "lo": 0.0827,
+     "hi": 0.169
+    },
+    "category": {
+     "k": 82,
+     "n": 218,
+     "p": 0.3761,
+     "lo": 0.3145,
+     "hi": 0.4421
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0483,
+     "exact": {
+      "k": 37,
+      "n": 66,
+      "p": 0.5606,
+      "lo": 0.4408,
+      "hi": 0.6737
+     },
+     "category": {
+      "k": 49,
+      "n": 66,
+      "p": 0.7424,
+      "lo": 0.6257,
+      "hi": 0.8325
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0351,
+     "exact": {
+      "k": 44,
+      "n": 131,
+      "p": 0.3359,
+      "lo": 0.2607,
+      "hi": 0.4204
+     },
+     "category": {
+      "k": 86,
+      "n": 131,
+      "p": 0.6565,
+      "lo": 0.5718,
+      "hi": 0.7323
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0257,
+     "exact": {
+      "k": 51,
+      "n": 197,
+      "p": 0.2589,
+      "lo": 0.2027,
+      "hi": 0.3242
+     },
+     "category": {
+      "k": 110,
+      "n": 197,
+      "p": 0.5584,
+      "lo": 0.4886,
+      "hi": 0.6259
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0188,
+     "exact": {
+      "k": 63,
+      "n": 262,
+      "p": 0.2405,
+      "lo": 0.1927,
+      "hi": 0.2957
+     },
+     "category": {
+      "k": 143,
+      "n": 262,
+      "p": 0.5458,
+      "lo": 0.4853,
+      "hi": 0.605
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0143,
+     "exact": {
+      "k": 70,
+      "n": 328,
+      "p": 0.2134,
+      "lo": 0.1725,
+      "hi": 0.2609
+     },
+     "category": {
+      "k": 174,
+      "n": 328,
+      "p": 0.5305,
+      "lo": 0.4764,
+      "hi": 0.5838
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0103,
+     "exact": {
+      "k": 88,
+      "n": 394,
+      "p": 0.2234,
+      "lo": 0.185,
+      "hi": 0.267
+     },
+     "category": {
+      "k": 214,
+      "n": 394,
+      "p": 0.5431,
+      "lo": 0.4938,
+      "hi": 0.5917
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0071,
+     "exact": {
+      "k": 94,
+      "n": 459,
+      "p": 0.2048,
+      "lo": 0.1704,
+      "hi": 0.2441
+     },
+     "category": {
+      "k": 236,
+      "n": 459,
+      "p": 0.5142,
+      "lo": 0.4685,
+      "hi": 0.5596
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0045,
+     "exact": {
+      "k": 107,
+      "n": 525,
+      "p": 0.2038,
+      "lo": 0.1716,
+      "hi": 0.2404
+     },
+     "category": {
+      "k": 266,
+      "n": 525,
+      "p": 0.5067,
+      "lo": 0.464,
+      "hi": 0.5492
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0024,
+     "exact": {
+      "k": 117,
+      "n": 590,
+      "p": 0.1983,
+      "lo": 0.1681,
+      "hi": 0.2324
+     },
+     "category": {
+      "k": 297,
+      "n": 590,
+      "p": 0.5034,
+      "lo": 0.4632,
+      "hi": 0.5436
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 119,
+      "n": 656,
+      "p": 0.1814,
+      "lo": 0.1538,
+      "hi": 0.2127
+     },
+     "category": {
+      "k": 312,
+      "n": 656,
+      "p": 0.4756,
+      "lo": 0.4376,
+      "hi": 0.5139
+     }
+    }
+   ]
+  },
+  "minilm/hier-stop-subtree/design": {
+   "n": 656,
+   "exact": {
+    "k": 119,
+    "n": 656,
+    "p": 0.1814,
+    "lo": 0.1538,
+    "hi": 0.2127
+   },
+   "sameLevel2": {
+    "k": 204,
+    "n": 656,
+    "p": 0.311,
+    "lo": 0.2767,
+    "hi": 0.3474
+   },
+   "sameCategory": {
+    "k": 312,
+    "n": 656,
+    "p": 0.4756,
+    "lo": 0.4376,
+    "hi": 0.5139
+   },
+   "top3Exact": {
+    "k": 177,
+    "n": 656,
+    "p": 0.2698,
+    "lo": 0.2373,
+    "hi": 0.3051
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 85,
+      "n": 325,
+      "p": 0.2615,
+      "lo": 0.2167,
+      "hi": 0.3119
+     },
+     "sameLevel2": {
+      "k": 132,
+      "n": 325,
+      "p": 0.4062,
+      "lo": 0.3542,
+      "hi": 0.4603
+     },
+     "sameCategory": {
+      "k": 168,
+      "n": 325,
+      "p": 0.5169,
+      "lo": 0.4627,
+      "hi": 0.5707
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 5,
+      "n": 62,
+      "p": 0.0806,
+      "lo": 0.0349,
+      "hi": 0.1753
+     },
+     "sameLevel2": {
+      "k": 8,
+      "n": 62,
+      "p": 0.129,
+      "lo": 0.0669,
+      "hi": 0.2345
+     },
+     "sameCategory": {
+      "k": 19,
+      "n": 62,
+      "p": 0.3065,
+      "lo": 0.2058,
+      "hi": 0.4297
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 29,
+      "n": 269,
+      "p": 0.1078,
+      "lo": 0.0761,
+      "hi": 0.1505
+     },
+     "sameLevel2": {
+      "k": 64,
+      "n": 269,
+      "p": 0.2379,
+      "lo": 0.1909,
+      "hi": 0.2923
+     },
+     "sameCategory": {
+      "k": 125,
+      "n": 269,
+      "p": 0.4647,
+      "lo": 0.406,
+      "hi": 0.5244
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0237,
+    "exact": {
+     "k": 54,
+     "n": 218,
+     "p": 0.2477,
+     "lo": 0.1951,
+     "hi": 0.309
+    },
+    "category": {
+     "k": 120,
+     "n": 218,
+     "p": 0.5505,
+     "lo": 0.4841,
+     "hi": 0.6151
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0079,
+    "exact": {
+     "k": 26,
+     "n": 218,
+     "p": 0.1193,
+     "lo": 0.0827,
+     "hi": 0.169
+    },
+    "category": {
+     "k": 82,
+     "n": 218,
+     "p": 0.3761,
+     "lo": 0.3145,
+     "hi": 0.4421
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0483,
+     "exact": {
+      "k": 37,
+      "n": 66,
+      "p": 0.5606,
+      "lo": 0.4408,
+      "hi": 0.6737
+     },
+     "category": {
+      "k": 49,
+      "n": 66,
+      "p": 0.7424,
+      "lo": 0.6257,
+      "hi": 0.8325
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0351,
+     "exact": {
+      "k": 44,
+      "n": 131,
+      "p": 0.3359,
+      "lo": 0.2607,
+      "hi": 0.4204
+     },
+     "category": {
+      "k": 86,
+      "n": 131,
+      "p": 0.6565,
+      "lo": 0.5718,
+      "hi": 0.7323
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0257,
+     "exact": {
+      "k": 51,
+      "n": 197,
+      "p": 0.2589,
+      "lo": 0.2027,
+      "hi": 0.3242
+     },
+     "category": {
+      "k": 110,
+      "n": 197,
+      "p": 0.5584,
+      "lo": 0.4886,
+      "hi": 0.6259
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0188,
+     "exact": {
+      "k": 63,
+      "n": 262,
+      "p": 0.2405,
+      "lo": 0.1927,
+      "hi": 0.2957
+     },
+     "category": {
+      "k": 143,
+      "n": 262,
+      "p": 0.5458,
+      "lo": 0.4853,
+      "hi": 0.605
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0143,
+     "exact": {
+      "k": 70,
+      "n": 328,
+      "p": 0.2134,
+      "lo": 0.1725,
+      "hi": 0.2609
+     },
+     "category": {
+      "k": 174,
+      "n": 328,
+      "p": 0.5305,
+      "lo": 0.4764,
+      "hi": 0.5838
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0103,
+     "exact": {
+      "k": 88,
+      "n": 394,
+      "p": 0.2234,
+      "lo": 0.185,
+      "hi": 0.267
+     },
+     "category": {
+      "k": 214,
+      "n": 394,
+      "p": 0.5431,
+      "lo": 0.4938,
+      "hi": 0.5917
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0071,
+     "exact": {
+      "k": 94,
+      "n": 459,
+      "p": 0.2048,
+      "lo": 0.1704,
+      "hi": 0.2441
+     },
+     "category": {
+      "k": 236,
+      "n": 459,
+      "p": 0.5142,
+      "lo": 0.4685,
+      "hi": 0.5596
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0045,
+     "exact": {
+      "k": 107,
+      "n": 525,
+      "p": 0.2038,
+      "lo": 0.1716,
+      "hi": 0.2404
+     },
+     "category": {
+      "k": 266,
+      "n": 525,
+      "p": 0.5067,
+      "lo": 0.464,
+      "hi": 0.5492
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0024,
+     "exact": {
+      "k": 117,
+      "n": 590,
+      "p": 0.1983,
+      "lo": 0.1681,
+      "hi": 0.2324
+     },
+     "category": {
+      "k": 297,
+      "n": 590,
+      "p": 0.5034,
+      "lo": 0.4632,
+      "hi": 0.5436
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 119,
+      "n": 656,
+      "p": 0.1814,
+      "lo": 0.1538,
+      "hi": 0.2127
+     },
+     "category": {
+      "k": 312,
+      "n": 656,
+      "p": 0.4756,
+      "lo": 0.4376,
+      "hi": 0.5139
+     }
+    }
+   ]
+  },
+  "minilm/hier-leaf-subtree/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 125,
+    "n": 656,
+    "p": 0.1905,
+    "lo": 0.1623,
+    "hi": 0.2224
+   },
+   "sameLevel2": {
+    "k": 215,
+    "n": 656,
+    "p": 0.3277,
+    "lo": 0.2929,
+    "hi": 0.3646
+   },
+   "sameCategory": {
+    "k": 312,
+    "n": 656,
+    "p": 0.4756,
+    "lo": 0.4376,
+    "hi": 0.5139
+   },
+   "top3Exact": {
+    "k": 179,
+    "n": 656,
+    "p": 0.2729,
+    "lo": 0.2402,
+    "hi": 0.3082
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 98,
+      "n": 325,
+      "p": 0.3015,
+      "lo": 0.2542,
+      "hi": 0.3535
+     },
+     "sameLevel2": {
+      "k": 136,
+      "n": 325,
+      "p": 0.4185,
+      "lo": 0.3661,
+      "hi": 0.4727
+     },
+     "sameCategory": {
+      "k": 168,
+      "n": 325,
+      "p": 0.5169,
+      "lo": 0.4627,
+      "hi": 0.5707
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 2,
+      "n": 62,
+      "p": 0.0323,
+      "lo": 0.0089,
+      "hi": 0.1102
+     },
+     "sameLevel2": {
+      "k": 10,
+      "n": 62,
+      "p": 0.1613,
+      "lo": 0.09,
+      "hi": 0.2721
+     },
+     "sameCategory": {
+      "k": 19,
+      "n": 62,
+      "p": 0.3065,
+      "lo": 0.2058,
+      "hi": 0.4297
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 25,
+      "n": 269,
+      "p": 0.0929,
+      "lo": 0.0637,
+      "hi": 0.1336
+     },
+     "sameLevel2": {
+      "k": 69,
+      "n": 269,
+      "p": 0.2565,
+      "lo": 0.208,
+      "hi": 0.3119
+     },
+     "sameCategory": {
+      "k": 125,
+      "n": 269,
+      "p": 0.4647,
+      "lo": 0.406,
+      "hi": 0.5244
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0298,
+    "exact": {
+     "k": 80,
+     "n": 218,
+     "p": 0.367,
+     "lo": 0.3058,
+     "hi": 0.4327
+    },
+    "category": {
+     "k": 144,
+     "n": 218,
+     "p": 0.6606,
+     "lo": 0.5954,
+     "hi": 0.7201
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0102,
+    "exact": {
+     "k": 16,
+     "n": 218,
+     "p": 0.0734,
+     "lo": 0.0457,
+     "hi": 0.1159
+    },
+    "category": {
+     "k": 87,
+     "n": 218,
+     "p": 0.3991,
+     "lo": 0.3364,
+     "hi": 0.4653
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0577,
+     "exact": {
+      "k": 38,
+      "n": 66,
+      "p": 0.5758,
+      "lo": 0.4556,
+      "hi": 0.6876
+     },
+     "category": {
+      "k": 57,
+      "n": 66,
+      "p": 0.8636,
+      "lo": 0.7607,
+      "hi": 0.9266
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.041,
+     "exact": {
+      "k": 59,
+      "n": 131,
+      "p": 0.4504,
+      "lo": 0.3678,
+      "hi": 0.5358
+     },
+     "category": {
+      "k": 100,
+      "n": 131,
+      "p": 0.7634,
+      "lo": 0.6837,
+      "hi": 0.828
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0314,
+     "exact": {
+      "k": 79,
+      "n": 197,
+      "p": 0.401,
+      "lo": 0.3351,
+      "hi": 0.4707
+     },
+     "category": {
+      "k": 134,
+      "n": 197,
+      "p": 0.6802,
+      "lo": 0.6122,
+      "hi": 0.7414
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0238,
+     "exact": {
+      "k": 85,
+      "n": 262,
+      "p": 0.3244,
+      "lo": 0.2706,
+      "hi": 0.3833
+     },
+     "category": {
+      "k": 158,
+      "n": 262,
+      "p": 0.6031,
+      "lo": 0.5427,
+      "hi": 0.6604
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0188,
+     "exact": {
+      "k": 98,
+      "n": 328,
+      "p": 0.2988,
+      "lo": 0.2518,
+      "hi": 0.3504
+     },
+     "category": {
+      "k": 188,
+      "n": 328,
+      "p": 0.5732,
+      "lo": 0.5191,
+      "hi": 0.6255
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0133,
+     "exact": {
+      "k": 101,
+      "n": 394,
+      "p": 0.2563,
+      "lo": 0.2157,
+      "hi": 0.3017
+     },
+     "category": {
+      "k": 203,
+      "n": 394,
+      "p": 0.5152,
+      "lo": 0.466,
+      "hi": 0.5642
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0089,
+     "exact": {
+      "k": 110,
+      "n": 459,
+      "p": 0.2397,
+      "lo": 0.2029,
+      "hi": 0.2808
+     },
+     "category": {
+      "k": 234,
+      "n": 459,
+      "p": 0.5098,
+      "lo": 0.4642,
+      "hi": 0.5553
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0062,
+     "exact": {
+      "k": 117,
+      "n": 525,
+      "p": 0.2229,
+      "lo": 0.1893,
+      "hi": 0.2604
+     },
+     "category": {
+      "k": 256,
+      "n": 525,
+      "p": 0.4876,
+      "lo": 0.4451,
+      "hi": 0.5303
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.003,
+     "exact": {
+      "k": 122,
+      "n": 590,
+      "p": 0.2068,
+      "lo": 0.176,
+      "hi": 0.2413
+     },
+     "category": {
+      "k": 286,
+      "n": 590,
+      "p": 0.4847,
+      "lo": 0.4446,
+      "hi": 0.525
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 125,
+      "n": 656,
+      "p": 0.1905,
+      "lo": 0.1623,
+      "hi": 0.2224
+     },
+     "category": {
+      "k": 312,
+      "n": 656,
+      "p": 0.4756,
+      "lo": 0.4376,
+      "hi": 0.5139
+     }
+    }
+   ]
+  },
+  "minilm/hier-leaf-subtree/design": {
+   "n": 656,
+   "exact": {
+    "k": 125,
+    "n": 656,
+    "p": 0.1905,
+    "lo": 0.1623,
+    "hi": 0.2224
+   },
+   "sameLevel2": {
+    "k": 215,
+    "n": 656,
+    "p": 0.3277,
+    "lo": 0.2929,
+    "hi": 0.3646
+   },
+   "sameCategory": {
+    "k": 312,
+    "n": 656,
+    "p": 0.4756,
+    "lo": 0.4376,
+    "hi": 0.5139
+   },
+   "top3Exact": {
+    "k": 179,
+    "n": 656,
+    "p": 0.2729,
+    "lo": 0.2402,
+    "hi": 0.3082
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 98,
+      "n": 325,
+      "p": 0.3015,
+      "lo": 0.2542,
+      "hi": 0.3535
+     },
+     "sameLevel2": {
+      "k": 136,
+      "n": 325,
+      "p": 0.4185,
+      "lo": 0.3661,
+      "hi": 0.4727
+     },
+     "sameCategory": {
+      "k": 168,
+      "n": 325,
+      "p": 0.5169,
+      "lo": 0.4627,
+      "hi": 0.5707
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 2,
+      "n": 62,
+      "p": 0.0323,
+      "lo": 0.0089,
+      "hi": 0.1102
+     },
+     "sameLevel2": {
+      "k": 10,
+      "n": 62,
+      "p": 0.1613,
+      "lo": 0.09,
+      "hi": 0.2721
+     },
+     "sameCategory": {
+      "k": 19,
+      "n": 62,
+      "p": 0.3065,
+      "lo": 0.2058,
+      "hi": 0.4297
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 25,
+      "n": 269,
+      "p": 0.0929,
+      "lo": 0.0637,
+      "hi": 0.1336
+     },
+     "sameLevel2": {
+      "k": 69,
+      "n": 269,
+      "p": 0.2565,
+      "lo": 0.208,
+      "hi": 0.3119
+     },
+     "sameCategory": {
+      "k": 125,
+      "n": 269,
+      "p": 0.4647,
+      "lo": 0.406,
+      "hi": 0.5244
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0298,
+    "exact": {
+     "k": 80,
+     "n": 218,
+     "p": 0.367,
+     "lo": 0.3058,
+     "hi": 0.4327
+    },
+    "category": {
+     "k": 144,
+     "n": 218,
+     "p": 0.6606,
+     "lo": 0.5954,
+     "hi": 0.7201
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0102,
+    "exact": {
+     "k": 16,
+     "n": 218,
+     "p": 0.0734,
+     "lo": 0.0457,
+     "hi": 0.1159
+    },
+    "category": {
+     "k": 87,
+     "n": 218,
+     "p": 0.3991,
+     "lo": 0.3364,
+     "hi": 0.4653
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0577,
+     "exact": {
+      "k": 38,
+      "n": 66,
+      "p": 0.5758,
+      "lo": 0.4556,
+      "hi": 0.6876
+     },
+     "category": {
+      "k": 57,
+      "n": 66,
+      "p": 0.8636,
+      "lo": 0.7607,
+      "hi": 0.9266
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.041,
+     "exact": {
+      "k": 59,
+      "n": 131,
+      "p": 0.4504,
+      "lo": 0.3678,
+      "hi": 0.5358
+     },
+     "category": {
+      "k": 100,
+      "n": 131,
+      "p": 0.7634,
+      "lo": 0.6837,
+      "hi": 0.828
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0314,
+     "exact": {
+      "k": 79,
+      "n": 197,
+      "p": 0.401,
+      "lo": 0.3351,
+      "hi": 0.4707
+     },
+     "category": {
+      "k": 134,
+      "n": 197,
+      "p": 0.6802,
+      "lo": 0.6122,
+      "hi": 0.7414
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0238,
+     "exact": {
+      "k": 85,
+      "n": 262,
+      "p": 0.3244,
+      "lo": 0.2706,
+      "hi": 0.3833
+     },
+     "category": {
+      "k": 158,
+      "n": 262,
+      "p": 0.6031,
+      "lo": 0.5427,
+      "hi": 0.6604
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0188,
+     "exact": {
+      "k": 98,
+      "n": 328,
+      "p": 0.2988,
+      "lo": 0.2518,
+      "hi": 0.3504
+     },
+     "category": {
+      "k": 188,
+      "n": 328,
+      "p": 0.5732,
+      "lo": 0.5191,
+      "hi": 0.6255
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0133,
+     "exact": {
+      "k": 101,
+      "n": 394,
+      "p": 0.2563,
+      "lo": 0.2157,
+      "hi": 0.3017
+     },
+     "category": {
+      "k": 203,
+      "n": 394,
+      "p": 0.5152,
+      "lo": 0.466,
+      "hi": 0.5642
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0089,
+     "exact": {
+      "k": 110,
+      "n": 459,
+      "p": 0.2397,
+      "lo": 0.2029,
+      "hi": 0.2808
+     },
+     "category": {
+      "k": 234,
+      "n": 459,
+      "p": 0.5098,
+      "lo": 0.4642,
+      "hi": 0.5553
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0062,
+     "exact": {
+      "k": 117,
+      "n": 525,
+      "p": 0.2229,
+      "lo": 0.1893,
+      "hi": 0.2604
+     },
+     "category": {
+      "k": 256,
+      "n": 525,
+      "p": 0.4876,
+      "lo": 0.4451,
+      "hi": 0.5303
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.003,
+     "exact": {
+      "k": 122,
+      "n": 590,
+      "p": 0.2068,
+      "lo": 0.176,
+      "hi": 0.2413
+     },
+     "category": {
+      "k": 286,
+      "n": 590,
+      "p": 0.4847,
+      "lo": 0.4446,
+      "hi": 0.525
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 125,
+      "n": 656,
+      "p": 0.1905,
+      "lo": 0.1623,
+      "hi": 0.2224
+     },
+     "category": {
+      "k": 312,
+      "n": 656,
+      "p": 0.4756,
+      "lo": 0.4376,
+      "hi": 0.5139
+     }
+    }
+   ]
+  },
+  "bge-small/flat/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 200,
+    "n": 656,
+    "p": 0.3049,
+    "lo": 0.2709,
+    "hi": 0.3412
+   },
+   "sameLevel2": {
+    "k": 295,
+    "n": 656,
+    "p": 0.4497,
+    "lo": 0.412,
+    "hi": 0.4879
+   },
+   "sameCategory": {
+    "k": 377,
+    "n": 656,
+    "p": 0.5747,
+    "lo": 0.5365,
+    "hi": 0.612
+   },
+   "top3Exact": {
+    "k": 323,
+    "n": 656,
+    "p": 0.4924,
+    "lo": 0.4543,
+    "hi": 0.5306
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 155,
+      "n": 325,
+      "p": 0.4769,
+      "lo": 0.4232,
+      "hi": 0.5312
+     },
+     "sameLevel2": {
+      "k": 201,
+      "n": 325,
+      "p": 0.6185,
+      "lo": 0.5646,
+      "hi": 0.6696
+     },
+     "sameCategory": {
+      "k": 226,
+      "n": 325,
+      "p": 0.6954,
+      "lo": 0.6433,
+      "hi": 0.7429
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 1,
+      "n": 62,
+      "p": 0.0161,
+      "lo": 0.0029,
+      "hi": 0.0859
+     },
+     "sameLevel2": {
+      "k": 9,
+      "n": 62,
+      "p": 0.1452,
+      "lo": 0.0783,
+      "hi": 0.2534
+     },
+     "sameCategory": {
+      "k": 16,
+      "n": 62,
+      "p": 0.2581,
+      "lo": 0.1655,
+      "hi": 0.3788
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 44,
+      "n": 269,
+      "p": 0.1636,
+      "lo": 0.1242,
+      "hi": 0.2124
+     },
+     "sameLevel2": {
+      "k": 85,
+      "n": 269,
+      "p": 0.316,
+      "lo": 0.2634,
+      "hi": 0.3738
+     },
+     "sameCategory": {
+      "k": 135,
+      "n": 269,
+      "p": 0.5019,
+      "lo": 0.4425,
+      "hi": 0.5612
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0254,
+    "exact": {
+     "k": 109,
+     "n": 218,
+     "p": 0.5,
+     "lo": 0.4342,
+     "hi": 0.5658
+    },
+    "category": {
+     "k": 153,
+     "n": 218,
+     "p": 0.7018,
+     "lo": 0.638,
+     "hi": 0.7586
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0096,
+    "exact": {
+     "k": 43,
+     "n": 218,
+     "p": 0.1972,
+     "lo": 0.1499,
+     "hi": 0.2551
+    },
+    "category": {
+     "k": 112,
+     "n": 218,
+     "p": 0.5138,
+     "lo": 0.4478,
+     "hi": 0.5793
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0608,
+     "exact": {
+      "k": 57,
+      "n": 66,
+      "p": 0.8636,
+      "lo": 0.7607,
+      "hi": 0.9266
+     },
+     "category": {
+      "k": 61,
+      "n": 66,
+      "p": 0.9242,
+      "lo": 0.8346,
+      "hi": 0.9672
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0361,
+     "exact": {
+      "k": 77,
+      "n": 131,
+      "p": 0.5878,
+      "lo": 0.5022,
+      "hi": 0.6684
+     },
+     "category": {
+      "k": 93,
+      "n": 131,
+      "p": 0.7099,
+      "lo": 0.6271,
+      "hi": 0.7808
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0266,
+     "exact": {
+      "k": 102,
+      "n": 197,
+      "p": 0.5178,
+      "lo": 0.4483,
+      "hi": 0.5865
+     },
+     "category": {
+      "k": 135,
+      "n": 197,
+      "p": 0.6853,
+      "lo": 0.6174,
+      "hi": 0.7461
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0214,
+     "exact": {
+      "k": 133,
+      "n": 262,
+      "p": 0.5076,
+      "lo": 0.4474,
+      "hi": 0.5676
+     },
+     "category": {
+      "k": 187,
+      "n": 262,
+      "p": 0.7137,
+      "lo": 0.6562,
+      "hi": 0.7651
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0165,
+     "exact": {
+      "k": 140,
+      "n": 328,
+      "p": 0.4268,
+      "lo": 0.3745,
+      "hi": 0.4809
+     },
+     "category": {
+      "k": 217,
+      "n": 328,
+      "p": 0.6616,
+      "lo": 0.6088,
+      "hi": 0.7107
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0122,
+     "exact": {
+      "k": 152,
+      "n": 394,
+      "p": 0.3858,
+      "lo": 0.339,
+      "hi": 0.4347
+     },
+     "category": {
+      "k": 243,
+      "n": 394,
+      "p": 0.6168,
+      "lo": 0.5678,
+      "hi": 0.6634
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0086,
+     "exact": {
+      "k": 168,
+      "n": 459,
+      "p": 0.366,
+      "lo": 0.3232,
+      "hi": 0.411
+     },
+     "category": {
+      "k": 280,
+      "n": 459,
+      "p": 0.61,
+      "lo": 0.5647,
+      "hi": 0.6536
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0053,
+     "exact": {
+      "k": 177,
+      "n": 525,
+      "p": 0.3371,
+      "lo": 0.298,
+      "hi": 0.3786
+     },
+     "category": {
+      "k": 316,
+      "n": 525,
+      "p": 0.6019,
+      "lo": 0.5594,
+      "hi": 0.6429
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0022,
+     "exact": {
+      "k": 192,
+      "n": 590,
+      "p": 0.3254,
+      "lo": 0.2889,
+      "hi": 0.3643
+     },
+     "category": {
+      "k": 354,
+      "n": 590,
+      "p": 0.6,
+      "lo": 0.5599,
+      "hi": 0.6388
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 200,
+      "n": 656,
+      "p": 0.3049,
+      "lo": 0.2709,
+      "hi": 0.3412
+     },
+     "category": {
+      "k": 377,
+      "n": 656,
+      "p": 0.5747,
+      "lo": 0.5365,
+      "hi": 0.612
+     }
+    }
+   ]
+  },
+  "bge-small/flat/design": {
+   "n": 656,
+   "exact": {
+    "k": 204,
+    "n": 656,
+    "p": 0.311,
+    "lo": 0.2767,
+    "hi": 0.3474
+   },
+   "sameLevel2": {
+    "k": 296,
+    "n": 656,
+    "p": 0.4512,
+    "lo": 0.4135,
+    "hi": 0.4895
+   },
+   "sameCategory": {
+    "k": 378,
+    "n": 656,
+    "p": 0.5762,
+    "lo": 0.5381,
+    "hi": 0.6135
+   },
+   "top3Exact": {
+    "k": 333,
+    "n": 656,
+    "p": 0.5076,
+    "lo": 0.4694,
+    "hi": 0.5457
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 159,
+      "n": 325,
+      "p": 0.4892,
+      "lo": 0.4353,
+      "hi": 0.5434
+     },
+     "sameLevel2": {
+      "k": 202,
+      "n": 325,
+      "p": 0.6215,
+      "lo": 0.5677,
+      "hi": 0.6726
+     },
+     "sameCategory": {
+      "k": 227,
+      "n": 325,
+      "p": 0.6985,
+      "lo": 0.6465,
+      "hi": 0.7458
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 1,
+      "n": 62,
+      "p": 0.0161,
+      "lo": 0.0029,
+      "hi": 0.0859
+     },
+     "sameLevel2": {
+      "k": 9,
+      "n": 62,
+      "p": 0.1452,
+      "lo": 0.0783,
+      "hi": 0.2534
+     },
+     "sameCategory": {
+      "k": 16,
+      "n": 62,
+      "p": 0.2581,
+      "lo": 0.1655,
+      "hi": 0.3788
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 44,
+      "n": 269,
+      "p": 0.1636,
+      "lo": 0.1242,
+      "hi": 0.2124
+     },
+     "sameLevel2": {
+      "k": 85,
+      "n": 269,
+      "p": 0.316,
+      "lo": 0.2634,
+      "hi": 0.3738
+     },
+     "sameCategory": {
+      "k": 135,
+      "n": 269,
+      "p": 0.5019,
+      "lo": 0.4425,
+      "hi": 0.5612
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0256,
+    "exact": {
+     "k": 110,
+     "n": 218,
+     "p": 0.5046,
+     "lo": 0.4387,
+     "hi": 0.5703
+    },
+    "category": {
+     "k": 152,
+     "n": 218,
+     "p": 0.6972,
+     "lo": 0.6333,
+     "hi": 0.7544
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0097,
+    "exact": {
+     "k": 44,
+     "n": 218,
+     "p": 0.2018,
+     "lo": 0.1539,
+     "hi": 0.2601
+    },
+    "category": {
+     "k": 110,
+     "n": 218,
+     "p": 0.5046,
+     "lo": 0.4387,
+     "hi": 0.5703
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0608,
+     "exact": {
+      "k": 57,
+      "n": 66,
+      "p": 0.8636,
+      "lo": 0.7607,
+      "hi": 0.9266
+     },
+     "category": {
+      "k": 61,
+      "n": 66,
+      "p": 0.9242,
+      "lo": 0.8346,
+      "hi": 0.9672
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0361,
+     "exact": {
+      "k": 78,
+      "n": 131,
+      "p": 0.5954,
+      "lo": 0.5098,
+      "hi": 0.6756
+     },
+     "category": {
+      "k": 92,
+      "n": 131,
+      "p": 0.7023,
+      "lo": 0.6191,
+      "hi": 0.7739
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0266,
+     "exact": {
+      "k": 103,
+      "n": 197,
+      "p": 0.5228,
+      "lo": 0.4533,
+      "hi": 0.5915
+     },
+     "category": {
+      "k": 134,
+      "n": 197,
+      "p": 0.6802,
+      "lo": 0.6122,
+      "hi": 0.7414
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0215,
+     "exact": {
+      "k": 133,
+      "n": 262,
+      "p": 0.5076,
+      "lo": 0.4474,
+      "hi": 0.5676
+     },
+     "category": {
+      "k": 186,
+      "n": 262,
+      "p": 0.7099,
+      "lo": 0.6523,
+      "hi": 0.7615
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0168,
+     "exact": {
+      "k": 143,
+      "n": 328,
+      "p": 0.436,
+      "lo": 0.3834,
+      "hi": 0.4901
+     },
+     "category": {
+      "k": 218,
+      "n": 328,
+      "p": 0.6646,
+      "lo": 0.6119,
+      "hi": 0.7136
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0125,
+     "exact": {
+      "k": 154,
+      "n": 394,
+      "p": 0.3909,
+      "lo": 0.344,
+      "hi": 0.4399
+     },
+     "category": {
+      "k": 244,
+      "n": 394,
+      "p": 0.6193,
+      "lo": 0.5704,
+      "hi": 0.6659
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0089,
+     "exact": {
+      "k": 169,
+      "n": 459,
+      "p": 0.3682,
+      "lo": 0.3253,
+      "hi": 0.4132
+     },
+     "category": {
+      "k": 280,
+      "n": 459,
+      "p": 0.61,
+      "lo": 0.5647,
+      "hi": 0.6536
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0053,
+     "exact": {
+      "k": 180,
+      "n": 525,
+      "p": 0.3429,
+      "lo": 0.3035,
+      "hi": 0.3845
+     },
+     "category": {
+      "k": 317,
+      "n": 525,
+      "p": 0.6038,
+      "lo": 0.5614,
+      "hi": 0.6447
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0022,
+     "exact": {
+      "k": 196,
+      "n": 590,
+      "p": 0.3322,
+      "lo": 0.2954,
+      "hi": 0.3712
+     },
+     "category": {
+      "k": 355,
+      "n": 590,
+      "p": 0.6017,
+      "lo": 0.5617,
+      "hi": 0.6404
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 204,
+      "n": 656,
+      "p": 0.311,
+      "lo": 0.2767,
+      "hi": 0.3474
+     },
+     "category": {
+      "k": 378,
+      "n": 656,
+      "p": 0.5762,
+      "lo": 0.5381,
+      "hi": 0.6135
+     }
+    }
+   ]
+  },
+  "bge-small/hier-stop/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 55,
+    "n": 656,
+    "p": 0.0838,
+    "lo": 0.065,
+    "hi": 0.1075
+   },
+   "sameLevel2": {
+    "k": 80,
+    "n": 656,
+    "p": 0.122,
+    "lo": 0.0991,
+    "hi": 0.1492
+   },
+   "sameCategory": {
+    "k": 197,
+    "n": 656,
+    "p": 0.3003,
+    "lo": 0.2665,
+    "hi": 0.3365
+   },
+   "top3Exact": {
+    "k": 80,
+    "n": 656,
+    "p": 0.122,
+    "lo": 0.0991,
+    "hi": 0.1492
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 40,
+      "n": 325,
+      "p": 0.1231,
+      "lo": 0.0917,
+      "hi": 0.1633
+     },
+     "sameLevel2": {
+      "k": 53,
+      "n": 325,
+      "p": 0.1631,
+      "lo": 0.1269,
+      "hi": 0.2071
+     },
+     "sameCategory": {
+      "k": 108,
+      "n": 325,
+      "p": 0.3323,
+      "lo": 0.2833,
+      "hi": 0.3852
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 1,
+      "n": 62,
+      "p": 0.0161,
+      "lo": 0.0029,
+      "hi": 0.0859
+     },
+     "sameLevel2": {
+      "k": 4,
+      "n": 62,
+      "p": 0.0645,
+      "lo": 0.0254,
+      "hi": 0.1545
+     },
+     "sameCategory": {
+      "k": 12,
+      "n": 62,
+      "p": 0.1935,
+      "lo": 0.1143,
+      "hi": 0.3085
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 14,
+      "n": 269,
+      "p": 0.052,
+      "lo": 0.0313,
+      "hi": 0.0855
+     },
+     "sameLevel2": {
+      "k": 23,
+      "n": 269,
+      "p": 0.0855,
+      "lo": 0.0576,
+      "hi": 0.125
+     },
+     "sameCategory": {
+      "k": 77,
+      "n": 269,
+      "p": 0.2862,
+      "lo": 0.2355,
+      "hi": 0.343
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0109,
+    "exact": {
+     "k": 31,
+     "n": 218,
+     "p": 0.1422,
+     "lo": 0.102,
+     "hi": 0.1948
+    },
+    "category": {
+     "k": 72,
+     "n": 218,
+     "p": 0.3303,
+     "lo": 0.2713,
+     "hi": 0.3952
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0041,
+    "exact": {
+     "k": 12,
+     "n": 218,
+     "p": 0.055,
+     "lo": 0.0318,
+     "hi": 0.0937
+    },
+    "category": {
+     "k": 55,
+     "n": 218,
+     "p": 0.2523,
+     "lo": 0.1993,
+     "hi": 0.3139
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0216,
+     "exact": {
+      "k": 22,
+      "n": 66,
+      "p": 0.3333,
+      "lo": 0.2316,
+      "hi": 0.4534
+     },
+     "category": {
+      "k": 32,
+      "n": 66,
+      "p": 0.4848,
+      "lo": 0.3685,
+      "hi": 0.6029
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0158,
+     "exact": {
+      "k": 27,
+      "n": 131,
+      "p": 0.2061,
+      "lo": 0.1457,
+      "hi": 0.2833
+     },
+     "category": {
+      "k": 54,
+      "n": 131,
+      "p": 0.4122,
+      "lo": 0.3316,
+      "hi": 0.4978
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0114,
+     "exact": {
+      "k": 30,
+      "n": 197,
+      "p": 0.1523,
+      "lo": 0.1088,
+      "hi": 0.2091
+     },
+     "category": {
+      "k": 68,
+      "n": 197,
+      "p": 0.3452,
+      "lo": 0.2823,
+      "hi": 0.414
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0085,
+     "exact": {
+      "k": 33,
+      "n": 262,
+      "p": 0.126,
+      "lo": 0.0911,
+      "hi": 0.1716
+     },
+     "category": {
+      "k": 82,
+      "n": 262,
+      "p": 0.313,
+      "lo": 0.2599,
+      "hi": 0.3715
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0066,
+     "exact": {
+      "k": 34,
+      "n": 328,
+      "p": 0.1037,
+      "lo": 0.0751,
+      "hi": 0.1414
+     },
+     "category": {
+      "k": 97,
+      "n": 328,
+      "p": 0.2957,
+      "lo": 0.2489,
+      "hi": 0.3473
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0051,
+     "exact": {
+      "k": 42,
+      "n": 394,
+      "p": 0.1066,
+      "lo": 0.0798,
+      "hi": 0.141
+     },
+     "category": {
+      "k": 131,
+      "n": 394,
+      "p": 0.3325,
+      "lo": 0.2878,
+      "hi": 0.3804
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0035,
+     "exact": {
+      "k": 44,
+      "n": 459,
+      "p": 0.0959,
+      "lo": 0.0722,
+      "hi": 0.1262
+     },
+     "category": {
+      "k": 146,
+      "n": 459,
+      "p": 0.3181,
+      "lo": 0.2771,
+      "hi": 0.362
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0022,
+     "exact": {
+      "k": 50,
+      "n": 525,
+      "p": 0.0952,
+      "lo": 0.073,
+      "hi": 0.1234
+     },
+     "category": {
+      "k": 167,
+      "n": 525,
+      "p": 0.3181,
+      "lo": 0.2797,
+      "hi": 0.3591
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0011,
+     "exact": {
+      "k": 51,
+      "n": 590,
+      "p": 0.0864,
+      "lo": 0.0664,
+      "hi": 0.1119
+     },
+     "category": {
+      "k": 181,
+      "n": 590,
+      "p": 0.3068,
+      "lo": 0.2709,
+      "hi": 0.3451
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 55,
+      "n": 656,
+      "p": 0.0838,
+      "lo": 0.065,
+      "hi": 0.1075
+     },
+     "category": {
+      "k": 197,
+      "n": 656,
+      "p": 0.3003,
+      "lo": 0.2665,
+      "hi": 0.3365
+     }
+    }
+   ]
+  },
+  "bge-small/hier-stop/design": {
+   "n": 656,
+   "exact": {
+    "k": 55,
+    "n": 656,
+    "p": 0.0838,
+    "lo": 0.065,
+    "hi": 0.1075
+   },
+   "sameLevel2": {
+    "k": 80,
+    "n": 656,
+    "p": 0.122,
+    "lo": 0.0991,
+    "hi": 0.1492
+   },
+   "sameCategory": {
+    "k": 197,
+    "n": 656,
+    "p": 0.3003,
+    "lo": 0.2665,
+    "hi": 0.3365
+   },
+   "top3Exact": {
+    "k": 81,
+    "n": 656,
+    "p": 0.1235,
+    "lo": 0.1005,
+    "hi": 0.1509
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 40,
+      "n": 325,
+      "p": 0.1231,
+      "lo": 0.0917,
+      "hi": 0.1633
+     },
+     "sameLevel2": {
+      "k": 53,
+      "n": 325,
+      "p": 0.1631,
+      "lo": 0.1269,
+      "hi": 0.2071
+     },
+     "sameCategory": {
+      "k": 108,
+      "n": 325,
+      "p": 0.3323,
+      "lo": 0.2833,
+      "hi": 0.3852
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 1,
+      "n": 62,
+      "p": 0.0161,
+      "lo": 0.0029,
+      "hi": 0.0859
+     },
+     "sameLevel2": {
+      "k": 4,
+      "n": 62,
+      "p": 0.0645,
+      "lo": 0.0254,
+      "hi": 0.1545
+     },
+     "sameCategory": {
+      "k": 12,
+      "n": 62,
+      "p": 0.1935,
+      "lo": 0.1143,
+      "hi": 0.3085
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 14,
+      "n": 269,
+      "p": 0.052,
+      "lo": 0.0313,
+      "hi": 0.0855
+     },
+     "sameLevel2": {
+      "k": 23,
+      "n": 269,
+      "p": 0.0855,
+      "lo": 0.0576,
+      "hi": 0.125
+     },
+     "sameCategory": {
+      "k": 77,
+      "n": 269,
+      "p": 0.2862,
+      "lo": 0.2355,
+      "hi": 0.343
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0109,
+    "exact": {
+     "k": 31,
+     "n": 218,
+     "p": 0.1422,
+     "lo": 0.102,
+     "hi": 0.1948
+    },
+    "category": {
+     "k": 72,
+     "n": 218,
+     "p": 0.3303,
+     "lo": 0.2713,
+     "hi": 0.3952
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0041,
+    "exact": {
+     "k": 12,
+     "n": 218,
+     "p": 0.055,
+     "lo": 0.0318,
+     "hi": 0.0937
+    },
+    "category": {
+     "k": 55,
+     "n": 218,
+     "p": 0.2523,
+     "lo": 0.1993,
+     "hi": 0.3139
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0216,
+     "exact": {
+      "k": 22,
+      "n": 66,
+      "p": 0.3333,
+      "lo": 0.2316,
+      "hi": 0.4534
+     },
+     "category": {
+      "k": 32,
+      "n": 66,
+      "p": 0.4848,
+      "lo": 0.3685,
+      "hi": 0.6029
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0158,
+     "exact": {
+      "k": 27,
+      "n": 131,
+      "p": 0.2061,
+      "lo": 0.1457,
+      "hi": 0.2833
+     },
+     "category": {
+      "k": 54,
+      "n": 131,
+      "p": 0.4122,
+      "lo": 0.3316,
+      "hi": 0.4978
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0114,
+     "exact": {
+      "k": 30,
+      "n": 197,
+      "p": 0.1523,
+      "lo": 0.1088,
+      "hi": 0.2091
+     },
+     "category": {
+      "k": 68,
+      "n": 197,
+      "p": 0.3452,
+      "lo": 0.2823,
+      "hi": 0.414
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0085,
+     "exact": {
+      "k": 33,
+      "n": 262,
+      "p": 0.126,
+      "lo": 0.0911,
+      "hi": 0.1716
+     },
+     "category": {
+      "k": 82,
+      "n": 262,
+      "p": 0.313,
+      "lo": 0.2599,
+      "hi": 0.3715
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0066,
+     "exact": {
+      "k": 34,
+      "n": 328,
+      "p": 0.1037,
+      "lo": 0.0751,
+      "hi": 0.1414
+     },
+     "category": {
+      "k": 97,
+      "n": 328,
+      "p": 0.2957,
+      "lo": 0.2489,
+      "hi": 0.3473
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0051,
+     "exact": {
+      "k": 42,
+      "n": 394,
+      "p": 0.1066,
+      "lo": 0.0798,
+      "hi": 0.141
+     },
+     "category": {
+      "k": 131,
+      "n": 394,
+      "p": 0.3325,
+      "lo": 0.2878,
+      "hi": 0.3804
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0035,
+     "exact": {
+      "k": 44,
+      "n": 459,
+      "p": 0.0959,
+      "lo": 0.0722,
+      "hi": 0.1262
+     },
+     "category": {
+      "k": 146,
+      "n": 459,
+      "p": 0.3181,
+      "lo": 0.2771,
+      "hi": 0.362
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0022,
+     "exact": {
+      "k": 50,
+      "n": 525,
+      "p": 0.0952,
+      "lo": 0.073,
+      "hi": 0.1234
+     },
+     "category": {
+      "k": 167,
+      "n": 525,
+      "p": 0.3181,
+      "lo": 0.2797,
+      "hi": 0.3591
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0011,
+     "exact": {
+      "k": 51,
+      "n": 590,
+      "p": 0.0864,
+      "lo": 0.0664,
+      "hi": 0.1119
+     },
+     "category": {
+      "k": 181,
+      "n": 590,
+      "p": 0.3068,
+      "lo": 0.2709,
+      "hi": 0.3451
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 55,
+      "n": 656,
+      "p": 0.0838,
+      "lo": 0.065,
+      "hi": 0.1075
+     },
+     "category": {
+      "k": 197,
+      "n": 656,
+      "p": 0.3003,
+      "lo": 0.2665,
+      "hi": 0.3365
+     }
+    }
+   ]
+  },
+  "bge-small/hier-leaf/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 69,
+    "n": 656,
+    "p": 0.1052,
+    "lo": 0.084,
+    "hi": 0.131
+   },
+   "sameLevel2": {
+    "k": 100,
+    "n": 656,
+    "p": 0.1524,
+    "lo": 0.127,
+    "hi": 0.182
+   },
+   "sameCategory": {
+    "k": 197,
+    "n": 656,
+    "p": 0.3003,
+    "lo": 0.2665,
+    "hi": 0.3365
+   },
+   "top3Exact": {
+    "k": 86,
+    "n": 656,
+    "p": 0.1311,
+    "lo": 0.1074,
+    "hi": 0.1591
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 54,
+      "n": 325,
+      "p": 0.1662,
+      "lo": 0.1296,
+      "hi": 0.2105
+     },
+     "sameLevel2": {
+      "k": 66,
+      "n": 325,
+      "p": 0.2031,
+      "lo": 0.1629,
+      "hi": 0.2502
+     },
+     "sameCategory": {
+      "k": 108,
+      "n": 325,
+      "p": 0.3323,
+      "lo": 0.2833,
+      "hi": 0.3852
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 1,
+      "n": 62,
+      "p": 0.0161,
+      "lo": 0.0029,
+      "hi": 0.0859
+     },
+     "sameLevel2": {
+      "k": 4,
+      "n": 62,
+      "p": 0.0645,
+      "lo": 0.0254,
+      "hi": 0.1545
+     },
+     "sameCategory": {
+      "k": 12,
+      "n": 62,
+      "p": 0.1935,
+      "lo": 0.1143,
+      "hi": 0.3085
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 14,
+      "n": 269,
+      "p": 0.052,
+      "lo": 0.0313,
+      "hi": 0.0855
+     },
+     "sameLevel2": {
+      "k": 30,
+      "n": 269,
+      "p": 0.1115,
+      "lo": 0.0792,
+      "hi": 0.1547
+     },
+     "sameCategory": {
+      "k": 77,
+      "n": 269,
+      "p": 0.2862,
+      "lo": 0.2355,
+      "hi": 0.343
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0102,
+    "exact": {
+     "k": 34,
+     "n": 218,
+     "p": 0.156,
+     "lo": 0.1138,
+     "hi": 0.21
+    },
+    "category": {
+     "k": 70,
+     "n": 218,
+     "p": 0.3211,
+     "lo": 0.2627,
+     "hi": 0.3857
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0038,
+    "exact": {
+     "k": 14,
+     "n": 218,
+     "p": 0.0642,
+     "lo": 0.0386,
+     "hi": 0.1049
+    },
+    "category": {
+     "k": 53,
+     "n": 218,
+     "p": 0.2431,
+     "lo": 0.1909,
+     "hi": 0.3042
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0237,
+     "exact": {
+      "k": 20,
+      "n": 66,
+      "p": 0.303,
+      "lo": 0.2055,
+      "hi": 0.4222
+     },
+     "category": {
+      "k": 29,
+      "n": 66,
+      "p": 0.4394,
+      "lo": 0.3263,
+      "hi": 0.5592
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0164,
+     "exact": {
+      "k": 31,
+      "n": 131,
+      "p": 0.2366,
+      "lo": 0.172,
+      "hi": 0.3163
+     },
+     "category": {
+      "k": 50,
+      "n": 131,
+      "p": 0.3817,
+      "lo": 0.303,
+      "hi": 0.4671
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0112,
+     "exact": {
+      "k": 32,
+      "n": 197,
+      "p": 0.1624,
+      "lo": 0.1175,
+      "hi": 0.2203
+     },
+     "category": {
+      "k": 60,
+      "n": 197,
+      "p": 0.3046,
+      "lo": 0.2445,
+      "hi": 0.3721
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0083,
+     "exact": {
+      "k": 37,
+      "n": 262,
+      "p": 0.1412,
+      "lo": 0.1042,
+      "hi": 0.1886
+     },
+     "category": {
+      "k": 82,
+      "n": 262,
+      "p": 0.313,
+      "lo": 0.2599,
+      "hi": 0.3715
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0065,
+     "exact": {
+      "k": 45,
+      "n": 328,
+      "p": 0.1372,
+      "lo": 0.1041,
+      "hi": 0.1787
+     },
+     "category": {
+      "k": 111,
+      "n": 328,
+      "p": 0.3384,
+      "lo": 0.2893,
+      "hi": 0.3912
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0049,
+     "exact": {
+      "k": 54,
+      "n": 394,
+      "p": 0.1371,
+      "lo": 0.1066,
+      "hi": 0.1745
+     },
+     "category": {
+      "k": 134,
+      "n": 394,
+      "p": 0.3401,
+      "lo": 0.2951,
+      "hi": 0.3882
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0032,
+     "exact": {
+      "k": 56,
+      "n": 459,
+      "p": 0.122,
+      "lo": 0.0952,
+      "hi": 0.1551
+     },
+     "category": {
+      "k": 149,
+      "n": 459,
+      "p": 0.3246,
+      "lo": 0.2834,
+      "hi": 0.3688
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0019,
+     "exact": {
+      "k": 64,
+      "n": 525,
+      "p": 0.1219,
+      "lo": 0.0966,
+      "hi": 0.1527
+     },
+     "category": {
+      "k": 170,
+      "n": 525,
+      "p": 0.3238,
+      "lo": 0.2852,
+      "hi": 0.365
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0009,
+     "exact": {
+      "k": 65,
+      "n": 590,
+      "p": 0.1102,
+      "lo": 0.0874,
+      "hi": 0.138
+     },
+     "category": {
+      "k": 179,
+      "n": 590,
+      "p": 0.3034,
+      "lo": 0.2677,
+      "hi": 0.3417
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 69,
+      "n": 656,
+      "p": 0.1052,
+      "lo": 0.084,
+      "hi": 0.131
+     },
+     "category": {
+      "k": 197,
+      "n": 656,
+      "p": 0.3003,
+      "lo": 0.2665,
+      "hi": 0.3365
+     }
+    }
+   ]
+  },
+  "bge-small/hier-leaf/design": {
+   "n": 656,
+   "exact": {
+    "k": 69,
+    "n": 656,
+    "p": 0.1052,
+    "lo": 0.084,
+    "hi": 0.131
+   },
+   "sameLevel2": {
+    "k": 100,
+    "n": 656,
+    "p": 0.1524,
+    "lo": 0.127,
+    "hi": 0.182
+   },
+   "sameCategory": {
+    "k": 197,
+    "n": 656,
+    "p": 0.3003,
+    "lo": 0.2665,
+    "hi": 0.3365
+   },
+   "top3Exact": {
+    "k": 87,
+    "n": 656,
+    "p": 0.1326,
+    "lo": 0.1088,
+    "hi": 0.1607
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 54,
+      "n": 325,
+      "p": 0.1662,
+      "lo": 0.1296,
+      "hi": 0.2105
+     },
+     "sameLevel2": {
+      "k": 66,
+      "n": 325,
+      "p": 0.2031,
+      "lo": 0.1629,
+      "hi": 0.2502
+     },
+     "sameCategory": {
+      "k": 108,
+      "n": 325,
+      "p": 0.3323,
+      "lo": 0.2833,
+      "hi": 0.3852
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 1,
+      "n": 62,
+      "p": 0.0161,
+      "lo": 0.0029,
+      "hi": 0.0859
+     },
+     "sameLevel2": {
+      "k": 4,
+      "n": 62,
+      "p": 0.0645,
+      "lo": 0.0254,
+      "hi": 0.1545
+     },
+     "sameCategory": {
+      "k": 12,
+      "n": 62,
+      "p": 0.1935,
+      "lo": 0.1143,
+      "hi": 0.3085
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 14,
+      "n": 269,
+      "p": 0.052,
+      "lo": 0.0313,
+      "hi": 0.0855
+     },
+     "sameLevel2": {
+      "k": 30,
+      "n": 269,
+      "p": 0.1115,
+      "lo": 0.0792,
+      "hi": 0.1547
+     },
+     "sameCategory": {
+      "k": 77,
+      "n": 269,
+      "p": 0.2862,
+      "lo": 0.2355,
+      "hi": 0.343
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0102,
+    "exact": {
+     "k": 34,
+     "n": 218,
+     "p": 0.156,
+     "lo": 0.1138,
+     "hi": 0.21
+    },
+    "category": {
+     "k": 70,
+     "n": 218,
+     "p": 0.3211,
+     "lo": 0.2627,
+     "hi": 0.3857
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0038,
+    "exact": {
+     "k": 14,
+     "n": 218,
+     "p": 0.0642,
+     "lo": 0.0386,
+     "hi": 0.1049
+    },
+    "category": {
+     "k": 53,
+     "n": 218,
+     "p": 0.2431,
+     "lo": 0.1909,
+     "hi": 0.3042
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0237,
+     "exact": {
+      "k": 20,
+      "n": 66,
+      "p": 0.303,
+      "lo": 0.2055,
+      "hi": 0.4222
+     },
+     "category": {
+      "k": 29,
+      "n": 66,
+      "p": 0.4394,
+      "lo": 0.3263,
+      "hi": 0.5592
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0164,
+     "exact": {
+      "k": 31,
+      "n": 131,
+      "p": 0.2366,
+      "lo": 0.172,
+      "hi": 0.3163
+     },
+     "category": {
+      "k": 50,
+      "n": 131,
+      "p": 0.3817,
+      "lo": 0.303,
+      "hi": 0.4671
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0112,
+     "exact": {
+      "k": 32,
+      "n": 197,
+      "p": 0.1624,
+      "lo": 0.1175,
+      "hi": 0.2203
+     },
+     "category": {
+      "k": 60,
+      "n": 197,
+      "p": 0.3046,
+      "lo": 0.2445,
+      "hi": 0.3721
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0083,
+     "exact": {
+      "k": 37,
+      "n": 262,
+      "p": 0.1412,
+      "lo": 0.1042,
+      "hi": 0.1886
+     },
+     "category": {
+      "k": 82,
+      "n": 262,
+      "p": 0.313,
+      "lo": 0.2599,
+      "hi": 0.3715
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0065,
+     "exact": {
+      "k": 45,
+      "n": 328,
+      "p": 0.1372,
+      "lo": 0.1041,
+      "hi": 0.1787
+     },
+     "category": {
+      "k": 111,
+      "n": 328,
+      "p": 0.3384,
+      "lo": 0.2893,
+      "hi": 0.3912
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0049,
+     "exact": {
+      "k": 54,
+      "n": 394,
+      "p": 0.1371,
+      "lo": 0.1066,
+      "hi": 0.1745
+     },
+     "category": {
+      "k": 134,
+      "n": 394,
+      "p": 0.3401,
+      "lo": 0.2951,
+      "hi": 0.3882
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0032,
+     "exact": {
+      "k": 56,
+      "n": 459,
+      "p": 0.122,
+      "lo": 0.0952,
+      "hi": 0.1551
+     },
+     "category": {
+      "k": 149,
+      "n": 459,
+      "p": 0.3246,
+      "lo": 0.2834,
+      "hi": 0.3688
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0019,
+     "exact": {
+      "k": 64,
+      "n": 525,
+      "p": 0.1219,
+      "lo": 0.0966,
+      "hi": 0.1527
+     },
+     "category": {
+      "k": 170,
+      "n": 525,
+      "p": 0.3238,
+      "lo": 0.2852,
+      "hi": 0.365
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0009,
+     "exact": {
+      "k": 65,
+      "n": 590,
+      "p": 0.1102,
+      "lo": 0.0874,
+      "hi": 0.138
+     },
+     "category": {
+      "k": 179,
+      "n": 590,
+      "p": 0.3034,
+      "lo": 0.2677,
+      "hi": 0.3417
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 69,
+      "n": 656,
+      "p": 0.1052,
+      "lo": 0.084,
+      "hi": 0.131
+     },
+     "category": {
+      "k": 197,
+      "n": 656,
+      "p": 0.3003,
+      "lo": 0.2665,
+      "hi": 0.3365
+     }
+    }
+   ]
+  },
+  "bge-small/hier-stop-subtree/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 91,
+    "n": 656,
+    "p": 0.1387,
+    "lo": 0.1144,
+    "hi": 0.1673
+   },
+   "sameLevel2": {
+    "k": 177,
+    "n": 656,
+    "p": 0.2698,
+    "lo": 0.2373,
+    "hi": 0.3051
+   },
+   "sameCategory": {
+    "k": 282,
+    "n": 656,
+    "p": 0.4299,
+    "lo": 0.3925,
+    "hi": 0.4681
+   },
+   "top3Exact": {
+    "k": 167,
+    "n": 656,
+    "p": 0.2546,
+    "lo": 0.2227,
+    "hi": 0.2893
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 69,
+      "n": 325,
+      "p": 0.2123,
+      "lo": 0.1713,
+      "hi": 0.26
+     },
+     "sameLevel2": {
+      "k": 111,
+      "n": 325,
+      "p": 0.3415,
+      "lo": 0.2921,
+      "hi": 0.3947
+     },
+     "sameCategory": {
+      "k": 147,
+      "n": 325,
+      "p": 0.4523,
+      "lo": 0.3991,
+      "hi": 0.5067
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 0,
+      "n": 62,
+      "p": 0.0,
+      "lo": 0.0,
+      "hi": 0.0583
+     },
+     "sameLevel2": {
+      "k": 5,
+      "n": 62,
+      "p": 0.0806,
+      "lo": 0.0349,
+      "hi": 0.1753
+     },
+     "sameCategory": {
+      "k": 16,
+      "n": 62,
+      "p": 0.2581,
+      "lo": 0.1655,
+      "hi": 0.3788
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 22,
+      "n": 269,
+      "p": 0.0818,
+      "lo": 0.0546,
+      "hi": 0.1207
+     },
+     "sameLevel2": {
+      "k": 61,
+      "n": 269,
+      "p": 0.2268,
+      "lo": 0.1808,
+      "hi": 0.2804
+     },
+     "sameCategory": {
+      "k": 119,
+      "n": 269,
+      "p": 0.4424,
+      "lo": 0.3843,
+      "hi": 0.5021
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0102,
+    "exact": {
+     "k": 41,
+     "n": 218,
+     "p": 0.1881,
+     "lo": 0.1418,
+     "hi": 0.2452
+    },
+    "category": {
+     "k": 118,
+     "n": 218,
+     "p": 0.5413,
+     "lo": 0.475,
+     "hi": 0.6061
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0044,
+    "exact": {
+     "k": 20,
+     "n": 218,
+     "p": 0.0917,
+     "lo": 0.0602,
+     "hi": 0.1375
+    },
+    "category": {
+     "k": 93,
+     "n": 218,
+     "p": 0.4266,
+     "lo": 0.3628,
+     "hi": 0.493
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0195,
+     "exact": {
+      "k": 14,
+      "n": 66,
+      "p": 0.2121,
+      "lo": 0.1308,
+      "hi": 0.3251
+     },
+     "category": {
+      "k": 41,
+      "n": 66,
+      "p": 0.6212,
+      "lo": 0.5006,
+      "hi": 0.7285
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0141,
+     "exact": {
+      "k": 30,
+      "n": 131,
+      "p": 0.229,
+      "lo": 0.1654,
+      "hi": 0.3081
+     },
+     "category": {
+      "k": 81,
+      "n": 131,
+      "p": 0.6183,
+      "lo": 0.5329,
+      "hi": 0.697
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0109,
+     "exact": {
+      "k": 41,
+      "n": 197,
+      "p": 0.2081,
+      "lo": 0.1573,
+      "hi": 0.2701
+     },
+     "category": {
+      "k": 110,
+      "n": 197,
+      "p": 0.5584,
+      "lo": 0.4886,
+      "hi": 0.6259
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0086,
+     "exact": {
+      "k": 46,
+      "n": 262,
+      "p": 0.1756,
+      "lo": 0.1343,
+      "hi": 0.2262
+     },
+     "category": {
+      "k": 132,
+      "n": 262,
+      "p": 0.5038,
+      "lo": 0.4437,
+      "hi": 0.5639
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.007,
+     "exact": {
+      "k": 62,
+      "n": 328,
+      "p": 0.189,
+      "lo": 0.1503,
+      "hi": 0.2349
+     },
+     "category": {
+      "k": 157,
+      "n": 328,
+      "p": 0.4787,
+      "lo": 0.4252,
+      "hi": 0.5327
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0057,
+     "exact": {
+      "k": 65,
+      "n": 394,
+      "p": 0.165,
+      "lo": 0.1316,
+      "hi": 0.2048
+     },
+     "category": {
+      "k": 177,
+      "n": 394,
+      "p": 0.4492,
+      "lo": 0.4008,
+      "hi": 0.4986
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0038,
+     "exact": {
+      "k": 73,
+      "n": 459,
+      "p": 0.159,
+      "lo": 0.1284,
+      "hi": 0.1953
+     },
+     "category": {
+      "k": 195,
+      "n": 459,
+      "p": 0.4248,
+      "lo": 0.3804,
+      "hi": 0.4705
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0026,
+     "exact": {
+      "k": 80,
+      "n": 525,
+      "p": 0.1524,
+      "lo": 0.1242,
+      "hi": 0.1856
+     },
+     "category": {
+      "k": 227,
+      "n": 525,
+      "p": 0.4324,
+      "lo": 0.3906,
+      "hi": 0.4751
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0012,
+     "exact": {
+      "k": 87,
+      "n": 590,
+      "p": 0.1475,
+      "lo": 0.1211,
+      "hi": 0.1783
+     },
+     "category": {
+      "k": 256,
+      "n": 590,
+      "p": 0.4339,
+      "lo": 0.3945,
+      "hi": 0.4742
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 91,
+      "n": 656,
+      "p": 0.1387,
+      "lo": 0.1144,
+      "hi": 0.1673
+     },
+     "category": {
+      "k": 282,
+      "n": 656,
+      "p": 0.4299,
+      "lo": 0.3925,
+      "hi": 0.4681
+     }
+    }
+   ]
+  },
+  "bge-small/hier-stop-subtree/design": {
+   "n": 656,
+   "exact": {
+    "k": 91,
+    "n": 656,
+    "p": 0.1387,
+    "lo": 0.1144,
+    "hi": 0.1673
+   },
+   "sameLevel2": {
+    "k": 177,
+    "n": 656,
+    "p": 0.2698,
+    "lo": 0.2373,
+    "hi": 0.3051
+   },
+   "sameCategory": {
+    "k": 282,
+    "n": 656,
+    "p": 0.4299,
+    "lo": 0.3925,
+    "hi": 0.4681
+   },
+   "top3Exact": {
+    "k": 170,
+    "n": 656,
+    "p": 0.2591,
+    "lo": 0.2271,
+    "hi": 0.294
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 69,
+      "n": 325,
+      "p": 0.2123,
+      "lo": 0.1713,
+      "hi": 0.26
+     },
+     "sameLevel2": {
+      "k": 111,
+      "n": 325,
+      "p": 0.3415,
+      "lo": 0.2921,
+      "hi": 0.3947
+     },
+     "sameCategory": {
+      "k": 147,
+      "n": 325,
+      "p": 0.4523,
+      "lo": 0.3991,
+      "hi": 0.5067
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 0,
+      "n": 62,
+      "p": 0.0,
+      "lo": 0.0,
+      "hi": 0.0583
+     },
+     "sameLevel2": {
+      "k": 5,
+      "n": 62,
+      "p": 0.0806,
+      "lo": 0.0349,
+      "hi": 0.1753
+     },
+     "sameCategory": {
+      "k": 16,
+      "n": 62,
+      "p": 0.2581,
+      "lo": 0.1655,
+      "hi": 0.3788
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 22,
+      "n": 269,
+      "p": 0.0818,
+      "lo": 0.0546,
+      "hi": 0.1207
+     },
+     "sameLevel2": {
+      "k": 61,
+      "n": 269,
+      "p": 0.2268,
+      "lo": 0.1808,
+      "hi": 0.2804
+     },
+     "sameCategory": {
+      "k": 119,
+      "n": 269,
+      "p": 0.4424,
+      "lo": 0.3843,
+      "hi": 0.5021
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0102,
+    "exact": {
+     "k": 41,
+     "n": 218,
+     "p": 0.1881,
+     "lo": 0.1418,
+     "hi": 0.2452
+    },
+    "category": {
+     "k": 118,
+     "n": 218,
+     "p": 0.5413,
+     "lo": 0.475,
+     "hi": 0.6061
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0044,
+    "exact": {
+     "k": 20,
+     "n": 218,
+     "p": 0.0917,
+     "lo": 0.0602,
+     "hi": 0.1375
+    },
+    "category": {
+     "k": 93,
+     "n": 218,
+     "p": 0.4266,
+     "lo": 0.3628,
+     "hi": 0.493
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0195,
+     "exact": {
+      "k": 14,
+      "n": 66,
+      "p": 0.2121,
+      "lo": 0.1308,
+      "hi": 0.3251
+     },
+     "category": {
+      "k": 41,
+      "n": 66,
+      "p": 0.6212,
+      "lo": 0.5006,
+      "hi": 0.7285
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0141,
+     "exact": {
+      "k": 30,
+      "n": 131,
+      "p": 0.229,
+      "lo": 0.1654,
+      "hi": 0.3081
+     },
+     "category": {
+      "k": 81,
+      "n": 131,
+      "p": 0.6183,
+      "lo": 0.5329,
+      "hi": 0.697
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0109,
+     "exact": {
+      "k": 41,
+      "n": 197,
+      "p": 0.2081,
+      "lo": 0.1573,
+      "hi": 0.2701
+     },
+     "category": {
+      "k": 110,
+      "n": 197,
+      "p": 0.5584,
+      "lo": 0.4886,
+      "hi": 0.6259
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0086,
+     "exact": {
+      "k": 46,
+      "n": 262,
+      "p": 0.1756,
+      "lo": 0.1343,
+      "hi": 0.2262
+     },
+     "category": {
+      "k": 132,
+      "n": 262,
+      "p": 0.5038,
+      "lo": 0.4437,
+      "hi": 0.5639
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.007,
+     "exact": {
+      "k": 62,
+      "n": 328,
+      "p": 0.189,
+      "lo": 0.1503,
+      "hi": 0.2349
+     },
+     "category": {
+      "k": 157,
+      "n": 328,
+      "p": 0.4787,
+      "lo": 0.4252,
+      "hi": 0.5327
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0057,
+     "exact": {
+      "k": 65,
+      "n": 394,
+      "p": 0.165,
+      "lo": 0.1316,
+      "hi": 0.2048
+     },
+     "category": {
+      "k": 177,
+      "n": 394,
+      "p": 0.4492,
+      "lo": 0.4008,
+      "hi": 0.4986
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0038,
+     "exact": {
+      "k": 73,
+      "n": 459,
+      "p": 0.159,
+      "lo": 0.1284,
+      "hi": 0.1953
+     },
+     "category": {
+      "k": 195,
+      "n": 459,
+      "p": 0.4248,
+      "lo": 0.3804,
+      "hi": 0.4705
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0026,
+     "exact": {
+      "k": 80,
+      "n": 525,
+      "p": 0.1524,
+      "lo": 0.1242,
+      "hi": 0.1856
+     },
+     "category": {
+      "k": 227,
+      "n": 525,
+      "p": 0.4324,
+      "lo": 0.3906,
+      "hi": 0.4751
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0012,
+     "exact": {
+      "k": 87,
+      "n": 590,
+      "p": 0.1475,
+      "lo": 0.1211,
+      "hi": 0.1783
+     },
+     "category": {
+      "k": 256,
+      "n": 590,
+      "p": 0.4339,
+      "lo": 0.3945,
+      "hi": 0.4742
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 91,
+      "n": 656,
+      "p": 0.1387,
+      "lo": 0.1144,
+      "hi": 0.1673
+     },
+     "category": {
+      "k": 282,
+      "n": 656,
+      "p": 0.4299,
+      "lo": 0.3925,
+      "hi": 0.4681
+     }
+    }
+   ]
+  },
+  "bge-small/hier-leaf-subtree/nodesign": {
+   "n": 656,
+   "exact": {
+    "k": 112,
+    "n": 656,
+    "p": 0.1707,
+    "lo": 0.1439,
+    "hi": 0.2014
+   },
+   "sameLevel2": {
+    "k": 195,
+    "n": 656,
+    "p": 0.2973,
+    "lo": 0.2635,
+    "hi": 0.3333
+   },
+   "sameCategory": {
+    "k": 282,
+    "n": 656,
+    "p": 0.4299,
+    "lo": 0.3925,
+    "hi": 0.4681
+   },
+   "top3Exact": {
+    "k": 163,
+    "n": 656,
+    "p": 0.2485,
+    "lo": 0.2169,
+    "hi": 0.2829
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 86,
+      "n": 325,
+      "p": 0.2646,
+      "lo": 0.2196,
+      "hi": 0.3151
+     },
+     "sameLevel2": {
+      "k": 121,
+      "n": 325,
+      "p": 0.3723,
+      "lo": 0.3215,
+      "hi": 0.4261
+     },
+     "sameCategory": {
+      "k": 147,
+      "n": 325,
+      "p": 0.4523,
+      "lo": 0.3991,
+      "hi": 0.5067
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 0,
+      "n": 62,
+      "p": 0.0,
+      "lo": 0.0,
+      "hi": 0.0583
+     },
+     "sameLevel2": {
+      "k": 7,
+      "n": 62,
+      "p": 0.1129,
+      "lo": 0.0558,
+      "hi": 0.2152
+     },
+     "sameCategory": {
+      "k": 16,
+      "n": 62,
+      "p": 0.2581,
+      "lo": 0.1655,
+      "hi": 0.3788
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 26,
+      "n": 269,
+      "p": 0.0967,
+      "lo": 0.0668,
+      "hi": 0.1379
+     },
+     "sameLevel2": {
+      "k": 67,
+      "n": 269,
+      "p": 0.2491,
+      "lo": 0.2012,
+      "hi": 0.304
+     },
+     "sameCategory": {
+      "k": 119,
+      "n": 269,
+      "p": 0.4424,
+      "lo": 0.3843,
+      "hi": 0.5021
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0131,
+    "exact": {
+     "k": 55,
+     "n": 218,
+     "p": 0.2523,
+     "lo": 0.1993,
+     "hi": 0.3139
+    },
+    "category": {
+     "k": 123,
+     "n": 218,
+     "p": 0.5642,
+     "lo": 0.4978,
+     "hi": 0.6284
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0049,
+    "exact": {
+     "k": 16,
+     "n": 218,
+     "p": 0.0734,
+     "lo": 0.0457,
+     "hi": 0.1159
+    },
+    "category": {
+     "k": 74,
+     "n": 218,
+     "p": 0.3394,
+     "lo": 0.2799,
+     "hi": 0.4046
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0249,
+     "exact": {
+      "k": 19,
+      "n": 66,
+      "p": 0.2879,
+      "lo": 0.1927,
+      "hi": 0.4064
+     },
+     "category": {
+      "k": 45,
+      "n": 66,
+      "p": 0.6818,
+      "lo": 0.5621,
+      "hi": 0.7815
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0185,
+     "exact": {
+      "k": 32,
+      "n": 131,
+      "p": 0.2443,
+      "lo": 0.1787,
+      "hi": 0.3244
+     },
+     "category": {
+      "k": 78,
+      "n": 131,
+      "p": 0.5954,
+      "lo": 0.5098,
+      "hi": 0.6756
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0141,
+     "exact": {
+      "k": 48,
+      "n": 197,
+      "p": 0.2437,
+      "lo": 0.189,
+      "hi": 0.3081
+     },
+     "category": {
+      "k": 112,
+      "n": 197,
+      "p": 0.5685,
+      "lo": 0.4987,
+      "hi": 0.6357
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0106,
+     "exact": {
+      "k": 62,
+      "n": 262,
+      "p": 0.2366,
+      "lo": 0.1892,
+      "hi": 0.2917
+     },
+     "category": {
+      "k": 140,
+      "n": 262,
+      "p": 0.5344,
+      "lo": 0.4739,
+      "hi": 0.5938
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0083,
+     "exact": {
+      "k": 73,
+      "n": 328,
+      "p": 0.2226,
+      "lo": 0.1809,
+      "hi": 0.2706
+     },
+     "category": {
+      "k": 162,
+      "n": 328,
+      "p": 0.4939,
+      "lo": 0.4402,
+      "hi": 0.5478
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0061,
+     "exact": {
+      "k": 87,
+      "n": 394,
+      "p": 0.2208,
+      "lo": 0.1827,
+      "hi": 0.2644
+     },
+     "category": {
+      "k": 193,
+      "n": 394,
+      "p": 0.4898,
+      "lo": 0.4408,
+      "hi": 0.5391
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0044,
+     "exact": {
+      "k": 100,
+      "n": 459,
+      "p": 0.2179,
+      "lo": 0.1825,
+      "hi": 0.2579
+     },
+     "category": {
+      "k": 214,
+      "n": 459,
+      "p": 0.4662,
+      "lo": 0.4211,
+      "hi": 0.512
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0029,
+     "exact": {
+      "k": 101,
+      "n": 525,
+      "p": 0.1924,
+      "lo": 0.1609,
+      "hi": 0.2283
+     },
+     "category": {
+      "k": 233,
+      "n": 525,
+      "p": 0.4438,
+      "lo": 0.4019,
+      "hi": 0.4866
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0012,
+     "exact": {
+      "k": 107,
+      "n": 590,
+      "p": 0.1814,
+      "lo": 0.1524,
+      "hi": 0.2145
+     },
+     "category": {
+      "k": 257,
+      "n": 590,
+      "p": 0.4356,
+      "lo": 0.3961,
+      "hi": 0.4759
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 112,
+      "n": 656,
+      "p": 0.1707,
+      "lo": 0.1439,
+      "hi": 0.2014
+     },
+     "category": {
+      "k": 282,
+      "n": 656,
+      "p": 0.4299,
+      "lo": 0.3925,
+      "hi": 0.4681
+     }
+    }
+   ]
+  },
+  "bge-small/hier-leaf-subtree/design": {
+   "n": 656,
+   "exact": {
+    "k": 113,
+    "n": 656,
+    "p": 0.1723,
+    "lo": 0.1453,
+    "hi": 0.203
+   },
+   "sameLevel2": {
+    "k": 195,
+    "n": 656,
+    "p": 0.2973,
+    "lo": 0.2635,
+    "hi": 0.3333
+   },
+   "sameCategory": {
+    "k": 282,
+    "n": 656,
+    "p": 0.4299,
+    "lo": 0.3925,
+    "hi": 0.4681
+   },
+   "top3Exact": {
+    "k": 167,
+    "n": 656,
+    "p": 0.2546,
+    "lo": 0.2227,
+    "hi": 0.2893
+   },
+   "byReferenceConfidence": {
+    "high": {
+     "exact": {
+      "k": 86,
+      "n": 325,
+      "p": 0.2646,
+      "lo": 0.2196,
+      "hi": 0.3151
+     },
+     "sameLevel2": {
+      "k": 121,
+      "n": 325,
+      "p": 0.3723,
+      "lo": 0.3215,
+      "hi": 0.4261
+     },
+     "sameCategory": {
+      "k": 147,
+      "n": 325,
+      "p": 0.4523,
+      "lo": 0.3991,
+      "hi": 0.5067
+     }
+    },
+    "low": {
+     "exact": {
+      "k": 0,
+      "n": 62,
+      "p": 0.0,
+      "lo": 0.0,
+      "hi": 0.0583
+     },
+     "sameLevel2": {
+      "k": 7,
+      "n": 62,
+      "p": 0.1129,
+      "lo": 0.0558,
+      "hi": 0.2152
+     },
+     "sameCategory": {
+      "k": 16,
+      "n": 62,
+      "p": 0.2581,
+      "lo": 0.1655,
+      "hi": 0.3788
+     }
+    },
+    "medium": {
+     "exact": {
+      "k": 27,
+      "n": 269,
+      "p": 0.1004,
+      "lo": 0.0699,
+      "hi": 0.1421
+     },
+     "sameLevel2": {
+      "k": 67,
+      "n": 269,
+      "p": 0.2491,
+      "lo": 0.2012,
+      "hi": 0.304
+     },
+     "sameCategory": {
+      "k": 119,
+      "n": 269,
+      "p": 0.4424,
+      "lo": 0.3843,
+      "hi": 0.5021
+     }
+    }
+   },
+   "marginTopThird": {
+    "marginAtLeast": 0.0131,
+    "exact": {
+     "k": 55,
+     "n": 218,
+     "p": 0.2523,
+     "lo": 0.1993,
+     "hi": 0.3139
+    },
+    "category": {
+     "k": 123,
+     "n": 218,
+     "p": 0.5642,
+     "lo": 0.4978,
+     "hi": 0.6284
+    }
+   },
+   "marginBottomThird": {
+    "marginAtMost": 0.0049,
+    "exact": {
+     "k": 17,
+     "n": 218,
+     "p": 0.078,
+     "lo": 0.0493,
+     "hi": 0.1213
+    },
+    "category": {
+     "k": 74,
+     "n": 218,
+     "p": 0.3394,
+     "lo": 0.2799,
+     "hi": 0.4046
+    }
+   },
+   "coverageCurve": [
+    {
+     "coverage": 0.1,
+     "marginAtLeast": 0.0249,
+     "exact": {
+      "k": 19,
+      "n": 66,
+      "p": 0.2879,
+      "lo": 0.1927,
+      "hi": 0.4064
+     },
+     "category": {
+      "k": 45,
+      "n": 66,
+      "p": 0.6818,
+      "lo": 0.5621,
+      "hi": 0.7815
+     }
+    },
+    {
+     "coverage": 0.2,
+     "marginAtLeast": 0.0184,
+     "exact": {
+      "k": 32,
+      "n": 131,
+      "p": 0.2443,
+      "lo": 0.1787,
+      "hi": 0.3244
+     },
+     "category": {
+      "k": 78,
+      "n": 131,
+      "p": 0.5954,
+      "lo": 0.5098,
+      "hi": 0.6756
+     }
+    },
+    {
+     "coverage": 0.3,
+     "marginAtLeast": 0.0141,
+     "exact": {
+      "k": 48,
+      "n": 197,
+      "p": 0.2437,
+      "lo": 0.189,
+      "hi": 0.3081
+     },
+     "category": {
+      "k": 112,
+      "n": 197,
+      "p": 0.5685,
+      "lo": 0.4987,
+      "hi": 0.6357
+     }
+    },
+    {
+     "coverage": 0.4,
+     "marginAtLeast": 0.0106,
+     "exact": {
+      "k": 62,
+      "n": 262,
+      "p": 0.2366,
+      "lo": 0.1892,
+      "hi": 0.2917
+     },
+     "category": {
+      "k": 140,
+      "n": 262,
+      "p": 0.5344,
+      "lo": 0.4739,
+      "hi": 0.5938
+     }
+    },
+    {
+     "coverage": 0.5,
+     "marginAtLeast": 0.0083,
+     "exact": {
+      "k": 73,
+      "n": 328,
+      "p": 0.2226,
+      "lo": 0.1809,
+      "hi": 0.2706
+     },
+     "category": {
+      "k": 162,
+      "n": 328,
+      "p": 0.4939,
+      "lo": 0.4402,
+      "hi": 0.5478
+     }
+    },
+    {
+     "coverage": 0.6,
+     "marginAtLeast": 0.0061,
+     "exact": {
+      "k": 87,
+      "n": 394,
+      "p": 0.2208,
+      "lo": 0.1827,
+      "hi": 0.2644
+     },
+     "category": {
+      "k": 193,
+      "n": 394,
+      "p": 0.4898,
+      "lo": 0.4408,
+      "hi": 0.5391
+     }
+    },
+    {
+     "coverage": 0.7,
+     "marginAtLeast": 0.0044,
+     "exact": {
+      "k": 100,
+      "n": 459,
+      "p": 0.2179,
+      "lo": 0.1825,
+      "hi": 0.2579
+     },
+     "category": {
+      "k": 214,
+      "n": 459,
+      "p": 0.4662,
+      "lo": 0.4211,
+      "hi": 0.512
+     }
+    },
+    {
+     "coverage": 0.8,
+     "marginAtLeast": 0.0029,
+     "exact": {
+      "k": 101,
+      "n": 525,
+      "p": 0.1924,
+      "lo": 0.1609,
+      "hi": 0.2283
+     },
+     "category": {
+      "k": 233,
+      "n": 525,
+      "p": 0.4438,
+      "lo": 0.4019,
+      "hi": 0.4866
+     }
+    },
+    {
+     "coverage": 0.9,
+     "marginAtLeast": 0.0012,
+     "exact": {
+      "k": 107,
+      "n": 590,
+      "p": 0.1814,
+      "lo": 0.1524,
+      "hi": 0.2145
+     },
+     "category": {
+      "k": 257,
+      "n": 590,
+      "p": 0.4356,
+      "lo": 0.3961,
+      "hi": 0.4759
+     }
+    },
+    {
+     "coverage": 1.0,
+     "marginAtLeast": 0.0,
+     "exact": {
+      "k": 113,
+      "n": 656,
+      "p": 0.1723,
+      "lo": 0.1453,
+      "hi": 0.203
+     },
+     "category": {
+      "k": 282,
+      "n": 656,
+      "p": 0.4299,
+      "lo": 0.3925,
+      "hi": 0.4681
+     }
+    }
+   ]
+  }
+ }
+}
