@@ -1,4 +1,5 @@
 import {type ReactNode} from "react";
+import {useLocation} from "react-router-dom";
 
 import {useSearchShortcut} from "../hooks/use-search-shortcut";
 import {useChainChoice} from "../lib/chain-choice";
@@ -6,6 +7,7 @@ import {useChainChoice} from "../lib/chain-choice";
 import {ActivityLog} from "./brand/ActivityLog";
 import {ChainToggle} from "./brand/ChainToggle";
 import {NavCoin, NavTrailProvider} from "./brand/NavCoin";
+import {SideGalaxy} from "./brand/SideGalaxy";
 import {Watermark} from "./brand/Watermark";
 import {useOnboarding} from "./onboarding/onboarding-context";
 import {SiteFooterLinks} from "./site/SiteFooter";
@@ -45,6 +47,8 @@ export function Layout({children}: {children: ReactNode}) {
     const chain = useChainChoice();
     const onboarding = useOnboarding();
     useSearchShortcut();
+    // The landing draws its own galaxy; every other page gets the faint one at its sides.
+    const {pathname} = useLocation();
 
     return (
         /* `min-h-screen flex flex-col` is what makes `flex-1` on `<main>` mean anything. This was
@@ -53,7 +57,8 @@ export function Layout({children}: {children: ReactNode}) {
            arrived (user, 2026-10-27). */
         /* `pb-9` is the collapsed activity bar's height, so the fixed bar never sits on the footer. */
         <NavTrailProvider>
-            <div className="flex min-h-screen flex-col pb-9">
+            {pathname === "/" ? null : <SideGalaxy />}
+            <div className="arp-page flex min-h-screen flex-col pb-9">
                 {/* Agents, Tools, Activity, Search, Docs: `/` is the landing and the coin leads to
                     it. Get started opens the onboarding panel, the one door for putting an agent
                     or a tool into ARP (task 62, ADR `0125`), and is lit on the `/start/<profile>`

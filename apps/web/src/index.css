@@ -892,6 +892,24 @@ a.arp-cf-card:hover {
     }
 }
 
+/* ---- the side galaxy (SideGalaxy.tsx) ------------------------------------ */
+
+/* Fixed behind the page: the layout's column sits above it (`.arp-page`), so it shows only where
+   the page itself has no background. */
+.arp-side-galaxy {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+}
+
+.arp-page {
+    position: relative;
+    z-index: 1;
+}
+
 /* ---- the nav: the coin (NavCoin.tsx) ------------------------------------- */
 
 /* Plain classes on purpose: the unlayered `a`, `a:hover` and `button` rules
