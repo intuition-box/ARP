@@ -58,6 +58,41 @@ const INNER = 0.17;
 const OUTER = 0.42;
 
 /**
+ * How far each ring is turned, in steps of its own spacing, on the atom page.
+ *
+ * Half a step of rotation per ring, so two claims about the same subject under different
+ * predicates do not line up on one radius and read as a single mark.
+ */
+export function atomPageOffset(ring: number): number {
+    return (ring % 2) * 0.5;
+}
+
+/**
+ * How far each ring is turned on the landing (task 81), where each ring's name sits at twelve
+ * o'clock: no dot may sit there, and rings 1 and 2 never share a radius.
+ */
+export const LANDING_RING_OFFSETS = [0.5, 0.5, 0.25] as const;
+
+export function landingOffset(ring: number): number {
+    return LANDING_RING_OFFSETS[ring % LANDING_RING_OFFSETS.length] ?? 0;
+}
+
+/**
+ * The angle of one dot on its ring, in radians, clockwise from twelve o'clock.
+ *
+ * @param offset how far the ring is turned, in steps; the atom page's rule by default.
+ */
+export function ringAngle(
+    ring: number,
+    position: number,
+    drawn: number,
+    offset: (ring: number) => number = atomPageOffset,
+): number {
+    const step = drawn === 0 ? 0 : (Math.PI * 2) / drawn;
+    return -Math.PI / 2 + (offset(ring) + position) * step;
+}
+
+/**
  * Lay out one field.
  *
  * @param groups how many claims each predicate has, in render order.
@@ -75,12 +110,8 @@ export function claimField(groups: readonly number[]): {rings: ClaimRing[]; dots
             groups.length === 1 ? OUTER : INNER + (ring / (groups.length - 1)) * (OUTER - INNER);
         rings.push({ring, r, drawn, total});
 
-        // Half a step of rotation per ring, so two claims about the same subject under different
-        // predicates do not line up on one radius and read as a single mark.
-        const step = drawn === 0 ? 0 : (Math.PI * 2) / drawn;
-        const offset = (ring % 2) * (step / 2);
         for (let position = 0; position < drawn; position += 1) {
-            const angle = -Math.PI / 2 + offset + position * step;
+            const angle = ringAngle(ring, position, drawn);
             dots.push({
                 index: index + position,
                 ring,
@@ -236,13 +267,35 @@ export function loupeRest(r: number): Point {
  * passes `cornerMaxX`, so it is always in view.
  */
 export function loupeLine(at: Point): string {
-    const cornerX = Math.min(
-        at.x + Math.abs(at.y - LOUPE.barY) / Math.tan((LOUPE.riseDegrees * Math.PI) / 180),
-        LOUPE.cornerMaxX,
-    );
-    const angle = Math.atan2(LOUPE.barY - at.y, cornerX - at.x);
-    const sx = at.x + LOUPE.radius * Math.cos(angle);
-    const sy = at.y + LOUPE.radius * Math.sin(angle);
+    const [start, corner, end] = elbowLine(at, {
+        radius: LOUPE.radius,
+        barY: LOUPE.barY,
+        endX: LOUPE.barEndX,
+        cornerMaxX: LOUPE.cornerMaxX,
+    });
     const f = (n: number) => n.toFixed(4);
-    return `${f(sx)},${f(sy)} ${f(cornerX)},${LOUPE.barY} ${LOUPE.barEndX},${LOUPE.barY}`;
+    return `${f(start.x)},${f(start.y)} ${f(corner.x)},${corner.y} ${end.x},${end.y}`;
+}
+
+/**
+ * The loupe's line in any unit: from the rim of a circle of `radius` at `at`, at
+ * `LOUPE.riseDegrees` to the level `barY`, then level to `endX`. The corner never passes
+ * `cornerMaxX`, so there is always an angle (the user, 2026-10-29: never a straight line).
+ *
+ * The atom page draws it in fractions of the box; the landing's canvas in pixels.
+ */
+export function elbowLine(
+    at: Point,
+    bar: {radius: number; barY: number; endX: number; cornerMaxX: number},
+): [Point, Point, Point] {
+    const cornerX = Math.min(
+        at.x + Math.abs(at.y - bar.barY) / Math.tan((LOUPE.riseDegrees * Math.PI) / 180),
+        bar.cornerMaxX,
+    );
+    const angle = Math.atan2(bar.barY - at.y, cornerX - at.x);
+    return [
+        {x: at.x + bar.radius * Math.cos(angle), y: at.y + bar.radius * Math.sin(angle)},
+        {x: cornerX, y: bar.barY},
+        {x: bar.endX, y: bar.barY},
+    ];
 }
