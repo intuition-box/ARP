@@ -7,10 +7,9 @@ import {ChainToggle} from "../ChainToggle";
 describe("the chain control (task 74)", () => {
     afterEach(() => vi.unstubAllEnvs());
 
-    it("says this is a test on testnet, and offers no switch, unless a build allows mainnet", () => {
+    it("shows nothing, and offers no switch, unless a build allows mainnet", () => {
         renderWithProviders(<ChainToggle />);
-        const label = screen.getByRole("link", {name: /Testnet · test money/});
-        expect(label.getAttribute("href")).toBe("/conditions");
+        expect(screen.queryByRole("link")).toBeNull();
         expect(screen.queryByRole("button")).toBeNull();
     });
 

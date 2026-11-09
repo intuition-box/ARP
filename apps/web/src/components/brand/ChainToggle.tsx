@@ -1,5 +1,3 @@
-import {Link} from "react-router-dom";
-
 import {useChainChoice, useSetChain} from "../../lib/chain-choice";
 import {allowsMainnet} from "../../lib/site-config";
 
@@ -24,27 +22,8 @@ import {allowsMainnet} from "../../lib/site-config";
  * what it will do, not just which chain is current.
  */
 export function ChainToggle() {
-    return allowsMainnet() ? <Toggle /> : <TestnetOnly />;
-}
-
-/**
- * Where mainnet is not allowed (task 74), the control is a statement instead: this is a test, on
- * testnet, with test money. It leads to the terms, which say what that means.
- */
-function TestnetOnly() {
-    return (
-        <Link
-            to="/conditions"
-            // Banged: the unlayered `a` rule in `index.css` beats an unbanged colour utility.
-            className="inline-flex h-7 items-center gap-2 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] px-2.5 font-mono text-[11px] uppercase tracking-[0.1em] text-[color:var(--color-fg)]! no-underline!"
-        >
-            <span
-                aria-hidden="true"
-                className="h-[6px] w-[6px] rounded-full border border-[color:var(--color-steel)]"
-            />
-            Testnet · test money
-        </Link>
-    );
+    // A testnet-only build shows nothing here: a label with no action was noise (the user, 2026-11-09).
+    return allowsMainnet() ? <Toggle /> : null;
 }
 
 function Toggle() {
