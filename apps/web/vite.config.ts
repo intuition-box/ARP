@@ -7,7 +7,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 import {buildLlmsFull, buildLlmsIndex} from './src/docs/llms';
 import {DOC_SECTIONS} from './src/docs/manifest';
-import {LEGAL_SLUGS, remainingPlaceholders} from './src/services/legal';
+import {LEGAL_SLUGS, legalDetailsFrom, remainingPlaceholders} from './src/services/legal';
 
 const DOCS_DIR = fileURLToPath(new URL('./public/docs/', import.meta.url));
 
@@ -60,7 +60,8 @@ const SITEMAP_PATHS = [
  * The public site's build (task 74).
  *
  * - A **release** build (`VITE_PUBLIC_RELEASE=1`) fails while a legal page still holds a
- *   `[… TO BE COMPLETED]` placeholder, so the site cannot go online with them unfilled.
+ *   `[… TO BE COMPLETED]` placeholder, that is while a `VITE_LEGAL_*` variable is unset, so the
+ *   site cannot go online with them unfilled.
  * - `robots.txt` and `sitemap.xml` are written with `VITE_SITE_URL`, the address the site is served
  *   at; without it there is no absolute URL to give, so no sitemap is written and robots says so.
  */
@@ -71,11 +72,11 @@ function publicSite(env: Record<string, string>): Plugin {
         apply: 'build',
         buildStart() {
             if (env.VITE_PUBLIC_RELEASE !== '1') return;
-            const left = remainingPlaceholders();
+            const left = remainingPlaceholders(legalDetailsFrom(env));
             if (left.length > 0) {
                 this.error(
                     `VITE_PUBLIC_RELEASE=1 but the legal pages still hold ${left.length} placeholder(s), ` +
-                        `in apps/web/src/services/legal.ts: ${[...new Set(left)].join(', ')}`,
+                        `set the matching VITE_LEGAL_* build variables: ${[...new Set(left)].join(', ')}`,
                 );
             }
             if (siteUrl === '') this.error('VITE_PUBLIC_RELEASE=1 needs VITE_SITE_URL, the address the site is served at.');

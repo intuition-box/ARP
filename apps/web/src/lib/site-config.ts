@@ -1,3 +1,5 @@
+import {legalDetailsFrom, type LegalDetails} from "../services/legal";
+
 /**
  * What the hosted site allows (task 74).
  *
@@ -12,4 +14,13 @@ export function allowsMainnet(): boolean {
     // Vite types `import.meta.env` keys through an index signature; annotated so `any` stops here.
     const flag: string | undefined = import.meta.env.VITE_ALLOW_MAINNET;
     return flag === "1";
+}
+
+/**
+ * The legal pages' build variables (`LEGAL_VARIABLES`): the host's details, the contact e-mail and
+ * the log retention. Set in the deployment, never committed. Read at call time, so a test can stub them.
+ */
+export function legalDetails(): LegalDetails {
+    // `import.meta.env` is Vite's typed record of the build's variables; read as a plain string map.
+    return legalDetailsFrom(import.meta.env as Record<string, string | undefined>);
 }

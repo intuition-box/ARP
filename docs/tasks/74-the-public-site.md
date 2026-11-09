@@ -31,3 +31,7 @@ The user asked for both in the footer (« il manque un footer aussi avec accessi
 ## Follow-up, 2026-11-09: the legal pages in English
 
 The user asked for every legal page in English (« toutes les conditions et autres mentions légales doivent être en anglais »). `apps/web/src/services/legal.ts` is translated, with the same content. The slugs are now `/legal-notice`, `/privacy`, `/cookies`, `/terms`, `/accessibility` and `/contact`; the French ones above are history and no longer route. The placeholders read `[… TO BE COMPLETED]`, and a `VITE_PUBLIC_RELEASE=1` build still fails while one is left. The accessibility page's known limit "legal pages in French" is gone.
+
+## Follow-up, 2026-11-09: the publisher is anonymous
+
+The user chose anonymity (a private individual, non-professional: LCEN article 6, III, 2). The legal pages name no publisher and no publication director; the legal notice says the identity is known to the host. The host's name, address and phone, the contact e-mail and the log retention are five `VITE_LEGAL_*` build variables, set in Coolify and never committed (`apps/web/DEPLOY.md`); an unset one prints as a blank naming it, and a `VITE_PUBLIC_RELEASE=1` build fails while one is unset. The host, in the user's words: intuition.box.

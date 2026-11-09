@@ -19,10 +19,11 @@ describe("the site's own pages (task 74)", () => {
         expect(screen.getByRole("link", {name: "Agents"}).getAttribute("href")).toBe("/agents");
     });
 
-    it("prints the legal notice in English, and shows a blank as a blank", async () => {
+    it("prints the legal notice in English, names no publisher, and shows an unset variable as a blank", async () => {
         renderAt("/legal-notice");
         expect(await screen.findByRole("heading", {name: "Legal notice"})).toBeTruthy();
-        expect(screen.getByText("[PUBLISHER'S FULL NAME TO BE COMPLETED]")).toBeTruthy();
+        expect(screen.getByText(/the publisher's identity is not shown here/)).toBeTruthy();
+        expect(screen.getByText("[VITE_LEGAL_HOST_NAME TO BE COMPLETED]")).toBeTruthy();
     });
 
     it("says there is no cookie, and says what the browser keeps instead", async () => {

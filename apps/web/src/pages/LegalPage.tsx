@@ -1,7 +1,8 @@
 import {Fragment} from "react";
 
 import {BackLink} from "../components/brand/BackLink";
-import {LEGAL, PLACEHOLDER, type LegalSlug} from "../services/legal";
+import {legalDetails} from "../lib/site-config";
+import {legalDocs, PLACEHOLDER, type LegalSlug} from "../services/legal";
 
 const LABEL =
     "font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]";
@@ -28,7 +29,7 @@ function Text({text}: {text: string}) {
 
 /** One of the legal pages (task 74), in English since 2026-11-09. */
 export function LegalPage({slug}: {slug: LegalSlug}) {
-    const doc = LEGAL[slug];
+    const doc = legalDocs(legalDetails())[slug];
     return (
         <article className="max-w-[72ch]">
             <BackLink to="/" label="home" />
