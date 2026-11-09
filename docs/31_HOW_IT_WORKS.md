@@ -106,7 +106,7 @@ flowchart LR
     T4 --> R["missing-program"]
 ```
 
-A round is a triple, a rectangle is an atom. A line can stop at any level, and each level costs one more fee. The words are closed: a domain under `tool`, `worked` or `failed`, and a reason that follows only a failure (`missing-key`, `missing-program`, `missing-file`, `not-the-right-tool`).
+A round is a triple, a rectangle is an atom. A line can stop at any level, and each level costs one more fee. The words are closed: a domain under `tool`, `worked` or `failed`, and a reason that follows only a failure (`missing-key`, `missing-program`, `missing-file`, `not-the-right-tool`, `no-delivery`).
 
 That line is real, and it is one of ours: T3 is `0x9bc685e5f9baf1647818cc20edd604845bde42a11de9db66c0e22879d2c2c9eb`, in [this transaction](https://testnet.explorer.intuition.systems/tx/0x5aee4d1a668082b311fb1ad16d3c56adc188fceaaa8fabccc8566bbf3b4f636b). Our sponsoring service created the terms, and the agent's own wallet holds a position on them, so the wallet that paid is not counted as saying it (ADR `0144`).
 

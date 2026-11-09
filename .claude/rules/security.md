@@ -48,7 +48,7 @@ Walk through each item for every contract change. Document the result (clean pas
   (`packages/protocol/src/sponsor/mint-gas.ts`, ADR `0116`), which carries no verifying contract
   because no contract checks it, and whose nonce the sponsoring service spends once; the address's
   list-tool request (`packages/protocol/src/sponsor/list-tool.ts`, ADR `0123`), the same shape
-  with the URL in the signed message; the agent's line request (`packages/protocol/src/sponsor/line.ts`, ADR `0144`), the same shape with the line in the signed message; the agent's category request (`packages/protocol/src/sponsor/category.ts`, ADR `0146`), the same shape with the category, its parent, the subject and the reason in the signed message; and `ReceiptEnforcer`
+  with the URL in the signed message; the agent's line request (`packages/protocol/src/sponsor/line.ts`, ADR `0144`), the same shape with the line in the signed message, and since version 2 the x402 payment the line claims (ADR `0159`); the agent's category request (`packages/protocol/src/sponsor/category.ts`, ADR `0146`), the same shape with the category, its parent, the subject and the reason in the signed message; and `ReceiptEnforcer`
   (`contracts/src/enforcers/ReceiptEnforcer.sol`, task 43, not deployed), which verifies that hire
   receipt on chain. The content receipt and the sponsor request carry no verifying contract. For the
   content receipt the cause still holds: no contract checks it. The sponsor request's nonce is the
@@ -59,7 +59,14 @@ Walk through each item for every contract change. Document the result (clean pas
   at the verifier it names. One payment gets one receipt only as far as the signing node's ledger
   holds: a node that signs two receipts for one payment, naming two verifiers, gets both used.
   The v1 receipt, which named no verifier, still verifies in `hire-receipt.ts` and is accepted by
-  neither (`SECURITY_REVIEW.md` INFO-R1 holds the history). A new signature site gets checked
+  neither (`SECURITY_REVIEW.md` INFO-R1 holds the history). **One payment proof is read on another chain** (task 89, ADR `0159`): an x402 line's
+  settlement transaction, checked by `packages/protocol/src/x402-payment.ts` in `apps/sponsor`'s
+  `/line`, in `arp line` and in `scripts/build/build-x402-feed.ts`. It is no signature: it reads one
+  receipt on the paying network (Base by default), takes the payer from the token's `Transfer` log and
+  never from `tx.from`, and accepts it only from the line writer's address or that agent's
+  `agentWallet`. ARP holds no account on that network and signs nothing there. A payment can be named
+  by several lines; the feed drops all of them, the sponsor's caps bound what it pays meanwhile.
+  A new signature site gets checked
   against the bullet above, and added to this list, before it ships (ADRs `0096`, `0098`, `0117`).
 
 ### Oracles / external data
@@ -138,7 +145,7 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   | ARP's own                                               | the sponsoring service, for a new agent's mint gas, its identity atoms and its first `uses` triple, within the same budget | **testnet 13579 only** — ADR `0110`                      |
   | ARP's own                                               | the sponsoring service, for a tool listing (the tool's atom, a skill's repository and `source`), within its own daily caps and the same budget | **testnet 13579 only** — ADR `0123`                      |
   | ARP's own                                               | the sponsoring service, for an accepted category (its atom, its parent edge, one skill's tag) or a tag with an existing category, as an attestor the index reads, within their own daily caps and the same budget; a new category only for a registered agent's signed request, within that agent's own daily cap (ADR `0146`) | **testnet 13579 only** — ADR `0124`                      |
-  | ARP's own                                               | the sponsoring service, for one form B line and the agent's position on each level, with no proof of use, within its own daily caps and the same budget | **testnet 13579 only** — ADR `0144`                      |
+  | ARP's own                                               | the sponsoring service, for one form B line and the agent's position on each level, with no proof of use, within its own daily caps and the same budget; for an x402 line, one more level naming its payment, read first on the paying chain | **testnet 13579 only** — ADR `0144`, ADR `0159`          |
 
   Row 3 is the product (`docs/12` points 3 and 5), so a flat "no agent may ever sign a mainnet
   transaction" forbids the thing being built. Row 1 is the development hazard the rule exists for.

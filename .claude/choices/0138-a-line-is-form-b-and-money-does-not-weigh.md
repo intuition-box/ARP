@@ -1,6 +1,6 @@
 # 0138 — A line is written in form B, has a closed reason, and money does not weigh in the score
 
-**Status:** Accepted
+**Status:** Accepted. Amended by ADR `0159`, 2026-11-09: a fifth reason, `no-delivery`.
 **Date:** 2026-11-05
 **Amends:** ADR `0135` (the shape of a line), and fills in part of ADR `0137` (what the score reads)
 **Triggered by:** the user, 2026-11-05: « oui la forme B est la meilleur et il faut la documenter avec un schema, les raison dechec doivent aussi etre ceux la, et largent deposer ne devrais pas ». Point 5 and the first form of point 7 are proposals of the same day that the user validated, as relayed by the session coordinating ARP's sessions (`arp-f3`). Point 7's final form is the user's own answer, « A », after the review measured what the first form did

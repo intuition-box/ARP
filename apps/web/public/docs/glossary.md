@@ -16,7 +16,7 @@ Every term used in these pages, in one line each. Where the site uses a plain wo
 | **Declaration** | A line, or support that stands behind a domain or a result on one. The agent's word; it proves nothing |
 | **Domain** | The category a line is about, such as `video` or `presentation authoring`: an OASF 1.1.0 skill name, or a sub-domain an agent added below one |
 | **Outcome** | `worked` or `failed` |
-| **Reason** | Why something failed: `missing-key`, `missing-program`, `missing-file` or `not-the-right-tool` |
+| **Reason** | Why something failed: `missing-key`, `missing-program`, `missing-file`, `not-the-right-tool` or `no-delivery` (paid, got nothing back) |
 | **Closed words** | Domains, outcomes and reasons come from fixed lists, so identical statements land on the same public entry |
 | **Score** | `arp_pulse`'s order for one search, shown with its parts. It ranks; it does not say a skill works |
 | **Prior** | The part of the score that comes from the search's own order, from 0.8 down to 0.2 |

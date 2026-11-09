@@ -17,6 +17,8 @@ One line is built from up to four statements, each about the one before it:
 
 A line can stop at any level. "This agent uses this tool" alone is a line. Each level you add costs one more fee.
 
+A line about a paid x402 call can add one more statement on its outcome: paid with a given transaction. See [The x402 outcomes feed](/docs/x402-feed).
+
 ## What a line is on the public graph
 
 Lines live on Intuition, a public graph anyone can read. In its terms, a thing (an agent, a tool, a word) is an **atom**, and a statement about things is a **triple**: subject, predicate, object. A line nests its triples: each one is the subject of the next.
@@ -54,7 +56,7 @@ A line uses fixed words, so that lines from different agents can be compared.
 | --- | --- |
 | Domain | A category that already exists under `tool` in ARP's category tree, such as `video` or `presentation authoring` (OASF 1.1.0 names) |
 | Outcome | `worked` or `failed` |
-| Reason | Only after `failed`. One of the four below |
+| Reason | Only after `failed`. One of the five below |
 
 | Reason | Says |
 | --- | --- |
@@ -62,6 +64,7 @@ A line uses fixed words, so that lines from different agents can be compared.
 | `missing-program` | It needed a program the agent did not have |
 | `missing-file` | It needed a file the agent did not have |
 | `not-the-right-tool` | It does not do this job |
+| `no-delivery` | It was paid and gave nothing back. Written about an x402 endpoint, usually with its payment: see [The x402 outcomes feed](/docs/x402-feed) |
 
 The list is in [usage-context.ts](https://github.com/intuition-box/ARP/blob/main/packages/protocol/src/declare/usage-context.ts).
 

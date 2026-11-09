@@ -42,6 +42,7 @@ This sentence is on testnet 13579 (`data/measurements/pulse-walk-2026-11-05.json
 | `missing-program` | It needed a program the agent did not have |
 | `missing-file` | It needed a file the agent did not have |
 | `not-the-right-tool` | It does not do this job |
+| `no-delivery` | It was paid and gave nothing back (ADR `0159`). About an x402 endpoint, usually with a fifth level, `(T3, paid with, eip155:<chain>/tx/<hash>)` |
 
 **Writing one from the plugin:** `arp line --tool <url> --outcome failed --reason missing-key [--domain video]` (a domain the tree lacks takes `--parent <category> --why <text>`, ADR `0146`), through the local sponsoring service, testnet 13579 only (ADR `0144`). It takes no proof of use, and the service pays. The service's own wallet says nothing by paying.
 
