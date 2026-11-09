@@ -6,6 +6,7 @@ import {RouteTransition} from "./components/brand/RouteTransition";
 import {ScrollToTop} from "./components/brand/ScrollToTop";
 
 import {Layout} from "./components/Layout";
+import {siteRoutes} from "./site-routes";
 
 /**
  * The trust panel and its entry point are split out of the main bundle. They
@@ -178,6 +179,7 @@ function App() {
                             </Suspense>
                         }
                     />
+                    {siteRoutes()}
                 </Routes>
             </RouteTransition>
         </Layout>
