@@ -1,0 +1,15 @@
+# Read by BuildKit for apps/web/Dockerfile, with the repository root as the context.
+**/node_modules
+**/dist
+.git
+contracts/lib
+contracts/out
+contracts/cache
+contracts/broadcast
+**/.env
+**/.env.*
+!**/.env.example
+packaging
+scripts
+**/*.test.ts
+**/*.test.tsx
