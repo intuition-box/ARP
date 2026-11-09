@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-150 decisions. Newest last. `choices/README.md` says when to write one.
+151 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -32,6 +32,7 @@ Read these before relying on them.
 - **0137** (Accepted. Its design is open.) — ARP will compute a score
 - **0145** (Accepted. Amended 2026-11-06 for the Claude Code plugin, at the end: it no longer goes through `npx`.) — The published CLI carries viem and has no dependency
 - **0148** (Accepted (design; nothing built)) — The hire loop reuses x402, ERC-8183 and ERC-8004, and checks the payment at read time
+- **0154** (Proposed) — Public read pages are dated static snapshots, not a live endpoint
 
 ## All
 
@@ -187,3 +188,4 @@ Read these before relying on them.
 | [0151](0151-the-nav-is-a-coin-the-mark-leaves-the-centre.md) | 2026-11-09 | Accepted | The nav is a coin: the mark leaves the centre |
 | [0152](0152-the-landing-is-one-camera-through-a-galaxy.md) | 2026-11-09 | Accepted | The landing is one camera through a galaxy, and the claim field is on it |
 | [0153](0153-search-reads-skills-sh-and-agents-open-on-reachable.md) | 2026-11-09 | Accepted | The search reads skills.sh's index, and the agent list opens on the reachable |
+| [0154](0154-public-read-pages-are-dated-static-snapshots.md) | 2026-11-09 | Proposed | Public read pages are dated static snapshots, not a live endpoint |
