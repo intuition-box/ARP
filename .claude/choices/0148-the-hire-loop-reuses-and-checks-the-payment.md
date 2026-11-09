@@ -15,8 +15,9 @@ already built and audited, build as little as possible, and rebuild only what gi
 1. **Payment:** x402, paying first, by default; ERC-8183 escrow above a price or duration threshold. ARP
    writes no escrow contract and reads an 8183 evaluator's attestation as a signal.
 2. **Proof across chains:** the line carries the payment's reference in ERC-8004's `proofOfPayment`
-   shape, and the reader checks it on the paying chain (sender = the line's writer, recipient = the
-   provider's payee, amount = the offer's). The verdict is a dated fact off chain, like the probe (ADR
+   shape, and the reader checks it on the paying chain: the payer, read from the token transfer and never
+   from `tx.from`, is the client agent's holder or its ERC-8004 `agentWallet`; the recipient is the
+   provider's payee; the amount is the offer's. The verdict is a dated fact off chain, like the probe (ADR
    `0093`). No bridge, no oracle. A line whose proof does not check stays at the declared tier.
 3. **Who signs a payment:** an autonomous agent under a per-period delegation (MetaMask's
    `erc20PeriodTransfer` for tokens, `TrustStakeCapEnforcer` for native TRUST); a person in the loop
@@ -49,7 +50,9 @@ backs them**. That is what makes one record worth reading for every checker or d
 **Negative:**
 
 - An agent paying from a smart account pays from an address that is not the key writing the line. The
-  link between that account and the ERC-8004 identity must be checkable, or choice 2 cannot pass.
+  link is ERC-8004's own `agentWallet` (set by the new wallet's EIP-712 / ERC-1271 signature), the rule
+  `apps/sponsor` already applies to hire receipts (`proof.ts`). Whether the paying chain's registry
+  exposes it the same way is to check before building.
 - Choice 4 is one more write per hire, on the registry's chain.
 - The node is paid in native tTRUST today; x402 waits for the mainnet port (ADR `0102`), so the loop
   cannot run end to end on testnet as decided.

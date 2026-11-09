@@ -97,15 +97,19 @@ The user's answers, ADR `0148`. Still a concept: nothing below is built.
 | # | Question | Choice | Why |
 | --- | --- | --- | --- |
 | 1 | Pay first, or escrow? | **x402, paying first, by default. ERC-8183 escrow above a price or duration threshold.** ARP writes no escrow contract | every x402 seller already accepts the first; the second exists. ARP reads an 8183 evaluator's attestation as one more signal |
-| 2 | Pay on one chain, record on another | **No bridge, no oracle: the line carries the payment's reference, in ERC-8004's `proofOfPayment` shape (`chainId`, `txHash`, `fromAddress`, `toAddress`), and the reader checks it on the paying chain** — sender is the line's writer, recipient the provider's payee, amount the offer's. The result is a dated fact, never on chain, as the probe is (ADR `0093`) | works for any chain; a line without a proof that checks stays declared |
+| 2 | Pay on one chain, record on another | **No bridge, no oracle: the line carries the payment's reference, in ERC-8004's `proofOfPayment` shape (`chainId`, `txHash`, `fromAddress`, `toAddress`), and the reader checks it on the paying chain** — the payer is the client agent's holder or its `agentWallet`, the recipient the provider's payee, the amount the offer's. The payer is read from the token transfer itself (the `Transfer` event, or the EIP-3009 authorisation), never from `tx.from`, which is the x402 facilitator or the delegation's redeemer. The result is a dated fact, never on chain, as the probe is (ADR `0093`) | works for any chain; a line without a proof that checks stays declared |
 | 3 | Delegation or a signature per call | **Both, by who is in charge.** An autonomous agent pays under a per-period delegation (`erc20PeriodTransfer` in USDC, `TrustStakeCapEnforcer` for native TRUST). With a person in the loop, or for a first run, x402's own per-payment signature | the seller receives an ordinary x402 payment either way; no ARP code in the payment |
 | 4 | Mirror to ERC-8004 feedback | **Yes, observed lines only**: the client's agent also calls `giveFeedback`, with `proofOfPayment` and a URI pointing at the ARP line, which keeps the domain and the reason | puts the record where 8004's readers already look, with ARP as the source |
 | 5 | An outside reader | **A dated, signed read API**, per endpoint and domain ("N payers, M failed, these reasons"), open to any reader. ARP also reads what others publish (a pre-pay checker's index under its licence, 8004 feedback, 8183 attestations) as dated facts, each with its source named | one record, readable by every checker or directory, instead of each keeping its own |
 
-**What choice 2 still has to solve:** an agent that pays from a smart account under a delegation pays
-from an address that is not the key that writes the line. The link between that account and the
-ERC-8004 identity has to be checkable (the registry's agent wallet, or a signed statement), or the
-check in choice 2 cannot pass.
+**How choice 2 links a smart account to the agent:** an agent that pays from a smart account under a
+delegation pays from an address that is not the key writing the line. ERC-8004 already has the link: the
+reserved `agentWallet`, set by `setAgentWallet` with an EIP-712 signature of the new wallet, ERC-1271
+for a smart account, and reset when the agent changes hands (`contracts/src/erc8004/IdentityRegistry.sol:29,56,214`,
+ARP's copy of the reference registry). The operator sets the smart account as the agent's `agentWallet`.
+ARP's sponsor already accepts the holder or the `agentWallet` for a hire receipt
+(`packages/protocol/src/sponsor/proof.ts:150-164`); choice 2 applies the same rule to the payer. Whether
+the registry on the paying chain exposes `agentWallet` the same way is to check before building.
 
 **What choice 4 costs:** one more write per hire, on the chain the registry is on, signed by the
 client. Mirroring only observed lines keeps a free rating from carrying ARP's name.
