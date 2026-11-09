@@ -193,13 +193,26 @@ describe("Landing", () => {
         ]);
     });
 
-    it("says nothing has happened rather than showing a sample, when the chain is empty", async () => {
+    it("shows the sample, said to be one, when the chain answers with nothing", async () => {
+        // The user, 2026-11-09: on testnet every real line is ARP's own hidden test, so the
+        // landing falls back to the reference's sample, and every panel showing it says so.
         const {container} = renderWithProviders(<Landing />);
-        expect(await screen.findByText("No activity yet.")).toBeTruthy();
+        expect(await screen.findByText("Lines · testnet · sample")).toBeTruthy();
+        const written = scene(container, 1);
+        await waitFor(() =>
+            expect(written.querySelector(".arp-gx-sentence")?.textContent).toBe(
+                "8453:3107 uses hyperframes in context of video has outcome worked",
+            ),
+        );
+        expect(within(written).getByText("A line, word by word · sample")).toBeTruthy();
+        expect(written.textContent).toContain("Sample.");
+        const reads = scene(container, 2);
         expect(
-            await within(scene(container, 1)).findByText("No line written here yet."),
+            within(reads).getByText("What your agent reads · hyperframes · sample"),
         ).toBeTruthy();
-        expect(within(scene(container, 2)).getByText("Nothing to read here yet.")).toBeTruthy();
+        expect(reads.querySelectorAll(".arp-gx-reads li")).toHaveLength(4);
+        expect(reads.textContent).toContain("Sample.");
+        expect(screen.queryByText("No activity yet.")).toBeNull();
     });
 
     it("says the read failed rather than claiming the chain is empty", async () => {
@@ -255,14 +268,15 @@ describe("Landing", () => {
         withRealLine();
         vi.mocked(hiddenAtomIds).mockResolvedValue(new Set([AGENT_ID]));
         const {container} = renderWithProviders(<Landing />);
+        // Its only declarer is hidden, so the chain has nothing to show: the sample, never the test.
         expect(
-            await within(scene(container, 1)).findByText("No line written here yet."),
+            await within(scene(container, 1)).findByText("A line, word by word · sample"),
         ).toBeTruthy();
         expect(container.textContent).not.toContain("13579:812");
         vi.mocked(hiddenAtomIds).mockResolvedValue(new Set());
     });
 
-    it("carries no sample from the design reference", async () => {
+    it("drops the sample as soon as the chain has a real line, in every panel", async () => {
         withRealLine();
         const {container} = renderWithProviders(<Landing />);
         await waitFor(() => expect(scene(container, 1).textContent).toContain("13579:812"));

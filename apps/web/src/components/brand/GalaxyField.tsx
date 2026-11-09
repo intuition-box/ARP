@@ -52,7 +52,8 @@ import {arrivalOf, useDeck, type DeckState} from "./scene-context";
  * - **Canvas 2D, no dependency** (`docs/18` §6): 3,500 points and a few circles.
  * - **No pointer** (`rules/ui.md`): the camera follows the deck's scene, nothing else. The loupe
  *   tours on a clock; the panel row it reads is a fact the page already holds.
- * - **Real data only**: the field is the most declared tool's real claims, or the empty field.
+ * - **Real data, or the sample said to be one**: the most declared tool's real claims; while the
+ *   chain answers with nothing, `landing-sample.ts`'s, which every panel marks « Sample ».
  * - **Saffron** on the subject atom, your agent, and a claim while it is being written or read —
  *   a selected state in motion (ADR `0067`), gone when the motion settles.
  * - **Reduced motion**: every scene jumps to its end state; the loupe holds on the first reading.

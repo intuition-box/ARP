@@ -13,12 +13,14 @@ import {
     type LandingFieldReads,
     type LineVocabulary,
 } from "../services/landing-field";
+import {fieldOrSample} from "../services/landing-sample";
 import {hiddenAtomIds} from "../services/test-identities";
 
 export type LandingFieldRead =
     | {status: "pending"}
     | {status: "failed"}
-    | {status: "ok"; field: LandingField};
+    /** `sample`: the chain answered with nothing, and the field is `landing-sample.ts`'s. */
+    | {status: "ok"; field: LandingField; sample: boolean};
 
 const READS: LandingFieldReads = {
     listTools,
@@ -81,5 +83,5 @@ export function useLandingField(): LandingFieldRead {
     );
     if (read.isPending) return {status: "pending"};
     if (field === null) return {status: "failed"};
-    return {status: "ok", field};
+    return {status: "ok", ...fieldOrSample(field)};
 }

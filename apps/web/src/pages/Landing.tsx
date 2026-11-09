@@ -20,6 +20,7 @@ import {useChainChoice} from "../lib/chain-choice";
 import {cssVars} from "../lib/css-vars";
 import {heroControlClass, linkClass} from "../lib/control-class";
 import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
+import {SAMPLE_LINES} from "../services/landing-sample";
 import {relativeDay, truncateMiddle} from "../services/trust-format";
 
 /**
@@ -33,13 +34,14 @@ import {relativeDay, truncateMiddle} from "../services/trust-format";
  *
  * The order is the user's: Pulse · Written · Travels · Plug in · No grade · Build.
  *
- * ## Real data or nothing
+ * ## Real data, or the sample said to be one
  *
- * The reference is all samples except one tool name. Here the pulse reads the chain's recent
- * lines and the field reads the most declared tool on the chain the reader chose, with ARP's own
- * test identities left out (`services/test-identities.ts`). When the chain has nothing, every
- * panel says so and the field is the empty field. A failed read says it failed; it is never shown
- * as an empty chain (`rules/claims.md` §1).
+ * The pulse reads the chain's recent lines and the field reads the most declared tool on the
+ * chain the reader chose, with ARP's own test identities left out (`services/test-identities.ts`).
+ * When the chain **answers with nothing** — on testnet every real line is one of those tests —
+ * scenes 0 to 2 show the reference's sample (`services/landing-sample.ts`) and every panel showing
+ * it says « Sample » (the user, 2026-11-09). Real data replaces it panel by panel; no panel mixes
+ * the two. A failed read says it failed; a sample never stands in for one (`rules/claims.md` §1).
  */
 
 /** How many recent lines the pulse asks for, and how many it shows. */
@@ -77,7 +79,7 @@ export function Landing() {
             backdrop={
                 <GalaxyField
                     field={field.status === "ok" ? field.field : null}
-                    beats={recent.status === "ok" ? recent.data.length : 0}
+                    beats={recent.status === "ok" ? recent.data.length || SAMPLE_LINES.length : 0}
                     readRow={readRow}
                 />
             }
@@ -165,11 +167,30 @@ function nameOf(end: {atomId: string; label: string | null}): string {
 function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
     const chain = useChainChoice();
     const rows = read.status === "ok" ? read.data.slice(0, PULSE_ROWS) : [];
+    // The chain answered with nothing: the sample, said to be one (the user, 2026-11-09).
+    const sample = read.status === "ok" && rows.length === 0;
     return (
         <>
             {/* The pulse panel, top left, desktop only (the design's open question 2, decided). */}
-            <Panel label={`Lines · ${chain.label.toLowerCase()}`} className="arp-gx-beat" index={2}>
-                {rows.length === 0 ? (
+            <Panel
+                label={`Lines · ${chain.label.toLowerCase()}${sample ? " · sample" : ""}`}
+                className="arp-gx-beat"
+                index={2}
+            >
+                {sample ? (
+                    <>
+                        <ul className="arp-gx-beatrows">
+                            {SAMPLE_LINES.map((row) => (
+                                <li key={row.agent}>
+                                    <b>{row.agent}</b>
+                                    <span>{row.tool}</span>
+                                    <em>{row.context}</em>
+                                </li>
+                            ))}
+                        </ul>
+                        <p className="arp-gx-foot">Sample.</p>
+                    </>
+                ) : rows.length === 0 ? (
                     <NotYet read={read} empty={<NoActivityYet />} />
                 ) : (
                     <ul className="arp-gx-beatrows">
@@ -219,6 +240,7 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
     const written = deck.previous >= 2 && deck.current === 1 ? Infinity : since;
     const lit = (word: number) => written > (WORD_TIMES[word] ?? 0) + WORD_LIGHTS_AFTER;
     const field = read.status === "ok" ? read.field : null;
+    const sample = read.status === "ok" && read.sample;
     const line = field?.line ?? null;
     // A part the line does not have stays unlit: a line can stop at any level (docs/28).
     const present = (part: number) =>
@@ -239,7 +261,11 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
 
     return (
         <>
-            <Panel label="A line, word by word" className="arp-gx-subject arp-gx-feed" index={1}>
+            <Panel
+                label={`A line, word by word${sample ? " · sample" : ""}`}
+                className="arp-gx-subject arp-gx-feed"
+                index={1}
+            >
                 {line === null ? (
                     <NotYet
                         read={linesOf(read)}
@@ -284,6 +310,7 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
                         </ol>
                         <p className="arp-gx-foot">
                             {joined} {joined === 1 ? "agent" : "agents"} writing into them
+                            {sample ? ". Sample." : ""}
                         </p>
                     </>
                 )}
@@ -314,6 +341,7 @@ function SceneTravels({
     const since = useSceneTime(2);
     const deck = useDeck();
     const field = read.status === "ok" ? read.field : null;
+    const sample = read.status === "ok" && read.sample;
     const readings = field?.readings ?? [];
     const ended = since === Infinity;
     const reading = ended ? -1 : readingAt(since, readings.length, deck.still);
@@ -322,9 +350,7 @@ function SceneTravels({
     return (
         <>
             <Panel
-                label={
-                    tool === undefined ? "What your agent reads" : `What your agent reads · ${tool}`
-                }
+                label={`${tool === undefined ? "What your agent reads" : `What your agent reads · ${tool}`}${sample ? " · sample" : ""}`}
                 className="arp-gx-subject arp-gx-board"
                 index={1}
             >
@@ -347,6 +373,7 @@ function SceneTravels({
                         {field?.linesFailed === true ? (
                             <NotYet read={{status: "failed"}} empty={null} />
                         ) : null}
+                        {sample ? <p className="arp-gx-foot">Sample.</p> : null}
                     </>
                 )}
             </Panel>

@@ -233,3 +233,17 @@ describe("loadLandingField", () => {
         expect(out.usage).toBeNull();
     });
 });
+
+describe("fieldOrSample", () => {
+    it("is the sample only when the chain answered with no tool, and real data replaces it", async () => {
+        const {fieldOrSample, SAMPLE_FIELD} = await import("../landing-sample");
+        expect(fieldOrSample(EMPTY_FIELD)).toEqual({field: SAMPLE_FIELD, sample: true});
+        const real = buildLandingField({
+            tool: listing("t1", ["a"]),
+            usage: usage([declaration("a", "w1")]),
+            hidden: new Set(),
+            paidWords: [],
+        });
+        expect(fieldOrSample(real)).toEqual({field: real, sample: false});
+    });
+});
