@@ -1,6 +1,6 @@
 # Task 75 — A line adds the domain it names
 
-**Status:** in progress, 2026-11-09, on `feat/75-line-domain` (worktree `../ARP-tree`, from `origin/main` 9e01db8), not pushed.
+**Status:** **verified 2026-11-09** (`task-verifier` PASS, `.claude/learning/66-a-line-adds-its-domain.md`), on `feat/75-line-domain` (worktree `../ARP-tree`), rebased on `origin/main` 80760b3, not pushed.
 **ADR:** `0146` (task 73), which this extends to the command line. No new decision.
 **Rules:** `code.md`, `security.md`, `claims.md`, `workflow.md`.
 
