@@ -881,6 +881,23 @@ describe("a request from a web page", () => {
         expect(run.status).toBe(1);
         expect(run.stderr).toContain("stdio only");
     });
+
+    it("in the sponsored mode, accepts every tool it lists", () => {
+        const input = ["tools/list", "tools/call"].map((method, i) =>
+            JSON.stringify({jsonrpc: "2.0", id: i + 1, method, ...(method === "tools/call" ? {params: {name: "arp_find_tools", arguments: {}}} : {})}),
+        );
+        const run = spawnSync("bun", ["run", SERVER, "--stdio"], {
+            cwd: SCRATCH,
+            env: {...process.env, ARP_HOME: SCRATCH, ARP_NO_RECEIPTS: "1", ARP_TOOLS: "sponsored", ARP_TARGET: "testnet", ARP_PULSE_SEARCH: "off"},
+            input: `${input.join("\n")}\n`,
+            encoding: "utf8",
+            timeout: 15_000,
+        });
+        const [listed, called] = run.stdout.trim().split("\n").map((line) => JSON.parse(line) as Record<string, unknown>);
+        const names = (listed?.["result"] as {tools: {name: string}[]}).tools.map((t) => t.name);
+        expect(names).toContain("arp_find_tools");
+        expect(JSON.stringify(called)).not.toContain("unknown tool");
+    });
 });
 
 /**

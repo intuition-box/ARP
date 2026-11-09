@@ -35,7 +35,8 @@
  */
 
 import { linesOf, loopbackHosts, redactUrls, refuseForeignRequest, serveFetch } from '@arp-protocol/core/node';
-import { DESKTOP_TOOL_NAMES, DESKTOP_TOOLS, PLUGIN_TOOL_NAMES, READ_TOOL_NAMES, TOOLS } from './tools.js';
+import { DESKTOP_TOOL_NAMES } from './tools.js';
+import { servedTools } from './served-tools.js';
 import { desktopTool } from './desktop/handlers.js';
 import { serveContentRequest } from './content.js';
 import { recordClientCapabilities, stdioRouter } from './client-session.js';
@@ -108,11 +109,8 @@ const SERVER_INSTRUCTIONS = [
   'two apart. The only score is `arp_pulse`\'s, which shows its parts; every other figure is what somebody declared or put behind it, or a fact read from elsewhere.',
 ].join('\n');
 
-const SERVED_TOOLS = DESKTOP
-  ? [...TOOLS.filter((t) => READ_TOOL_NAMES.has(t.name) && !DESKTOP_TOOL_NAMES.has(t.name)), ...DESKTOP_TOOLS]
-  : READ_ONLY
-    ? TOOLS.filter((t) => PLUGIN_TOOL_NAMES.has(t.name))
-    : TOOLS;
+const SERVED_TOOLS = servedTools({ desktop: DESKTOP, readOnly: READ_ONLY });
+const SERVED_NAMES: ReadonlySet<string> = new Set(SERVED_TOOLS.map((t) => t.name));
 
 /**
  * What an agent is told at `initialize` when the server runs read-only, for operators who were
@@ -172,7 +170,7 @@ async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefin
   // Refused by name, not left to fall through: `tools/list` hides the planners in read mode, and a
   // client that calls one anyway must not get a plan the operator never agreed to be offered.
   if (DESKTOP && name !== null && DESKTOP_TOOL_NAMES.has(name)) return desktopTool(id, name, args);
-  if (READ_ONLY && name !== null && !PLUGIN_TOOL_NAMES.has(name)) {
+  if (READ_ONLY && name !== null && !SERVED_NAMES.has(name)) {
     return fail(id, -32602, `unknown tool: ${name}`);
   }
   try {
