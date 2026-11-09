@@ -274,13 +274,16 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
                 ) : (
                     <>
                         <p className="arp-gx-sentence">
+                            {/* Tool first, then who used it (the user, 2026-11-09: « hyperframes
+                                used by agent 1, c'est plus compréhensible »). The graph's triple is
+                                still `agent uses tool`; this reads it from the tool's side. */}
+                            <span data-on={lit(1)}>{line.tool}</span>{" "}
+                            <span data-on={lit(0)} className="is-pr">
+                                used by
+                            </span>{" "}
                             <span data-on={lit(0)} className={line.agentIsId ? "is-id" : ""}>
                                 {line.agent}
-                            </span>{" "}
-                            <span data-on={lit(1)} className="is-pr">
-                                uses
-                            </span>{" "}
-                            <span data-on={lit(1)}>{line.tool}</span>
+                            </span>
                             {line.context === null ? null : (
                                 <>
                                     {" "}

@@ -12,7 +12,7 @@ import {Landing} from "./Landing";
  *   under the hero (the user removed both).
  * - **Real data, or the sample said to be one** (the user, 2026-11-09). The reference's sample
  *   agent ids (`8453:3107`…) are real agents on Base and never reach the app; the landing's sample
- *   names `agent A` to `agent E`, and only while the chain answers with nothing.
+ *   names `agent 1` to `agent 5`, and only while the chain answers with nothing.
  * - **ARP's own test identities are left out**, as on every other page.
  * - **A failed read says it failed**, never that the chain is empty.
  * - **Reduced motion** shows every scene at its end state.
@@ -202,7 +202,7 @@ describe("Landing", () => {
         const written = scene(container, 1);
         await waitFor(() =>
             expect(written.querySelector(".arp-gx-sentence")?.textContent).toBe(
-                "agent A uses hyperframes in context of video has outcome worked",
+                "hyperframes used by agent 1 in context of video has outcome worked",
             ),
         );
         expect(within(written).getByText("A line, word by word · sample")).toBeTruthy();
@@ -244,7 +244,7 @@ describe("Landing", () => {
         const written = scene(container, 1);
         await waitFor(() =>
             expect(written.querySelector(".arp-gx-sentence")?.textContent).toBe(
-                "13579:812 uses transcribe in context of research has outcome failed: missing-key",
+                "transcribe used by 13579:812 in context of research has outcome failed: missing-key",
             ),
         );
         expect(written.textContent).toContain("1 agent writing into them");

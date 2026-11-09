@@ -6,7 +6,7 @@
  * `docs/design/landing-galaxy/landing-galaxy-reference.html` names its sample agents `8453:3107`,
  * `8453:5512`, `8453:7720` and `8453:2418`. If `ownerOf` answers for one, it is a real agent, and a
  * sample line in its name puts a use in the mouth of an agent that never declared it. The landing's
- * own sample (`apps/web/src/services/landing-sample.ts`) uses `agent A` to `agent E` instead.
+ * own sample (`apps/web/src/services/landing-sample.ts`) uses `agent 1` to `agent 5` instead.
  * The last id is a control that should not exist, so a revert is told apart from a dead RPC.
  */
 import { createPublicClient, http, parseAbi } from 'viem';
