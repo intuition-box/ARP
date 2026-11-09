@@ -1,6 +1,6 @@
 # Task 77 — The hire loop, as a concept
 
-**Status:** written 2026-11-09, docs only, on `docs/77-hire-loop` (worktree `../ARP-tree`), not pushed.
+**Status:** verified 2026-11-09, `task-verifier` PASS round 2, commits 9dd4fd5..0c4c94c, post-mortem `learning/68`; docs only, on `docs/77-hire-loop`, not pushed.
 **ADR:** `0148`.
 **Rules:** `workflow.md`, `claims.md`.
 
