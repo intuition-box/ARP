@@ -519,6 +519,15 @@ but no route for those reports is in the OpenAPI.
   checks that the endpoint can be paid, not that it holds the thing either.
 - The placement note of 2026-11-05 pauses x402 behind the skills work.
 
-**When it is picked up:** start with point 1, as a conversation with Fizzl about whether ARP lines
-on x402 endpoints are useful to them. Then do point 2, which is the cheapest. Do 41b, the node
+**Update, 2026-11-09 (Frits Zwager's third reply, by e-mail).** Point 1 is settled the other way
+round. Doctor's `POST /api/v1/outcome` accepts only reports carrying a preflight Doctor signed, so
+ARP lines do not go there. Instead ARP publishes its failure records at a read endpoint (one URL
+per endpoint, or one feed) and Doctor reads them before an agent pays. Doctor checks each
+transaction on chain (payer, payTo, amount) itself and shows "N paid, M got nothing" beside its
+verdict, as it does for nohumans.directory and PayAPI. Per record it needs: the endpoint URL, the
+outcome, the settlement transaction, the network, and the date. Frits offers to wire it in once
+the first version exists. So an x402 failure line must carry the settlement transaction, and the
+networks Doctor reads are mainnets (Base, Solana and others, `openapi.json`, read 2026-11-09).
+
+**When it is picked up:** start with the read feed above, the shape Frits asked for. Then do point 2, which is the cheapest. Do 41b, the node
 answering 402, with Doctor's `diagnose` as its test.
