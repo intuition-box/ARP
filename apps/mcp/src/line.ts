@@ -4,11 +4,12 @@
  * (`handlers/pulse.ts`, `canSearch`), so the plugin's server stays read-only and holds no key, and this holds
  * it for the length of one call.
  */
-import { isUsageOutcome, isUsageReason, USAGE_REASONS } from '@arp-protocol/core';
+import { isCategoryIn, isUsageOutcome, isUsageReason, readDomainTree, USAGE_REASONS } from '@arp-protocol/core';
 
-import { chainId } from './config.js';
+import { chainId, domainWalk } from './config.js';
+import type { AgentSender } from './desktop/agent-key.js';
 import { agentFor, loopConfig } from './desktop/handlers.js';
-import { writeLine, type LineInput, type WrittenLine } from './desktop/loop.js';
+import { sponsorApproval, writeLine, type LineInput, type LoopConfig, type WrittenLine } from './desktop/loop.js';
 
 /** A command line's strings as a line, or what is wrong with them. Closed words only. */
 export function lineFromArgs(args: {
@@ -30,8 +31,32 @@ export function lineFromArgs(args: {
   };
 }
 
+export type LineSteps = {
+  config: LoopConfig;
+  isCategory: (label: string) => Promise<boolean>;
+  /** Called last, so a refused line leaves no key behind (`~/.arp/agent-key`, audit 2026-11-09). */
+  agent: () => AgentSender;
+  write?: typeof writeLine;
+};
+
+/** The checks that need no key come first: the domain, then whether the sponsor answers. */
+export async function writeLineChecked(steps: LineSteps, input: LineInput): Promise<WrittenLine> {
+  if (input.domain !== undefined && !(await steps.isCategory(input.domain.trim().toLowerCase()))) {
+    throw new Error(`"${input.domain}" is not a category under tool`);
+  }
+  await sponsorApproval(steps.config);
+  return (steps.write ?? writeLine)(steps.config, steps.agent(), input);
+}
+
 /** Testnet 13579 only (ADR `0135`, `0144`). */
 export async function writeLineHere(input: LineInput): Promise<WrittenLine> {
   if (chainId !== 13579) throw new Error('a line is written on testnet 13579 only for now');
-  return writeLine(loopConfig(), agentFor(), input);
+  return writeLineChecked(
+    {
+      config: loopConfig(),
+      isCategory: async (label) => isCategoryIn(await readDomainTree(domainWalk()))(label),
+      agent: agentFor,
+    },
+    input,
+  );
 }

@@ -9,7 +9,7 @@ import {afterEach, describe, expect, it} from "vitest";
 
 import type {AgentSender} from "../src/desktop/agent-key.js";
 import {writeLine, type LoopConfig} from "../src/desktop/loop.js";
-import {lineFromArgs} from "../src/line.js";
+import {lineFromArgs, writeLineChecked} from "../src/line.js";
 
 const ATOM = `0x${"77".repeat(32)}` as Hex;
 const MULTI_VAULT = "0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91";
@@ -131,5 +131,44 @@ describe("lineFromArgs", () => {
         expect(lineFromArgs({...args, outcome: "maybe"})).toBeInstanceOf(Error);
         expect(lineFromArgs({...args, outcome: "failed", reason: "the moon"})).toBeInstanceOf(Error);
         expect(lineFromArgs({...args, outcome: "worked", reason: "missing-key"})).toBeInstanceOf(Error);
+    });
+});
+
+describe("writeLineChecked", () => {
+    it("refuses an unknown domain before it reaches the sponsor or makes a key", async () => {
+        const {config, asked} = setup(() => ok);
+        let keys = 0;
+        const steps = {config, isCategory: async () => false, agent: () => {
+            keys += 1;
+            throw new Error("no key in this test");
+        }};
+        await expect(writeLineChecked(steps, {...INPUT, domain: "zzz"})).rejects.toThrow('"zzz" is not a category under tool');
+        expect(asked).toEqual([]);
+        expect(keys).toBe(0);
+    });
+
+    it("makes no key when the sponsor does not answer", async () => {
+        const {config} = setup(() => ok);
+        let keys = 0;
+        const down = {...config, fetch: (async () => {
+            throw new TypeError("fetch failed");
+        }) as unknown as typeof fetch};
+        const steps = {config: down, isCategory: async () => true, agent: () => {
+            keys += 1;
+            throw new Error("no key in this test");
+        }};
+        await expect(writeLineChecked(steps, {...INPUT, domain: "video"})).rejects.toThrow("did not answer at http://sponsor");
+        expect(keys).toBe(0);
+    });
+
+    it("asks for the key only once both checks pass", async () => {
+        const {config, agent} = setup(() => ok);
+        let keys = 0;
+        const steps = {config, isCategory: async (label: string) => label === "video", agent: () => {
+            keys += 1;
+            return agent;
+        }};
+        await expect(writeLineChecked(steps, {...INPUT, domain: " Video "})).resolves.toMatchObject({termId: ATOM});
+        expect(keys).toBe(1);
     });
 });

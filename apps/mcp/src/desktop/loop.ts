@@ -289,7 +289,7 @@ async function ensureIdentity(config: LoopConfig, state: AgentState): Promise<He
 }
 
 /** The one approval this key signs, built here: the sponsor's answer to /gas does not choose it. */
-async function sponsorApproval(config: LoopConfig) {
+export async function sponsorApproval(config: LoopConfig) {
   const info = await json(
     await reach(config, sponsoring(config), config.sponsorUrl, { signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS) }),
   );
