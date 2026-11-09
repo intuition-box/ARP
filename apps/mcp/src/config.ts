@@ -153,6 +153,17 @@ function required<T>(value: T | undefined, what: string): T {
 }
 
 export const GRAPHQL = required(GRAPHQL_URL, 'a graphqlUrl');
+
+/**
+ * Where `arp_find_tools` reads skills.sh's index (task 82): skills.sh itself unless
+ * `ARP_SKILLS_INDEX_URL` names another base, which is how the test suite keeps it off the network.
+ * `off` sends no search words anywhere, and the search reads ARP's catalogue alone (`null`).
+ */
+export const SKILLS_INDEX: string | null = (() => {
+  const raw = process.env.ARP_SKILLS_INDEX_URL?.trim() ?? '';
+  if (raw === 'off') return null;
+  return raw === '' ? 'https://skills.sh' : raw;
+})();
 export const RPC = required(RPC_URL, 'an rpcUrl');
 export const MULTI_VAULT = required(MULTI_VAULT_RAW, 'a multiVault');
 

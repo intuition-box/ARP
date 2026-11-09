@@ -285,6 +285,8 @@ beforeAll(async () => {
             ARP_TARGET: "testnet",
             INTUITION_GRAPHQL_URL: `http://127.0.0.1:${PORT + 1}/v1/graphql`,
             INTUITION_RPC_URL: `http://127.0.0.1:${PORT + 1}/rpc`,
+            // skills.sh's index, kept off the network: the stub answers `/api/search` with no skills.
+            ARP_SKILLS_INDEX_URL: `http://127.0.0.1:${PORT + 1}`,
             ARP_MULTI_VAULT: MULTI_VAULT,
             // A receipt the node will read, and the signer this node's reader accepts. Both are
             // what `corroborationOf`'s wiring needs to be visible at all: without them the
@@ -948,6 +950,7 @@ describe("read-only mode", () => {
                 PORT: String(READ_PORT),
                 ARP_TOOLS: "read",
                 ARP_PULSE_SEARCH: "off",
+                ARP_SKILLS_INDEX_URL: `http://127.0.0.1:${PORT + 1}`,
                 ARP_TARGET: "testnet",
                 ARP_NO_RECEIPTS: "1",
                 INTUITION_GRAPHQL_URL: `http://127.0.0.1:${PORT + 1}/v1/graphql`,

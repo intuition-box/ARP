@@ -14,7 +14,7 @@ import {
   toolsInDomain,
 } from '@arp-protocol/core';
 
-import { GRAPHQL, DOMAIN_ROOT, DOMAIN_ATTESTORS } from '../config.js';
+import { GRAPHQL, DOMAIN_ROOT, DOMAIN_ATTESTORS, SKILLS_INDEX } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 import {
   type CatalogueEntry,
@@ -177,7 +177,7 @@ const readListings = cachedFor(LISTINGS_TTL_MS, (key) => {
 // skills.sh's answer for a query, kept a minute like the listings: an agent asks two or three
 // times while it picks, and the index does not move faster than that.
 const readIndex = cachedFor(LISTINGS_TTL_MS, (query): Promise<SkillsIndexAnswer> =>
-  searchSkillsIndex(query, { limit: 20 }),
+  searchSkillsIndex(query, { limit: 20, baseUrl: SKILLS_INDEX ?? undefined }),
 );
 
 export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
@@ -357,7 +357,7 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
   // A search by need reads skills.sh's whole index too (task 82): the catalogue alone met 10 of 20
   // fixed needs. Not with a domain, which is ARP's own tree and means "what ARP filed there".
   const index: SkillsIndexAnswer | null =
-    query === null || domainRaw !== undefined ? null : await readIndex(query);
+    query === null || domainRaw !== undefined || SKILLS_INDEX === null ? null : await readIndex(query);
   const byKey = new Map(
     described
       .filter((entry) => entry.row.label !== null)

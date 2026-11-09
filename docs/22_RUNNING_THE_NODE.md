@@ -153,7 +153,10 @@ gateway.pinata.cloud   a pinned document: an agent's registration file when it p
                        `ipfs://` one, a proof the index does not hold, or a skill atom's document
 ipfs.io                the same, when Pinata does not serve it
 skills.sh              one `GET /api/search?q=skill` when a search on `arp_pulse` comes back empty, with none
-                       of your words, to tell "nothing exists" from "the service is down"
+                       of your words, to tell "nothing exists" from "the service is down". And
+                       `arp_find_tools` sends **your search words** in one `GET /api/search` per new
+                       query, kept a minute, to search skills.sh's whole index beside ARP's catalogue
+                       (task 82). `ARP_SKILLS_INDEX_URL=off` stops it
 the signed addresses   `arp_agent_endpoints` asks `/` of an agent's three newest signed addresses, and
                        `arp_pulse` the newest of up to ten agents on every search with words:
                        somebody else's servers, through the same guard as any probe. Your words stay here
@@ -319,6 +322,8 @@ ARP_PROJECT_DIR        set by the launch through npx, which starts from /: the p
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
 ARP_PULSE_SEARCH       off: arp_pulse runs no package, and takes search_output only
+ARP_SKILLS_INDEX_URL   off: arp_find_tools searches ARP's catalogue alone and sends your words nowhere.
+                       Another base URL is read instead of https://skills.sh
 ARP_TOOLS              read: the plugin's set, arp_pulse, arp_agent_endpoints and arp_tool_reputation, and
                        arp_agent_endpoints asks agents' signed addresses. desktop or sponsored: the reads plus arp_get_skill
                        and arp_declare_used, with a local agent key in ~/.arp/agent-key (ADR 0110),
