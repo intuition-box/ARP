@@ -59,7 +59,7 @@ const SITEMAPS = [
 const sleep = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
 const get = async (url: string): Promise<{status: number; body: string}> => {
     const response = await fetch(url, {
-        headers: {"user-agent": "arp-measure (+https://github.com/Wieedze/ARP)"},
+        headers: {"user-agent": "arp-measure (+https://github.com/intuition-box/ARP)"},
         signal: AbortSignal.timeout(25000),
     });
     return {status: response.status, body: await response.text()};

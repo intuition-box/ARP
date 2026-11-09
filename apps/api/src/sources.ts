@@ -23,7 +23,7 @@ export type RepoFact = {
 
 export type SkillFact = { description: string; installs: number | null };
 
-const USER_AGENT = 'arp-api (+https://github.com/Wieedze/ARP)';
+const USER_AGENT = 'arp-api (+https://github.com/intuition-box/ARP)';
 
 /** One upstream read, at most this long (ADR `0116`): a hung host must not eat the whole slice. */
 const READ_TIMEOUT_MS = 15_000;

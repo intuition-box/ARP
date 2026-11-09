@@ -17,7 +17,7 @@ import { highestTokenId } from '../helpers/erc8004-population.js';
 import type { JsonRpcReply } from '../helpers/shapes.js';
 const RPC = 'https://base-rpc.publicnode.com';
 const REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
-const UA = 'ARP-verifier/0.0 (+https://github.com/Wieedze/ARP) measurement';
+const UA = 'ARP-verifier/0.0 (+https://github.com/intuition-box/ARP) measurement';
 
 async function tokenURI(id: number): Promise<string | null> {
   const data = '0xc87b56dd' + BigInt(id).toString(16).padStart(64, '0');

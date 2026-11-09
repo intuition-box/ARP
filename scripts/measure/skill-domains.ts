@@ -83,7 +83,7 @@ const out: Classified[] = [];
 
 for (const row of rows) {
     const response = await fetch(`https://www.skills.sh/${row.repo}/${row.skill}`, {
-        headers: {"user-agent": "arp-measure (+https://github.com/Wieedze/ARP)"},
+        headers: {"user-agent": "arp-measure (+https://github.com/intuition-box/ARP)"},
         signal: AbortSignal.timeout(25000),
     });
     const body = await response.text();
