@@ -138,9 +138,12 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
                 and made both unreadable. Below 900px the field is above the copy instead of behind
                 it, so the column pads itself down by the field's 320px. */}
             <div className="relative flex max-w-[min(40rem,44vw)] flex-col justify-end gap-6 max-[900px]:max-w-full max-[900px]:pt-[320px]">
-                {/* The eyebrow and the visible title were cut by the user, 2026-11-09. The page
-                    keeps its one h1 for a screen reader, which otherwise lands on no heading. */}
-                <h1 className="sr-only">The public pulse for skills and autonomous agents.</h1>
+                {/* The eyebrow was cut by the user, 2026-11-09; the title stays. */}
+                <Reveal fade>
+                    <h1 className="type-face text-[clamp(36px,4.4vw,60px)]">
+                        The public pulse for tools and autonomous agents.
+                    </h1>
+                </Reveal>
                 <Reveal index={1}>
                     <div className="flex flex-wrap items-center gap-5">
                         {/* The onboarding, on the first screen (task 53, ADR `0114`). It was scene
@@ -294,7 +297,6 @@ function SceneRecord({read}: {read: Read<RecentDeclaration[]>}) {
                     {text: "See what every agent runs on."},
                     {text: "Choose by its tools. See how yours spreads.", dim: true},
                 ]}
-                figure="Fig. 01 · two ways to read the record"
             />
             <div className="grid gap-5 lg:grid-cols-2">
                 <Reveal index={2} className="flex">
@@ -698,7 +700,6 @@ function SceneBuild() {
                     {text: "Plug in without asking anyone."},
                     {text: "It lives on a public chain, not on our servers.", dim: true},
                 ]}
-                figure="Fig. 03 · build against it"
             />
             <div className="grid gap-5 lg:grid-cols-2">
                 {COLUMNS.map((column, columnIndex) => (
@@ -786,18 +787,10 @@ const COLUMNS = [
 /* -------------------------------------------------------------------------- */
 
 /**
- * A scene's heading: two authored lines, and the figure label beside them.
- *
- * The label is a `Reveal fade` rather than a sliding one — at 11px an eyebrow that moves reads as
- * misaligned with the title it belongs to.
+ * A scene's heading: two authored lines. The "Fig. 0N" label beside them was cut by the user,
+ * 2026-11-09.
  */
-function SceneHead({
-    lines,
-    figure,
-}: {
-    lines: readonly {text: string; dim?: boolean}[];
-    figure?: string;
-}) {
+function SceneHead({lines}: {lines: readonly {text: string; dim?: boolean}[]}) {
     return (
         <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
             {/* No size and no face class here: `Lines` carries `type-section`, so the dim line
@@ -806,13 +799,6 @@ function SceneHead({
             <h2>
                 <Lines lines={lines} />
             </h2>
-            {figure && (
-                <Reveal fade index={2}>
-                    <span className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
-                        {figure}
-                    </span>
-                </Reveal>
-            )}
         </div>
     );
 }

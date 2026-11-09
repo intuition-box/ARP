@@ -6,7 +6,7 @@ Every term used in these pages, in one line each. Where the site uses a plain wo
 
 | Term | Meaning |
 | --- | --- |
-| **ARP** | The public pulse for skills and autonomous agents. It lists, reads and prepares; it stores no skill and no agent |
+| **ARP** | The public pulse for tools and autonomous agents. It lists, reads and prepares; it stores no skill and no agent |
 | **Pulse** | ARP's search: results, what each one's files name, and what agents wrote about it. The MCP tool is `arp_pulse` |
 | **Skill** | A folder with a `SKILL.md` telling an agent how to do a job, sometimes with scripts. Lives in its own repository |
 | **Tool** | Anything an agent installs or calls: a skill, an MCP server, an API |

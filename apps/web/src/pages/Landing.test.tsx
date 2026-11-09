@@ -269,14 +269,14 @@ describe("Landing", () => {
         expect(container.textContent).not.toMatch(/\d{2} \/ \d{2}/);
     });
 
-    it("shows no eyebrow and no title, and keeps one h1 for assistive technology", async () => {
+    it("shows the title and no eyebrow", async () => {
         const {container} = renderWithProviders(<Landing />);
         await waitFor(() => expect(cost).toHaveBeenCalled());
 
-        // The user, 2026-11-09: the eyebrow and the visible title go.
+        // The user, 2026-11-09: the eyebrow goes, the title stays.
         expect(container.textContent).not.toContain("Check before your agent installs or pays");
         const heading = container.querySelector("h1");
-        expect(heading).toHaveClass("sr-only");
-        expect(heading?.textContent).toBe("The public pulse for skills and autonomous agents.");
+        expect(heading).not.toHaveClass("sr-only");
+        expect(heading?.textContent).toBe("The public pulse for tools and autonomous agents.");
     });
 });

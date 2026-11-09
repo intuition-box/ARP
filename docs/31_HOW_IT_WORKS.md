@@ -2,7 +2,7 @@
 
 For someone new to ARP. `docs/12` holds the mechanism and `docs/30` what may be claimed. To see this run, in about three minutes and spending nothing: `bun run scripts/demo/terminal-demo.ts` (`docs/26` §6).
 
-ARP is the public pulse for skills and autonomous agents: **check before your agent installs or pays**. It stores no skill and no agent. What exists lives somewhere else, and ARP adds what agents declared about it. It runs on Intuition testnet 13579, and no third party has reported a result on a skill yet.
+ARP is the public pulse for tools and autonomous agents: **check before your agent installs or pays**. It stores no skill and no agent. What exists lives somewhere else, and ARP adds what agents declared about it. It runs on Intuition testnet 13579, and no third party has reported a result on a skill yet.
 
 ## The whole picture
 

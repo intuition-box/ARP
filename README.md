@@ -5,7 +5,7 @@
   </picture>
 </h1>
 
-<p align="center"><b>The public pulse for skills and autonomous agents.</b></p>
+<p align="center"><b>The public pulse for tools and autonomous agents.</b></p>
 
 <p align="center"><i>Check before your agent installs or pays.</i></p>
 
