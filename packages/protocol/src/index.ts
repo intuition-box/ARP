@@ -851,7 +851,6 @@ export {
 export {
     CATEGORY_REQUEST_MAX_LABEL_LENGTH,
     CATEGORY_REQUEST_MAX_REASON_LENGTH,
-    CATEGORY_REQUEST_MAX_TTL_SECONDS,
     CATEGORY_REQUEST_TYPES,
     categoryRequestTypedData,
     signCategoryRequest,

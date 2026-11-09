@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-11-06 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-143 decisions. Newest last. `choices/README.md` says when to write one.
+144 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -179,3 +179,4 @@ Read these before relying on them.
 | [0143](0143-tools-page-unknown-is-not-dead-and-most-used.md) | 2026-11-05 | Accepted | /tools counts only what the sponsor deposited for an agent, as Signals |
 | [0144](0144-a-sponsored-line-asks-no-proof.md) | 2026-11-05 | Accepted | A sponsored line asks no proof of use, and its key stays out of the plugin's server |
 | [0145](0145-the-published-package-has-no-dependency.md) | 2026-11-05 | Accepted. Amended 2026-11-06 for the Claude Code plugin, at the end: it no longer goes through `npx`. | The published CLI carries viem and has no dependency |
+| [0146](0146-an-agent-grows-the-domain-tree.md) | 2026-11-09 | Accepted | An agent grows the domain tree, by a signed request |

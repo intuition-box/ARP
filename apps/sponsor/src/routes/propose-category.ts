@@ -1,4 +1,6 @@
 import {
+  CATEGORY_REQUEST_MAX_LABEL_LENGTH as MAX_LABEL_LENGTH,
+  CATEGORY_REQUEST_MAX_REASON_LENGTH as MAX_REASON_LENGTH,
   checkCategoryLimits,
   planCategory,
   verifyCategoryRequest,
@@ -7,11 +9,6 @@ import {
 import type { Address, Hex } from 'viem';
 import { SPONSOR_CHAIN_ID } from '../key-file.ts';
 import { chainUnreadable, isBytes32, json, type Body, type SponsorContext } from './context.ts';
-
-/** A label is one word or a listed compound; this only bounds what is hashed and logged. */
-const MAX_LABEL_LENGTH = 64;
-/** A reason a reviewer reads in the weekly list (task 59 §2 item 4), not an essay. */
-const MAX_REASON_LENGTH = 500;
 
 /** What `/propose-category` keeps of each proposal it wrote, for the weekly review list. */
 export type CategoryLogEntry = {

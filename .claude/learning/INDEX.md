@@ -75,4 +75,4 @@
 | [61](61-a-false-line.md) | `docs/tasks/71-a-false-line.md`, and `docs/tasks/70-the-local-package.md` items 1 and 3 | PASS (second pass; the first failed on six blocking and five minor items, all closed), and PASS on §5 at its second reading (the first failed on four blocking and two minor items, all closed) | A false line, and a line the plugin can write |
 | [61](61-tools-page-signals-and-wallets.md) | no task file; the spec is `.claude/choices/0143-tools-page-unknown-is-not-dead-and-most-used.md` | PASS, after one FAIL of 12 items: stale wording, gate wording, test names, and no RepoPage wallets test | /tools says Signals, not Usage, and shows the wallets behind it |
 | [62](62-the-local-package.md) | `docs/tasks/70-the-local-package.md` | PASS, at the second reading | The whole package, working locally |
-| [63](63-the-docs.md) | `docs/tasks/72-the-docs.md` | PASS (second round; first round failed on one visible `docs/NN` link text) | The docs on the site |
+| [63](63-the-tree-grows.md) | `docs/tasks/73-the-tree-grows.md` | PASS | The domain tree grows from the agents |
