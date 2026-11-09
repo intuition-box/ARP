@@ -10,6 +10,8 @@ import { createInterface } from 'node:readline/promises';
  */
 export type InstallEnv = {
   home: string;
+  /** ARP's own directory, `~/.arp` unless `ARP_HOME` says otherwise. Absent in tests: `<home>/.arp`. */
+  arpHome?: string;
   cwd: string;
   /** The absolute path of a binary on PATH, or `null`. */
   which: (command: string) => string | null;
@@ -42,6 +44,7 @@ function which(command: string): string | null {
 export function processEnv(dist: string, version: string): InstallEnv {
   return {
     home: homedir(),
+    arpHome: process.env['ARP_HOME']?.trim() || join(homedir(), '.arp'),
     cwd: process.cwd(),
     which,
     run: (argv, stdin, timeoutMs = 15_000) => {

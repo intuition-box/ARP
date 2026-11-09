@@ -8,10 +8,10 @@ import {
     useSearchParams,
 } from "react-router-dom";
 
-import {Install} from "../components/atom/AtomPageParts";
 import {BackLink} from "../components/brand/BackLink";
 import {Hint} from "../components/brand/Hint";
 import {PageLoading} from "../components/brand/PageLoading";
+import {StepCommands} from "../components/onboarding/StepCommands";
 import {ChooseCategory} from "../components/tool/ChooseCategory";
 import {useAgentActivity} from "../hooks/use-agent-activity";
 import {controlClass, linkClass} from "../lib/control-class";
@@ -242,7 +242,7 @@ function StepRow({step, n}: {step: StartStep; n: number}) {
                         <Hint label={`About: ${step.title}`}>{step.hint}</Hint>
                     )}
                 </div>
-                {step.commands?.map((command) => <Install key={command} command={command} />)}
+                <StepCommands step={step} />
                 {step.prompt !== undefined && (
                     <p className="mt-4 border-l border-[color:var(--color-rule-strong)] pl-4 text-[15px] text-[color:var(--color-silver)]">
                         “{step.prompt}”

@@ -11,6 +11,8 @@ import {
 } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import { SHARE_OFFER, shareOfferLines } from '../../../../packages/protocol/src/share-offer.ts';
+
 import type { InstallEnv } from './env.ts';
 import {
   commandsFor,
@@ -51,6 +53,8 @@ export type Flags = {
   print: boolean;
   capture: boolean;
   sponsored: boolean;
+  /** `--share` or `--no-share`: the answer to the sharing offer, given up front (task 88). `null` asks. */
+  share: boolean | null;
   /** `init` replaces an MCP server named `arp` that ARP did not write. */
   force: boolean;
   runtimes: RuntimeId[] | null;
@@ -65,6 +69,7 @@ export function parseFlags(args: readonly string[]): Flags | Error {
     print: false,
     capture: false,
     sponsored: false,
+    share: null,
     force: false,
     runtimes: null,
   };
@@ -78,6 +83,8 @@ export function parseFlags(args: readonly string[]): Flags | Error {
     else if (arg === '--capture') flags.capture = true;
     else if (arg === '--sponsored') flags.sponsored = true;
     else if (arg === '--force') flags.force = true;
+    else if (arg === '--share') flags.share = true;
+    else if (arg === '--no-share') flags.share = false;
     else if (arg === '--runtime') {
       const list = (args[i + 1] ?? '').split(',').filter((name) => name.length > 0);
       i += 1;
@@ -255,7 +262,35 @@ export async function init(env: InstallEnv, flags: Flags, cliPath: string): Prom
   if (installsHook(runtimes, flags.capture)) {
     plan.push({ runtime: 'hook', steps: [hookFileStep(env, commands, false)] });
   }
-  return change(env, flags, plan, 'Install');
+  const code = await change(env, flags, plan, 'Install');
+  if ((code === EXIT.ok || code === EXIT.partly) && !flags.dryRun) await offerSharing(env, flags);
+  return code;
+}
+
+/**
+ * Offers to turn on sharing once, after an install (task 88, ADR `0157`). Off unless the person says yes or
+ * passes `--share`; `--yes` alone never turns it on. Asked only when no answer is on file yet.
+ */
+async function offerSharing(env: InstallEnv, flags: Flags): Promise<void> {
+  const home = env.arpHome ?? join(env.home, '.arp');
+  const file = join(home, 'sharing.json');
+  const save = (on: boolean) => {
+    mkdirSync(home, { recursive: true });
+    writeFileSync(file, `${JSON.stringify({ failures: on })}\n`);
+  };
+  if (flags.share !== null) {
+    save(flags.share);
+    env.out(`Sharing ${flags.share ? 'on' : 'off'}. ${SHARE_OFFER.later}`);
+    return;
+  }
+  if (existsSync(file)) return;
+  if (flags.yes || flags.noInput || !env.interactive) {
+    env.out(`Sharing is off. ${SHARE_OFFER.later}`);
+    return;
+  }
+  env.out('');
+  for (const line of shareOfferLines()) env.out(line);
+  save(await env.ask(SHARE_OFFER.question));
 }
 
 export async function uninstall(env: InstallEnv, flags: Flags, cliPath: string): Promise<number> {

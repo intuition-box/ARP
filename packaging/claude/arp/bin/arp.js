@@ -23796,6 +23796,19 @@ function domainInText(text, words) {
 var SUGGESTIONS = 5;
 var init_domain_words = () => {};
 
+// ../../packages/protocol/dist/share-offer.js
+var SHARE_OFFER;
+var init_share_offer = __esm(() => {
+  SHARE_OFFER = {
+    question: "Share this machine's skill failures as public lines?",
+    sends: `When a skill fails here, one public line on Intuition testnet: the skill's public address, its category when known, "failed" and a closed reason (missing-key, missing-program, missing-file).`,
+    signer: "Each line is signed by this machine's own ARP address, created on the first send: it is public and the same on every line, so this machine's lines can be told apart from others' and linked together.",
+    never: "Never your prompts, your files, your paths, your code or your keys.",
+    service: "Sending goes through ARP's sponsoring service, which is not online yet: until it is, nothing is sent and `arp share send` says so.",
+    later: "Off by default. Change it any time with `arp share on` or `arp share off`."
+  };
+});
+
 // ../../packages/protocol/dist/declare/usage-context.js
 function isUsageOutcome2(value) {
   return USAGE_OUTCOMES2.some((outcome) => outcome === value);
@@ -25928,6 +25941,7 @@ var init_dist2 = __esm(() => {
   init_pulse();
   init_skill_requires();
   init_domain_words();
+  init_share_offer();
   init_local_failures();
   init_share_failures();
   init_pulse_score();
@@ -34177,6 +34191,33 @@ var init_line2 = __esm(() => {
   init_loop();
 });
 
+// ../mcp/src/share-ask.ts
+import { existsSync as existsSync6, mkdirSync as mkdirSync6, writeFileSync as writeFileSync7 } from "node:fs";
+import { join as join9 } from "node:path";
+function shareAskInstructions(arpHome2) {
+  if (existsSync6(join9(arpHome2, "sharing.json")))
+    return null;
+  return [
+    "SHARING IS NOT SET YET. Once in this session, at a natural pause (never in the middle of a task), ask the",
+    `person: "${SHARE_OFFER.question}" and give them, in your own short words, exactly this: ${SHARE_OFFER.sends}`,
+    `${SHARE_OFFER.signer} ${SHARE_OFFER.never} ${SHARE_OFFER.service}`,
+    "It is off unless they agree. If they agree, they type /arp:share-on; if not, /arp:share-off, so the",
+    "question is not asked again. Do not run either yourself, and do not ask twice."
+  ].join(`
+`);
+}
+function applyDesktopShare(value, arpHome2) {
+  if (value !== "true" && value !== "false")
+    return null;
+  mkdirSync6(arpHome2, { recursive: true });
+  writeFileSync7(join9(arpHome2, "sharing.json"), `${JSON.stringify({ failures: value === "true" })}
+`);
+  return value === "true";
+}
+var init_share_ask = __esm(() => {
+  init_dist2();
+});
+
 // ../mcp/src/tools.ts
 var TOOLS, DESKTOP_TOOLS, DESKTOP_TOOL_NAMES, PLUGIN_TOOL_NAMES, READ_TOOL_NAMES;
 var init_tools = __esm(() => {
@@ -39776,10 +39817,10 @@ var init_find_tools = __esm(() => {
 
 // ../mcp/src/pulse-cache.ts
 import { createHash } from "node:crypto";
-import { chmodSync as chmodSync2, mkdirSync as mkdirSync6, readFileSync as readFileSync6, writeFileSync as writeFileSync7 } from "node:fs";
-import { join as join9 } from "node:path";
+import { chmodSync as chmodSync2, mkdirSync as mkdirSync7, readFileSync as readFileSync6, writeFileSync as writeFileSync8 } from "node:fs";
+import { join as join10 } from "node:path";
 function diskListingCache(directory2, now = Date.now) {
-  const pathOf = (repo) => join9(directory2, `${createHash("sha256").update(repo).digest("hex")}.json`);
+  const pathOf = (repo) => join10(directory2, `${createHash("sha256").update(repo).digest("hex")}.json`);
   return {
     async get(repo) {
       let stored;
@@ -39805,7 +39846,7 @@ function diskListingCache(directory2, now = Date.now) {
     async set(repo, listing2) {
       if (listing2.files.length > MAX_FILES)
         return;
-      mkdirSync6(directory2, { recursive: true, mode: 448 });
+      mkdirSync7(directory2, { recursive: true, mode: 448 });
       chmodSync2(directory2, 448);
       const stored = {
         readAt: new Date(now()).toISOString(),
@@ -39814,7 +39855,7 @@ function diskListingCache(directory2, now = Date.now) {
         trees: [...listing2.trees],
         truncated: listing2.truncated
       };
-      writeFileSync7(pathOf(repo), JSON.stringify(stored), { mode: 384 });
+      writeFileSync8(pathOf(repo), JSON.stringify(stored), { mode: 384 });
     }
   };
 }
@@ -39983,9 +40024,9 @@ var init_search_run = __esm(() => {
 });
 
 // ../mcp/src/handlers/pulse.ts
-import { chmodSync as chmodSync3, existsSync as existsSync6, mkdirSync as mkdirSync7, readFileSync as readFileSync7, rmSync } from "node:fs";
+import { chmodSync as chmodSync3, existsSync as existsSync7, mkdirSync as mkdirSync8, readFileSync as readFileSync7, rmSync } from "node:fs";
 import { homedir as homedir4 } from "node:os";
-import { join as join10, delimiter } from "node:path";
+import { join as join11, delimiter } from "node:path";
 function within(work, ms, stop) {
   return new Promise((resolve3, reject) => {
     const quit = () => reject(new Error("no answer in time"));
@@ -40047,10 +40088,10 @@ function canSearch(env) {
   return !env.holdsAgentKey && env.setting !== "off";
 }
 function searchHome() {
-  return join10(arpHome(process.env, homedir4()), "skills-cli");
+  return join11(arpHome(process.env, homedir4()), "skills-cli");
 }
 function searchIsCached() {
-  return existsSync6(join10(searchHome(), ".npm", "_npx"));
+  return existsSync7(join11(searchHome(), ".npm", "_npx"));
 }
 async function search(query, timeoutMs, stop, firstDownload = false) {
   if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env["ARP_PULSE_SEARCH"] })) {
@@ -40058,9 +40099,9 @@ async function search(query, timeoutMs, stop, firstDownload = false) {
   }
   try {
     const home = searchHome();
-    mkdirSync7(home, { recursive: true, mode: 448 });
+    mkdirSync8(home, { recursive: true, mode: 448 });
     chmodSync3(home, 448);
-    rmSync(join10(home, ".npm", "_logs"), { recursive: true, force: true });
+    rmSync(join11(home, ".npm", "_logs"), { recursive: true, force: true });
     return { output: await runSearch(searchInvocation(query, process.env["PATH"], home, firstDownload), { timeoutMs, stop }) };
   } catch (error) {
     return { error: withoutPaths(error instanceof Error ? error.message.split(`
@@ -40156,8 +40197,8 @@ function usageLine(usage, domain) {
 }
 function readYourFailures() {
   try {
-    const path = join10(arpHome(process.env, homedir4()), "failures.jsonl");
-    return existsSync6(path) ? parseLocalFailures(readFileSync7(path, "utf8")) : [];
+    const path = join11(arpHome(process.env, homedir4()), "failures.jsonl");
+    return existsSync7(path) ? parseLocalFailures(readFileSync7(path, "utf8")) : [];
   } catch {
     return [];
   }
@@ -40417,7 +40458,7 @@ async function answer(id, args, budget, cancelled) {
   const source = githubPulseSource({
     ...token === undefined ? { withRepository: false } : { token },
     signal: filesStop,
-    cache: diskListingCache(join10(arpHome(process.env, homedir4()), "pulse-listings"))
+    cache: diskListingCache(join11(arpHome(process.env, homedir4()), "pulse-listings"))
   });
   const pulses = await readWindow(ordered, source, {
     limit,
@@ -40630,6 +40671,7 @@ sends nothing — the planners return calls for your own key, signed by you.`);
 var PROTOCOL_VERSION = "2025-06-18", SERVER_INSTRUCTIONS, SERVED_TOOLS, SERVED_NAMES, READ_INSTRUCTIONS, DESKTOP_INSTRUCTIONS, handler, WILDCARD;
 var init_server = __esm(async () => {
   init_node2();
+  init_share_ask();
   init_tools();
   init_served_tools();
   init_handlers();
@@ -40751,11 +40793,15 @@ var init_server = __esm(async () => {
       switch (body.method) {
         case "initialize":
           recordClientCapabilities(body.params);
+          if (DESKTOP)
+            applyDesktopShare(process.env["ARP_SHARE"], arpHome());
           return result(id, {
             protocolVersion: PROTOCOL_VERSION,
             capabilities: { tools: {} },
             serverInfo: { name: "ARP", version: "0.2.0" },
-            instructions: DESKTOP ? DESKTOP_INSTRUCTIONS : READ_ONLY ? READ_INSTRUCTIONS : SERVER_INSTRUCTIONS
+            instructions: DESKTOP ? DESKTOP_INSTRUCTIONS : READ_ONLY ? [READ_INSTRUCTIONS, shareAskInstructions(arpHome())].filter((part) => part !== null).join(`
+
+`) : SERVER_INSTRUCTIONS
           });
         case "notifications/initialized":
           return new Response(null, { status: 202 });
@@ -41588,9 +41634,9 @@ var init_skill_nodes_13579 = __esm(() => {
 });
 
 // ../hook/src/skill-failure.ts
-import { existsSync as existsSync7, mkdirSync as mkdirSync8, readFileSync as readFileSync8 } from "node:fs";
+import { existsSync as existsSync8, mkdirSync as mkdirSync9, readFileSync as readFileSync8 } from "node:fs";
 import { homedir as homedir5 } from "node:os";
-import { dirname as dirname6, join as join11 } from "node:path";
+import { dirname as dirname6, join as join12 } from "node:path";
 function failureReason(text2) {
   if (MISSING_PROGRAM.test(text2))
     return "missing-program";
@@ -41629,24 +41675,24 @@ function contextOf(words, skill) {
   return domainInText2(words, WORDS) ?? SKILL_NODE[skill.split(":").pop() ?? skill] ?? null;
 }
 function skillDirectory(name, cwd) {
-  const roots = [join11(cwd, ".claude", "skills"), join11(homedir5(), ".claude", "skills")];
+  const roots = [join12(cwd, ".claude", "skills"), join12(homedir5(), ".claude", "skills")];
   const given = process.env["ARP_SKILLS_DIR"];
   if (given !== undefined && given !== "")
     roots.unshift(given);
-  return roots.map((root2) => join11(root2, name)).find((dir) => existsSync7(join11(dir, "SKILL.md"))) ?? null;
+  return roots.map((root2) => join12(root2, name)).find((dir) => existsSync8(join12(dir, "SKILL.md"))) ?? null;
 }
 function arpHome2() {
   const given = process.env["ARP_HOME"]?.trim();
-  return given !== undefined && given !== "" ? given : join11(homedir5(), ".arp");
+  return given !== undefined && given !== "" ? given : join12(homedir5(), ".arp");
 }
 function appendFailure(line) {
-  const path = join11(arpHome2(), "failures.jsonl");
-  const seen = existsSync7(path) ? readFileSync8(path, "utf8") : "";
+  const path = join12(arpHome2(), "failures.jsonl");
+  const seen = existsSync8(path) ? readFileSync8(path, "utf8") : "";
   const key = `"session":${JSON.stringify(line.session)},"skill":${JSON.stringify(line.skill)},`;
   if (seen.split(`
 `).some((row) => row.includes(key) && row.includes(`"reason":"${line.reason}"`)))
     return false;
-  mkdirSync8(dirname6(path), { recursive: true });
+  mkdirSync9(dirname6(path), { recursive: true });
   appendOwn(path, `${JSON.stringify(line)}
 `);
   return true;
@@ -41677,7 +41723,7 @@ __export(exports_backfill, {
 });
 import { readdirSync, readFileSync as readFileSync9, statSync as statSync2 } from "node:fs";
 import { homedir as homedir6 } from "node:os";
-import { basename, join as join12 } from "node:path";
+import { basename, join as join13 } from "node:path";
 function blocksOf(content2) {
   return Array.isArray(content2) ? content2 : [];
 }
@@ -41690,7 +41736,7 @@ function textOf(content2) {
 function fromDisk(name, cwd) {
   try {
     const directory2 = skillDirectory(name, cwd);
-    return directory2 === null ? null : { name, directory: directory2, markdown: readFileSync9(join12(directory2, "SKILL.md"), "utf8") };
+    return directory2 === null ? null : { name, directory: directory2, markdown: readFileSync9(join13(directory2, "SKILL.md"), "utf8") };
   } catch {
     return null;
   }
@@ -41790,7 +41836,7 @@ function transcripts(root2) {
     return found2;
   }
   for (const name of names) {
-    const path = join12(root2, name);
+    const path = join13(root2, name);
     try {
       if (statSync2(path).isDirectory())
         found2.push(...transcripts(path));
@@ -41802,7 +41848,7 @@ function transcripts(root2) {
   }
   return found2;
 }
-function backfill(root2 = join12(homedir6(), ".claude", "projects")) {
+function backfill(root2 = join13(homedir6(), ".claude", "projects")) {
   const files = transcripts(root2);
   let uses = 0;
   let added = 0;
@@ -41819,7 +41865,7 @@ function backfill(root2 = join12(homedir6(), ".claude", "projects")) {
       if (appendFailure(failure))
         added += 1;
   }
-  return { transcripts: files.length, uses, added, file: join12(arpHome2(), "failures.jsonl") };
+  return { transcripts: files.length, uses, added, file: join13(arpHome2(), "failures.jsonl") };
 }
 var BODY, lastPart = (name) => name.split(":").pop() ?? name;
 var init_backfill = __esm(() => {
@@ -42086,7 +42132,7 @@ var init_task = __esm(() => {
 // ../node/src/tunnel.ts
 import { spawn as spawnChild } from "node:child_process";
 import { accessSync, constants as constants2, statSync as statSync3 } from "node:fs";
-import { delimiter as delimiter2, join as join13 } from "node:path";
+import { delimiter as delimiter2, join as join14 } from "node:path";
 import { createInterface } from "node:readline";
 function isExecutable(path) {
   try {
@@ -42102,7 +42148,7 @@ function findOnPath(name, path, executable) {
   for (const dir of (path ?? "").split(delimiter2)) {
     if (dir.length === 0)
       continue;
-    const candidate = join13(dir, name);
+    const candidate = join14(dir, name);
     if (executable(candidate))
       return candidate;
   }
@@ -42400,6 +42446,22 @@ var init_node3 = __esm(async () => {
     ;
 });
 
+// ../../packages/protocol/src/share-offer.ts
+function shareOfferLines2() {
+  return [SHARE_OFFER2.sends, SHARE_OFFER2.signer, SHARE_OFFER2.never, SHARE_OFFER2.service, SHARE_OFFER2.later];
+}
+var SHARE_OFFER2;
+var init_share_offer2 = __esm(() => {
+  SHARE_OFFER2 = {
+    question: "Share this machine's skill failures as public lines?",
+    sends: `When a skill fails here, one public line on Intuition testnet: the skill's public address, its category when known, "failed" and a closed reason (missing-key, missing-program, missing-file).`,
+    signer: "Each line is signed by this machine's own ARP address, created on the first send: it is public and the same on every line, so this machine's lines can be told apart from others' and linked together.",
+    never: "Never your prompts, your files, your paths, your code or your keys.",
+    service: "Sending goes through ARP's sponsoring service, which is not online yet: until it is, nothing is sent and `arp share send` says so.",
+    later: "Off by default. Change it any time with `arp share on` or `arp share off`."
+  };
+});
+
 // src/install/edits.ts
 function isRecord3(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -42564,8 +42626,8 @@ var init_edits = __esm(() => {
 });
 
 // src/install/targets.ts
-import { existsSync as existsSync8, readFileSync as readFileSync10 } from "node:fs";
-import { join as join14 } from "node:path";
+import { existsSync as existsSync9, readFileSync as readFileSync10 } from "node:fs";
+import { join as join15 } from "node:path";
 function namesOurServer(text2, cliPath) {
   return text2.includes("@arp-protocol/cli") || text2.includes(cliPath) || /apps[\\/]cli[\\/]dist[\\/]cli\.js/.test(text2) || /[\\/]dist[\\/]cli\.js/.test(text2) && text2.includes("ARP_TARGET") || /(?:packaging[\\/]claude[\\/]arp|plugins[\\/]cache[\\/]arp[\\/]arp[\\/][^\\/]+)[\\/]bin[\\/]arp\.js/.test(text2);
 }
@@ -42584,7 +42646,7 @@ function foreignRefusal(where) {
 }
 function read2(path) {
   try {
-    return existsSync8(path) ? readFileSync10(path, "utf8") : null;
+    return existsSync9(path) ? readFileSync10(path, "utf8") : null;
   } catch {
     return null;
   }
@@ -42596,7 +42658,7 @@ function npxLaunch(pkg) {
   };
 }
 function commandsFor(env, cliPath, capture = false, sponsored = false, force = false) {
-  const hookFile = join14(env.home, ".arp", "bin", "hook.js");
+  const hookFile = join15(env.home, ".arp", "bin", "hook.js");
   const fromNpx = /[\\/]_npx[\\/]/.test(cliPath);
   const mcp = {
     ...fromNpx ? {
@@ -42639,8 +42701,8 @@ function hasForeignServer(path, commands) {
 function claudeFiles(env, project) {
   const root2 = project ? env.cwd : env.home;
   return {
-    mcp: project ? join14(env.cwd, ".mcp.json") : join14(env.home, ".claude.json"),
-    settings: join14(root2, ".claude", "settings.json")
+    mcp: project ? join15(env.cwd, ".mcp.json") : join15(env.home, ".claude.json"),
+    settings: join15(root2, ".claude", "settings.json")
   };
 }
 function mcpEntry(server, typed) {
@@ -42745,8 +42807,8 @@ function hookStep(path, spec, commands, remove) {
 function jsonMcpRuntime(options) {
   const { id, name, dir, file, typed, binary, hook } = options;
   const root2 = (env, project) => project ? env.cwd : env.home;
-  const path = (env, project) => join14(root2(env, project), dir, file);
-  const hookPath = (env, project) => join14(root2(env, project), dir, hook.file);
+  const path = (env, project) => join15(root2(env, project), dir, file);
+  const hookPath = (env, project) => join15(root2(env, project), dir, hook.file);
   const mcpEdit = (commands) => (config) => withMcpServer(config, SERVER_NAME, commands === null ? null : mcpEntry(commands.mcp, typed));
   const steps = (env, commands, project, remove) => {
     const withHook = remove || commands.capture;
@@ -42775,7 +42837,7 @@ function jsonMcpRuntime(options) {
   return {
     id,
     name,
-    detect: (env) => env.which(binary) !== null || existsSync8(join14(env.home, dir)),
+    detect: (env) => env.which(binary) !== null || existsSync9(join15(env.home, dir)),
     install: (env, commands, project) => steps(env, commands, project, false),
     remove: (env, commands, project) => steps(env, commands, project, true),
     check: (env, _commands, project) => {
@@ -42786,7 +42848,7 @@ function jsonMcpRuntime(options) {
   };
 }
 function codexStep(env, entry, project, force = false) {
-  const path = join14(project ? env.cwd : env.home, ".codex", "config.toml");
+  const path = join15(project ? env.cwd : env.home, ".codex", "config.toml");
   const before = read2(path);
   const after = withCodexServer(before, entry, force);
   if (after instanceof Error) {
@@ -42826,7 +42888,7 @@ var init_targets = __esm(() => {
   claude = {
     id: "claude",
     name: "Claude Code",
-    detect: (env) => env.which("claude") !== null || existsSync8(join14(env.home, ".claude")),
+    detect: (env) => env.which("claude") !== null || existsSync9(join15(env.home, ".claude")),
     install: (env, commands, project) => [
       ...claudeMcpSteps(env, commands, project, false, true),
       claudeHookStep(env, commands, project, false)
@@ -42840,7 +42902,7 @@ var init_targets = __esm(() => {
   grok = {
     id: "grok",
     name: "Grok Build",
-    detect: (env) => env.which("grok") !== null || existsSync8(join14(env.home, ".grok")),
+    detect: (env) => env.which("grok") !== null || existsSync9(join15(env.home, ".grok")),
     install: (env, commands, project) => claude.detect(env) ? [{ kind: "skip", summary: "reads Claude Code's files, written above" }] : [
       ...claudeMcpSteps(env, commands, project, false, false),
       claudeHookStep(env, commands, project, false)
@@ -42878,17 +42940,17 @@ var init_targets = __esm(() => {
   codex2 = {
     id: "codex",
     name: "Codex",
-    detect: (env) => env.which("codex") !== null || existsSync8(join14(env.home, ".codex")),
+    detect: (env) => env.which("codex") !== null || existsSync9(join15(env.home, ".codex")),
     install: (env, commands, project) => [
       codexStep(env, commands.mcp, project, commands.force),
-      commands.capture ? hookStep(join14(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, false) : noHook(join14(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands)
+      commands.capture ? hookStep(join15(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, false) : noHook(join15(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands)
     ],
     remove: (env, commands, project) => [
       codexStep(env, null, project),
-      hookStep(join14(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, true)
+      hookStep(join15(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, true)
     ],
     check: (env, _commands, project) => {
-      const path = join14(project ? env.cwd : env.home, ".codex", "config.toml");
+      const path = join15(project ? env.cwd : env.home, ".codex", "config.toml");
       return [[`MCP server "arp" declared (${path})`, hasCodexServer(read2(path))]];
     }
   };
@@ -42921,7 +42983,7 @@ var init_targets = __esm(() => {
       file: "mcp-config.json",
       typed: true,
       binary: "copilot",
-      hook: { file: join14("hooks", "arp.json"), spec: COPILOT_HOOKS }
+      hook: { file: join15("hooks", "arp.json"), spec: COPILOT_HOOKS }
     })
   ];
 });
@@ -42938,15 +43000,15 @@ __export(exports_commands, {
 import {
   chmodSync as chmodSync4,
   copyFileSync,
-  existsSync as existsSync9,
-  mkdirSync as mkdirSync9,
+  existsSync as existsSync10,
+  mkdirSync as mkdirSync10,
   readFileSync as readFileSync11,
   renameSync,
   rmSync as rmSync2,
   statSync as statSync4,
-  writeFileSync as writeFileSync8
+  writeFileSync as writeFileSync9
 } from "node:fs";
-import { dirname as dirname7, join as join15 } from "node:path";
+import { dirname as dirname7, join as join16 } from "node:path";
 function parseFlags(args) {
   const flags = {
     yes: false,
@@ -42956,6 +43018,7 @@ function parseFlags(args) {
     print: false,
     capture: false,
     sponsored: false,
+    share: null,
     force: false,
     runtimes: null
   };
@@ -42977,6 +43040,10 @@ function parseFlags(args) {
       flags.sponsored = true;
     else if (arg === "--force")
       flags.force = true;
+    else if (arg === "--share")
+      flags.share = true;
+    else if (arg === "--no-share")
+      flags.share = false;
     else if (arg === "--runtime") {
       const list = (args[i + 1] ?? "").split(",").filter((name) => name.length > 0);
       i += 1;
@@ -42998,7 +43065,7 @@ function installsHook(runtimes, capture) {
 }
 function read3(path) {
   try {
-    return existsSync9(path) ? readFileSync11(path, "utf8") : null;
+    return existsSync10(path) ? readFileSync11(path, "utf8") : null;
   } catch {
     return null;
   }
@@ -43023,10 +43090,10 @@ function apply(env, step2) {
       rmSync2(step2.path, { force: true });
       return null;
     }
-    mkdirSync9(dirname7(step2.path), { recursive: true });
+    mkdirSync10(dirname7(step2.path), { recursive: true });
     const mode2 = step2.before === null ? undefined : statSync4(step2.path).mode & 511;
     const temp = `${step2.path}.arp-tmp`;
-    writeFileSync8(temp, step2.after, mode2 === undefined ? undefined : { mode: mode2 });
+    writeFileSync9(temp, step2.after, mode2 === undefined ? undefined : { mode: mode2 });
     if (mode2 !== undefined)
       chmodSync4(temp, mode2);
     renameSync(temp, step2.path);
@@ -43037,7 +43104,7 @@ function apply(env, step2) {
 }
 function hookFileStep(env, commands, remove) {
   const before = read3(commands.hookFile);
-  const after = remove ? null : read3(join15(env.dist, "hook.js"));
+  const after = remove ? null : read3(join16(env.dist, "hook.js"));
   if (!remove && after === null) {
     return {
       kind: "skip",
@@ -43131,7 +43198,34 @@ async function init(env, flags, cliPath) {
   if (installsHook(runtimes, flags.capture)) {
     plan.push({ runtime: "hook", steps: [hookFileStep(env, commands, false)] });
   }
-  return change(env, flags, plan, "Install");
+  const code = await change(env, flags, plan, "Install");
+  if ((code === EXIT.ok || code === EXIT.partly) && !flags.dryRun)
+    await offerSharing(env, flags);
+  return code;
+}
+async function offerSharing(env, flags) {
+  const home = env.arpHome ?? join16(env.home, ".arp");
+  const file = join16(home, "sharing.json");
+  const save = (on) => {
+    mkdirSync10(home, { recursive: true });
+    writeFileSync9(file, `${JSON.stringify({ failures: on })}
+`);
+  };
+  if (flags.share !== null) {
+    save(flags.share);
+    env.out(`Sharing ${flags.share ? "on" : "off"}. ${SHARE_OFFER2.later}`);
+    return;
+  }
+  if (existsSync10(file))
+    return;
+  if (flags.yes || flags.noInput || !env.interactive) {
+    env.out(`Sharing is off. ${SHARE_OFFER2.later}`);
+    return;
+  }
+  env.out("");
+  for (const line of shareOfferLines2())
+    env.out(line);
+  save(await env.ask(SHARE_OFFER2.question));
 }
 async function uninstall(env, flags, cliPath) {
   const commands = commandsFor(env, cliPath);
@@ -43142,8 +43236,8 @@ async function uninstall(env, flags, cliPath) {
   }));
   plan.push({ runtime: "hook", steps: [hookFileStep(env, commands, true)] });
   const code = await change(env, flags, plan, "Remove");
-  const captures = join15(env.home, ".arp", "captures");
-  if (existsSync9(captures))
+  const captures = join16(env.home, ".arp", "captures");
+  if (existsSync10(captures))
     env.out(`Captures kept in ${captures}. Delete them when you no longer need them.`);
   return code;
 }
@@ -43159,7 +43253,7 @@ function doctor(env, flags, cliPath) {
   }
   if (installsHook(runtimes, false)) {
     const installed = read3(commands.hookFile);
-    const packaged = read3(join15(env.dist, "hook.js"));
+    const packaged = read3(join16(env.dist, "hook.js"));
     rows.push(["hook", `${commands.hookFile} present`, installed !== null]);
     if (installed !== null && packaged !== null) {
       rows.push([
@@ -43168,7 +43262,7 @@ function doctor(env, flags, cliPath) {
         installed === packaged
       ]);
     }
-    rows.push(["hook", `node at ${env.node}`, existsSync9(env.node)]);
+    rows.push(["hook", `node at ${env.node}`, existsSync10(env.node)]);
   }
   const answer2 = env.run([commands.mcp.command, ...commands.mcp.args], INITIALIZE, 30000);
   rows.push([
@@ -43176,7 +43270,7 @@ function doctor(env, flags, cliPath) {
     `answers initialize (${commands.mcp.command} ${commands.mcp.args.join(" ")})`,
     answer2.stdout.includes('"name":"ARP"')
   ]);
-  const log = read3(join15(env.cwd, ".arp", "session.jsonl"));
+  const log = read3(join16(env.cwd, ".arp", "session.jsonl"));
   const last = log?.trim().split(`
 `).pop();
   let lastAt = null;
@@ -43189,11 +43283,12 @@ function doctor(env, flags, cliPath) {
   }
   for (const [where, what, ok] of rows)
     env.out(`${ok ? "ok  " : "FAIL"}  ${where.padEnd(12)} ${what}`);
-  env.out(`--    session log  ${lastAt === null ? `no call recorded in ${join15(env.cwd, ".arp")}` : `last call recorded ${lastAt}`}`);
+  env.out(`--    session log  ${lastAt === null ? `no call recorded in ${join16(env.cwd, ".arp")}` : `last call recorded ${lastAt}`}`);
   return rows.every(([, , ok]) => ok) ? EXIT.ok : EXIT.problems;
 }
 var EXIT, INITIALIZE;
 var init_commands = __esm(() => {
+  init_share_offer2();
   init_targets();
   EXIT = {
     ok: 0,
@@ -43214,16 +43309,16 @@ __export(exports_env, {
   processEnv: () => processEnv
 });
 import { spawnSync } from "node:child_process";
-import { existsSync as existsSync10 } from "node:fs";
+import { existsSync as existsSync11 } from "node:fs";
 import { homedir as homedir7 } from "node:os";
-import { delimiter as delimiter3, join as join16 } from "node:path";
+import { delimiter as delimiter3, join as join17 } from "node:path";
 import { createInterface as createInterface2 } from "node:readline/promises";
 function which(command) {
   for (const dir of (process.env.PATH ?? "").split(delimiter3)) {
     if (dir.length === 0)
       continue;
-    const candidate = join16(dir, command);
-    if (existsSync10(candidate))
+    const candidate = join17(dir, command);
+    if (existsSync11(candidate))
       return candidate;
   }
   return null;
@@ -43231,6 +43326,7 @@ function which(command) {
 function processEnv(dist, version5) {
   return {
     home: homedir7(),
+    arpHome: process.env["ARP_HOME"]?.trim() || join17(homedir7(), ".arp"),
     cwd: process.cwd(),
     which,
     run: (argv, stdin, timeoutMs = 15000) => {
@@ -43306,6 +43402,7 @@ usage
     --capture            (init) hook every runtime and keep each payload, redacted, in
                          ~/.arp/captures/ — to teach the hook a new runtime
     --force              (init) replace an MCP server named "arp" that ARP did not write
+    --share, --no-share  (init) answer the sharing offer up front; off unless --share or a "y"
   arp --version
   arp --help
 

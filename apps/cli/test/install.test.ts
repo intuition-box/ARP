@@ -552,3 +552,43 @@ describe('uninstall and doctor', () => {
     expect(doctor(silent, flags(), CLI)).toBe(EXIT.problems);
   });
 });
+
+describe('the sharing offer at install (task 88)', () => {
+  const sharing = () => join(home, '.arp', 'sharing.json');
+  const withClaude = () => mkdirSync(join(home, '.claude'), { recursive: true });
+
+  test('--yes installs and leaves sharing off, saying how to turn it on', async () => {
+    withClaude();
+    expect(await init(env(), flags(['--yes']), CLI)).toBe(EXIT.ok);
+    expect(existsSync(sharing())).toBe(false);
+    expect(lines.join('\n')).toContain('Sharing is off.');
+  });
+
+  test('--share turns it on, --no-share writes off, without asking', async () => {
+    withClaude();
+    await init(env(), flags(['--yes', '--share']), CLI);
+    expect(json(sharing())).toEqual({ failures: true });
+    await init(env(), flags(['--yes', '--no-share']), CLI);
+    expect(json(sharing())).toEqual({ failures: false });
+  });
+
+  test('a person at a terminal is asked once, with what leaves and what never does, default no', async () => {
+    withClaude();
+    const asked: string[] = [];
+    const terminal = env({ interactive: true, ask: async (q) => (asked.push(q), true) });
+    expect(await init(terminal, flags(), CLI)).toBe(EXIT.ok);
+    expect(asked.at(-1)).toBe("Share this machine's skill failures as public lines?");
+    expect(lines.join('\n')).toContain('Never your prompts');
+    expect(lines.join('\n')).toContain('not online yet');
+    expect(json(sharing())).toEqual({ failures: true });
+    asked.length = 0;
+    await init(terminal, flags(), CLI);
+    expect(asked).not.toContain("Share this machine's skill failures as public lines?");
+  });
+
+  test('--dry-run asks nothing and writes nothing', async () => {
+    withClaude();
+    await init(env({ interactive: true, ask: async () => true }), flags(['--dry-run']), CLI);
+    expect(existsSync(sharing())).toBe(false);
+  });
+});

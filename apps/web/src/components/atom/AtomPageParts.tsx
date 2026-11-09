@@ -8,15 +8,18 @@ import {LABEL} from "../../lib/atom-page";
  * (`docs/design/pages/`).
  */
 
-/** An install command and a Copy button. It wraps rather than scrolls. */
-export function Install({command}: {command: string}) {
+/**
+ * An install command and a Copy button. It wraps rather than scrolls. `prompt` is what precedes it: `$` for a
+ * shell command, `›` for one typed in an agent (task 88), so a slash command never reads as shell.
+ */
+export function Install({command, prompt = "$"}: {command: string; prompt?: string}) {
     const [copied, setCopied] = useState(false);
     return (
         <div className="mt-5 flex overflow-hidden rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)]">
             {/* Wraps rather than scrolls: a scrollbar inside a one-line box read as broken, and a
                 long skill name is the common case. */}
             <code className="min-w-0 flex-1 px-3.5 py-[11px] font-mono text-[13px] [overflow-wrap:anywhere]">
-                <span className="text-[color:var(--color-steel)]">$ </span>
+                <span className="text-[color:var(--color-steel)]">{prompt} </span>
                 {command}
             </code>
             <button

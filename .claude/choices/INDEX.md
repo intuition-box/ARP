@@ -191,4 +191,4 @@ Read these before relying on them.
 | [0153](0153-search-reads-skills-sh-and-agents-open-on-reachable.md) | 2026-11-09 | Accepted | The search reads skills.sh's index, and the agent list opens on the reachable |
 | [0154](0154-public-read-pages-are-dated-static-snapshots.md) | 2026-11-09 | Proposed | Public read pages are dated static snapshots, not a live endpoint |
 | [0155](0155-words-to-the-tree-stay-local.md) | 2026-11-09 | Accepted | A word names a node through a local alias table; the words never leave the machine |
-| [0156](0156-the-8004-sieve-orders-the-directory.md) | 2026-11-09 | Accepted | The 8004 sieve orders the agent directory, and only callable endpoints count |
+| [0157](0157-installs-offer-sharing-off-by-default.md) | 2026-11-09 | Accepted | Every install offers sharing once, off unless the person agrees |
