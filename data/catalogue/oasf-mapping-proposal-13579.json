@@ -1,0 +1,331 @@
+{
+ "_note": "Proposed correspondence from ARP's testnet categories to OASF 1.1.0 skills (data/catalogue/oasf-1.1.0-skills.json), task 79. A proposal for review: nothing is written on chain from it. Skill counts come from data/catalogue/skills-13579.json plus data/catalogue/category-first-run-13579.json, the records of what ARP filed, not a read of the chain. kind: same = the OASF node replaces the ARP category; arp-node = an ARP sub-domain under the OASF node; split = the category is dissolved and each skill goes to one of the listed nodes.",
+ "oasfVersion": "1.1.0",
+ "skillsCounted": 662,
+ "categories": [
+  {
+   "arp": "video",
+   "skills": 197,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 204,
+     "caption": "Video"
+    }
+   ],
+   "note": "refine per skill into its sub-skills (Text to Video, Video Editing, Talking Avatar Generation…)"
+  },
+  {
+   "arp": "infrastructure",
+   "skills": 80,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 9,
+     "caption": "DevOps and Cloud Infrastructure"
+    }
+   ],
+   "note": "refine per skill: Cloud Platform Operations [906], Deployment and Release Management [905], Container Orchestration [902], Observability [908]"
+  },
+  {
+   "arp": "marketing",
+   "skills": 65,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 11,
+     "caption": "Content, Writing and Marketing"
+    }
+   ],
+   "note": "refine per skill: Marketing Strategy [1105], Copywriting [1103], Email Marketing [1108], Social Media Marketing [1107]; CRO skills to Conversion Optimization [110304]"
+  },
+  {
+   "arp": "design",
+   "skills": 51,
+   "kind": "arp-node",
+   "oasf": [
+    {
+     "id": 602,
+     "caption": "Web Development"
+    }
+   ],
+   "note": "no OASF node for UI or visual design: an ARP node `design` under Web Development [602]; canvas and character design to Image Generation [202]; brand-guidelines to Branding [1109]"
+  },
+  {
+   "arp": "method",
+   "skills": 46,
+   "kind": "split",
+   "oasf": [
+    {
+     "id": 15,
+     "caption": "Reasoning and Planning"
+    },
+    {
+     "id": 1308,
+     "caption": "Project and Task Management"
+    },
+    {
+     "id": 120701,
+     "caption": "Requirements and PRD Authoring"
+    },
+    {
+     "id": 709,
+     "caption": "Agent Orchestration"
+    }
+   ],
+   "note": "no ARP node kept: brainstorming and grilling to Reasoning and Planning [15]; to-issues, triage, executing-plans to Project and Task Management [1308]; to-prd, to-spec to Requirements and PRD Authoring [120701]; parallel or subagent work to Agent Orchestration [709]"
+  },
+  {
+   "arp": "image",
+   "skills": 42,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 2,
+     "caption": "Computer Vision"
+    }
+   ],
+   "note": "refine per skill: Image Generation [202], Image Editing [203]"
+  },
+  {
+   "arp": "collaboration",
+   "skills": 30,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 1307,
+     "caption": "Collaboration and Communication"
+    }
+   ],
+   "note": "the Lark apps to Collaboration and Communication [1307] and its children; community-marketing and marketing-plan move to [11]"
+  },
+  {
+   "arp": "writing",
+   "skills": 29,
+   "kind": "split",
+   "oasf": [
+    {
+     "id": 1101,
+     "caption": "Content Writing"
+    },
+    {
+     "id": 1102,
+     "caption": "Editing and Proofreading"
+    },
+    {
+     "id": 10307,
+     "caption": "Text Style Transfer"
+    }
+   ],
+   "note": "the caveman family is terse output style: Text Style Transfer [10307]; edit-article to Editing and Proofreading [1102]; writing guides to Content Writing [1101]"
+  },
+  {
+   "arp": "quality",
+   "skills": 26,
+   "kind": "split",
+   "oasf": [
+    {
+     "id": 605,
+     "caption": "Software Testing"
+    },
+    {
+     "id": 606,
+     "caption": "Code Debugging"
+    },
+    {
+     "id": 607,
+     "caption": "Code Quality and Maintenance"
+    }
+   ],
+   "note": "tdd and qa to Software Testing [605]; debugging to Code Debugging [606]; code review to Code Quality and Maintenance [607]; ab-testing to Product Analytics [80703]"
+  },
+  {
+   "arp": "development",
+   "skills": 21,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 6,
+     "caption": "Software Engineering"
+    }
+   ],
+   "note": "refine per skill; mcp-builder and skill-creator to Agent Tool Building [70802]"
+  },
+  {
+   "arp": "database",
+   "skills": 21,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 801,
+     "caption": "Databases"
+    }
+   ],
+   "note": ""
+  },
+  {
+   "arp": "automation",
+   "skills": 12,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 17,
+     "caption": "Tool Use and Automation"
+    }
+   ],
+   "note": "refine: Workflow Automation [1704]"
+  },
+  {
+   "arp": "scraping",
+   "skills": 10,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 810,
+     "caption": "Web Data Acquisition"
+    }
+   ],
+   "note": ""
+  },
+  {
+   "arp": "document",
+   "skills": 9,
+   "kind": "split",
+   "oasf": [
+    {
+     "id": 1306,
+     "caption": "Office Productivity"
+    },
+    {
+     "id": 1305,
+     "caption": "Document Processing"
+    }
+   ],
+   "note": "pptx to Presentation Authoring [130602], xlsx to Spreadsheet Authoring [130601], docx to Document Authoring [130603], pdf to PDF Manipulation [130503]"
+  },
+  {
+   "arp": "payment",
+   "skills": 8,
+   "kind": "split",
+   "oasf": [
+    {
+     "id": 120304,
+     "caption": "Payments Integration"
+    },
+    {
+     "id": 110304,
+     "caption": "Conversion Optimization"
+    }
+   ],
+   "note": "mostly pricing and CRO, not payments: to Conversion Optimization [110304] or a pricing node; Payments Integration [120304] only for skills that move money"
+  },
+  {
+   "arp": "audio",
+   "skills": 5,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 3,
+     "caption": "Audio & Speech Processing"
+    }
+   ],
+   "note": ""
+  },
+  {
+   "arp": "research",
+   "skills": 4,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 1301,
+     "caption": "Research and Scholarship"
+    }
+   ],
+   "note": ""
+  },
+  {
+   "arp": "website",
+   "skills": 3,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 602,
+     "caption": "Web Development"
+    }
+   ],
+   "note": "mobile-native to Mobile Development [603]"
+  },
+  {
+   "arp": "browser",
+   "skills": 1,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 1705,
+     "caption": "Browser Automation"
+    }
+   ],
+   "note": ""
+  },
+  {
+   "arp": "api",
+   "skills": 1,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 604,
+     "caption": "API Development"
+    }
+   ],
+   "note": ""
+  },
+  {
+   "arp": "observability",
+   "skills": 1,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 908,
+     "caption": "Observability"
+    }
+   ],
+   "note": ""
+  },
+  {
+   "arp": "presentation",
+   "skills": 0,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 130602,
+     "caption": "Presentation Authoring"
+    }
+   ],
+   "note": "created by agent 12 on 2026-11-09; OASF already has it"
+  },
+  {
+   "arp": "card",
+   "skills": 0,
+   "kind": "arp-node",
+   "oasf": [
+    {
+     "id": 120304,
+     "caption": "Payments Integration"
+    }
+   ],
+   "note": "an ARP node under Payments Integration [120304]"
+  },
+  {
+   "arp": "blockchain",
+   "skills": 0,
+   "kind": "same",
+   "oasf": [
+    {
+     "id": 1405,
+     "caption": "Blockchain and Web3"
+    }
+   ],
+   "note": "no skill tagged"
+  }
+ ]
+}
