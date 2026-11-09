@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-83 entries, one per completed task. Written by `task-verifier` on a pass.
+84 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -89,3 +89,4 @@
 | [74](74-the-8004-sieve.md) | `docs/tasks/87-the-8004-sieve.md` (written as task 83, renumbered at rebase) | PASS on round 2 | The 8004 sieve: separate the agents that exist from the ones that answer |
 | [75](75-words-to-the-tree.md) | `docs/tasks/84-words-to-the-tree.md` | PASS (round 2) | Words to the tree |
 | [76](76-no-limits-page.md) | `docs/tasks/85-no-limits-page.md` | PASS | The docs have no Limits page |
+| [77](77-share-at-install.md) | `docs/tasks/88-share-at-install.md` (built as task 86, renumbered by the coordinating session) | PASS (round 2) | Installs offer sharing |

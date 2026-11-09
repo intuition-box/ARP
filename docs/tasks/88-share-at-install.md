@@ -1,6 +1,6 @@
 # Task 88 — Installs offer sharing
 
-**Status:** built 2026-11-09 on `feat/88-share-at-install` (worktree `../ARP-tree`), not pushed.
+**Status:** verified 2026-11-09, `task-verifier` PASS (round 2), commit `9b68596`, post-mortem `.claude/learning/77-share-at-install.md`; on `feat/88-share-at-install`, not pushed.
 **ADR:** `0157`.
 **Rules:** `code.md`, `ui.md`, `claims.md`, `workflow.md`.
 
