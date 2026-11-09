@@ -1,4 +1,4 @@
-import { chmodSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, delimiter } from 'node:path';
 
@@ -136,6 +136,8 @@ export function searchInvocation(query: string, path: string | undefined, home: 
       '--prefix',
       home,
       '--yes',
+      // npm keeps a log of each run, argv included, so the query: none is written (audit 2026-11-09).
+      '--logs-max=0',
       ...(firstDownload ? [] : ['--fetch-retries=0', '--fetch-timeout=5000']),
       SKILLS_CLI,
       'find',
@@ -174,6 +176,8 @@ async function search(query: string, timeoutMs: number, stop: AbortSignal, first
     const home = searchHome();
     mkdirSync(home, { recursive: true, mode: 0o700 });
     chmodSync(home, 0o700); // `mode` above does not tighten a directory that already exists
+    // Logs an earlier version let npm write, each with the words of one search.
+    rmSync(join(home, '.npm', '_logs'), { recursive: true, force: true });
     return { output: await runSearch(searchInvocation(query, process.env['PATH'], home, firstDownload), { timeoutMs, stop }) };
   } catch (error) {
     return { error: withoutPaths(error instanceof Error ? (error.message.split('\n')[0] ?? 'failed') : String(error)) };
