@@ -208,9 +208,8 @@
     --reveal-fade: 260ms;
     --reveal-step: 80ms;
 
-    /* Word scale: one word of a display heading. `--line-step` is per RENDERED
-       line, measured at runtime, because `--text-display` is a clamp() and the
-       wrap moves with the viewport. */
+    /* Line scale: one authored line of a heading (`.arp-line`, `Lines`). `--line-step`
+       staggers the written lines, not the wrapped ones. */
     --word-rise: 380ms;
     --line-step: 110ms;
 

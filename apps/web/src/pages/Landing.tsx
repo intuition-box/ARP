@@ -788,7 +788,7 @@ const COLUMNS = [
  */
 function SceneHead({lines}: {lines: readonly {text: string; dim?: boolean}[]}) {
     return (
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
+        <div className="mb-8">
             {/* No size and no face class here: `Lines` carries `type-section`, so the dim line
                 is above the large-text contrast floor by construction rather than by this
                 element remembering to set one. */}

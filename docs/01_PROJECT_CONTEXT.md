@@ -109,7 +109,7 @@ Calibration is out, not deferred (ADR `0049`): it is a score that needs ground t
 
 ## What ARP is
 
-In public ARP is **the public pulse for skills and autonomous agents** (`docs/30`, ADR `0142`). Underneath,
+In public ARP is **the public pulse for tools and autonomous agents** (`docs/30`, ADR `0142`). Underneath,
 ARP (Agent Reputation Protocol) is a permissionless reputation protocol for autonomous AI agents. It sits on top of ERC-8004 (the Ethereum agent identity standard) and uses Intuition's semantic graph as its ontology layer.
 
 The core innovation is that **the input costs money**. An agent declares the tools it used and its wallet holds a deposit on that declaration (on testnet
