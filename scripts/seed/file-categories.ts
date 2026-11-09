@@ -13,7 +13,7 @@
  *  A new category is added only by a registered agent's signed request (task 73, ADR `0146`), so
  *  `--agent`, `--key` (the NAME of the env variable holding that agent's key, never the key) and
  *  `--expect` (the address it must sign as, checked before anything is sent) sign every filing. Without
- *  them, only tags with an existing category are sent.
+ *  them every filing goes as a tag, which the sponsor accepts only for a category that exists.
  *
  *  A new category is filed once with its parent and reason; every later skill under it is a plain
  *  tag, as the web and `arp_file_category` send it.
@@ -81,10 +81,8 @@ const filed = new Set<string>();
 let done = 0;
 for (const filing of filings) {
     const first = filing.parent !== undefined && !filed.has(filing.category);
-    if (first && signer === null) {
-        console.log(`  SKIPPED ${filing.url} → ${filing.category}: a new category needs --agent, --key and --expect`);
-        continue;
-    }
+    // Unsigned, a filing goes as a tag: accepted when the category exists already (a re-run), refused
+    // with rule `agent` when it would be new.
     const body =
         signer === null
             ? {label: filing.category, subjectId: filing.atom}
@@ -121,6 +119,7 @@ for (const filing of filings) {
     const answer = (await response.json().catch(() => null)) as {rule?: string; error?: string; created?: boolean} | null;
     if (!response.ok) {
         console.log(`  REFUSED ${filing.url} → ${filing.category}: ${answer?.rule ?? response.status} ${answer?.error ?? ""}`);
+        if (answer?.rule === "agent") console.log("    a new category needs --agent, --key and --expect");
         if (answer?.rule === "limit") {
             console.log(`stopped at the daily limit after ${done}; re-run tomorrow`);
             break;
