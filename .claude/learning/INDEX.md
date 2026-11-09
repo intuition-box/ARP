@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-81 entries, one per completed task. Written by `task-verifier` on a pass.
+82 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -87,3 +87,4 @@
 | [72](72-the-landing-galaxy.md) | `docs/tasks/81-the-landing-galaxy.md` | PASS (round 3) | The landing: one camera through the registry |
 | [73](73-enough-to-test.md) | `docs/tasks/82-enough-to-test.md` | PASS (round 2; round 1 FAIL on one claim and uncommented casts) | Enough to test |
 | [75](75-words-to-the-tree.md) | `docs/tasks/84-words-to-the-tree.md` | PASS (round 2) | Words to the tree |
+| [76](76-no-limits-page.md) | `docs/tasks/85-no-limits-page.md` | PASS | The docs have no Limits page |

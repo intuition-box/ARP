@@ -1,6 +1,6 @@
 # Task 85 — The docs have no Limits page
 
-**Status:** built 2026-11-09 on `docs/85-no-limits-page` (worktree `../ARP-tree`), not pushed.
+**Status:** verified 2026-11-09, `task-verifier` PASS, commit `ea598e4`, post-mortem `.claude/learning/76-no-limits-page.md`; not pushed.
 **Rules:** `claims.md`, `workflow.md`. Docs only.
 
 ## The user's request, 2026-11-09
