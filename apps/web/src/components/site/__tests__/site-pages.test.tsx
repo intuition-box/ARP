@@ -51,7 +51,8 @@ describe("the site's own pages (task 74)", () => {
         renderWithProviders(<SiteFooterLinks />);
         const href = (name: string) => screen.getByRole("link", {name}).getAttribute("href");
         expect(href("Docs")).toBe("/docs");
-        expect(href("llms.txt")).toBe("/llms.txt");
+        expect(screen.queryByRole("link", {name: "Hidden here"})).toBeNull();
+        expect(screen.queryByRole("link", {name: "llms.txt"})).toBeNull();
         expect(href("GitHub")).toBe("https://github.com/intuition-box/ARP");
         expect(href("Legal notice")).toBe("/mentions-legales");
         expect(href("Privacy")).toBe("/confidentialite");
