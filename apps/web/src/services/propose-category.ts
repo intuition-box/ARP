@@ -1,19 +1,13 @@
 /**
- * Ask the sponsor to tag a tool with a category, or to file a new one (task 59, ADR `0124`).
- *
- * An existing category is the common choice: only the tag is written. A new one needs a parent and
- * a reason, and meets the same rules as every category (`docs/25` §8). The sponsor decides; this
- * reports what it answered.
+ * Ask the sponsor to tag a tool with an existing category (task 59, ADR `0124`). Only the tag is
+ * written. A new category is added by a registered agent's signed request, never from here (task 73,
+ * ADR `0146`). The sponsor decides; this reports what it answered.
  *
  * No React. Every IO is injected, so the test needs no server.
  */
 export type CategoryRequest = {
     label: string;
     subjectId: string;
-    /** For a new category only. */
-    parent?: string;
-    /** For a new category only. */
-    reason?: string;
 };
 
 export type ProposeCategoryResult =
@@ -67,26 +61,13 @@ export async function proposeCategory(
 export function proposeCategoryMessage(result: ProposeCategoryResult): string {
     switch (result.status) {
         case "done":
-            if (!result.created) return `Already in “${result.label}”.`;
-            return result.newCategory
-                ? `Filed under the new category “${result.label}”.`
-                : `Filed under “${result.label}”.`;
+            return result.created ? `Filed under “${result.label}”.` : `Already in “${result.label}”.`;
         case "unavailable":
             return "Categories are not available right now.";
         case "refused":
             switch (result.rule) {
-                case "empty":
-                    return "Give the category a name.";
-                case "hyphen":
-                case "charset":
-                case "compound":
-                    return "One word, letters and digits only.";
-                case "reason":
-                    return "Say why no category fits.";
-                case "parent":
-                    return "Pick the category it sits under.";
-                case "exists":
-                    return "That name is taken outside the tree. Choose another.";
+                case "agent":
+                    return "Pick a category from the list.";
                 case "root":
                     return "Pick a category under tool, not tool itself.";
                 case "limit":

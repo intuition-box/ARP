@@ -24,21 +24,7 @@ describe("proposing a category through the sponsor", () => {
         expect(proposeCategoryMessage(result)).toBe("Filed under “design”.");
     });
 
-    it("files a new category, and says when nothing needed writing", async () => {
-        const filed = await proposeCategory(
-            {
-                label: "slides",
-                parent: "design",
-                reason: "no presentation category",
-                subjectId: SKILL,
-            },
-            {
-                endpoint: "http://sponsor",
-                fetch: answering(200, {label: "slides", newCategory: true, created: true}),
-            },
-        );
-        expect(proposeCategoryMessage(filed)).toBe("Filed under the new category “slides”.");
-
+    it("says when nothing needed writing", async () => {
         const already = await proposeCategory(
             {label: "design", subjectId: SKILL},
             {
@@ -51,9 +37,7 @@ describe("proposing a category through the sponsor", () => {
 
     it("names the rule that refused it", async () => {
         const cases = [
-            [422, {rule: "charset"}, "One word, letters and digits only."],
-            [422, {rule: "reason"}, "Say why no category fits."],
-            [422, {rule: "exists"}, "That name is taken outside the tree. Choose another."],
+            [403, {rule: "agent"}, "Pick a category from the list."],
             [422, {rule: "root"}, "Pick a category under tool, not tool itself."],
             [429, {rule: "limit"}, "Today's limit is reached. Try again tomorrow."],
             [422, {rule: "skill"}, "That tool is not on the index yet. Try again in a minute."],

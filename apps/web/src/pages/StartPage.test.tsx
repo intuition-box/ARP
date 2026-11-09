@@ -190,7 +190,7 @@ describe("the start page", () => {
         expect(screen.queryByLabelText("Tool or skill URL")).toBeNull();
     });
 
-    it("offers the category step once the tool is listed: an existing one, or a new one", async () => {
+    it("offers the category step once the tool is listed, with existing categories only", async () => {
         listing.result = {status: "listed", atomId: "0xabc", created: true, transactions: []};
         renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
 
@@ -198,20 +198,9 @@ describe("the start page", () => {
         fireEvent.change(select, {target: {value: "design"}});
         fireEvent.click(screen.getByRole("button", {name: "File it"}));
         expect(proposal.submit).toHaveBeenCalledWith({label: "design", subjectId: "0xabc"});
-
-        fireEvent.change(select, {target: {value: "__none-fits"}});
-        fireEvent.change(screen.getByLabelText("New category"), {target: {value: "slides"}});
-        fireEvent.change(screen.getByLabelText("Under"), {target: {value: "design"}});
-        fireEvent.change(screen.getByLabelText("Why none fits"), {
-            target: {value: "no deck category"},
-        });
-        fireEvent.click(screen.getByRole("button", {name: "File it"}));
-        expect(proposal.submit).toHaveBeenLastCalledWith({
-            label: "slides",
-            parent: "design",
-            reason: "no deck category",
-            subjectId: "0xabc",
-        });
+        // A new category is an agent's to add (ADR `0146`): no way to type one here.
+        expect(within(select).queryByRole("option", {name: "None fits"})).toBeNull();
+        expect(screen.queryByLabelText("New category")).toBeNull();
     });
 
     it("tells the reader while it files, then what was filed", async () => {
@@ -225,16 +214,6 @@ describe("the start page", () => {
         proposal.result = {status: "done", label: "design", newCategory: false, created: true};
         view.rerender(<StartPage feed={feedWith([]).feed} />);
         expect(await screen.findByText("Filed under “design”.")).toBeTruthy();
-    });
-
-    it("offers the root as a parent for a new category", async () => {
-        listing.result = {status: "listed", atomId: "0xabc", created: true, transactions: []};
-        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
-        fireEvent.change(await screen.findByLabelText("Category"), {
-            target: {value: "__none-fits"},
-        });
-        const under = screen.getByLabelText("Under");
-        expect(within(under).getByRole("option", {name: "tool"})).toBeTruthy();
     });
 
     it("shows no category step without a sponsor, even once listed", async () => {
