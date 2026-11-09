@@ -19,11 +19,18 @@ export function SideGalaxy() {
             const width = window.innerWidth;
             const height = window.innerHeight;
             const ratio = window.devicePixelRatio || 1;
+            const stars = sideStars(width, height);
+            // Below about 1412px nothing shows: an empty canvas would still hold width × height × ratio².
+            if (stars.length === 0) {
+                canvas.width = 0;
+                canvas.height = 0;
+                return;
+            }
             canvas.width = Math.round(width * ratio);
             canvas.height = Math.round(height * ratio);
             context.setTransform(ratio, 0, 0, ratio, 0, 0);
             context.clearRect(0, 0, width, height);
-            for (const star of sideStars(width, height)) {
+            for (const star of stars) {
                 context.globalAlpha = star.alpha;
                 context.fillStyle = star.tone;
                 context.beginPath();

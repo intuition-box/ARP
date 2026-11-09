@@ -18,7 +18,7 @@ export const CLEAR_WIDTH = 1272;
 /** Beyond the clear column, the distance over which stars come to full strength. */
 export const FADE_PX = 140;
 
-/** The strongest a side star gets: faint, never competing with the page. */
+/** The strongest a side star gets. The faintness comes from `STAR_TONES`' dim greys, not from this. */
 export const MAX_ALPHA = 0.95;
 
 export type SideStar = {x: number; y: number; r: number; alpha: number; tone: string};
