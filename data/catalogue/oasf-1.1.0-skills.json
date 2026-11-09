@@ -1,5 +1,5 @@
 {
- "_note": "OASF skills taxonomy, pinned. Read from github.com/agntcy/oasf at tag v1.1.0 (schema/version.json 1.1.0), schema/skills/**. Apache-2.0, Copyright AGNTCY Contributors. id = parent id * 100 + uid, as the OASF server prints it. Data only: nothing here is on chain.",
+ "_note": "OASF skills taxonomy, pinned. Read from github.com/agntcy/oasf at tag v1.1.0 (schema/version.json 1.1.0), schema/skills/**. Apache-2.0, Copyright AGNTCY Contributors. id = parent id * 100 + uid, as the OASF server prints it. Data only: nothing here is on chain. Licence and notice: data/catalogue/NOTICE.md and oasf-LICENSE.txt.",
  "source": "https://github.com/agntcy/oasf/tree/v1.1.0/schema/skills",
  "commit": "f510be0d4b5878ac8f86c64ffd6cd7132733c03e",
  "version": "1.1.0",
