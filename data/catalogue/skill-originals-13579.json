@@ -1,0 +1,477 @@
+{
+ "_note": "Which listing of a copied skill is the original, task 79, ADR 0150 point 8. A copy is hidden from the search only when its original is known; otherwise every copy is shown. inference-sh/skills checked 2026-11-09 at commit 0cbf91c2 (all 26 SKILL.md present). The other groups come from GitHub repo creation dates, confirmed by installs. Search-side hiding is not built yet.",
+ "measuredOn": "2026-11-09",
+ "groups": [
+  {
+   "skill": "agent-browser",
+   "original": "https://github.com/inference-sh/skills?skill=agent-browser",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=agent-browser",
+    "https://github.com/bankai-skills/superpowers?skill=agent-browser",
+    "https://github.com/its-a-skill-issue/superpowers?skill=agent-browser",
+    "https://github.com/magentosh/superpowers?skill=agent-browser",
+    "https://github.com/qu-skills/superpowers?skill=agent-browser",
+    "https://github.com/skills-shell/superpowers?skill=agent-browser"
+   ],
+   "oasfId": 1705,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "agent-tools",
+   "original": "https://github.com/inference-sh/skills?skill=agent-tools",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=agent-tools",
+    "https://github.com/bankai-skills/superpowers?skill=agent-tools",
+    "https://github.com/its-a-skill-issue/superpowers?skill=agent-tools",
+    "https://github.com/magentosh/superpowers?skill=agent-tools",
+    "https://github.com/qu-skills/superpowers?skill=agent-tools",
+    "https://github.com/skills-shell/superpowers?skill=agent-tools"
+   ],
+   "oasfId": 1703,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "ai-avatar-video",
+   "original": "https://github.com/inference-sh/skills?skill=ai-avatar-video",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=ai-avatar-video",
+    "https://github.com/bankai-skills/superpowers?skill=ai-avatar-video",
+    "https://github.com/its-a-skill-issue/superpowers?skill=ai-avatar-video",
+    "https://github.com/magentosh/superpowers?skill=ai-avatar-video",
+    "https://github.com/qu-skills/superpowers?skill=ai-avatar-video",
+    "https://github.com/skills-shell/superpowers?skill=ai-avatar-video"
+   ],
+   "oasfId": 20406,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "ai-image-generation",
+   "original": "https://github.com/inference-sh/skills?skill=ai-image-generation",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=ai-image-generation",
+    "https://github.com/bankai-skills/superpowers?skill=ai-image-generation",
+    "https://github.com/its-a-skill-issue/superpowers?skill=ai-image-generation",
+    "https://github.com/magentosh/superpowers?skill=ai-image-generation",
+    "https://github.com/qu-skills/superpowers?skill=ai-image-generation",
+    "https://github.com/skills-shell/superpowers?skill=ai-image-generation"
+   ],
+   "oasfId": 20201,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "ai-image-generation",
+   "original": "https://github.com/prime-skills/runcomfy-agent-skills?skill=ai-image-generation",
+   "listed": true,
+   "copies": [
+    "https://github.com/gencraft-labs/skills?skill=ai-image-generation"
+   ],
+   "oasfId": 20201,
+   "arpNode": null,
+   "rule": "c-earliest-creation"
+  },
+  {
+   "skill": "ai-music",
+   "original": "https://github.com/prime-skills/runcomfy-agent-skills?skill=ai-music",
+   "listed": true,
+   "copies": [
+    "https://github.com/gencraft-labs/skills?skill=ai-music"
+   ],
+   "oasfId": 30301,
+   "arpNode": null,
+   "rule": "c-earliest-creation"
+  },
+  {
+   "skill": "ai-video-generation",
+   "original": "https://github.com/inference-sh/skills?skill=ai-video-generation",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=ai-video-generation",
+    "https://github.com/bankai-skills/superpowers?skill=ai-video-generation",
+    "https://github.com/its-a-skill-issue/superpowers?skill=ai-video-generation",
+    "https://github.com/magentosh/superpowers?skill=ai-video-generation",
+    "https://github.com/qu-skills/superpowers?skill=ai-video-generation",
+    "https://github.com/skills-shell/superpowers?skill=ai-video-generation"
+   ],
+   "oasfId": 20403,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "ai-video-generation",
+   "original": "https://github.com/prime-skills/runcomfy-agent-skills?skill=ai-video-generation",
+   "listed": true,
+   "copies": [
+    "https://github.com/gencraft-labs/skills?skill=ai-video-generation"
+   ],
+   "oasfId": 20403,
+   "arpNode": null,
+   "rule": "c-earliest-creation"
+  },
+  {
+   "skill": "app-store-screenshots",
+   "original": "https://github.com/inference-sh/skills?skill=app-store-screenshots",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=app-store-screenshots",
+    "https://github.com/bankai-skills/superpowers?skill=app-store-screenshots",
+    "https://github.com/its-a-skill-issue/superpowers?skill=app-store-screenshots",
+    "https://github.com/magentosh/superpowers?skill=app-store-screenshots",
+    "https://github.com/qu-skills/superpowers?skill=app-store-screenshots",
+    "https://github.com/skills-shell/superpowers?skill=app-store-screenshots"
+   ],
+   "oasfId": 60303,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "character-design-sheet",
+   "original": "https://github.com/inference-sh/skills?skill=character-design-sheet",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=character-design-sheet",
+    "https://github.com/bankai-skills/superpowers?skill=character-design-sheet",
+    "https://github.com/its-a-skill-issue/superpowers?skill=character-design-sheet",
+    "https://github.com/magentosh/superpowers?skill=character-design-sheet",
+    "https://github.com/qu-skills/superpowers?skill=character-design-sheet",
+    "https://github.com/skills-shell/superpowers?skill=character-design-sheet"
+   ],
+   "oasfId": 20203,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "competitor-teardown",
+   "original": "https://github.com/inference-sh/skills?skill=competitor-teardown",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=competitor-teardown",
+    "https://github.com/bankai-skills/superpowers?skill=competitor-teardown",
+    "https://github.com/its-a-skill-issue/superpowers?skill=competitor-teardown",
+    "https://github.com/magentosh/superpowers?skill=competitor-teardown",
+    "https://github.com/qu-skills/superpowers?skill=competitor-teardown",
+    "https://github.com/skills-shell/superpowers?skill=competitor-teardown"
+   ],
+   "oasfId": 120802,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "gpt-image",
+   "original": "https://github.com/inference-sh/skills?skill=gpt-image",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=gpt-image",
+    "https://github.com/bankai-skills/superpowers?skill=gpt-image",
+    "https://github.com/its-a-skill-issue/superpowers?skill=gpt-image",
+    "https://github.com/magentosh/superpowers?skill=gpt-image",
+    "https://github.com/qu-skills/superpowers?skill=gpt-image",
+    "https://github.com/skills-shell/superpowers?skill=gpt-image"
+   ],
+   "oasfId": 20201,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "happyhorse",
+   "original": "https://github.com/inference-sh/skills?skill=happyhorse",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=happyhorse",
+    "https://github.com/bankai-skills/superpowers?skill=happyhorse",
+    "https://github.com/its-a-skill-issue/superpowers?skill=happyhorse",
+    "https://github.com/magentosh/superpowers?skill=happyhorse",
+    "https://github.com/qu-skills/superpowers?skill=happyhorse",
+    "https://github.com/skills-shell/superpowers?skill=happyhorse"
+   ],
+   "oasfId": 20403,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "image-to-video",
+   "original": "https://github.com/inference-sh/skills?skill=image-to-video",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=image-to-video",
+    "https://github.com/bankai-skills/superpowers?skill=image-to-video",
+    "https://github.com/its-a-skill-issue/superpowers?skill=image-to-video",
+    "https://github.com/magentosh/superpowers?skill=image-to-video",
+    "https://github.com/qu-skills/superpowers?skill=image-to-video",
+    "https://github.com/skills-shell/superpowers?skill=image-to-video"
+   ],
+   "oasfId": 20404,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "image-to-video",
+   "original": "https://github.com/prime-skills/runcomfy-agent-skills?skill=image-to-video",
+   "listed": true,
+   "copies": [
+    "https://github.com/gencraft-labs/skills?skill=image-to-video"
+   ],
+   "oasfId": 20404,
+   "arpNode": null,
+   "rule": "c-earliest-creation"
+  },
+  {
+   "skill": "infsh-cli",
+   "original": "https://github.com/inference-sh/skills?skill=infsh-cli",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=infsh-cli",
+    "https://github.com/bankai-skills/superpowers?skill=infsh-cli",
+    "https://github.com/its-a-skill-issue/superpowers?skill=infsh-cli",
+    "https://github.com/magentosh/superpowers?skill=infsh-cli",
+    "https://github.com/qu-skills/superpowers?skill=infsh-cli",
+    "https://github.com/skills-shell/superpowers?skill=infsh-cli"
+   ],
+   "oasfId": 1703,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "landing-page-design",
+   "original": "https://github.com/inference-sh/skills?skill=landing-page-design",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=landing-page-design",
+    "https://github.com/bankai-skills/superpowers?skill=landing-page-design",
+    "https://github.com/its-a-skill-issue/superpowers?skill=landing-page-design",
+    "https://github.com/magentosh/superpowers?skill=landing-page-design",
+    "https://github.com/qu-skills/superpowers?skill=landing-page-design",
+    "https://github.com/skills-shell/superpowers?skill=landing-page-design"
+   ],
+   "oasfId": 110304,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "p-image",
+   "original": "https://github.com/inference-sh/skills?skill=p-image",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=p-image",
+    "https://github.com/bankai-skills/superpowers?skill=p-image",
+    "https://github.com/its-a-skill-issue/superpowers?skill=p-image",
+    "https://github.com/magentosh/superpowers?skill=p-image",
+    "https://github.com/qu-skills/superpowers?skill=p-image",
+    "https://github.com/skills-shell/superpowers?skill=p-image"
+   ],
+   "oasfId": 20201,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "p-video",
+   "original": "https://github.com/inference-sh/skills?skill=p-video",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=p-video",
+    "https://github.com/bankai-skills/superpowers?skill=p-video",
+    "https://github.com/its-a-skill-issue/superpowers?skill=p-video",
+    "https://github.com/magentosh/superpowers?skill=p-video",
+    "https://github.com/qu-skills/superpowers?skill=p-video",
+    "https://github.com/skills-shell/superpowers?skill=p-video"
+   ],
+   "oasfId": 20403,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "p-video-avatar",
+   "original": "https://github.com/inference-sh/skills?skill=p-video-avatar",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=p-video-avatar",
+    "https://github.com/bankai-skills/superpowers?skill=p-video-avatar",
+    "https://github.com/its-a-skill-issue/superpowers?skill=p-video-avatar",
+    "https://github.com/magentosh/superpowers?skill=p-video-avatar",
+    "https://github.com/qu-skills/superpowers?skill=p-video-avatar",
+    "https://github.com/skills-shell/superpowers?skill=p-video-avatar"
+   ],
+   "oasfId": 20406,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "product-hunt-launch",
+   "original": "https://github.com/inference-sh/skills?skill=product-hunt-launch",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=product-hunt-launch",
+    "https://github.com/bankai-skills/superpowers?skill=product-hunt-launch",
+    "https://github.com/its-a-skill-issue/superpowers?skill=product-hunt-launch",
+    "https://github.com/magentosh/superpowers?skill=product-hunt-launch",
+    "https://github.com/qu-skills/superpowers?skill=product-hunt-launch",
+    "https://github.com/skills-shell/superpowers?skill=product-hunt-launch"
+   ],
+   "oasfId": 110503,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "product-photography",
+   "original": "https://github.com/inference-sh/skills?skill=product-photography",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=product-photography",
+    "https://github.com/bankai-skills/superpowers?skill=product-photography",
+    "https://github.com/its-a-skill-issue/superpowers?skill=product-photography",
+    "https://github.com/magentosh/superpowers?skill=product-photography",
+    "https://github.com/qu-skills/superpowers?skill=product-photography",
+    "https://github.com/skills-shell/superpowers?skill=product-photography"
+   ],
+   "oasfId": 20201,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "python-executor",
+   "original": "https://github.com/inference-sh/skills?skill=python-executor",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=python-executor",
+    "https://github.com/bankai-skills/superpowers?skill=python-executor",
+    "https://github.com/its-a-skill-issue/superpowers?skill=python-executor",
+    "https://github.com/magentosh/superpowers?skill=python-executor",
+    "https://github.com/qu-skills/superpowers?skill=python-executor",
+    "https://github.com/skills-shell/superpowers?skill=python-executor"
+   ],
+   "oasfId": 1703,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "remotion-render",
+   "original": "https://github.com/inference-sh/skills?skill=remotion-render",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=remotion-render",
+    "https://github.com/bankai-skills/superpowers?skill=remotion-render",
+    "https://github.com/its-a-skill-issue/superpowers?skill=remotion-render",
+    "https://github.com/magentosh/superpowers?skill=remotion-render",
+    "https://github.com/qu-skills/superpowers?skill=remotion-render",
+    "https://github.com/skills-shell/superpowers?skill=remotion-render"
+   ],
+   "oasfId": 204,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "seedance",
+   "original": "https://github.com/inference-sh/skills?skill=seedance",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=seedance",
+    "https://github.com/bankai-skills/superpowers?skill=seedance",
+    "https://github.com/its-a-skill-issue/superpowers?skill=seedance",
+    "https://github.com/magentosh/superpowers?skill=seedance",
+    "https://github.com/qu-skills/superpowers?skill=seedance",
+    "https://github.com/skills-shell/superpowers?skill=seedance"
+   ],
+   "oasfId": 20403,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "storyboard-creation",
+   "original": "https://github.com/inference-sh/skills?skill=storyboard-creation",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=storyboard-creation",
+    "https://github.com/bankai-skills/superpowers?skill=storyboard-creation",
+    "https://github.com/its-a-skill-issue/superpowers?skill=storyboard-creation",
+    "https://github.com/magentosh/superpowers?skill=storyboard-creation",
+    "https://github.com/qu-skills/superpowers?skill=storyboard-creation",
+    "https://github.com/skills-shell/superpowers?skill=storyboard-creation"
+   ],
+   "oasfId": 204,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "twitter-automation",
+   "original": "https://github.com/inference-sh/skills?skill=twitter-automation",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=twitter-automation",
+    "https://github.com/bankai-skills/superpowers?skill=twitter-automation",
+    "https://github.com/its-a-skill-issue/superpowers?skill=twitter-automation",
+    "https://github.com/magentosh/superpowers?skill=twitter-automation",
+    "https://github.com/qu-skills/superpowers?skill=twitter-automation",
+    "https://github.com/skills-shell/superpowers?skill=twitter-automation"
+   ],
+   "oasfId": 110702,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "video-ad-specs",
+   "original": "https://github.com/inference-sh/skills?skill=video-ad-specs",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=video-ad-specs",
+    "https://github.com/bankai-skills/superpowers?skill=video-ad-specs",
+    "https://github.com/its-a-skill-issue/superpowers?skill=video-ad-specs",
+    "https://github.com/magentosh/superpowers?skill=video-ad-specs",
+    "https://github.com/qu-skills/superpowers?skill=video-ad-specs",
+    "https://github.com/skills-shell/superpowers?skill=video-ad-specs"
+   ],
+   "oasfId": 110602,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "video-edit",
+   "original": "https://github.com/prime-skills/runcomfy-agent-skills?skill=video-edit",
+   "listed": true,
+   "copies": [
+    "https://github.com/gencraft-labs/skills?skill=video-edit"
+   ],
+   "oasfId": 20405,
+   "arpNode": null,
+   "rule": "c-earliest-creation"
+  },
+  {
+   "skill": "web-search",
+   "original": "https://github.com/inference-sh/skills?skill=web-search",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=web-search",
+    "https://github.com/bankai-skills/superpowers?skill=web-search",
+    "https://github.com/its-a-skill-issue/superpowers?skill=web-search",
+    "https://github.com/magentosh/superpowers?skill=web-search",
+    "https://github.com/qu-skills/superpowers?skill=web-search",
+    "https://github.com/skills-shell/superpowers?skill=web-search"
+   ],
+   "oasfId": 130201,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  },
+  {
+   "skill": "youtube-thumbnail-design",
+   "original": "https://github.com/inference-sh/skills?skill=youtube-thumbnail-design",
+   "listed": false,
+   "copies": [
+    "https://github.com/101-skills/superpowers?skill=youtube-thumbnail-design",
+    "https://github.com/bankai-skills/superpowers?skill=youtube-thumbnail-design",
+    "https://github.com/its-a-skill-issue/superpowers?skill=youtube-thumbnail-design",
+    "https://github.com/magentosh/superpowers?skill=youtube-thumbnail-design",
+    "https://github.com/qu-skills/superpowers?skill=youtube-thumbnail-design",
+    "https://github.com/skills-shell/superpowers?skill=youtube-thumbnail-design"
+   ],
+   "oasfId": 202,
+   "arpNode": null,
+   "rule": "the six */superpowers repos are pinned at becc256, a commit of inference-sh/skills older than all six"
+  }
+ ]
+}

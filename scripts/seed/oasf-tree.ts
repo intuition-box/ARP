@@ -142,25 +142,46 @@ const HELD = `query($who: [String!]!, $pids: [String!]!, $curveId: numeric!, $li
 }`;
 type Held = { account_id: string; shares: string; term: { triple: { term_id: string; predicate_id: string; subject: { label: string | null }; object: { label: string | null } } } };
 const held: Held[] = [];
-for (let offset = 0; ; offset += 250) {
+// The index answers at most 100 rows a page whatever `limit` says: page by what came back.
+const PAGE = 100;
+for (let offset = 0; ; offset += PAGE) {
   const res = await fetch(graphqlUrl, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ query: HELD, variables: { who: [...ARP_DOMAIN_ATTESTORS], pids: [IS_A_SUB_DOMAIN_OF, HAS_TAG], curveId: curve.toString(), limit: 250, offset } }),
+    body: JSON.stringify({ query: HELD, variables: { who: [...ARP_DOMAIN_ATTESTORS], pids: [IS_A_SUB_DOMAIN_OF, HAS_TAG], curveId: curve.toString(), limit: PAGE, offset } }),
   });
   const body = (await res.json()) as { data?: { positions: Held[] }; errors?: unknown };
   if (body.data === undefined) throw new Error(`the index could not be read: ${JSON.stringify(body.errors)}`);
   held.push(...body.data.positions);
-  if (body.data.positions.length < 250) break;
+  if (body.data.positions.length < PAGE) break;
+}
+// The old tree's nodes: every label that is a child or parent of a hierarchy edge the attestors hold.
+const oldNodes = new Set<string>();
+for (const h of held) {
+  if (h.term.triple.predicate_id.toLowerCase() !== IS_A_SUB_DOMAIN_OF.toLowerCase()) continue;
+  oldNodes.add(h.term.triple.subject.label ?? '');
+  oldNodes.add(h.term.triple.object.label ?? '');
 }
 const retire = new Map<string, Call[]>();
+const unredeemable: { holder: string; id: string; what: string; error: string }[] = [];
 for (const h of held) {
   const id = h.term.triple.term_id as Hex;
   if (wanted.has(id.toLowerCase())) continue;
+  // Only the tree is rewritten: a hierarchy edge, or a tag onto a node of the old tree. Other tags the
+  // attestors hold (`maintained`, from `record-maintained.ts`) are not the tree's and stay.
+  const isEdge = h.term.triple.predicate_id.toLowerCase() === IS_A_SUB_DOMAIN_OF.toLowerCase();
+  if (!isEdge && !oldNodes.has(h.term.triple.object.label ?? '')) continue;
   const holder = h.account_id as Hex;
   const shares = BigInt(h.shares);
-  const preview = await reads.previewRedeem(id, curve, shares);
   const what = `${h.term.triple.subject.label} — ${h.term.triple.predicate_id === IS_A_SUB_DOMAIN_OF ? 'is a sub-domain of' : 'has tag'} — ${h.term.triple.object.label}`;
+  let preview;
+  try {
+    preview = await reads.previewRedeem(id, curve, shares);
+  } catch (error) {
+    // A vault that would fall below its minimum shares, or any other revert: listed, not planned.
+    unredeemable.push({ holder, id, what, error: String(error instanceof Error ? error.message.split('\n')[0] : error) });
+    continue;
+  }
   retire.set(holder, [...(retire.get(holder) ?? []), { kind: 'redeem', chainId, to: multiVault, value: '0', data: encodeRedeem(holder, id, curve, shares, preview.assetsAfterFees), why: `retire ${what}` }]);
 }
 
@@ -171,6 +192,9 @@ writeFileSync(join(out, 'create.json'), JSON.stringify(create, null, 2));
 const total = create.reduce((sum, c) => sum + BigInt(c.value), 0n);
 console.log(`nodes ${labels.size} (${edges.size} edges), skills ${keep.length} (${missingSkill} without an atom)`);
 console.log(`create.json: ${atoms.length} atoms + ${triples.length} triples + ${deposits.length} deposits = ${create.length} calls, ${formatEther(total)} tTRUST, signed by ${attestor}`);
+writeFileSync(join(out, 'unredeemable.json'), JSON.stringify(unredeemable, null, 2));
+console.log(`old tree nodes: ${oldNodes.size}`);
+console.log(`positions held by the attestors: ${held.length}; kept ${held.length - [...retire.values()].flat().length - unredeemable.length}; unredeemable ${unredeemable.length}`);
 for (const [holder, calls] of retire) {
   writeFileSync(join(out, `retire-${holder.toLowerCase()}.json`), JSON.stringify(calls, null, 2));
   console.log(`retire-${holder.toLowerCase()}.json: ${calls.length} redeems, signed by ${holder}`);
