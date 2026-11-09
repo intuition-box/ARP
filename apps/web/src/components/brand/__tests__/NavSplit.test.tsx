@@ -1,5 +1,5 @@
 import {fireEvent, screen} from "@testing-library/react";
-import {describe, expect, it} from "vitest";
+import {describe, expect, it, vi} from "vitest";
 
 import {renderWithProviders} from "../../../test/render";
 import {NavAction, NavLink, NavSplit} from "../NavSplit";
@@ -93,5 +93,26 @@ describe("Get started in the nav (task 62)", () => {
         nav(undefined, "/tools");
         for (const button of screen.getAllByRole("button", {name: "Get started"}))
             expect(button).not.toHaveAttribute("aria-current");
+    });
+});
+
+describe("the mark on the landing", () => {
+    it("takes the reader back to the first scene, since the path does not change", () => {
+        const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
+        nav(undefined, "/");
+        for (const mark of screen.getAllByRole("link", {name: "ARP, home"})) {
+            scrollTo.mockClear();
+            fireEvent.click(mark);
+            expect(scrollTo).toHaveBeenCalledWith({top: 0, left: 0, behavior: "instant"});
+        }
+        scrollTo.mockRestore();
+    });
+
+    it("leaves another page to the router", () => {
+        const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
+        nav(undefined, "/tools");
+        fireEvent.click(screen.getAllByRole("link", {name: "ARP, home"})[0]);
+        expect(scrollTo).not.toHaveBeenCalledWith({top: 0, left: 0, behavior: "instant"});
+        scrollTo.mockRestore();
     });
 });
