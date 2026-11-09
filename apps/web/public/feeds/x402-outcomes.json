@@ -1,0 +1,19 @@
+{
+  "schema": "arp.x402-outcomes/1",
+  "generated_at": "2026-11-09T19:35:11.248Z",
+  "trace": {
+    "chain": "eip155:13579",
+    "graphql": "https://testnet.intuition.sh/v1/graphql"
+  },
+  "networks": [
+    "eip155:8453"
+  ],
+  "note": "Each record is one payer's word about one paid call, tied to a payment ARP read on its own chain when this file was built. It proves the payment and who made it, not what the endpoint delivered. ARP's own ranking counts an outcome only once 3 distinct wallets say it (ADR 0143); this feed lists every record and leaves the counting to the reader.",
+  "records": [],
+  "by_endpoint": {},
+  "skipped": {
+    "count": 0,
+    "reasons": {}
+  },
+  "truncated": false
+}

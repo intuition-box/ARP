@@ -23,7 +23,7 @@ describe("the docs", () => {
     it("links only to pages that exist", () => {
         const slugs = new Set(DOC_ENTRIES.map((entry) => entry.slug));
         for (const entry of DOC_ENTRIES) {
-            for (const match of read(entry.slug).matchAll(/\]\(\/docs\/([a-z-]+)/g)) {
+            for (const match of read(entry.slug).matchAll(/\]\(\/docs\/([a-z0-9-]+)/g)) {
                 expect(slugs, `${entry.slug} links to /docs/${match[1]}`).toContain(match[1]);
             }
         }
@@ -38,7 +38,7 @@ describe("the docs' section links", () => {
 
     it("land on a heading that exists", () => {
         for (const entry of DOC_ENTRIES) {
-            for (const match of read(entry.slug).matchAll(/\]\((?:\/docs\/([a-z-]+))?#([^)]+)\)/g)) {
+            for (const match of read(entry.slug).matchAll(/\]\((?:\/docs\/([a-z0-9-]+))?#([^)]+)\)/g)) {
                 const target = match[1] ?? entry.slug;
                 expect(ids(target), `${entry.slug} links to ${target}#${match[2]}`).toContain(match[2]);
             }
