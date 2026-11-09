@@ -1,38 +1,69 @@
-import {createContext, useContext} from "react";
+import {createContext, useContext, useEffect, useState} from "react";
 
 /**
- * What a {@link import("./SceneDeck").SceneDeck} tells the subtree inside one scene.
+ * What a {@link import("./SceneDeck").SceneDeck} tells everything inside it: which scene is on,
+ * which one it came from, and when the camera settles there.
  *
- * Two things read it. `Reveal` and `Words` need to know whether they are in a pinned deck, because
- * pinned they arrive on a longer timing while a Saffron cover opens over them; and the manifesto
- * needs `progress` to light one line at a time as the scroll crosses its band.
- *
- * It lives in its own module because a file exporting both a component and a context breaks React
- * Fast Refresh, which eslint enforces here.
+ * Its own module because a file exporting both a component and a context breaks React Fast
+ * Refresh, which eslint enforces here.
  */
-export type SceneState = {
-    /** Whether a deck above this point is pinning scenes rather than stacking them. */
+export type DeckState = {
+    /** Whether the deck is pinning scenes rather than stacking them. */
     pinned: boolean;
-    /** Whether this particular scene is the one on screen. Always true when stacked. */
-    isActive: boolean;
-    /**
-     * Scene-space scroll position: 0 is the first scene centred, 1 the second, and so on.
-     *
-     * Continuous, so a hand-over is a fraction and not a step. Stacked it stays at this scene's own
-     * index, which is what makes a scrubbed effect read as finished rather than as never started.
-     */
-    progress: number;
-    /** This scene's index in the deck. */
-    index: number;
+    /** The scene on screen. Changes the moment a gesture asks for the next one. */
+    current: number;
+    /** The scene before it, so a scene can play differently by where the reader came from. */
+    previous: number;
+    /** `performance.now()` when `current` last changed. */
+    changedAt: number;
+    /** How long the camera takes to reach `current`, in ms. 0 under reduced motion. */
+    settleMs: number;
+    /** `prefers-reduced-motion`: every scene jumps to its end state. */
+    still: boolean;
 };
 
-export const SceneContext = createContext<SceneState>({
+export const DeckContext = createContext<DeckState>({
     pinned: false,
-    isActive: true,
-    progress: 0,
-    index: 0,
+    current: 0,
+    previous: 0,
+    changedAt: 0,
+    settleMs: 0,
+    still: true,
 });
 
-export function useScene(): SceneState {
-    return useContext(SceneContext);
+export function useDeck(): DeckState {
+    return useContext(DeckContext);
+}
+
+/**
+ * The moment a scene's own sequence starts: when the camera is most of the way there, as the
+ * reference times it (60% of the move).
+ */
+export function arrivalOf(deck: DeckState): number {
+    return deck.changedAt + (deck.still ? 0 : deck.settleMs * 0.6);
+}
+
+/**
+ * Seconds since scene `index` arrived, ticking ten times a second while it is on screen, `-1`
+ * while it is not. Stacked, or under reduced motion, a scene is at its end state: `Infinity`.
+ */
+export function useSceneTime(index: number): number {
+    const deck = useDeck();
+    const on = deck.current === index;
+    const ended = !deck.pinned || deck.still;
+    const arrival = arrivalOf(deck);
+    const [now, setNow] = useState(() => performance.now());
+    useEffect(() => {
+        if (!on || ended) return;
+        const tick = () => setNow(performance.now());
+        const first = window.setTimeout(tick, 0);
+        const id = window.setInterval(tick, 100);
+        return () => {
+            window.clearTimeout(first);
+            window.clearInterval(id);
+        };
+    }, [on, ended, arrival]);
+    if (ended) return Infinity;
+    if (!on) return -1;
+    return Math.max(0, (now - arrival) / 1000);
 }
