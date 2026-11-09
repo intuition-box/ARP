@@ -215,7 +215,7 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
         }
     }
 
-    type Candidate = {payment: Level; outcomeId: string; record: Omit<X402FeedRecord, "payer" | "pay_to" | "amount" | "asset" | "paid_at" | "writer">; writers: Set<string>; owner: Address | null; agentWallet: Address | null};
+    type Candidate = {payment: Level; record: Omit<X402FeedRecord, "payer" | "pay_to" | "amount" | "asset" | "paid_at" | "writer">; writers: Set<string>; owner: Address | null; agentWallet: Address | null};
     const candidates: Candidate[] = [];
     for (const payment of payments) {
         const ref = payment.object.label === null ? null : parsePaymentAtomLabel(payment.object.label);
@@ -270,7 +270,6 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
         }
         candidates.push({
             payment,
-            outcomeId: key(outcome.termId),
             writers,
             owner,
             agentWallet,
@@ -287,21 +286,11 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
         });
     }
 
-    // One payment backs one line. A transaction named by two lines is nobody's record.
-    const linesPerTx = new Map<string, Set<string>>();
-    for (const candidate of candidates) {
-        const tx = `${candidate.record.network}/${candidate.record.settlement_tx}`;
-        linesPerTx.set(tx, (linesPerTx.get(tx) ?? new Set()).add(candidate.outcomeId));
-    }
-
+    const verified: X402FeedRecord[] = [];
     const records: X402FeedRecord[] = [];
     const unreadable: string[] = [];
     for (const candidate of candidates) {
         const {record} = candidate;
-        if ((linesPerTx.get(`${record.network}/${record.settlement_tx}`)?.size ?? 0) > 1) {
-            skip("one payment is named by several lines");
-            continue;
-        }
         const payers = [...candidate.writers].map((wallet) => getAddress(wallet));
         if (candidate.agentWallet !== null) payers.push(candidate.agentWallet);
         const checked = await checkX402Payment({
@@ -325,7 +314,7 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
         }
         const payer = checked.transfer.payer;
         const writer = candidate.writers.has(key(payer)) ? payer : (candidate.owner ?? payer);
-        records.push({
+        verified.push({
             ...record,
             payer,
             pay_to: checked.transfer.payTo,
@@ -336,6 +325,19 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
         });
     }
     if (unreadable.length > 0) throw new Error(`a paying chain could not be read, so no snapshot is written: ${unreadable[0]}`);
+
+    // One payment backs one line. Counted among lines whose payment checked, so a stranger who names
+    // somebody else's transaction is dropped for not paying and cannot void the payer's record. A payer
+    // who names its own payment on two lines voids both, and only its own.
+    const linesPerTx = new Map<string, number>();
+    for (const record of verified) {
+        const tx = `${record.network}/${record.settlement_tx}`;
+        linesPerTx.set(tx, (linesPerTx.get(tx) ?? 0) + 1);
+    }
+    for (const record of verified) {
+        if ((linesPerTx.get(`${record.network}/${record.settlement_tx}`) ?? 0) > 1) skip("one payment is named by several lines");
+        else records.push(record);
+    }
 
     records.sort((a, b) => a.written_at.localeCompare(b.written_at) || a.line_id.localeCompare(b.line_id));
     const byEndpoint: Record<string, X402EndpointSummary> = {};

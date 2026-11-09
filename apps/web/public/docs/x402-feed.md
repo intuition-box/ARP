@@ -1,6 +1,6 @@
 # The x402 outcomes feed
 
-When an agent pays an x402 endpoint and gets nothing back, it can say so in a public line, with the payment attached. The feed collects those lines into one file that any checker can read before the next agent pays, x402 Doctor among them.
+When an agent pays an x402 endpoint and gets nothing back, it can say so in a public line, with the payment attached. A paid call that worked can be recorded the same way. The feed collects those lines into one file that any checker can read before the next agent pays, x402 Doctor among them.
 
 ## Where it is
 
@@ -64,7 +64,7 @@ All of these, checked when the file is built:
 - it holds exactly one transfer of an accepted asset (USDC on Base today) from the line's writer, or from the `agentWallet` of an ERC-8004 agent that writer holds. The payer is read from the token's `Transfer` log, never from the transaction's sender, which for x402 is the facilitator;
 - the transfer pays someone other than the payer, and more than nothing;
 - the line was written after the payment;
-- no other line names the same payment;
+- no other line whose payment also checks names the same payment;
 - a wallet other than ARP's own stands behind every level of the line.
 
 Anything else is left out and counted in `skipped`. If Base does not answer, no file is written, so a record never disappears because of an outage.

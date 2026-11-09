@@ -64,8 +64,9 @@ Walk through each item for every contract change. Document the result (clean pas
   `/line`, in `arp line` and in `scripts/build/build-x402-feed.ts`. It is no signature: it reads one
   receipt on the paying network (Base by default), takes the payer from the token's `Transfer` log and
   never from `tx.from`, and accepts it only from the line writer's address or that agent's
-  `agentWallet`. ARP holds no account on that network and signs nothing there. A payment can be named
-  by several lines; the feed drops all of them, the sponsor's caps bound what it pays meanwhile.
+  `agentWallet`. ARP holds no account on that network and signs nothing there. The sponsor spends one
+  payment once (its label is the line's ledger key); the feed drops a payment that two lines name only
+  when both check, so a stranger naming it cannot void the payer's record.
   A new signature site gets checked
   against the bullet above, and added to this list, before it ships (ADRs `0096`, `0098`, `0117`).
 

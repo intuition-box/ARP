@@ -2381,6 +2381,17 @@ describe('POST /line', () => {
       }
     });
 
+    test('lets one payment back one line, under any nonce', async () => {
+      const w = seeded();
+      const service = paid(w, base(AGENT.address));
+      expect((await post(service, { request: await withPayment() })).status).toBe(200);
+      const count = w.sent.length;
+      const again = await post(service, { request: await withPayment({ domain: 'video' }) });
+      expect(again.status).toBe(409);
+      expect(again.body.rule).toBe('payment');
+      expect(w.sent.length).toBe(count);
+    });
+
     test('accepts a payment from the agent wallet the registry names', async () => {
       const w = seeded();
       const service = paid(w, base(STRANGER.address), { owners: owners(undefined, { '7': STRANGER.address }) });

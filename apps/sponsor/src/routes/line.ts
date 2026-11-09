@@ -99,8 +99,15 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
   }
 
   return exclusive(async () => {
-    const key = `line:${request.nonce.toLowerCase()}`;
-    if (ledger.has('line', key)) return json({ error: 'this request was already used', rule: 'nonce' }, 409);
+    // One payment backs one sponsored line, whoever asks again and under any nonce (ADR `0159`): its
+    // label is the key. A replay of the same request names the same payment, so the nonce is covered.
+    const key = payment === null ? `line:${request.nonce.toLowerCase()}` : `line-payment:${request.payment}`;
+    if (ledger.has('line', key)) {
+      return json(
+        { error: payment === null ? 'this request was already used' : 'this payment already backs a line', rule: payment === null ? 'nonce' : 'payment' },
+        409,
+      );
+    }
 
     let usesId: Hex;
     let plan;

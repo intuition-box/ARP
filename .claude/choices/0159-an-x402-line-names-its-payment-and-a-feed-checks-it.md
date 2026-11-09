@@ -37,7 +37,8 @@ line writer's holder address or its ERC-8004 `agentWallet`; the check runs when 
 6. **The feed** (`scripts/build/build-x402-feed.ts` → `apps/web/public/feeds/x402-outcomes.json`) is a dated
    static snapshot (ADR `0154`). A record needs: the payment checks as in 5, read again at build time; a
    wallet other than ARP's stands behind every level; the line was written after the payment; no other line
-   names the same payment. Everything else is counted in `skipped` by reason. If a paying chain does not
+   whose payment also checks names the same payment. The sponsor spends one payment once: its label is
+   the line's ledger key, under any nonce. Everything else is counted in `skipped` by reason. If a paying chain does not
    answer, nothing is written.
 7. **ARP reads the paying chain and signs nothing there.** Its own writes stay on testnet 13579.
 

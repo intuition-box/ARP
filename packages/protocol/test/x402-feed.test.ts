@@ -136,6 +136,13 @@ describe("buildX402Feed", () => {
         expect(feed.skipped.reasons).toEqual({"one payment is named by several lines": 2});
     });
 
+    it("does not let a stranger void a payer's record by naming the same transaction", async () => {
+        const rows = [...line(0, PAYER.toLowerCase()), ...line(100, OTHER.toLowerCase())];
+        const feed = await buildX402Feed(config(rows));
+        expect(feed.records.map((r) => r.writer)).toEqual([PAYER]);
+        expect(feed.skipped.reasons).toEqual({"no transfer of an accepted asset from the writer": 1});
+    });
+
     it("leaves out a payment the chain does not have and a label it does not write", async () => {
         const rows = [...line(0, PAYER.toLowerCase(), `0x${"ab".repeat(32)}`), ...line(100, PAYER.toLowerCase())];
         rows[5] = {...(rows[5] as Row), object: {term_id: id(5000), label: "paid on Tuesday", value: null}};
