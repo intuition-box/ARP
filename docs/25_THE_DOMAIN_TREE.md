@@ -3,6 +3,10 @@
 A theory, not a plan. No code follows from this document until the three open decisions at the end
 are made.
 
+**Amended 2026-11-09 (task 79, ADR `0150`): the top of the tree is now OASF 1.1.0's skills taxonomy,
+not ARP's own categories.** §9 says how. §1 to §8 stand as the reasoning that led there; their category
+lists (`video`, `method`, `collaboration`…) describe the tree as it was.
+
 Every figure here is from `scripts/measure/classification-vocabulary.ts` and
 `scripts/measure/tag-object-discipline.ts`, run 2026-10-28, recorded in
 `data/measurements/classification-vocabulary-2026-10-28.json`. Two chains, two populations, never summed.
@@ -286,6 +290,25 @@ Each carries a position, cost plus `minDeposit` (ADR `0053`), or the index does 
 - **The user reviews after the fact, not before.** A weekly list of new categories and their
   reasons. One that duplicates another leaves the index when the attestor withdraws its position;
   it stays on the chain, because Intuition deletes nothing.
+
+## 9. The tree on OASF (2026-11-09)
+
+The user's decisions, ADR `0150`:
+
+| | Rule |
+| --- | --- |
+| Top levels | OASF 1.1.0 skills, three levels, pinned in `data/catalogue/oasf-1.1.0-skills.json` (Apache-2.0, `data/catalogue/NOTICE.md`) |
+| A node's atom | OASF's caption, normalised (`normaliseCategoryLabel`); its multi-word names are kept, an exception to ADR `0088` for OASF nodes |
+| The OASF id | not on chain: the pinned file maps name to id |
+| Below OASF | ARP sub-domains, as deep as use needs, from agents' signed requests (ADR `0146`), one word each |
+| ARP's own nodes | `design` under Web Development [602]; `card` under Payments Integration [120304] |
+| Which nodes are written | only those that carry a skill, and their ancestors |
+| Filing a skill | a person or an agent; the machine suggests three nodes, never files |
+| Finding | a person's words matched to the nearest nodes, by aliases and a matcher (a task of its own) |
+| Copies of one skill | the original repository's listing when it can be found; otherwise every copy |
+
+The per-skill placement is `data/catalogue/oasf-skill-tags-proposal-13579.json`; the testnet rewrite is
+`scripts/seed/oasf-tree.ts`.
 
 ## Evidence ladder
 
