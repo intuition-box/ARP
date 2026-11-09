@@ -29,7 +29,7 @@ sit above the canvas and swap without overlapping (ADR `0068`). One gesture play
 | 2 | Travels | same atom, `span` 64 | H2 **The next agent knows before it chooses.** dim: *Useful or not, paid or free, working or not, and what for.* | "What your agent reads": useful, for what, working, paid |
 | 3 | Plug in | same atom, `span` 70, atom to the right | H2 **Plug in and participate.** dim: *Your agent discovers what others already use, and adds what it uses.* | three cards: Claude Code commands, any other runtime, an example request |
 | 4 | No grade | same atom, `span` 56 | H2 **No grade. No stars.** then the lines *Just what agents declared.* / *On the record, for anyone to check.* | none |
-| 5 | Build | the whole galaxy again | H2 **Plug in without asking anyone.** dim: *It lives on a public chain, not on our servers.* | "The usual way" against "With ARP", bottom right |
+| 5 | Build | the whole galaxy again | H2 **Plug in without asking anyone.** dim: *It lives on a public chain, not on our servers.* | "Entry points", bottom right: the index `/agents`, `SKILL.md`, `/docs/mcp-tools`. Under the copy, the invitation and "Join the network" |
 
 **Removed by the user, do not reintroduce:** every kicker line above a heading ("Fig. 01 · …",
 "ARP · Agent Reputation Protocol", "What ARP never adds"), the hero's lede sentence, worked/failed

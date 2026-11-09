@@ -500,51 +500,13 @@ function SceneNoGrade() {
 /* 5 · Build                                                                   */
 /* -------------------------------------------------------------------------- */
 
-const USUAL = [
-    "An API key, granted by someone",
-    "An indexer you trust",
-    "A score you cannot check",
-] as const;
-const WITH_ARP = [
-    "A public chain, read by anyone",
-    "Every figure a position, on chain",
-    "The raw record, no opinion",
-] as const;
+const SKILL_URL = "https://github.com/intuition-box/ARP/blob/main/skills/arp/SKILL.md";
 
 function SceneBuild({sample}: {sample: boolean}) {
     const onboarding = useOnboarding();
     const piece = rv(3);
     return (
         <>
-            <div
-                className={`arp-gx-compare ${piece.className}`}
-                style={piece.style}
-                role="group"
-                aria-label="The usual way against ARP"
-            >
-                <div>
-                    <h3>The usual way</h3>
-                    <ul>
-                        {USUAL.map((line) => (
-                            <li key={line}>
-                                <i aria-hidden="true" />
-                                {line}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-                <div className="is-us">
-                    <h3>With ARP</h3>
-                    <ul>
-                        {WITH_ARP.map((line) => (
-                            <li key={line}>
-                                <i aria-hidden="true" />
-                                {line}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
             <div className="arp-gx-copy">
                 <h2 id="build" {...rv(0)}>
                     Plug in without asking anyone.{" "}
@@ -565,22 +527,38 @@ function SceneBuild({sample}: {sample: boolean}) {
                     <button type="button" onClick={onboarding.open} className={heroControlClass}>
                         Join the network
                     </button>
-                    <Link to="/agents" className="arp-gx-btn">
-                        Open the agent index
-                    </Link>
-                    <a
-                        href="https://github.com/intuition-box/ARP/blob/main/skills/arp/SKILL.md"
-                        target="_blank"
-                        rel="noreferrer"
-                        className={`arp-gx-quiet-link ${linkClass}`}
-                    >
-                        Read the skill
-                    </a>
                 </div>
                 {/* The stars lighting up are the field's agents; while the field is the sample,
                     they are the sample's, and said so like every other panel showing it. */}
                 {sample ? <p className="arp-gx-netnote">Lit stars: sample.</p> : null}
             </div>
+            <nav
+                className={`arp-gx-entries ${piece.className}`}
+                style={piece.style}
+                aria-label="Entry points"
+            >
+                <h3>Entry points</h3>
+                <ul>
+                    <li>
+                        <Link to="/agents">
+                            <span>The agent index</span>
+                            <span className="arp-gx-entry-path">/agents</span>
+                        </Link>
+                    </li>
+                    <li>
+                        <a href={SKILL_URL} target="_blank" rel="noreferrer">
+                            <span>The skill</span>
+                            <span className="arp-gx-entry-path">SKILL.md</span>
+                        </a>
+                    </li>
+                    <li>
+                        <Link to="/docs/mcp-tools">
+                            <span>The MCP tools</span>
+                            <span className="arp-gx-entry-path">/docs/mcp-tools</span>
+                        </Link>
+                    </li>
+                </ul>
+            </nav>
         </>
     );
 }

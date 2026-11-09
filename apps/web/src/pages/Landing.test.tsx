@@ -195,6 +195,24 @@ describe("Landing", () => {
         ]);
     });
 
+    it("ends on three entry points: the agent index, the skill, the MCP tools", async () => {
+        renderWithProviders(<Landing />);
+        await waitFor(() => expect(listTools).toHaveBeenCalled());
+        const nav = screen.getByRole("navigation", {name: "Entry points", hidden: true});
+        const links = within(nav)
+            .getAllByRole("link", {hidden: true})
+            .map((link) => [link.textContent, link.getAttribute("href")]);
+        expect(links).toEqual([
+            ["The agent index/agents", "/agents"],
+            [
+                "The skillSKILL.md",
+                "https://github.com/intuition-box/ARP/blob/main/skills/arp/SKILL.md",
+            ],
+            ["The MCP tools/docs/mcp-tools", "/docs/mcp-tools"],
+        ]);
+        expect(document.body.textContent).not.toContain("The usual way");
+    });
+
     it("shows the sample, said to be one, when the chain answers with nothing", async () => {
         // Scene 1 builds its line only while it is on screen; reduced motion shows its end state.
         reduceMotion(true);
