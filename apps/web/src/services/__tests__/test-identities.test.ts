@@ -134,7 +134,7 @@ describe("fetchHiddenAtomIds", () => {
         const ids = await fetchHiddenAtomIds("https://indexer.test", fetcher);
         expect([...ids]).toEqual(["0xabc"]);
         const body = JSON.parse(String((fetcher.mock.calls[0] as unknown as [string, RequestInit])[1].body));
-        expect(body.variables.caips).toHaveLength(38);
+        expect(body.variables.labels).toHaveLength(38);
     });
 
     it("throws on a failed read rather than hiding nothing", async () => {

@@ -1,5 +1,5 @@
-import {INTUITION_SAME_AS_TERM_ID, toCaip19} from "@arp-protocol/core";
-import type {AgentListing, AtomStanding, RecentDeclaration, RecentStake, TermBacker} from "@arp-protocol/core";
+import {createGraphqlTransport, INTUITION_SAME_AS_TERM_ID, SAME_AS_SUBJECTS_QUERY, toCaip19} from "@arp-protocol/core";
+import type {AgentListing, FetchLike, AtomStanding, RecentDeclaration, RecentStake, TermBacker} from "@arp-protocol/core";
 import {getAddress, type Address} from "viem";
 
 import list from "../data/arp-test-identities.json";
@@ -67,36 +67,22 @@ export function hiddenCaip19s(): string[] {
     return out;
 }
 
-const SAME_AS_SUBJECTS = `query TestIdentityAtoms($sameAs: String!, $caips: [String!]!) {
-    triples(where: {predicate_id: {_eq: $sameAs}, object: {label: {_in: $caips}}}, limit: 500) {
-        subject_id
-    }
-}`;
-
-export type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
 
 /**
  * The identity atoms that claim to be one of the listed agents, by their `same as` edge.
  *
  * A line names its agent by atom, not by token id, so this is the join. Anybody can write a
  * `same as` to one of these identities; such an atom is hidden too, which can only hide more of
- * ARP's tests, never somebody else's agent.
+ * ARP's tests, never somebody else's agent. The query document and the transport are
+ * `@arp-protocol/graphql`'s (ADR `0082`); a failed read throws, so nothing is shown unfiltered.
  */
 export async function fetchHiddenAtomIds(graphqlUrl: string, fetcher: FetchLike = fetch): Promise<Set<string>> {
-    const response = await fetcher(graphqlUrl, {
-        method: "POST",
-        headers: {"content-type": "application/json"},
-        body: JSON.stringify({
-            query: SAME_AS_SUBJECTS,
-            variables: {sameAs: INTUITION_SAME_AS_TERM_ID, caips: hiddenCaip19s()},
-        }),
+    const transport = createGraphqlTransport({url: graphqlUrl, fetch: fetcher});
+    const data = await transport.request(SAME_AS_SUBJECTS_QUERY, {
+        sameAs: INTUITION_SAME_AS_TERM_ID,
+        labels: hiddenCaip19s(),
     });
-    if (!response.ok) throw new Error(`the graph answered ${response.status}`);
-    const body: unknown = await response.json();
-    const triples =
-        typeof body === "object" && body !== null && "data" in body
-            ? (body as {data?: {triples?: unknown}}).data?.triples // `data` checked just above.
-            : undefined;
+    const triples = data["triples"];
     if (!Array.isArray(triples)) throw new Error("the graph answered without triples");
     const ids = new Set<string>();
     for (const row of triples) {

@@ -126,6 +126,8 @@ export {
 export type {TrustSource} from "./sources/source.js";
 
 export {DEFAULT_TIMEOUT_MS, HttpError, isTimeoutError, type FetchLike} from "@arp-protocol/graphql";
+// For a read the app makes itself through the shared transport: the test identities (task 74).
+export {createGraphqlTransport, GraphqlError, SAME_AS_SUBJECTS_QUERY} from "@arp-protocol/graphql";
 
 export type {
     AgentAtomMarket,
