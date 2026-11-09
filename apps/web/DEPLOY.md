@@ -35,7 +35,7 @@ secret: everything here ends up in public JavaScript.
 | `VITE_PUBLIC_RELEASE` | **yes, `1`** for the public site | refuses the build while a legal placeholder is left or `VITE_SITE_URL` is unset | no check: fine locally, not for the public site |
 | `VITE_SITE_URL` | **yes** | the site's address, `https://example.org`, no trailing slash. Writes `sitemap.xml`, the `Sitemap:` line of `robots.txt`, the canonical link and the Open Graph URL and image | no sitemap, no canonical, no `og:image` |
 | `VITE_ALLOW_MAINNET` | no, leave unset | `1` brings back the switch to Intuition mainnet, where a deposit spends real TRUST | testnet only, and the header says "Testnet · test money" |
-| `VITE_WALLETCONNECT_PROJECT_ID` | no | a WalletConnect (Reown) project id, for mobile wallets | browser-extension wallets only |
+| `VITE_WALLETCONNECT_PROJECT_ID` | no, leave it unset | a WalletConnect (Reown) project id, for mobile wallets. This build does not ship `@walletconnect/ethereum-provider`, so the connector cannot load, and the privacy and cookies pages do not cover it: set it only after adding the package and re-checking both pages | browser-extension wallets only |
 | `VITE_INTUITION_TESTNET_RPC_URL` | no | the testnet RPC | `https://testnet.rpc.intuition.systems/http` |
 | `VITE_INTUITION_TESTNET_EXPLORER` | no | the testnet explorer | `https://testnet.explorer.intuition.systems` |
 | `VITE_ARP_API_URL` | no | ARP's facts API (`apps/api`), for fresh install and star counts | the copy bundled with the build, dated |

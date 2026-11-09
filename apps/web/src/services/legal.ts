@@ -88,7 +88,7 @@ export const LEGAL: Record<LegalSlug, LegalDoc> = {
             {
                 heading: "Ce que votre navigateur garde",
                 blocks: [
-                    "Le stockage local de votre navigateur (pas un cookie, et rien n'en sort vers ARP) garde quelques préférences : le parcours choisi dans « Get started », la barre d'activité ouverte ou fermée et, si vous connectez un portefeuille, l'état de la connexion et les délégations que vous signez. Vous pouvez l'effacer à tout moment depuis les réglages de votre navigateur.",
+                    "Le stockage local de votre navigateur (pas un cookie, et rien n'en sort vers ARP) garde quelques préférences : le parcours choisi dans « Get started », la barre d'activité ouverte ou fermée, le réseau choisi quand la version du site propose le réseau principal et, si vous connectez un portefeuille, l'état de la connexion et les délégations que vous signez. Vous pouvez l'effacer à tout moment depuis les réglages de votre navigateur.",
                     "Si vous connectez un portefeuille, son adresse est lue dans votre navigateur, pour afficher vos positions. Elle n'est envoyée à aucun serveur d'ARP.",
                 ],
             },
@@ -101,7 +101,6 @@ export const LEGAL: Record<LegalSlug, LegalDoc> = {
                         "GitHub (api.github.com, raw.githubusercontent.com), pour lire le fichier d'un skill sur sa page ;",
                         "la passerelle IPFS ipfs.io, et les adresses d'image que les agents déclarent eux-mêmes, pour leurs images ;",
                         "les réseaux publics Base, BNB Chain et Ethereum, seulement si vous importez un agent qui y est inscrit ;",
-                        "WalletConnect (Reown), seulement si vous choisissez de connecter un portefeuille mobile par ce moyen ;",
                         "[ADRESSE DU SERVICE DE CHIFFRES D'ARP À COMPLÉTER, OU RETIRER CETTE LIGNE SI VITE_ARP_API_URL N'EST PAS DÉFINI], pour le nombre d'installations et d'étoiles des skills.",
                     ],
                     "Les polices sont servies par ce site, pas par Google.",
@@ -134,7 +133,7 @@ export const LEGAL: Record<LegalSlug, LegalDoc> = {
             {
                 heading: "Aucun cookie",
                 blocks: [
-                    "Ce site ne dépose aucun cookie. Il n'utilise ni mesure d'audience, ni publicité, ni bouton de réseau social, ni aucun autre traceur. C'est pourquoi il ne vous demande pas votre consentement : il n'y a rien à accepter ni à refuser.",
+                    "Ce site ne dépose lui-même aucun cookie. Il n'utilise ni mesure d'audience, ni publicité, ni bouton de réseau social, ni aucun autre traceur. C'est pourquoi il ne vous demande pas votre consentement : il n'y a rien à accepter ni à refuser.",
                 ],
             },
             {
@@ -144,8 +143,8 @@ export const LEGAL: Record<LegalSlug, LegalDoc> = {
                     [
                         "le parcours choisi dans « Get started » ;",
                         "la barre d'activité, ouverte ou fermée ;",
-                        "si vous connectez un portefeuille : l'état de la connexion, gardé par la bibliothèque de connexion, et les délégations que vous signez ;",
-                        "si vous connectez un portefeuille mobile par WalletConnect : la session de connexion, gardée par WalletConnect.",
+                        "le réseau choisi, test ou principal, seulement dans une version du site qui propose le réseau principal ;",
+                        "si vous connectez un portefeuille : l'état de la connexion, gardé par la bibliothèque de connexion, et les délégations que vous signez.",
                     ],
                     "Ces valeurs sont strictement nécessaires au service que vous demandez ; elles ne requièrent pas de consentement. Vous pouvez les effacer à tout moment en supprimant les données de ce site dans les réglages de votre navigateur.",
                 ],
@@ -153,7 +152,7 @@ export const LEGAL: Record<LegalSlug, LegalDoc> = {
             {
                 heading: "Les sites tiers",
                 blocks: [
-                    "Les services que votre navigateur contacte pour afficher les pages sont listés dans la page Confidentialité. Aucun d'eux n'est appelé pour vous suivre.",
+                    "Les services que votre navigateur contacte pour afficher les pages sont listés dans la page Confidentialité. Le site ne les appelle pas pour vous suivre ; les images que les agents déclarent sont chargées depuis des adresses qu'il ne contrôle pas.",
                 ],
             },
         ],
@@ -207,11 +206,11 @@ export const LEGAL: Record<LegalSlug, LegalDoc> = {
                 blocks: [
                     [
                         "les couleurs du texte respectent le contraste AA des WCAG sur fond sombre, vérifié par un script du code source ;",
-                        "tous les éléments interactifs sont atteignables au clavier, avec un indicateur de focus visible ;",
+                        "les éléments interactifs sont conçus pour être atteignables au clavier, avec un indicateur de focus visible ;",
                         "les aides « ? » s'ouvrent au survol et au focus clavier ;",
                         "les champs de formulaire ont une étiquette et les boutons à icône un nom accessible ;",
                         "les animations s'arrêtent quand votre système demande moins de mouvement ;",
-                        "les pages de documentation existent aussi en texte brut (/llms.txt), avec les schémas sous forme de texte.",
+                        "les pages de documentation existent aussi en texte brut (/docs/<page>.md, ou toutes ensemble dans /llms-full.txt), avec les schémas sous forme de texte.",
                     ],
                 ],
             },
