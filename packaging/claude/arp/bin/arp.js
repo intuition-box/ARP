@@ -34258,6 +34258,17 @@ var init_tools = __esm(() => {
   ]);
 });
 
+// ../mcp/src/served-tools.ts
+function servedTools(mode2) {
+  if (mode2.desktop) {
+    return [...TOOLS.filter((t) => READ_TOOL_NAMES.has(t.name) && !DESKTOP_TOOL_NAMES.has(t.name)), ...DESKTOP_TOOLS];
+  }
+  return mode2.readOnly ? TOOLS.filter((t) => PLUGIN_TOOL_NAMES.has(t.name)) : TOOLS;
+}
+var init_served_tools = __esm(() => {
+  init_tools();
+});
+
 // ../mcp/src/serialise.ts
 function serialise(usage) {
   const side = (s) => ({
@@ -36699,7 +36710,7 @@ async function callTool(id, params) {
   const args = typeof raw2 === "object" && raw2 !== null && !Array.isArray(raw2) ? raw2 : {};
   if (DESKTOP && name !== null && DESKTOP_TOOL_NAMES.has(name))
     return desktopTool(id, name, args);
-  if (READ_ONLY && name !== null && !PLUGIN_TOOL_NAMES.has(name)) {
+  if (READ_ONLY && name !== null && !SERVED_NAMES.has(name)) {
     return fail(id, -32602, `unknown tool: ${name}`);
   }
   try {
@@ -36812,10 +36823,11 @@ async function main(argv = process.argv, stdin = process.stdin) {
 sends nothing — the planners return calls for your own key, signed by you.`);
   log(`The receipt key signs receipts and cannot move value (ADR 0080).`);
 }
-var PROTOCOL_VERSION = "2025-06-18", SERVER_INSTRUCTIONS, SERVED_TOOLS, READ_INSTRUCTIONS, DESKTOP_INSTRUCTIONS, handler, WILDCARD;
+var PROTOCOL_VERSION = "2025-06-18", SERVER_INSTRUCTIONS, SERVED_TOOLS, SERVED_NAMES, READ_INSTRUCTIONS, DESKTOP_INSTRUCTIONS, handler, WILDCARD;
 var init_server = __esm(async () => {
   init_node2();
   init_tools();
+  init_served_tools();
   init_handlers();
   init_content();
   init_client_session();
@@ -36858,7 +36870,8 @@ var init_server = __esm(async () => {
     "two apart. The only score is `arp_pulse`'s, which shows its parts; every other figure is what somebody declared or put behind it, or a fact read from elsewhere."
   ].join(`
 `);
-  SERVED_TOOLS = DESKTOP ? [...TOOLS.filter((t) => READ_TOOL_NAMES.has(t.name) && !DESKTOP_TOOL_NAMES.has(t.name)), ...DESKTOP_TOOLS] : READ_ONLY ? TOOLS.filter((t) => PLUGIN_TOOL_NAMES.has(t.name)) : TOOLS;
+  SERVED_TOOLS = servedTools({ desktop: DESKTOP, readOnly: READ_ONLY });
+  SERVED_NAMES = new Set(SERVED_TOOLS.map((t) => t.name));
   READ_INSTRUCTIONS = [
     "ARP is a public registry of skills, tools, MCP servers and APIs, with what each one is for and",
     "what agents wrote about it.",

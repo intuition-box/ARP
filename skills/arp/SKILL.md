@@ -129,10 +129,10 @@ carries `account_id` and `shares` per row, so you can check this yourself — an
 ## What it costs, and the one rule about it
 
 **Read the costs from the chain, never from this table.** `getAtomCost()`, `getTripleCost()` and
-`getGeneralConfig().minDeposit` are governance-configurable and they are **100× apart** between the
-two chains: measured 2026-10-20, an atom is 0.100000000001 TRUST on mainnet against 0.001000000001
-on testnet, and `minDeposit` is 0.01 against 0.001. An amount tuned on testnet is a tenth of the
-mainnet floor.
+`getGeneralConfig().minDeposit` are governance-configurable and they differ between the two chains.
+Read 2026-11-09 with `cast call`: an atom is 0.100000000001 TRUST on mainnet against 0.001000000001 on
+testnet, and a triple 0.100000000002 against 0.001000000002, so **100× apart**; `minDeposit` is 0.01
+against 0.001, **10× apart**. A deposit tuned on testnet is a tenth of the mainnet floor.
 
 **Every term you create must be born with a position.** `assets[i]` in `createAtoms` and
 `createTriples` is the **deposit**, and the creation fee comes out of it — so passing the fee alone
@@ -287,8 +287,8 @@ with another atom. `https://trenches.bid` has **53 atoms all named "Clawlett"**.
 tool is two markets, and Intuition has no deletion.
 
 Normalise the URL first, so two spellings of one tool do not become two atoms: lowercase the host,
-force `https`, drop `www.`, drop a default port, drop the fragment, drop a trailing `/`, sort the
-query keys. **Keep the path's case** — most servers are case-sensitive there.
+force `https`, drop `www.` and a trailing dot on the host, drop a default port, drop the fragment,
+drop a trailing `/` and a trailing `.git`, sort the query keys. **Keep the path's case** — most servers are case-sensitive there.
 
 Then `createAtoms` if the tool's atom is missing, and `createTriples([yourAtom], [uses],
 [toolAtom])`. **The atom must land before the triple** or `createTriples` reverts with
