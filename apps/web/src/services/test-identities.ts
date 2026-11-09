@@ -1,5 +1,6 @@
 import {INTUITION_SAME_AS_TERM_ID, toCaip19} from "@arp-protocol/core";
 import type {AgentListing, AtomStanding, RecentDeclaration, RecentStake, TermBacker} from "@arp-protocol/core";
+import {getAddress, type Address} from "viem";
 
 import list from "../data/arp-test-identities.json";
 
@@ -10,7 +11,13 @@ import list from "../data/arp-test-identities.json";
  * reads the same thing the filter reads. Two rules, and only two:
  *
  * - **about** one of ARP's test agents (the subject or the object of a line): hidden;
- * - **signed by or held by** one of the listed wallets (a deposit, a redemption, a position): hidden.
+ * - **held by** one of the listed wallets (a deposit, a redemption, a position): hidden. Not *signed
+ *   by*: the sponsoring service signs deposits in a tester's name (ADR `0144`), and those are the
+ *   lines a test round exists to produce.
+ *
+ * **A failed read of the test atoms fails the read it filters**, on purpose: showing ARP's tests
+ * as somebody's activity because one query failed is the error this list exists to prevent, and
+ * the pages already say "the graph did not answer" for a failed read.
  *
  * The tool catalogue ARP listed is not filtered: a listing is a URL, not a use.
  */
@@ -19,12 +26,16 @@ export type TestIdentityList = {
     why: string;
     measured: string;
     chainId: number;
-    registry: string;
+    registry: Address;
     agents: {from: number; to: number};
     addresses: readonly {address: string; role: string}[];
 };
 
-export const TEST_IDENTITIES: TestIdentityList = list;
+export const TEST_IDENTITIES: TestIdentityList = {
+    ...list,
+    // Checked here, once, so a typo in the file fails at load rather than as a silent miss.
+    registry: getAddress(list.registry),
+};
 
 const HIDDEN_ADDRESSES = new Set(TEST_IDENTITIES.addresses.map((entry) => entry.address.toLowerCase()));
 
@@ -50,7 +61,7 @@ export function hiddenCaip19s(): string[] {
     const out: string[] = [];
     for (let id = TEST_IDENTITIES.agents.from; id <= TEST_IDENTITIES.agents.to; id += 1) {
         out.push(
-            toCaip19({chainId: TEST_IDENTITIES.chainId, tokenId: String(id), registry: TEST_IDENTITIES.registry as `0x${string}`}),
+            toCaip19({chainId: TEST_IDENTITIES.chainId, tokenId: String(id), registry: TEST_IDENTITIES.registry}),
         );
     }
     return out;
@@ -126,8 +137,8 @@ export function visibleStakes(rows: readonly RecentStake[], hidden: ReadonlySet<
         (row) =>
             !hiddenAtom(hidden, row.subject.atomId) &&
             !hiddenAtom(hidden, row.object.atomId) &&
-            !isHiddenAddress(row.account) &&
-            !isHiddenAddress(row.receiver),
+            // Whose position it is decides, not who signed: the sponsor signs deposits for testers.
+            !isHiddenAddress(row.receiver ?? row.account),
     );
 }
 

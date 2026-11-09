@@ -11,7 +11,7 @@ import {buildToolCatalogView, type ToolCatalogView} from "../services/tool-catal
 import {useChainChoice} from "../lib/chain-choice";
 import {deployments} from "../lib/deployments";
 import {sponsorAddressFor} from "../lib/sponsor";
-import {hiddenAtomIds, isHiddenAddress} from "../services/test-identities";
+import {hiddenAtomIds} from "../services/test-identities";
 
 /**
  * The tool catalogue's read.
@@ -103,10 +103,7 @@ export function toolCatalogQueryOptions(
                 fetchHidden(chain.graphqlUrl),
             ]);
             // ARP's own tests are left out of the figures, not the catalogue (task 74).
-            return buildToolCatalogView(declared, registered, {
-                hiddenAtoms,
-                sponsorHidden: isHiddenAddress(sponsor),
-            });
+            return buildToolCatalogView(declared, registered, {hiddenAtoms});
         },
         // Graph reads, and both populations move on the order of days at most.
         staleTime: 120_000,

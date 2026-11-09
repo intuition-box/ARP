@@ -26,11 +26,41 @@ vi.mock("@arp-protocol/core", async () => {
         resolveAgentRefForAtom: vi.fn(),
         getDeclaredModulesFor: vi.fn(),
         getToolWallets: vi.fn(async () => []),
+        // The catalogue read `ToolWallets` checks Signals against (task 74). Empty unless a test says.
+        listTools: vi.fn(async () => ({curveId: 1, edgesRead: 0, truncated: false, sponsor: null, tools: []})),
+        listRegisteredTools: vi.fn(async () => ({curveId: 1, truncated: false, tools: []})),
     };
 });
 
-const {getAtomStanding, getToolWallets, resolveAgentRefForAtom, getDeclaredModulesFor} =
+const {getAtomStanding, getToolWallets, listTools, resolveAgentRefForAtom, getDeclaredModulesFor} =
     await import("@arp-protocol/core");
+
+/** The catalogue's row for this page's atom, with Signals from a declarer who is not a test. */
+function withSignals(declarers: string[]) {
+    vi.mocked(listTools).mockResolvedValue({
+        curveId: 1,
+        edgesRead: 1,
+        truncated: false,
+        sponsor: null,
+        tools: [
+            {
+                atomId: `0x${"ab".repeat(32)}`,
+                label: null,
+                uri: null,
+                hostedAt: null,
+                type: "Thing",
+                edgeCount: 1,
+                declarers,
+                pricedEdges: 1,
+                sponsoredDeposits: 2,
+                sponsoredWallets: 1,
+                declaredDeposits: 0,
+                supportAssetsSum: 0n,
+                opposeAssetsSum: 0n,
+            },
+        ],
+    });
+}
 const read = getAtomStanding as unknown as ReturnType<typeof vi.fn>;
 /**
  * The identity behind an atom, which decides whether this page renders at all.
@@ -672,8 +702,8 @@ describe("a skill's page", () => {
     });
 
     it("lists the wallets the sponsor deposited for on a skill's own page", async () => {
-        // A sponsor that is not one of ARP's listed test addresses (task 74).
-        vi.stubEnv("VITE_ARP_SPONSOR_ADDRESS", "0x1111111111111111111111111111111111111111");
+        vi.stubEnv("VITE_ARP_SPONSOR_ADDRESS", "0xE596096F4176b682E300d73963e7B04B383C1AA1");
+        withSignals(["0xtester"]);
         vi.mocked(getToolWallets).mockResolvedValueOnce([
             {account: "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42", deposits: 2, assets: 2_000n},
         ]);
@@ -689,8 +719,11 @@ describe("a skill's page", () => {
         vi.unstubAllEnvs();
     });
 
-    it("shows no wallets when the sponsor is one of ARP's test addresses (task 74)", async () => {
+    it("shows no wallets on a tool only ARP's test agents declared (task 74)", async () => {
         vi.stubEnv("VITE_ARP_SPONSOR_ADDRESS", "0xE596096F4176b682E300d73963e7B04B383C1AA1");
+        const {hiddenAtomIds} = await import("../services/test-identities");
+        vi.mocked(hiddenAtomIds).mockResolvedValue(new Set(["0xarptest"]));
+        withSignals(["0xARPTEST"]);
         vi.mocked(getToolWallets).mockResolvedValueOnce([
             {account: "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42", deposits: 2, assets: 2_000n},
         ]);
@@ -702,8 +735,9 @@ describe("a skill's page", () => {
         );
         renderAt();
         expect(await screen.findByRole("heading", {name: "render-video", level: 1})).toBeTruthy();
+        await waitFor(() => expect(listTools).toHaveBeenCalled());
         expect(screen.queryByRole("heading", {name: "Wallets"})).toBeNull();
-        expect(getToolWallets).not.toHaveBeenCalled();
+        vi.mocked(hiddenAtomIds).mockResolvedValue(new Set());
         vi.unstubAllEnvs();
     });
 
@@ -717,7 +751,8 @@ describe("a skill's page", () => {
 
 describe("a repository's page", () => {
     it("lists the wallets the sponsor deposited for", async () => {
-        vi.stubEnv("VITE_ARP_SPONSOR_ADDRESS", "0x1111111111111111111111111111111111111111");
+        vi.stubEnv("VITE_ARP_SPONSOR_ADDRESS", "0xE596096F4176b682E300d73963e7B04B383C1AA1");
+        withSignals(["0xtester"]);
         vi.mocked(getToolWallets).mockResolvedValueOnce([
             {account: "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42", deposits: 1, assets: 1_000n},
         ]);

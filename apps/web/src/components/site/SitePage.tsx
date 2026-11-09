@@ -1,5 +1,6 @@
 import {lazy, Suspense, type ReactNode} from "react";
 
+import type {LegalSlug} from "../../services/legal";
 import {PageLoading} from "../brand/PageLoading";
 
 /**
@@ -16,7 +17,6 @@ const LegalPage = lazy(() =>
 );
 
 export type SitePageName = "test-identities" | "not-found" | LegalSlug;
-export type LegalSlug = "mentions-legales" | "confidentialite" | "conditions" | "contact";
 
 function pageOf(name: SitePageName): ReactNode {
     if (name === "test-identities") return <TestIdentitiesPage />;

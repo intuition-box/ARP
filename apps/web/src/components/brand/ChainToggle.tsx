@@ -35,7 +35,6 @@ function TestnetOnly() {
     return (
         <Link
             to="/conditions"
-            title="A test on Intuition testnet. Its token, tTRUST, has no value."
             // Banged: the unlayered `a` rule in `index.css` beats an unbanged colour utility.
             className="inline-flex h-7 items-center gap-2 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] px-2.5 font-mono text-[11px] uppercase tracking-[0.1em] text-[color:var(--color-fg)]! no-underline!"
         >

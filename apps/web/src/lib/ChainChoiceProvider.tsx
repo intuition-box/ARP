@@ -19,7 +19,8 @@ export function ChainChoiceProvider({children}: {children: ReactNode}) {
     const [isMainnet, setIsMainnet] = useState(() => allowsMainnet() && readStored());
 
     const setMainnet = useCallback((next: boolean) => {
-        if (next && !allowsMainnet()) return;
+        // Where mainnet is not allowed there is no choice to remember, so nothing is stored.
+        if (!allowsMainnet()) return;
         setIsMainnet(next);
         try {
             localStorage.setItem(CHAIN_STORAGE_KEY, next ? "mainnet" : "testnet");

@@ -13,10 +13,11 @@ export function useToolWallets(atomId: string) {
         queryKey: ["intuition", chain.chainId, "tool-wallets", atomId, sponsor ?? "none"] as const,
         queryFn: async (): Promise<ToolWallet[]> => {
             if (sponsor === null) throw new Error("no sponsor");
-            return getToolWallets(atomId, {graphqlUrl: chain.graphqlUrl, sponsor});
+            // A listed wallet is one of ARP's tests (task 74).
+            const wallets = await getToolWallets(atomId, {graphqlUrl: chain.graphqlUrl, sponsor});
+            return wallets.filter((wallet) => !isHiddenAddress(wallet.account));
         },
-        // Every deposit a listed address signed is one of ARP's tests (task 74): nothing to show.
-        enabled: sponsor !== null && !isHiddenAddress(sponsor),
+        enabled: sponsor !== null,
         staleTime: 120_000,
         retry: 1,
     });

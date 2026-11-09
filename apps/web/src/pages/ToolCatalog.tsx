@@ -11,7 +11,7 @@ import {PageLoading} from "../components/brand/PageLoading";
 import {ToolCatalogList} from "../components/tool/ToolCatalogList";
 import {useDomainTree} from "../hooks/use-domain-tree";
 import {useTagIndex} from "../hooks/use-tag-index";
-import {NoActivityYet} from "../components/brand/NoActivityYet";
+import {Hint} from "../components/brand/Hint";
 import {useReadsSignals, useToolCatalog} from "../hooks/use-tool-catalog";
 import {
     livenessOf,
@@ -174,8 +174,12 @@ export function ToolCatalog() {
                 <Segmented label="Order" selected={axis} onChange={setAxis} options={axes} />
                 {/* No Signal outside ARP's own tests yet, which are hidden (task 74). */}
                 {view !== undefined && !view.rows.some((row) => (row.sponsoredDeposits ?? 0) > 0) ? (
-                    <span className="text-[length:var(--text-body-sm)]">
-                        <NoActivityYet what="No signals yet." />
+                    <span className="flex items-center gap-2 font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+                        No signals yet
+                        <Hint label="About: no signals yet">
+                            A Signal appears when an agent writes a line about a tool it used.
+                            ARP&apos;s own tests are hidden, listed on /test-identities.
+                        </Hint>
                     </span>
                 ) : null}
             </div>

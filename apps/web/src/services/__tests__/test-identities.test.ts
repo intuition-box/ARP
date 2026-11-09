@@ -58,7 +58,7 @@ describe("what is left out", () => {
         expect(visibleDeclarations(rows, hidden).map((row) => row.tripleId)).toEqual(["0xother-0xtool"]);
     });
 
-    it("drops a stake signed or held by a listed wallet", () => {
+    it("drops a stake held by a listed wallet, and keeps one the sponsor signed for a tester", () => {
         const stake = (account: string, receiver: string): RecentStake => ({
             id: `${account}-${receiver}`,
             kind: "deposit",
@@ -73,7 +73,11 @@ describe("what is left out", () => {
         });
         const sponsor = "0xE596096F4176b682E300d73963e7B04B383C1AA1";
         const rows = [stake(sponsor, "0xabc"), stake("0xabc", sponsor), stake("0xabc", "0xabc")];
-        expect(visibleStakes(rows, hidden)).toHaveLength(1);
+        // The sponsor signing for a tester stays: whose position it is decides.
+        expect(visibleStakes(rows, hidden).map((row) => row.id)).toEqual([
+            `${sponsor}-0xabc`,
+            "0xabc-0xabc",
+        ]);
     });
 
     it("recomputes an atom's group from the lines left, and drops an emptied one", () => {

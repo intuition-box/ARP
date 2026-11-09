@@ -211,7 +211,8 @@ describe("toolCatalogQueryOptions", () => {
 
     it("leaves out what ARP's own tests wrote, and keeps the tool in the catalogue", async () => {
         // Task 74: a tool declared only by ARP's test agents loses its declared row and its Signals,
-        // and stays listed as registered with no declaration.
+        // and stays listed as registered with no declaration. The sponsor is on the list, and a
+        // tester's Signal it signed stays.
         const sponsor = "0xE596096F4176b682E300d73963e7B04B383C1AA1";
         const options = toolCatalogQueryOptions(
             {chainId: 13579, graphqlUrl: "https://indexer.test", sponsor},
@@ -235,7 +236,6 @@ describe("toolCatalogQueryOptions", () => {
         const mixed = view.rows.find((row) => row.key === "0xc0ffee");
         expect(mixed?.declarers).toEqual(["0xbbb"]);
         expect(mixed?.declarations).toBe(1);
-        // Every Signal is a deposit the listed sponsor signed.
-        expect(mixed?.sponsoredDeposits).toBe(0);
+        expect(mixed?.sponsoredDeposits).toBe(2);
     });
 });

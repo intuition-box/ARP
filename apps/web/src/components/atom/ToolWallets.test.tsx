@@ -12,12 +12,25 @@ const state = vi.hoisted(
 vi.mock("../../hooks/use-tool-wallets", () => ({
     useToolWallets: () => ({data: state.data}),
 }));
+/** The tool's row in the catalogue: Signals it shows, unless a test sets none (task 74). */
+const signals = vi.hoisted((): {count: number} => ({count: 2}));
+vi.mock("../../hooks/use-tool-catalog", () => ({
+    useToolCatalog: () => ({data: {rows: [{key: "0xaa", sponsoredDeposits: signals.count}]}}),
+}));
 
 const ACCOUNT = "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42";
 
 describe("ToolWallets", () => {
     beforeEach(() => {
         state.data = undefined;
+        signals.count = 2;
+    });
+
+    it("shows nothing when the catalogue shows no Signal for the tool, as when only ARP's tests wrote them", () => {
+        state.data = [{account: ACCOUNT, deposits: 2, assets: 1n}];
+        signals.count = 0;
+        const {container} = renderWithProviders(<ToolWallets atomId="0xaa" />);
+        expect(container.textContent).toBe("");
     });
 
     it("lists each wallet with its amount, linked to the explorer", () => {

@@ -1,7 +1,9 @@
 import {Block} from "./AtomPageParts";
+import {useToolCatalog} from "../../hooks/use-tool-catalog";
 import {useToolWallets} from "../../hooks/use-tool-wallets";
 import {useChainChoice} from "../../lib/chain-choice";
 import {linkClass} from "../../lib/control-class";
+import {TOOL_CURVES} from "../../services/tool-catalog";
 import {formatTrust, truncateMiddle} from "../../services/trust-format";
 
 /**
@@ -12,7 +14,11 @@ import {formatTrust, truncateMiddle} from "../../services/trust-format";
 export function ToolWallets({atomId}: {atomId: string}) {
     const chain = useChainChoice();
     const wallets = useToolWallets(atomId).data ?? [];
-    if (wallets.length === 0) return null;
+    // Only behind Signals the catalogue shows: on a tool only ARP's test agents declared, the
+    // sponsor's deposits went to ARP's own test wallets (task 74). The same read `/tools` makes.
+    const catalogue = useToolCatalog("conviction", TOOL_CURVES[0]?.id ?? 1);
+    const row = catalogue.data?.rows.find((entry) => entry.key.toLowerCase() === atomId.toLowerCase());
+    if (wallets.length === 0 || (row?.sponsoredDeposits ?? 0) === 0) return null;
     return (
         <Block title="Wallets" label="Who the sponsor deposited for">
             <ul>

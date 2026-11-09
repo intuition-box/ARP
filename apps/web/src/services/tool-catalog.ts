@@ -363,11 +363,15 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
 /**
  * What ARP's own tests left on a tool, removed (task 74, `services/test-identities.ts`).
  *
- * `hiddenAtoms` are the identity atoms of ARP's test agents. `sponsorHidden` says the sponsoring
- * address is on the list, and then **every** Signal is one of its deposits, so none is shown. A
- * tool whose declarers are all hidden loses its declared row; the catalogue keeps it as registered.
+ * `hiddenAtoms` are the identity atoms of ARP's test agents. A tool whose declarers are all hidden
+ * loses its declared row, and with it the Signals on those agents' edges; the catalogue keeps it as
+ * registered. The sponsor's address is **not** a reason to hide a Signal: it signs every Signal,
+ * a tester's included (ADR `0144`).
+ *
+ * A tool declared by a test agent **and** somebody else keeps its row whole: the read sums Signals
+ * per tool, not per edge, so they cannot be split here. None does today (2026-11-09).
  */
-export type HiddenTests = {hiddenAtoms: ReadonlySet<string>; sponsorHidden: boolean};
+export type HiddenTests = {hiddenAtoms: ReadonlySet<string>};
 
 function withoutTests(tool: ToolListing, hidden: HiddenTests): ToolListing | null {
     const declarers = tool.declarers.filter((atom) => !hidden.hiddenAtoms.has(atom.toLowerCase()));
@@ -377,8 +381,6 @@ function withoutTests(tool: ToolListing, hidden: HiddenTests): ToolListing | nul
         ...tool,
         declarers,
         edgeCount: changed ? declarers.length : tool.edgeCount,
-        sponsoredDeposits: hidden.sponsorHidden ? 0 : tool.sponsoredDeposits,
-        sponsoredWallets: hidden.sponsorHidden ? 0 : tool.sponsoredWallets,
     };
 }
 
