@@ -22,7 +22,7 @@
     },
     "apps/cli": {
       "name": "@arp-protocol/cli",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "bin": {
         "arp": "dist/cli.js",
       },
@@ -130,7 +130,7 @@
         "@testing-library/jest-dom": "^7.0.1",
         "@testing-library/react": "^16.3.3",
         "@testing-library/user-event": "^14.6.8",
-        "@types/hast": "3",
+        "@types/hast": "^3.0.4",
         "@types/node": "^24.12.2",
         "@types/react": "^19.2.14",
         "@types/react-dom": "^19.2.3",
