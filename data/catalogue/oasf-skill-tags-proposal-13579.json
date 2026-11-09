@@ -1,5 +1,5 @@
 {
- "_note": "Per-skill proposal: each of ARP's 662 categorised testnet skills placed at the finest OASF 1.1.0 node (data/catalogue/oasf-1.1.0-skills.json), task 79, rules approved by the user on 2026-11-09: by what the skill does, design and card the only ARP nodes, no sub-domain seeded (suggestedWord kept for later). Classified by reading each description (data/catalogue/skill-facts.json, truncated); confidence is the classifier's own. A proposal for review: nothing is written on chain from it.",
+ "_note": "Per-skill proposal: each of ARP's 662 categorised testnet skills placed at the finest OASF 1.1.0 node (data/catalogue/oasf-1.1.0-skills.json), task 79, rules approved by the user on 2026-11-09: by what the skill does, design and card the only ARP nodes, no sub-domain seeded (suggestedWord kept for later). Classified by reading each description (data/catalogue/skill-facts.json, truncated); confidence is the classifier's own. A proposal for review: nothing is written on chain from it. Low rows reviewed 2026-11-09 (user: \"je te fais confiance\"): reviewed=ok keeps the node, reviewed=skip leaves the skill untagged (a \"Moved to\" stub, a deprecated alias or a compatibility entry). Decisions also in https://claude.ai/artifact/EAK7VjSNWBmuiGNSDKJKcy.",
  "oasfVersion": "1.1.0",
  "count": 662,
  "confidence": {
@@ -29,7 +29,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic runner for many hosted AI apps via one CLI"
+   "why": "Generic runner for many hosted AI apps via one CLI",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/101-skills/superpowers?skill=ai-avatar-video",
@@ -139,7 +140,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic runner for many hosted AI apps via one CLI"
+   "why": "Generic runner for many hosted AI apps via one CLI",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/101-skills/superpowers?skill=landing-page-design",
@@ -304,7 +306,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "education",
-   "why": "Recommends Claude Academy courses to users asking product how-to"
+   "why": "Recommends Claude Academy courses to users asking product how-to",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/anthropics/skills?skill=algorithmic-art",
@@ -359,7 +362,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "discernment",
-   "why": "Nudges users to scrutinise answers before acting on them"
+   "why": "Nudges users to scrutinise answers before acting on them",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/anthropics/skills?skill=doc-coauthoring",
@@ -469,7 +473,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "template",
-   "why": "Placeholder skill template with no real function"
+   "why": "Placeholder skill template with no real function",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/anthropics/skills?skill=theme-factory",
@@ -535,7 +540,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic runner for many hosted AI apps via one CLI"
+   "why": "Generic runner for many hosted AI apps via one CLI",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/bankai-skills/superpowers?skill=ai-avatar-video",
@@ -645,7 +651,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic runner for many hosted AI apps via one CLI"
+   "why": "Generic runner for many hosted AI apps via one CLI",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/bankai-skills/superpowers?skill=landing-page-design",
@@ -1602,7 +1609,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "pricing",
-   "why": "Pricing and packaging decisions; OASF has no pricing node"
+   "why": "Pricing and packaging decisions; OASF has no pricing node",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/coreyhaines31/marketingskills?skill=pricing-strategy",
@@ -1613,7 +1621,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "pricing",
-   "why": "Pricing and packaging decisions; OASF has no pricing node"
+   "why": "Pricing and packaging decisions; OASF has no pricing node",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/coreyhaines31/marketingskills?skill=product-marketing",
@@ -1789,7 +1798,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "sms",
-   "why": "SMS and WhatsApp marketing; nearest is email marketing"
+   "why": "SMS and WhatsApp marketing; nearest is email marketing",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/coreyhaines31/marketingskills?skill=social",
@@ -2438,7 +2448,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": null,
-   "why": "No description; name suggests caption overlays on video"
+   "why": "No description; name suggests caption overlays on video",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/heygen-com/hyperframes?skill=changelog-video",
@@ -2449,7 +2460,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": null,
-   "why": "No description; name suggests changelog video"
+   "why": "No description; name suggests changelog video",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/heygen-com/hyperframes?skill=claude-design-hyperframes",
@@ -2515,7 +2527,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": null,
-   "why": "No description; HyperFrames block, purpose unknown"
+   "why": "No description; HyperFrames block, purpose unknown",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/heygen-com/hyperframes?skill=embedded-captions",
@@ -2746,7 +2759,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "assets",
-   "why": "Sources music, images, voice and footage for videos"
+   "why": "Sources music, images, voice and footage for videos",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/heygen-com/hyperframes?skill=motion-doctrine",
@@ -2757,7 +2771,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": null,
-   "why": "No description; name suggests motion rules"
+   "why": "No description; name suggests motion rules",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/heygen-com/hyperframes?skill=motion-graphics",
@@ -2801,7 +2816,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": null,
-   "why": "No description; HyperFrames block, purpose unknown"
+   "why": "No description; HyperFrames block, purpose unknown",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/heygen-com/hyperframes?skill=pr-to-video",
@@ -2845,7 +2861,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": null,
-   "why": "No description; HyperFrames block, purpose unknown"
+   "why": "No description; HyperFrames block, purpose unknown",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/heygen-com/hyperframes?skill=slideshow",
@@ -3032,7 +3049,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": null,
-   "why": "Compatibility shim for a retired explainer-video skill"
+   "why": "Compatibility shim for a retired explainer-video skill",
+   "reviewed": "skip"
   },
   {
    "url": "https://github.com/higgsfield-ai/skills?skill=higgsfield-websites",
@@ -3076,7 +3094,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic runner for many hosted AI apps via one CLI"
+   "why": "Generic runner for many hosted AI apps via one CLI",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/its-a-skill-issue/superpowers?skill=ai-avatar-video",
@@ -3186,7 +3205,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic runner for many hosted AI apps via one CLI"
+   "why": "Generic runner for many hosted AI apps via one CLI",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/its-a-skill-issue/superpowers?skill=landing-page-design",
@@ -3296,7 +3316,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "storyboard",
-   "why": "Plans shots and panels for film and video"
+   "why": "Plans shots and panels for film and video",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/its-a-skill-issue/superpowers?skill=twitter-automation",
@@ -3439,7 +3460,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": null,
-   "why": "Help card for the caveman skills; no task of its own"
+   "why": "Help card for the caveman skills; no task of its own",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/juliusbrussee/caveman?skill=caveman-learn",
@@ -3461,7 +3483,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": null,
-   "why": "Manages an experiment lifecycle: approve, promote, roll back"
+   "why": "Manages an experiment lifecycle: approve, promote, roll back",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/juliusbrussee/caveman?skill=caveman-optimize",
@@ -3637,7 +3660,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "attendance",
-   "why": "Queries own Lark attendance clock-in records"
+   "why": "Queries own Lark attendance clock-in records",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/larksuite/cli?skill=lark-base",
@@ -3802,7 +3826,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "auth",
-   "why": "Lark CLI login, identity and permission scopes setup"
+   "why": "Lark CLI login, identity and permission scopes setup",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/larksuite/cli?skill=lark-sheets",
@@ -3890,7 +3915,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "diagram",
-   "why": "Draws architecture and flow diagrams on Lark whiteboards"
+   "why": "Draws architecture and flow diagrams on Lark whiteboards",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/larksuite/cli?skill=lark-wiki",
@@ -3934,7 +3960,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "moved",
-   "why": "Moved stub; name only suggests brand kit generation"
+   "why": "Moved stub; name only suggests brand kit generation",
+   "reviewed": "skip"
   },
   {
    "url": "https://github.com/leonxlnx/taste-skill?skill=design-taste-frontend",
@@ -4022,7 +4049,8 @@
    "arpNode": "design",
    "confidence": "low",
    "suggestedWord": "moved",
-   "why": "Moved stub; name suggests design image to code"
+   "why": "Moved stub; name suggests design image to code",
+   "reviewed": "skip"
   },
   {
    "url": "https://github.com/leonxlnx/taste-skill?skill=imagegen-frontend-mobile",
@@ -4033,7 +4061,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "moved",
-   "why": "Moved stub; name suggests image-led mobile frontend"
+   "why": "Moved stub; name suggests image-led mobile frontend",
+   "reviewed": "skip"
   },
   {
    "url": "https://github.com/leonxlnx/taste-skill?skill=imagegen-frontend-web",
@@ -4044,7 +4073,8 @@
    "arpNode": "design",
    "confidence": "low",
    "suggestedWord": "moved",
-   "why": "Moved stub; name suggests image-led web frontend"
+   "why": "Moved stub; name suggests image-led web frontend",
+   "reviewed": "skip"
   },
   {
    "url": "https://github.com/leonxlnx/taste-skill?skill=industrial-brutalist-ui",
@@ -4099,7 +4129,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "reproduction",
-   "why": "Orchestrates reproduction of AI research repositories"
+   "why": "Orchestrates reproduction of AI research repositories",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/lllllllama/rigorpilot-skills?skill=ai-research-explore",
@@ -4121,7 +4152,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "reproduction",
-   "why": "End-to-end reproduction of deep learning repositories"
+   "why": "End-to-end reproduction of deep learning repositories",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/lllllllama/rigorpilot-skills?skill=analyze-project",
@@ -4154,7 +4186,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "research",
-   "why": "Exploratory implementation changes in deep learning repos"
+   "why": "Exploratory implementation changes in deep learning repos",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/lllllllama/rigorpilot-skills?skill=explore-run",
@@ -4242,7 +4275,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic runner for many hosted AI apps via one CLI"
+   "why": "Generic runner for many hosted AI apps via one CLI",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/magentosh/superpowers?skill=ai-avatar-video",
@@ -4352,7 +4386,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic runner for many hosted AI apps via one CLI"
+   "why": "Generic runner for many hosted AI apps via one CLI",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/magentosh/superpowers?skill=landing-page-design",
@@ -4462,7 +4497,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "storyboard",
-   "why": "Film storyboarding: shots, angles, continuity"
+   "why": "Film storyboarding: shots, angles, continuity",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/magentosh/superpowers?skill=twitter-automation",
@@ -4517,7 +4553,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "router",
-   "why": "Routes the user to the right skill in the repo"
+   "why": "Routes the user to the right skill in the repo",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/mattpocock/skills?skill=batch-grill-me",
@@ -4638,7 +4675,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "domain",
-   "why": "Sharpens domain terminology, glossary and ADRs"
+   "why": "Sharpens domain terminology, glossary and ADRs",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/mattpocock/skills?skill=edit-article",
@@ -4792,7 +4830,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "prototype",
-   "why": "Builds throwaway prototype to answer a design question"
+   "why": "Builds throwaway prototype to answer a design question",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/mattpocock/skills?skill=qa",
@@ -4847,7 +4886,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "retrospective",
-   "why": "Retrospective on a coding session"
+   "why": "Retrospective on a coding session",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/mattpocock/skills?skill=review",
@@ -4924,7 +4964,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "teaching",
-   "why": "Teaches the user a new skill or concept"
+   "why": "Teaches the user a new skill or concept",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/mattpocock/skills?skill=to-issues",
@@ -4957,7 +4998,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "questionnaire",
-   "why": "Turns an open decision into a questionnaire for others"
+   "why": "Turns an open decision into a questionnaire for others",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/mattpocock/skills?skill=to-spec",
@@ -5001,7 +5043,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "glossary",
-   "why": "Extracts DDD ubiquitous-language glossary from conversation"
+   "why": "Extracts DDD ubiquitous-language glossary from conversation",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/mattpocock/skills?skill=wait-what",
@@ -5012,7 +5055,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "clarify",
-   "why": "Re-pitches the last message more clearly"
+   "why": "Re-pitches the last message more clearly",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/mattpocock/skills?skill=wayfinder",
@@ -5133,7 +5177,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "testrun",
-   "why": "No description; name suggests test-run analysis"
+   "why": "No description; name suggests test-run analysis",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=appinsights-instrumentation",
@@ -5155,7 +5200,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "azureai",
-   "why": "Azure AI search, speech, OCR, OpenAI services"
+   "why": "Azure AI search, speech, OCR, OpenAI services",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=azure-aigateway",
@@ -5166,7 +5212,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "gateway",
-   "why": "Azure API Management as AI gateway: caching, limits, safety"
+   "why": "Azure API Management as AI gateway: caching, limits, safety",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=azure-app-onboard",
@@ -5188,7 +5235,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "readiness",
-   "why": "Assesses whether code is ready to deploy to Azure"
+   "why": "Assesses whether code is ready to deploy to Azure",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=azure-cloud-migrate",
@@ -5342,7 +5390,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "securitygraph",
-   "why": "Graph visualisation of IRQL query results"
+   "why": "Graph visualisation of IRQL query results",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=azure-messaging",
@@ -5353,7 +5402,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "messaging",
-   "why": "Troubleshoots Event Hubs and Service Bus SDKs"
+   "why": "Troubleshoots Event Hubs and Service Bus SDKs",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=azure-observability",
@@ -5375,7 +5425,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "postgres",
-   "why": "No description; name suggests Azure PostgreSQL"
+   "why": "No description; name suggests Azure PostgreSQL",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=azure-prepare",
@@ -5441,7 +5492,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "diagram",
-   "why": "Generates Mermaid architecture diagrams of Azure resources"
+   "why": "Generates Mermaid architecture diagrams of Azure resources",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=azure-storage",
@@ -5452,7 +5504,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "storage",
-   "why": "Azure Blob, Files, Queue, Table storage guidance"
+   "why": "Azure Blob, Files, Queue, Table storage guidance",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=azure-upgrade",
@@ -5474,7 +5527,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "validation",
-   "why": "Pre-deployment validation of Azure config and IaC"
+   "why": "Pre-deployment validation of Azure config and IaC",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=discover-azure-skills",
@@ -5485,7 +5539,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "router",
-   "why": "Recommends Azure agent skills from a catalogue"
+   "why": "Recommends Azure agent skills from a catalogue",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=entra-agent-id",
@@ -5518,7 +5573,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": null,
-   "why": "No description; name suggests filing a bug from a failing test"
+   "why": "No description; name suggests filing a bug from a failing test",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=markdown-token-optimizer",
@@ -5529,7 +5585,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": null,
-   "why": "No description; name suggests trimming markdown tokens for context"
+   "why": "No description; name suggests trimming markdown tokens for context",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=microsoft-foundry",
@@ -5562,7 +5619,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": null,
-   "why": "No description; repository context suggests skill-improvement tooling"
+   "why": "No description; repository context suggests skill-improvement tooling",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/microsoft/azure-skills?skill=skill-authoring",
@@ -5716,7 +5774,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "verification",
-   "why": "Runs verification commands before claiming work done"
+   "why": "Runs verification commands before claiming work done",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/obra/superpowers?skill=writing-plans",
@@ -5991,7 +6050,8 @@
    "arpNode": "design",
    "confidence": "low",
    "suggestedWord": null,
-   "why": "Deprecated alias of impeccable; as in sample"
+   "why": "Deprecated alias of impeccable; as in sample",
+   "reviewed": "skip"
   },
   {
    "url": "https://github.com/pbakaus/impeccable?skill=typeset",
@@ -6266,7 +6326,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic CLI runner for many hosted models; like infsh-cli"
+   "why": "Generic CLI runner for many hosted models; like infsh-cli",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/prime-skills/runcomfy-agent-skills?skill=seedance-v2",
@@ -6464,7 +6525,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic runner for many hosted AI apps; like infsh-cli"
+   "why": "Generic runner for many hosted AI apps; like infsh-cli",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/qu-skills/superpowers?skill=ai-avatar-video",
@@ -6574,7 +6636,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic runner for many hosted AI apps; as in sample"
+   "why": "Generic runner for many hosted AI apps; as in sample",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/qu-skills/superpowers?skill=landing-page-design",
@@ -6684,7 +6747,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "storyboard",
-   "why": "Film storyboarding: shots, continuity, panel layout"
+   "why": "Film storyboarding: shots, continuity, panel layout",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/qu-skills/superpowers?skill=twitter-automation",
@@ -6783,7 +6847,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "docs",
-   "why": "Searches Remotion documentation"
+   "why": "Searches Remotion documentation",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/remotion-dev/skills?skill=remotion-interactivity",
@@ -6893,7 +6958,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic runner for many hosted AI apps; like infsh-cli"
+   "why": "Generic runner for many hosted AI apps; like infsh-cli",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/skills-shell/superpowers?skill=ai-avatar-video",
@@ -7003,7 +7069,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "inference",
-   "why": "Generic runner for many hosted AI apps; as in sample"
+   "why": "Generic runner for many hosted AI apps; as in sample",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/skills-shell/superpowers?skill=landing-page-design",
@@ -7113,7 +7180,8 @@
    "arpNode": null,
    "confidence": "low",
    "suggestedWord": "storyboard",
-   "why": "Film storyboarding: shots, continuity, panel layout"
+   "why": "Film storyboarding: shots, continuity, panel layout",
+   "reviewed": "ok"
   },
   {
    "url": "https://github.com/skills-shell/superpowers?skill=twitter-automation",
