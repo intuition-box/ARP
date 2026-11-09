@@ -1101,9 +1101,10 @@
    "0x45b1db45dfc633d02f0e589235c37aa056cf197c3f4932cdf2da0fc43992548b",
    "0x12d4da33e4681090194108be718d846fba67b3633791b24f316bd94248abc301",
    "0x1c8648578a5d064a6973ff5897f57fedd0b859236e459a2a06231e66914d4c7d",
-   "0xf94137cc34de1004a84cd38475000990a7625bf847888c6581c82058a93614f7"
+   "0xf94137cc34de1004a84cd38475000990a7625bf847888c6581c82058a93614f7",
+   "0xa04a94060b5aeff7481d2fa5befd65ac985ee793dfbf2bd0c74cf0dbbeba2260"
   ],
-  "hashesNote": "1,094 hashes from the senders' success lines; call 940's hash is not in them because its receipt read failed (see skipped)"
+  "hashesNote": "1,095 hashes: 1,094 from the senders' success lines, plus call 940 (block 9377485) read from the explorer, whose receipt read had failed"
  },
  "originals": {
   "calls": 78,

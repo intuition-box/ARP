@@ -1,6 +1,6 @@
 # Task 79 — The domain tree on OASF
 
-**Status:** built and written on testnet 13579, 2026-11-09, on `feat/79-oasf-tree` (worktree `../ARP-tree`), not pushed.
+**Status:** verified 2026-11-09, `task-verifier` PASS (round 2), commit `0eacf67`, post-mortem `.claude/learning/70-the-tree-on-oasf.md`; written on testnet 13579, on `feat/79-oasf-tree`, not pushed.
 **ADR:** `0150`.
 **Rules:** `code.md`, `portability.md`, `claims.md`, `workflow.md`.
 
