@@ -86,6 +86,15 @@ export function SkillPage({
                             {`${new URL(view.browseUrl).hostname} ↗`}
                         </a>
                     )}
+                    {/* The skill's pulse, which no other page linked to (task 74). */}
+                    {parsed?.kind === "skill" ? (
+                        <Link
+                            to={`/pulse/${parsed.owner}/${parsed.repo}/${encodeURIComponent(parsed.skill)}`}
+                            className={linkClass}
+                        >
+                            Pulse →
+                        </Link>
+                    ) : null}
                 </div>
                 <h1 className="type-title mt-[18px] [overflow-wrap:anywhere]">{skill}</h1>
 

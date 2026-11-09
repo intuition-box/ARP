@@ -8,6 +8,7 @@ import {ChainToggle} from "./brand/ChainToggle";
 import {NavAction, NavLink, NavSplit} from "./brand/NavSplit";
 import {Watermark} from "./brand/Watermark";
 import {useOnboarding} from "./onboarding/onboarding-context";
+import {SiteFooterLinks} from "./site/SiteFooter";
 import {WalletConnect} from "./WalletConnect";
 
 /**
@@ -109,18 +110,7 @@ export function Layout({children}: {children: ReactNode}) {
                     {/* `ModuleRegistry` used to be the first link here. The contract is retired
                         (ADR `0051`, `0055`) and the three pages that used it are deleted, so the
                         link advertised a surface the product no longer has. */}
-                    <nav className="flex flex-wrap gap-4">
-                        <a href="https://docs.intuition.systems" target="_blank" rel="noreferrer">
-                            Intuition
-                        </a>
-                        <a
-                            href="https://docs.metamask.io/smart-accounts-kit/"
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            MetaMask
-                        </a>
-                    </nav>
+                    <SiteFooterLinks />
                 </div>
                 {/* Full bleed, so "across the whole width" means the viewport and not the
                     1320px shell (user, 2026-10-27). The footer carries `px-6`, cancelled here by
