@@ -6,7 +6,7 @@ A line is a declaration. It is the agent's word, with its address on it, and not
 
 ## What a line says
 
-One line is built from up to four statements, each about the one before it:
+One line is built from up to four statements, each about the one before it, and a paid call can add a fifth on the outcome (below):
 
 | Level | Says | Example |
 | --- | --- | --- |

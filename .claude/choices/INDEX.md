@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-155 decisions. Newest last. `choices/README.md` says when to write one.
+156 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -30,6 +30,8 @@ Read these before relying on them.
 - **0101** (Proposed; the v2 receipt itself is the user's decision (2026-10-30), the shape is this task's) — The hire receipt v2 names the one verifier it is for, and the hirer chooses it
 - **0113** (Deferred (mainnet port). The user's decision, 2026-11-02: « intéressant mais inutile en) — Who may speak for an agent's identity: trusted writers, the market, then ambiguity
 - **0137** (Accepted. Its design is open.) — ARP will compute a score
+- **0138** (Accepted. Amended by ADR `0159`, 2026-11-09: a fifth reason, `no-delivery`.) — A line is written in form B, has a closed reason, and money does not weigh in the score
+- **0144** (Accepted. Amended by ADR `0159`, 2026-11-09: a line about an endpoint is sponsored when it names a payment the agent made.) — A sponsored line asks no proof of use, and its key stays out of the plugin's server
 - **0145** (Accepted. Amended 2026-11-06 for the Claude Code plugin, at the end: it no longer goes through `npx`.) — The published CLI carries viem and has no dependency
 - **0148** (Accepted (design; nothing built)) — The hire loop reuses x402, ERC-8183 and ERC-8004, and checks the payment at read time
 - **0154** (Proposed) — Public read pages are dated static snapshots, not a live endpoint
@@ -172,14 +174,14 @@ Read these before relying on them.
 | [0135](0135-a-declaration-can-carry-a-domain-and-an-outcome.md) | 2026-11-05 | Accepted | A declaration can carry a domain and an outcome, written by the declarer |
 | [0136](0136-the-product-is-the-search.md) | 2026-11-05 | Accepted | The product is the search |
 | [0137](0137-arp-will-compute-a-score.md) | 2026-11-05 | Accepted. Its design is open. | ARP will compute a score |
-| [0138](0138-a-line-is-form-b-and-money-does-not-weigh.md) | 2026-11-05 | Accepted | A line is written in form B, has a closed reason, and money does not weigh in the score |
+| [0138](0138-a-line-is-form-b-and-money-does-not-weigh.md) | 2026-11-05 | Accepted. Amended by ADR `0159`, 2026-11-09: a fifth reason, `no-delivery`. | A line is written in form B, has a closed reason, and money does not weigh in the score |
 | [0139](0139-one-search-two-kinds-of-result.md) | 2026-11-05 | Accepted | One search, two kinds of result, and four uses for an agent you can call |
 | [0140](0140-the-hook-records-a-skills-failure-and-only-that.md) | 2026-11-05 | Accepted | The hook records a skill's failure, in one file, and writes `worked` never |
 | [0141](0141-an-agent-line-carries-the-receipt-of-the-hire.md) | 2026-11-05 | Accepted | An agent's line carries the receipt of the hire, and is read from the index first |
 | [0142](0142-the-message-is-not-the-argument.md) | 2026-11-05 | Accepted | The public message is not the internal argument |
 | [0143](0143-the-ranking-moves-from-three-wallets.md) | 2026-11-05 | Accepted | The ranking moves from three wallets, and a line below that is only shown |
 | [0143](0143-tools-page-unknown-is-not-dead-and-most-used.md) | 2026-11-05 | Accepted | /tools counts only what the sponsor deposited for an agent, as Signals |
-| [0144](0144-a-sponsored-line-asks-no-proof.md) | 2026-11-05 | Accepted | A sponsored line asks no proof of use, and its key stays out of the plugin's server |
+| [0144](0144-a-sponsored-line-asks-no-proof.md) | 2026-11-05 | Accepted. Amended by ADR `0159`, 2026-11-09: a line about an endpoint is sponsored when it names a payment the agent made. | A sponsored line asks no proof of use, and its key stays out of the plugin's server |
 | [0145](0145-the-published-package-has-no-dependency.md) | 2026-11-05 | Accepted. Amended 2026-11-06 for the Claude Code plugin, at the end: it no longer goes through `npx`. | The published CLI carries viem and has no dependency |
 | [0146](0146-an-agent-grows-the-domain-tree.md) | 2026-11-09 | Accepted | An agent grows the domain tree, by a signed request |
 | [0147](0147-the-evidence-ladder-is-ordered-by-who-produced-the-signal.md) | 2026-11-09 | Accepted | The evidence ladder is ordered by who produced the signal |
@@ -193,3 +195,4 @@ Read these before relying on them.
 | [0155](0155-words-to-the-tree-stay-local.md) | 2026-11-09 | Accepted | A word names a node through a local alias table; the words never leave the machine |
 | [0156](0156-the-8004-sieve-orders-the-directory.md) | 2026-11-09 | Accepted | The 8004 sieve orders the agent directory, and only callable endpoints count |
 | [0157](0157-installs-offer-sharing-off-by-default.md) | 2026-11-09 | Accepted | Every install offers sharing once, off unless the person agrees |
+| [0159](0159-an-x402-line-names-its-payment-and-a-feed-checks-it.md) | 2026-11-09 | Accepted | An x402 line names its payment in one more level, and a feed keeps it only when the payment checks |
