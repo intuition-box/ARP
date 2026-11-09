@@ -11,7 +11,7 @@
  *  `devDependencies` only, never in an app): the requirements, the verification and the settlement are
  *  theirs. Settlement goes through a facilitator, `https://x402.org/facilitator` by default, which
  *  submits the payer's EIP-3009 authorisation and pays the gas. So this process holds no key and
- *  signs nothing. `payTo` is the address the caller names; the runbook names one the user holds.
+ *  signs nothing. `payTo` is the address the caller names; the runbook defaults to `0x…dEaD` (ADR `0160`).
  *
  *  Never shipped: nothing under `apps/` imports `scripts/` (CLAUDE.md).
  */

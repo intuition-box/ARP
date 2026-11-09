@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-85 entries, one per completed task. Written by `task-verifier` on a pass.
+86 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -91,3 +91,4 @@
 | [76](76-no-limits-page.md) | `docs/tasks/85-no-limits-page.md` | PASS | The docs have no Limits page |
 | [77](77-share-at-install.md) | `docs/tasks/88-share-at-install.md` (built as task 86, renumbered by the coordinating session) | PASS (round 2) | Installs offer sharing |
 | [79](79-x402-failure-feed.md) | `docs/tasks/89-x402-failure-feed.md` | PASS | The x402 failure feed |
+| [80](80-x402-end-to-end.md) | `docs/tasks/91-x402-end-to-end.md` | PASS | The x402 failure loop, end to end on Base Sepolia |

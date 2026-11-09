@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-156 decisions. Newest last. `choices/README.md` says when to write one.
+157 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -196,3 +196,4 @@ Read these before relying on them.
 | [0156](0156-the-8004-sieve-orders-the-directory.md) | 2026-11-09 | Accepted | The 8004 sieve orders the agent directory, and only callable endpoints count |
 | [0157](0157-installs-offer-sharing-off-by-default.md) | 2026-11-09 | Accepted | Every install offers sharing once, off unless the person agrees |
 | [0159](0159-an-x402-line-names-its-payment-and-a-feed-checks-it.md) | 2026-11-09 | Accepted | An x402 line names its payment in one more level, and a feed keeps it only when the payment checks |
+| [0160](0160-a-paying-network-is-added-by-configuration-and-the-demo-pays-on-base-sepolia.md) | 2026-11-09 | Accepted | A paying network is added by configuration, and the demo agent pays on Base Sepolia |

@@ -1,6 +1,6 @@
 # Task 91 — The x402 failure loop, end to end on Base Sepolia
 
-**Status:** built 2026-11-09, dry run done; the paid run waits on the user's test USDC. On `feat/91-x402-e2e-sepolia`, worktree `../ARP-91`, not pushed.
+**Status:** verified 2026-11-09, `task-verifier` PASS (round 1), commits `290a4ac`..`ececf21`, post-mortem `.claude/learning/80-x402-end-to-end.md`; dry run done, the paid run waits on the user's test USDC. On `feat/91-x402-e2e-sepolia`, worktree `../ARP-91`, not pushed.
 **ADR:** `0160`.
 **Rules:** `code.md`, `security.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`.
