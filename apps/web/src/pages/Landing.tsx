@@ -220,6 +220,9 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
     const lit = (word: number) => written > (WORD_TIMES[word] ?? 0) + WORD_LIGHTS_AFTER;
     const field = read.status === "ok" ? read.field : null;
     const line = field?.line ?? null;
+    // A part the line does not have stays unlit: a line can stop at any level (docs/28).
+    const present = (part: number) =>
+        part === 2 ? line?.context !== null : part === 3 ? line?.outcome !== null : true;
     const total = field?.agents ?? 0;
     // The count climbs as the other agents' words join, then rests on the chain's figure.
     const joined =
@@ -273,7 +276,7 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
                         </p>
                         <ol className="arp-gx-steps">
                             {STEPS.map((step, index) => (
-                                <li key={step.name} data-on={lit(index)}>
+                                <li key={step.name} data-on={lit(index) && present(index)}>
                                     <em>{step.name}</em>
                                     {step.line}
                                 </li>

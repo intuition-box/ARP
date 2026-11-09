@@ -296,7 +296,14 @@ export function GalaxyField({
             x: number,
             y: number,
             alpha: number,
-            style: {mono: boolean; size: number; colour: string; border: string | null},
+            style: {
+                mono: boolean;
+                size: number;
+                colour: string;
+                border: string | null;
+                /** Beside the point rather than above it, vertically centred on it. */
+                side?: "left" | "right";
+            },
         ) {
             if (alpha <= 0.01) return;
             ctx.save();
@@ -306,8 +313,10 @@ export function GalaxyField({
             const padX = style.border === null ? 0 : 8;
             const boxW = w + padX * 2;
             const boxH = style.size + 8;
-            const cx = Math.max(boxW / 2 + 8, Math.min(width - boxW / 2 - 8, x));
-            const top = y - boxH;
+            const along =
+                style.side === "right" ? x + boxW / 2 : style.side === "left" ? x - boxW / 2 : x;
+            const cx = Math.max(boxW / 2 + 8, Math.min(width - boxW / 2 - 8, along));
+            const top = style.side === undefined ? y - boxH : y - boxH / 2;
             if (style.border !== null) {
                 ctx.fillStyle = palette.ground;
                 ctx.strokeStyle = style.border;
@@ -603,7 +612,8 @@ export function GalaxyField({
                 const at = where.get(atom.key);
                 let show = current >= 1 && current <= 3 && vis > 0.5;
                 if (atom.kind === "tool") show = current >= 1 && current <= 4;
-                if (atom.kind === "reader") show = current === 2 || current === 3;
+                // On a phone, scene 3's copy and cards leave the field no room for a label.
+                if (atom.kind === "reader") show = current === 2 || (current === 3 && !small);
                 if (current === 2 && atom.kind === "claim") show = show && readKey === atom.key;
                 if (current === 3 && atom.kind === "claim") show = false;
                 // Scene 1 names only the line's own words and the claim being written: six agents'
@@ -637,11 +647,15 @@ export function GalaxyField({
                         border: palette.accent,
                     });
                 } else {
-                    label(atom.label, at.x, at.y - at.r - 4, atom.labelA, {
+                    // Beside the dot, away from the centre: above it, a label on a dot near twelve
+                    // o'clock covers the ring's name.
+                    const right = at.x >= cx;
+                    label(atom.label, at.x + (right ? 1 : -1) * (at.r + 6), at.y, atom.labelA, {
                         mono: true,
                         size: 11,
                         colour: atom.hl > 0.05 ? palette.fg : palette.steel,
                         border: palette.ruleStrong,
+                        side: right ? "right" : "left",
                     });
                 }
             }
