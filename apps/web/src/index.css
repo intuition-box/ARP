@@ -186,36 +186,28 @@
     --duration-base: 200ms;
 
     /* ---------------------------------------------------------------------- */
-    /* Motion — the landing's scene deck (ADRs 0066-0069)                     */
+    /* Motion — the landing's camera (task 81, ADR 0152)                      */
     /*                                                                        */
-    /* `docs/design/motion/MOTION-V2.md` §1 is where these numbers come     */
-    /* from, and `docs/design/motion/index.html` is the page they were tuned */
-    /* on. Every one of them is HERE rather than in a class, because          */
-    /* `check:tokens` can see a token and cannot see a magic number.          */
+    /* `docs/design/landing-galaxy/LANDING-GALAXY.md` is where these numbers  */
+    /* come from. HERE rather than in a class, because `check:tokens` can see */
+    /* a token and cannot see a magic number.                                 */
     /* ---------------------------------------------------------------------- */
 
-    /* A whole scene handing over to the next. Short, because the pacing comes
-       from the glide (ADR 0066), not from the fade. */
-    --scene-fade: 240ms;
+    /* A scene leaves all at once, fast. */
+    --gx-leave: 200ms;
+    /* It arrives piece by piece as the camera settles: each piece 75ms after
+       the one before, rising 14px out of a 5px blur, on the entering curve. */
+    --gx-step: 75ms;
+    --gx-rise: 14px;
+    --gx-blur: 5px;
+    --gx-in: 650ms;
+    --gx-travel: 900ms;
+    --ease-gx-in: cubic-bezier(0.23, 1, 0.32, 1);
 
-    /* An element arriving INSIDE a pinned scene. Slower and further apart than
-       the stacked reveal below: it plays while the Saffron cover is opening, so
-       it has a second to fill rather than a quarter of one. */
-    --scene-reveal: 700ms;
-    --scene-step: 150ms;
-    --scene-rise: 28px;
-
-    /* The same thing stacked — no cover to wait for, so it is the practitioner
-       range for a scroll reveal (150-250ms) rather than the pinned timing. */
+    /* The claim field's dots, on the atom page (`.arp-claim`). */
     --reveal-fade: 260ms;
-    --reveal-step: 80ms;
 
-    /* Line scale: one authored line of a heading (`.arp-line`, `Lines`). `--line-step`
-       staggers the written lines, not the wrapped ones. */
-    --word-rise: 380ms;
-    --line-step: 110ms;
-
-    /* List rows, the first `LIST_CAP` of them only — see `Reveal`'s docstring.
+    /* List rows, the first `LIST_CAP` of them only.
        Tuned on three rows, an uncapped stagger is a 16s wait on two hundred. */
     --list-step: 30ms;
 
@@ -233,26 +225,18 @@
     /*                                                                        */
     /* These are overridden inline, per element, because each one is DATA      */
     /* about that element: which sibling it is, which rendered line it sits    */
-    /* on, how far through the manifesto the scroll has got. They are declared */
+    /* on, when the camera settles. They are declared                          */
     /* as tokens because `check:tokens` resolves every `var()` against the     */
     /* @theme block and nothing else (ADR 0050) — an undeclared local would    */
     /* fail the gate, and a gate with an allowlist stops being a gate.         */
     /* ---------------------------------------------------------------------- */
-    --reveal-index: 0; /* which sibling, for the stagger */
     --reveal-after: 0ms; /* a group that waits for another group */
-    --line-index: 0; /* which authored line of a heading */
     --row-index: 0; /* which row of a list */
+    --gx-i: 0; /* which piece of a landing scene, for the stagger */
+    --gx-base: 0ms; /* when the scene's first piece starts: half the camera's move */
     --orbit-for: 90s; /* how long one ring of the claim field takes to turn */
     --claim-dot: 10px; /* one claim's mark in the field, set per dot by positions */
     --orbit-to: 360deg; /* and which way — negative reverses it */
-    --lit: 1; /* how lit one manifesto line is, 0 to 1 */
-
-    /* The illustrative diagram in Fig. 02 draws itself: a dot appears, a line
-       traces left to right. Per element, because each one is a beat of a
-       sequence a reader follows with their eyes. */
-    --draw-at: 0ms; /* when this part of the diagram starts */
-    --draw-for: 1200ms; /* how long it takes to trace */
-    --draw-length: 1000; /* the path's own length, in user units */
 }
 
 /* -------------------------------------------------------------------------- */
@@ -497,117 +481,12 @@ summary:focus-visible,
 }
 
 /* -------------------------------------------------------------------------- */
-/* Motion — the scene deck's arrival rules                                     */
-/*                                                                            */
-/* Here and not in Tailwind classes, for one reason: every rule below is a     */
-/* DESCENDANT selector driven by state on an ancestor — "elements inside a     */
-/* scene that is not on yet". A utility cannot express that, and `data-*`      */
-/* variants would put the state on every leaf instead of on the scene, which   */
-/* is the whole point: one attribute flips and the subtree arrives.            */
-/*                                                                            */
-/* These are unlayered, so they beat Tailwind utilities on the same property   */
-/* without `!important`. That is deliberate here and it is also the trap        */
-/* `rules/ui.md` names: if you reach for `opacity-*` or `translate-*` on        */
-/* anything inside a scene, it will lose to this and no checker will say so.   */
+/* Motion — the claim field's dots arriving                                    */
 /* -------------------------------------------------------------------------- */
-
-/* ---- block scale: a heading, then its body, then its rows ---------------- */
-
-.arp-rev {
-    transition:
-        opacity var(--reveal-fade) var(--ease-out-quart),
-        transform var(--reveal-fade) var(--ease-out-quart);
-}
-
-/* A label or an eyebrow fades without sliding. One that moves reads as
-   misaligned with the title it belongs to, which is visible at 11px. */
-.arp-rev-fade {
-    transform: none !important;
-}
-
-.arp-scene[data-on="false"] .arp-rev {
-    opacity: 0;
-    transform: translateY(12px);
-}
-
-.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-rev {
-    opacity: 1;
-    transform: none;
-    transition-delay: calc(var(--reveal-index) * var(--reveal-step) + var(--reveal-after));
-}
-
-/* ---- the same, pinned: slower, further, and waiting for the cover -------- */
-
-.arp-deck-pinned .arp-rev {
-    transition:
-        opacity var(--scene-reveal) var(--ease-out-quart),
-        transform var(--scene-reveal) var(--ease-out-quart);
-}
-
-.arp-deck-pinned .arp-scene[data-on="false"]:not(.arp-scene-played) .arp-rev:not(.arp-rev-fade) {
-    transform: translateY(var(--scene-rise));
-}
-
-.arp-deck-pinned .arp-scene[data-on="true"]:not(.arp-scene-played) .arp-rev {
-    transition-delay: calc(var(--reveal-index) * var(--scene-step) + var(--reveal-after));
-}
-
-/* A played scene shows everything, instantly, in both modes. The rules above all carry
-   `:not(.arp-scene-played)` as well: `.arp-scene[data-on=…]` is one specificity step above
-   `.arp-scene-played`, so excluding it only here would lose the tie. */
-.arp-scene-played .arp-rev,
-.arp-scene-played .arp-line,
-.arp-scene-played .arp-row {
-    opacity: 1;
-    transform: none;
-    transition: none;
-}
-
-/* ---- authored-line scale: an h2 whose two lines are written as two ------- */
-
-.arp-line {
-    display: block;
-}
-
-.arp-scene[data-on="false"]:not(.arp-scene-played) .arp-lines .arp-line {
-    opacity: 0;
-    transform: translateY(0.22em);
-}
-
-.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-lines .arp-line {
-    opacity: 1;
-    transform: none;
-    transition:
-        opacity var(--word-rise) var(--ease-out-quart),
-        transform var(--word-rise) var(--ease-out-quart);
-    transition-delay: calc(var(--line-index) * var(--line-step));
-}
-
-.arp-deck-pinned .arp-scene[data-on="true"]:not(.arp-scene-played) .arp-line {
-    transition-duration: var(--scene-reveal);
-    transition-delay: calc(var(--line-index) * var(--scene-step));
-}
-
-/* ---- list rows: capped, because a stagger tuned on three waits on two hundred */
-
-.arp-scene[data-on="false"]:not(.arp-scene-played) .arp-row {
-    opacity: 0;
-    transform: translateY(8px);
-}
-
-.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-row {
-    opacity: 1;
-    transform: none;
-    transition:
-        opacity var(--reveal-fade) var(--ease-out-quart),
-        transform var(--reveal-fade) var(--ease-out-quart);
-    transition-delay: calc(var(--row-index) * var(--list-step) + var(--reveal-after));
-}
 
 /* ---- the claim field: dots arriving, and the edge a hover draws ---------- */
 
-/* **Outside a scene**, unlike `.arp-row` above, whose rules are all scoped to
-   `.arp-scene[data-on]`. The atom page has no deck, so the arrival is driven by
+/* The atom page has no deck, so the arrival is driven by
    a class the element has from its first paint and removed one frame later —
    the same opacity-and-lift vocabulary at the same tokens, reusing
    `--row-index`, `--list-step` and the `LIST_CAP` the stagger is capped at. */
@@ -1437,14 +1316,6 @@ a.arp-cf-card:hover {
     color: var(--color-fg);
 }
 
-/* ---- one manifesto line lighting up, scrubbed by scroll ------------------ */
-
-/* display-only: applied on one element, `Landing.tsx` manifesto lines, at
-   `text-[clamp(36px,5.4vw,72px)]` — floor 36px, so the grey end of the mix clears AA large. */
-.arp-lit {
-    color: color-mix(in oklab, var(--color-fg) calc(var(--lit) * 100%), var(--color-grey));
-}
-
 /* ---- route scale: opacity only, and the loader only if the chunk is slow -- */
 
 .arp-route-in {
@@ -1468,17 +1339,9 @@ a.arp-cf-card:hover {
 
 /* -------------------------------------------------------------------------- */
 /* Reduced motion means none, not less (docs/18 §3)                            */
-/*                                                                            */
-/* The same composition, at full opacity and final position. Not a faster       */
-/* version of the animation — none of it. The deck also refuses to pin at all   */
-/* under this setting, so the reader gets an ordinary stacked document.         */
 /* -------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
-    .arp-rev,
-    .arp-scene,
-    .arp-line,
-    .arp-row,
     .arp-route-in,
     .arp-route-loader {
         animation: none !important;
@@ -1486,67 +1349,630 @@ a.arp-cf-card:hover {
         opacity: 1 !important;
         transform: none !important;
     }
-
-    .arp-lit {
-        color: var(--color-fg);
-    }
 }
 
 /* -------------------------------------------------------------------------- */
-/* Fig. 02's diagram draws itself                                              */
+/* The landing: one camera through the registry (task 81, ADR 0152)            */
 /*                                                                            */
-/* An SVG path traced by animating `stroke-dashoffset` from its own length to  */
-/* zero, and labels and dots that appear at a named moment. It is illustrative */
-/* — a picture of the mechanism, not a chart of data — so it is the one place  */
-/* on this page where a sequence is authored rather than measured.             */
-/*                                                                            */
-/* `--draw-length` has to be the path's real length or the dash never clears:  */
-/* it is set per path, beside the `d` attribute it describes.                  */
+/* `docs/design/landing-galaxy/` is the design. One sticky stage holds the     */
+/* galaxy's canvas and six scenes; only the current scene is on. A scene       */
+/* leaves in 200ms, all at once, and arrives as the camera settles, piece by   */
+/* piece (ADR 0068: never two scenes on screen). Plain classes, because every  */
+/* rule is driven by `data-on` on the scene, which a utility cannot express.   */
 /* -------------------------------------------------------------------------- */
 
-.arp-draw {
-    stroke-dasharray: var(--draw-length);
-    stroke-dashoffset: var(--draw-length);
+.arp-gx-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    width: 100vw;
+    /* Full bleed out of the 1320px shell. `html { overflow-x: clip }` cuts the
+       half scrollbar `vw` overruns by. */
+    margin-left: calc(50% - 50vw);
+    overflow: hidden;
 }
 
-.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-draw {
-    stroke-dashoffset: 0;
-    transition: stroke-dashoffset var(--draw-for) linear var(--draw-at);
+.arp-gx-canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
-.arp-pop {
+.arp-deck-pinned .arp-gx-scene {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
     opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity var(--gx-leave) ease,
+        visibility 0s linear var(--gx-leave);
 }
 
-.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-pop {
+.arp-deck-pinned .arp-gx-scene[data-on="true"] {
     opacity: 1;
-    transition: opacity var(--reveal-fade) var(--ease-out-quart) var(--draw-at);
-}
-
-/* A diagram redraws for nobody. The rules above carry `:not(.arp-scene-played)` as well, because
-   `.arp-scene[data-on="true"]` is one specificity step above `.arp-scene-played` and would win the
-   `transition` outright — the exclusion has to be on the losing side's selector, not only here. */
-.arp-scene-played .arp-draw {
-    stroke-dashoffset: 0;
+    visibility: visible;
     transition: none;
 }
 
-.arp-scene-played .arp-pop {
+.arp-gx-scene a,
+.arp-gx-scene button {
+    pointer-events: auto;
+}
+
+/* `translate`, not `transform`, so a panel keeps its own transform. */
+.arp-deck-pinned .arp-gx-rv {
+    opacity: 0;
+    translate: 0 var(--gx-rise);
+    filter: blur(var(--gx-blur));
+}
+
+.arp-deck-pinned .arp-gx-scene[data-on="true"] .arp-gx-rv {
     opacity: 1;
-    transition: none;
+    translate: 0 0;
+    filter: none;
+    transition:
+        opacity var(--gx-in) var(--ease-gx-in),
+        translate var(--gx-travel) var(--ease-gx-in),
+        filter var(--gx-in) var(--ease-gx-in);
+    transition-delay: calc(var(--gx-base) + var(--gx-i) * var(--gx-step));
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .arp-draw {
-        stroke-dasharray: none;
-        stroke-dashoffset: 0;
+    .arp-deck-pinned .arp-gx-rv {
+        translate: none;
+        filter: none;
     }
 
-    .arp-draw,
-    .arp-pop {
-        animation: none !important;
-        transition: none !important;
-        opacity: 1 !important;
+    .arp-deck-pinned .arp-gx-scene[data-on="true"] .arp-gx-rv {
+        transition: opacity 300ms ease;
+        transition-delay: 0ms;
+    }
+}
+
+/* ---- the copy ------------------------------------------------------------ */
+
+.arp-deck-pinned .arp-gx-copy {
+    position: absolute;
+    left: max(24px, 5vw);
+    bottom: clamp(40px, 9vh, 96px);
+    max-width: min(34rem, calc(100% - 48px));
+}
+
+.arp-deck-pinned .arp-gx-copy.is-center {
+    left: 0;
+    right: 0;
+    max-width: none;
+    margin: 0 auto;
+    padding: 0 24px;
+    text-align: center;
+}
+
+.arp-deck-pinned .arp-gx-copy.is-top {
+    bottom: auto;
+    top: clamp(112px, 15vh, 150px);
+}
+
+.arp-gx-copy h1,
+.arp-gx-copy h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(30px, 4.2vw, 62px);
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -0.035em;
+    line-height: 0.94;
+    text-wrap: balance;
+}
+
+.arp-gx-copy.is-center h1 {
+    max-width: 18ch;
+    margin: 0 auto;
+    font-size: clamp(34px, 5vw, 72px);
+}
+
+/* display-only: the dim half of a scene's h2, never smaller than 30px. */
+.arp-gx-dim {
+    display: block;
+    color: var(--color-grey);
+}
+
+.arp-gx-ctas {
+    margin-top: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    align-items: center;
+}
+
+.arp-gx-copy.is-center .arp-gx-ctas {
+    justify-content: center;
+}
+
+.arp-gx-ctas a {
+    transition: transform 160ms var(--ease-gx-in);
+}
+
+.arp-gx-ctas a:active,
+.arp-gx-copy-btn:active {
+    transform: scale(0.97);
+}
+
+.arp-gx-quiet-link {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-silver);
+}
+
+.arp-gx-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius-button);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-fg);
+    text-decoration: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .arp-gx-btn:hover {
+        background: var(--color-raised);
+        border-color: var(--color-steel);
+        color: var(--color-fg);
+    }
+
+    .arp-gx-quiet-link:hover {
+        color: var(--color-fg);
+    }
+
+    .arp-gx-copy-btn:hover {
+        color: var(--color-fg);
+        border-color: var(--color-steel);
+    }
+}
+
+.arp-gx-hint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: max(16px, 2.4vh);
+    margin: 0;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-steel);
+}
+
+/* ---- panels ---------------------------------------------------------------- */
+
+.arp-gx-panel {
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+    padding: 14px 16px;
+    font-size: var(--text-body-sm);
+}
+
+.arp-deck-pinned .arp-gx-panel {
+    position: absolute;
+}
+
+.arp-gx-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--color-rule);
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-steel);
+}
+
+.arp-gx-panel-head i {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--color-accent);
+}
+
+.arp-gx-quiet,
+.arp-gx-empty {
+    margin: 10px 0 0;
+    color: var(--color-steel);
+}
+
+.arp-gx-empty p {
+    margin: 0;
+}
+
+.arp-deck-pinned .arp-gx-beat {
+    left: max(24px, 5vw);
+    top: clamp(112px, 16vh, 160px);
+    width: min(20rem, calc(100% - 48px));
+}
+
+.arp-gx-beatrows {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+}
+
+.arp-gx-beatrows li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--color-rule);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--color-steel);
+}
+
+.arp-gx-beatrows li:last-child {
+    border-bottom: 0;
+}
+
+.arp-gx-beatrows b,
+.arp-gx-beatrows span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.arp-gx-beatrows b {
+    font-weight: 500;
+    color: var(--color-fg);
+}
+
+.arp-gx-beatrows em {
+    font-style: normal;
+}
+
+.arp-deck-pinned .arp-gx-subject {
+    right: max(24px, 5vw);
+    bottom: clamp(40px, 9vh, 96px);
+    width: min(23rem, calc(100% - 48px));
+}
+
+.arp-gx-sentence {
+    margin: 12px 0 0;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--color-fg);
+    overflow-wrap: anywhere;
+}
+
+.arp-gx-sentence span {
+    opacity: 0.12;
+    transition: opacity 500ms var(--ease-gx-in);
+}
+
+.arp-gx-sentence span[data-on="true"] {
+    opacity: 1;
+}
+
+.arp-gx-sentence .is-pr {
+    color: var(--color-steel);
+}
+
+.arp-gx-steps,
+.arp-gx-reads {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+    display: grid;
+}
+
+.arp-gx-steps li,
+.arp-gx-reads li {
+    display: grid;
+    grid-template-columns: 5.6rem minmax(0, 1fr);
+    gap: 10px;
+    padding: 7px 0;
+    border-top: 1px solid var(--color-rule);
+    color: var(--color-steel);
+    transition: color 400ms ease;
+}
+
+.arp-gx-steps li[data-on="true"],
+.arp-gx-reads li[data-on="true"] {
+    color: var(--color-fg);
+}
+
+.arp-gx-steps em,
+.arp-gx-reads em {
+    font-style: normal;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-steel);
+    padding-top: 2px;
+}
+
+/* The row being read is the selected state: Saffron, as the claim it reads. */
+.arp-gx-steps li[data-on="true"] em,
+.arp-gx-reads li[data-on="true"] em {
+    color: var(--color-accent);
+}
+
+.arp-gx-foot {
+    margin: 8px 0 0;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-rule);
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    color: var(--color-steel);
+}
+
+/* ---- scene 3's cards -------------------------------------------------------- */
+
+.arp-gx-use {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr 1fr;
+    gap: 12px;
+}
+
+.arp-deck-pinned .arp-gx-use {
+    position: absolute;
+    left: max(24px, 5vw);
+    right: max(24px, 5vw);
+    bottom: clamp(36px, 8vh, 80px);
+}
+
+.arp-gx-cmd {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding: 14px 16px;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+}
+
+.arp-gx-cmd.is-ask {
+    border-color: var(--color-accent);
+}
+
+.arp-gx-cmd-name {
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-steel);
+}
+
+.arp-gx-cmd code {
+    padding-right: 64px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--color-fg);
+    overflow-wrap: anywhere;
+}
+
+.arp-gx-cmd code::before {
+    content: "$ ";
+    color: var(--color-steel);
+}
+
+.arp-gx-cmd p {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.arp-gx-cmd b {
+    font-weight: 700;
+    color: var(--color-accent);
+}
+
+/* A button: the unlayered `button {}` rule sets a border and a radius, and
+   this class is unlayered too and more specific, so it wins on both. */
+.arp-gx-copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius-control);
+    background: transparent;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    letter-spacing: 0.06em;
+    color: var(--color-silver);
+    transition:
+        transform 160ms var(--ease-gx-in),
+        color 200ms ease,
+        border-color 200ms ease;
+}
+
+/* ---- scene 4's lines, scene 5's comparison -------------------------------- */
+
+.arp-gx-lines {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 4px;
+}
+
+/* display-only: 22px and up at 700, so the grey end is large text. */
+.arp-gx-lines li {
+    font-size: clamp(22px, 2.6vw, 36px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-grey);
+    transition: color 700ms ease;
+}
+
+.arp-gx-lines li[data-on="true"] {
+    color: var(--color-fg);
+}
+
+.arp-gx-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 24px;
+}
+
+.arp-deck-pinned .arp-gx-compare {
+    position: absolute;
+    right: max(24px, 5vw);
+    bottom: clamp(40px, 9vh, 96px);
+    width: min(30rem, calc(100% - 48px));
+}
+
+.arp-gx-compare h3 {
+    margin: 0 0 8px;
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-steel);
+}
+
+.arp-gx-compare ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.arp-gx-compare li {
+    display: flex;
+    gap: 9px;
+    align-items: baseline;
+    padding: 7px 0;
+    border-top: 1px solid var(--color-rule);
+    font-size: 13.5px;
+    color: var(--color-steel);
+}
+
+.arp-gx-compare .is-us li {
+    color: var(--color-fg);
+}
+
+.arp-gx-compare i {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    border: 1px solid var(--color-steel);
+    transform: translateY(-1px);
+}
+
+.arp-gx-compare .is-us i {
+    background: var(--color-fg);
+    border-color: var(--color-fg);
+}
+
+/* ---- a phone: panels at the top, the copy at the bottom -------------------- */
+
+@media (max-width: 820px) {
+    .arp-deck-pinned .arp-gx-copy {
+        left: 16px;
+        max-width: calc(100% - 32px);
+    }
+
+    .arp-deck-pinned .arp-gx-copy.is-center {
+        left: 0;
+        max-width: none;
+        padding: 0 16px;
+    }
+
+    .arp-deck-pinned .arp-gx-copy.is-top {
+        top: calc(env(safe-area-inset-top, 0px) + 100px);
+    }
+
+    .arp-deck-pinned .arp-gx-subject,
+    .arp-deck-pinned .arp-gx-compare {
+        left: 16px;
+        right: auto;
+        bottom: auto;
+        top: calc(env(safe-area-inset-top, 0px) + 96px);
+        width: calc(100% - 32px);
+    }
+
+    .arp-deck-pinned .arp-gx-beat,
+    .arp-gx-steps,
+    .arp-deck-pinned .arp-gx-hint {
+        display: none;
+    }
+
+    .arp-gx-reads li {
+        padding: 5px 0;
+        font-size: 12px;
+    }
+
+    .arp-deck-pinned .arp-gx-use {
+        left: 16px;
+        right: 16px;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .arp-gx-cmd {
+        padding: 12px 14px;
+    }
+
+    .arp-gx-compare {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    /* On a phone the comparison sits over the galaxy, so it gets a panel's ground. */
+    .arp-deck-pinned .arp-gx-compare {
+        padding: 14px 16px;
+        border: 1px solid var(--color-rule-strong);
+        border-radius: var(--radius-card);
+        background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+    }
+}
+
+/* ---- stacked: before JavaScript, or a viewport too short to pin ------------ */
+
+.arp-gx-stacked .arp-gx-scene {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 48px 0;
+    border-bottom: 1px solid var(--color-rule);
+}
+
+.arp-gx-stacked .arp-gx-scene:first-child {
+    padding-top: 0;
+}
+
+.arp-gx-stacked .arp-gx-copy {
+    order: -1;
+}
+
+.arp-gx-stacked .arp-gx-hint {
+    display: none;
+}
+
+.arp-gx-stacked .arp-gx-panel,
+.arp-gx-stacked .arp-gx-compare {
+    max-width: 30rem;
+}
+
+@media (max-width: 820px) {
+    .arp-gx-stacked .arp-gx-use {
+        grid-template-columns: 1fr;
     }
 }
 

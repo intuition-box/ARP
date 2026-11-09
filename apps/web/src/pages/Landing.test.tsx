@@ -1,281 +1,339 @@
-import {describe, expect, it, vi, beforeEach} from "vitest";
-import {act, fireEvent, screen, waitFor} from "@testing-library/react";
-import type {RecentDeclaration} from "@arp-protocol/core";
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
+import {screen, waitFor, within} from "@testing-library/react";
+import type {PulseUsage, RecentDeclaration, ToolListing} from "@arp-protocol/core";
 
-import {OnboardingContext} from "../components/onboarding/onboarding-context";
 import {renderWithProviders} from "../test/render";
 import {Landing} from "./Landing";
 
 /**
- * The front page's behaviours that a type checker cannot see.
+ * The front page's behaviours a type checker cannot see (task 81).
  *
- * Three of these are regressions that shipped once:
+ * - **The copy is the design file's**, to the word, with no kicker above a heading and no lede
+ *   under the hero (the user removed both).
+ * - **Real data or a sentence saying there is none.** The reference is filled with samples
+ *   (`8453:3107`, `video`, `missing-key`…) that must never reach the app.
+ * - **ARP's own test identities are left out**, as on every other page.
+ * - **A failed read says it failed**, never that the chain is empty.
+ * - **Reduced motion** shows every scene at its end state.
  *
- * - **One price per act.** The page stated the declaration cost twice and only one copy was
- *   corrected to read the chain, so on testnet the two sites were 100× apart and eleven inches
- *   apart on screen (`rules/claims.md` §5).
- * - **Every in-page anchor resolves.** The hero's second call to action pointed at `#build` and
- *   the port had dropped the section's `id`, so one of two CTAs scrolled nowhere.
- * - **Real data or a sentence saying there is none.** Mainnet returns zero declarations today, and
- *   the reference the page is built from carries sample names (`vault-auditor`, `crytic-runner`)
- *   that must not reach the app.
- *
- * And one is a scope guard rather than a regression: ADR `0060` took hire and pay out of scope, so
- * the `be hired` card may say an agent can be found and called and may **not** promise payment.
- *
- * **The deck pins here, and the inherited claim that it does not was wrong.** `happy-dom` lays out
- * at 1024x768 with `prefers-reduced-motion` false, so `canPin()` is true and every test below
- * renders the pinned deck. What `happy-dom` returns zero for is `getBoundingClientRect()`, so
- * `progress` never leaves 0 — the pinned **structure** at the first scene is reachable and is
- * asserted at the end of this file, and everything **driven by scroll** is not: the gesture
- * stepping, the hand-over in situ, the dive, the four Saffron covers, the scrubbed manifesto and
- * the `played` set. `MOTION-V2.md` §5 is the browser checklist that covers those.
- *
- * The three reads are faked at the package and service boundary — that is where the network is.
- * Everything between them and the screen runs for real, because that is the chain that shipped the
- * defects.
+ * The reads are faked at the package boundary, where the network is. The canvas does not draw
+ * under `happy-dom` (no 2D context), so what is asserted is the HTML a reader gets; the motion is
+ * checked in a browser (task 81's frame check).
  */
 
 vi.mock("@arp-protocol/core", async () => {
     const actual = await vi.importActual<Record<string, unknown>>("@arp-protocol/core");
-    return {...actual, getRecentDeclarations: vi.fn()};
+    return {...actual, getRecentDeclarations: vi.fn(), listTools: vi.fn(), getPulseUsage: vi.fn()};
 });
-vi.mock("../services/declaration-cost", () => ({readDeclarationCost: vi.fn()}));
+vi.mock("../services/landing-field", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("../services/landing-field")>()),
+    readVocabularyIds: vi.fn(async () => ({hasOutcome: "0xoutcome", because: "0xbecause"})),
+    readPaidWords: vi.fn(async () => []),
+}));
 
-const {getRecentDeclarations} = await import("@arp-protocol/core");
-const {readDeclarationCost} = await import("../services/declaration-cost");
+const core = await import("@arp-protocol/core");
+const {hiddenAtomIds} = await import("../services/test-identities");
+const {readPaidWords} = await import("../services/landing-field");
+const recent = vi.mocked(core.getRecentDeclarations);
+const listTools = vi.mocked(core.listTools);
+const getPulseUsage = vi.mocked(core.getPulseUsage);
 
-const recent = getRecentDeclarations as unknown as ReturnType<typeof vi.fn>;
-const cost = readDeclarationCost as unknown as ReturnType<typeof vi.fn>;
+const TOOL_ID = "0xtool";
+const AGENT_ID = "0xagent";
 
-/** Testnet's real figures: fee 0.001000000002, deposit 0.001, floor ~0.002. */
-const TESTNET_COST = {fee: 1_000_000_002_000_000n, deposit: 1_000_000_000_000_000n, floor: 0n};
-TESTNET_COST.floor = TESTNET_COST.fee + TESTNET_COST.deposit;
+function tool(overrides: Partial<ToolListing> = {}): ToolListing {
+    // Only the fields the landing reads are meaningful here; the rest of a listing is shaped as the
+    // package returns it.
+    return {
+        atomId: TOOL_ID,
+        label: "github.com/acme/skills?skill=transcribe",
+        uri: null,
+        hostedAt: null,
+        type: null,
+        edgeCount: 1,
+        declarers: [AGENT_ID],
+        ...overrides,
+    } as ToolListing;
+}
+
+function usage(): PulseUsage {
+    return {
+        declarations: [
+            {
+                tripleId: "0xedge",
+                agent: {atomId: AGENT_ID, label: "13579:812"},
+                writer: "0xwallet",
+                holders: ["0xwallet"],
+                declaredAt: "2026-11-08T10:00:00Z",
+                domains: ["research"],
+                outcomes: ["failed"],
+                lines: [
+                    {
+                        domain: "research",
+                        outcome: "failed",
+                        reasons: ["missing-key"],
+                        form: "nested",
+                    },
+                ],
+            },
+        ],
+        agents: 1,
+        wallets: 1,
+        byDomain: {research: 1},
+        byOutcome: {failed: 1},
+        byReason: {"missing-key": 1},
+        byOthers: [],
+        truncated: false,
+    };
+}
 
 function declaration(overrides: Partial<RecentDeclaration> = {}): RecentDeclaration {
     return {
         tripleId: `0x${"cd".repeat(32)}`,
         at: new Date().toISOString(),
         txHash: null,
-        subject: {atomId: "agent-1", label: "Agent One"},
-        object: {atomId: "tool-1", label: "Slither"},
+        subject: {atomId: AGENT_ID, label: "13579:812"},
+        object: {atomId: TOOL_ID, label: "github.com/acme/skills?skill=transcribe"},
         assets: null,
         positions: 0,
         ...overrides,
     };
 }
 
+function withRealLine() {
+    recent.mockResolvedValue([declaration()]);
+    listTools.mockResolvedValue({
+        curveId: 1,
+        edgesRead: 1,
+        truncated: false,
+        sponsor: null,
+        tools: [tool()],
+    } as never);
+    getPulseUsage.mockResolvedValue(new Map([[TOOL_ID, usage()]]));
+}
+
+function reduceMotion(on: boolean) {
+    vi.spyOn(window, "matchMedia").mockImplementation(
+        (query: string) =>
+            ({
+                matches: on && query.includes("reduce"),
+                media: query,
+                onchange: null,
+                addEventListener: () => undefined,
+                removeEventListener: () => undefined,
+                addListener: () => undefined,
+                removeListener: () => undefined,
+                dispatchEvent: () => false,
+            }) as MediaQueryList,
+    );
+}
+
+const scene = (container: HTMLElement, index: number) => {
+    const node = container.querySelector<HTMLElement>(`[data-scene="${index}"]`);
+    if (node === null) throw new Error(`no scene ${index}`);
+    return node;
+};
+
 beforeEach(() => {
     recent.mockReset();
-    cost.mockReset();
+    listTools.mockReset();
+    getPulseUsage.mockReset();
     recent.mockResolvedValue([]);
-    cost.mockResolvedValue(TESTNET_COST);
+    listTools.mockResolvedValue({
+        curveId: 1,
+        edgesRead: 0,
+        truncated: false,
+        sponsor: null,
+        tools: [],
+    } as never);
+    getPulseUsage.mockResolvedValue(new Map());
+    reduceMotion(false);
+});
+
+afterEach(() => {
+    vi.restoreAllMocks();
 });
 
 describe("Landing", () => {
-    it("prints no amount the chain read did not produce", async () => {
+    it("says the design's words, and no kicker or lede", async () => {
         const {container} = renderWithProviders(<Landing />);
-        await waitFor(() => expect(cost).toHaveBeenCalled());
+        await waitFor(() => expect(listTools).toHaveBeenCalled());
 
-        // The defect this guards: a literal `0.1 TRUST` survived beside a figure read off the
-        // chain, wearing the chain's symbol so it looked chain-aware while staying fixed. On
-        // testnet the two were 100× apart.
-        //
-        // The page legitimately prints **two** figures — the non-recoverable fee and the
-        // fee-plus-deposit floor — so the assertion is not "one amount". It is that every amount
-        // on the page came from the mocked read, which a hardcoded literal cannot satisfy.
-        const allowed = new Set(["0.001 tTRUST", "0.002 tTRUST"]);
-        await waitFor(() => {
-            const amounts = (container.textContent ?? "").match(/[\d.]+\s*tTRUST/g) ?? [];
-            expect(amounts.length).toBeGreaterThan(0);
-            for (const amount of amounts) expect(allowed).toContain(amount.replace(/\s+/g, " "));
-        });
+        expect(container.querySelector("h1")?.textContent).toBe(
+            "The public pulse for tools and autonomous agents.",
+        );
+        const headings = [...container.querySelectorAll("h2")].map((h) => h.textContent);
+        expect(headings).toEqual([
+            "An agent writes down what it used. With its identity, into words every agent shares.",
+            "The next agent knows before it chooses. Useful or not, paid or free, working or not, and what for.",
+            "Plug in and participate. Your agent discovers what others already use, and adds what it uses.",
+            "No grade. No stars.",
+            "Plug in without asking anyone. It lives on a public chain, not on our servers.",
+        ]);
+        const text = container.textContent ?? "";
+        for (const removed of [
+            "Fig. 0",
+            "ARP · Agent Reputation Protocol",
+            "What ARP never adds",
+        ]) {
+            expect(text, `a kicker the user removed: ${removed}`).not.toContain(removed);
+        }
+        expect(text).toContain("Just what agents declared.");
+        expect(text).toContain("On the record, for anyone to check.");
     });
 
-    it("opens the onboarding from the first screen, and keeps the index one link away", async () => {
-        const open = vi.fn();
-        renderWithProviders(
-            <OnboardingContext.Provider value={{open, landed: () => undefined}}>
-                <Landing />
-            </OnboardingContext.Provider>,
-        );
+    it("gives the exact install commands, with -y for npx", async () => {
+        const {container} = renderWithProviders(<Landing />);
+        await waitFor(() => expect(listTools).toHaveBeenCalled());
+        const codes = [...container.querySelectorAll("code")].map((c) => c.textContent);
+        expect(codes).toEqual([
+            "claude plugin marketplace add intuition-box/ARP",
+            "claude plugin install arp@arp",
+            "npx -y @arp-protocol/cli init",
+        ]);
+    });
 
-        // Task 53: the onboarding is behind Get started on the hero, which is scene 0 and in the
-        // accessibility tree, so it is found by role.
-        fireEvent.click(await screen.findByRole("button", {name: "Get started"}));
-        expect(open).toHaveBeenCalledTimes(1);
-        expect(screen.getByRole("link", {name: /Open the agent index/})).toBeTruthy();
+    it("says nothing has happened rather than showing a sample, when the chain is empty", async () => {
+        const {container} = renderWithProviders(<Landing />);
+        expect(await screen.findByText("No activity yet.")).toBeTruthy();
+        expect(
+            await within(scene(container, 1)).findByText("No line written here yet."),
+        ).toBeTruthy();
+        expect(within(scene(container, 2)).getByText("Nothing to read here yet.")).toBeTruthy();
+    });
+
+    it("says the read failed rather than claiming the chain is empty", async () => {
+        recent.mockRejectedValue(new Error("502 from the indexer"));
+        listTools.mockRejectedValue(new Error("502 from the indexer"));
+        renderWithProviders(<Landing />);
+        // The pulse panel and the two panels the field feeds.
+        expect(await screen.findAllByText(/The graph did not answer/i)).toHaveLength(3);
+        expect(screen.queryByText("No activity yet.")).toBeNull();
+    });
+
+    it("writes the most declared tool's latest line, word by word, from the chain", async () => {
+        withRealLine();
+        const {container} = renderWithProviders(<Landing />);
+        const written = scene(container, 1);
+        await waitFor(() =>
+            expect(written.querySelector(".arp-gx-sentence")?.textContent).toBe(
+                "13579:812 uses transcribe in context of research has outcome failed: missing-key",
+            ),
+        );
+        expect(written.textContent).toContain("1 agent writing into these words");
+
+        const reads = scene(container, 2);
+        await waitFor(() => expect(reads.querySelectorAll(".arp-gx-reads li")).toHaveLength(3));
+        expect(reads.textContent).toContain("13579:812 uses it · the one agent so far");
+        expect(reads.textContent).toContain("in context of research · 1 wallet");
+        expect(reads.textContent).toContain("failed: missing-key · 1 wallet");
+    });
+
+    it("adds the paid reading only when the tool's files name a paid service", async () => {
+        withRealLine();
+        vi.mocked(readPaidWords).mockResolvedValueOnce(["stripe"]);
+        const {container} = renderWithProviders(<Landing />);
+        await waitFor(() =>
+            expect(scene(container, 2).textContent).toContain(
+                "its files name stripe · no position",
+            ),
+        );
+    });
+
+    it("leaves ARP's own test identities out", async () => {
+        withRealLine();
+        vi.mocked(hiddenAtomIds).mockResolvedValue(new Set([AGENT_ID]));
+        const {container} = renderWithProviders(<Landing />);
+        expect(
+            await within(scene(container, 1)).findByText("No line written here yet."),
+        ).toBeTruthy();
+        expect(container.textContent).not.toContain("13579:812");
+        vi.mocked(hiddenAtomIds).mockResolvedValue(new Set());
+    });
+
+    it("carries no sample from the design reference", async () => {
+        withRealLine();
+        const {container} = renderWithProviders(<Landing />);
+        await waitFor(() => expect(scene(container, 1).textContent).toContain("13579:812"));
+        const text = container.textContent ?? "";
+        for (const sample of [
+            "8453:3107",
+            "8453:5512",
+            "8453:44512",
+            "hyperframes",
+            "marketing",
+            "Sample",
+            "paid service",
+        ]) {
+            expect(text, `sample data on the page: ${sample}`).not.toContain(sample);
+        }
+    });
+
+    it("keeps out the claims docs/30 forbids", async () => {
+        const {container} = renderWithProviders(<Landing />);
+        await waitFor(() => expect(listTools).toHaveBeenCalled());
+        const text = (container.textContent ?? "").toLowerCase();
+        for (const forbidden of [
+            "shows who used it",
+            "ranked by real use",
+            "written by the agents themselves",
+            "verified",
+            "best ",
+            "get paid",
+        ]) {
+            expect(text, `forbidden on the page: ${forbidden}`).not.toContain(forbidden);
+        }
     });
 
     it("gives every in-page anchor a target on the page", async () => {
         const {container} = renderWithProviders(<Landing />);
-        await waitFor(() => expect(cost).toHaveBeenCalled());
-
-        // None since 2026-10-29, when the user cut "or build against it →". The guard stays for
-        // the next one rather than asserting that one exists.
+        await waitFor(() => expect(listTools).toHaveBeenCalled());
         const anchors = [...container.querySelectorAll('a[href^="#"]')];
+        expect(anchors.length).toBeGreaterThan(0);
         for (const anchor of anchors) {
             const id = (anchor.getAttribute("href") ?? "").slice(1);
             expect(container.querySelector(`#${id}`), `no target for #${id}`).not.toBeNull();
         }
     });
 
-    it("says nothing has happened rather than showing a sample, when the chain is empty", async () => {
-        renderWithProviders(<Landing />);
-        // Mainnet returns zero today. The handoff's own instruction: never sample data.
-        expect(await screen.findByText("No activity yet.")).toBeTruthy();
-        // And the same for the two cards of Fig. 01, which the reference fills with sample names.
-        expect(
-            await screen.findByText(/No agent has declared using anything here yet/i),
-        ).toBeTruthy();
-        expect(await screen.findByText(/No tool has been declared here yet/i)).toBeTruthy();
-    });
-
-    it("carries no sample name from the design reference", async () => {
-        recent.mockResolvedValue([declaration()]);
+    it("puts one scene on screen and takes the other five out of the tree", async () => {
         const {container} = renderWithProviders(<Landing />);
-        await waitFor(() => expect(cost).toHaveBeenCalled());
-
-        // The reference's two cards are filled with invented agents and tools so a designer can
-        // see the composition. Any of these reaching the app is the failure the empty states exist
-        // to prevent, and it is one grep (`rules/claims.md` §5).
-        await waitFor(() => {
-            const text = container.textContent ?? "";
-            for (const sample of ["vault-auditor", "crytic-runner", "maturity-bot", "Echidna"]) {
-                expect(text, `sample data on the page: ${sample}`).not.toContain(sample);
-            }
-        });
-    });
-
-    it("says the read failed rather than claiming the chain is empty", async () => {
-        recent.mockRejectedValue(new Error("502 from the indexer"));
-        renderWithProviders(<Landing />);
-
-        // `recentQueryOptions` sets `retry: 0`, so one transient GraphQL failure gives
-        // `isPending === false` and `data === undefined`. Reading only those two printed
-        // "Nobody has run the loop here, including us." — this page's most load-bearing claim,
-        // derived from a request that never answered (`rules/claims.md` §1).
-        // `findAll`: the beat card and both cards of Fig. 01 each say it, which is the point —
-        // three independent reads of the same query, none of them claiming an empty chain.
-        expect(await screen.findAllByText(/The graph did not answer/i)).toHaveLength(3);
-        expect(screen.queryByText("No activity yet.")).toBeNull();
-        expect(screen.queryByText(/No agent has declared using anything here yet/i)).toBeNull();
-    });
-
-    it("shows the newest declaration when there is one", async () => {
-        recent.mockResolvedValue([
-            declaration({
-                subject: {atomId: "a", label: "Agent One"},
-                positions: 1,
-                assets: 5n * 10n ** 17n,
-            }),
-        ]);
-        renderWithProviders(<Landing />);
-        expect(await screen.findByText(/Agent One uses Slither/)).toBeTruthy();
-    });
-
-    it("walks the recent declarations, and names a tool by its name, not its URL", async () => {
-        vi.useFakeTimers({shouldAdvanceTime: true});
-        try {
-            recent.mockResolvedValue([
-                declaration({
-                    tripleId: "0x01",
-                    subject: {atomId: "a", label: "Agent One"},
-                    object: {
-                        atomId: "t1",
-                        label: "github.com/obra/superpowers?skill=brainstorming",
-                    },
-                }),
-                declaration({
-                    tripleId: "0x02",
-                    subject: {atomId: "b", label: "Agent Two"},
-                    object: {atomId: "t2", label: "github.com/crytic/slither"},
-                }),
-            ]);
-            renderWithProviders(<Landing />);
-            expect(await screen.findByText("Agent One uses brainstorming")).toBeTruthy();
-            await act(async () => {
-                vi.advanceTimersByTime(4000);
-            });
-            expect(await screen.findByText("Agent Two uses crytic/slither")).toBeTruthy();
-        } finally {
-            vi.useRealTimers();
-        }
-    });
-
-    it("groups one query two ways, so both cards of Fig. 01 read real edges", async () => {
-        recent.mockResolvedValue([
-            declaration({
-                tripleId: "0x01",
-                subject: {atomId: "a", label: "Agent One"},
-                object: {atomId: "t1", label: "Slither"},
-                positions: 1,
-            }),
-            declaration({
-                tripleId: "0x02",
-                subject: {atomId: "a", label: "Agent One"},
-                object: {atomId: "t2", label: "Echidna-like"},
-                positions: 0,
-            }),
-        ]);
-        renderWithProviders(<Landing />);
-
-        // The agent card lists what one agent used, with `proven` only where a position stands
-        // behind the claim — ADR `0042`: the test is `positions`, never the amount, because every
-        // term is born with `minShare`.
-        expect(await screen.findByText("signalled")).toBeTruthy();
-        expect(await screen.findByText("declared only")).toBeTruthy();
-    });
-
-    it("does not promise payment for being hired", async () => {
-        const {container} = renderWithProviders(<Landing />);
-        await waitFor(() => expect(cost).toHaveBeenCalled());
-
-        // ADR `0060`: ARP records a use, it does not broker one. A delegation names its delegate by
-        // address and an agent's runtime address is not on the graph, so "get paid" would be a
-        // promise with no mechanism. The "be hired" card left with scene 4's jobs (task 53); the
-        // forbidden promises stay forbidden everywhere on the page.
-        const text = (container.textContent ?? "").toLowerCase();
-        for (const forbidden of ["get paid", "earn fees", "marketplace", "hire an agent"]) {
-            expect(text, `out-of-scope promise on the page: ${forbidden}`).not.toContain(forbidden);
-        }
-    });
-
-    it("puts one scene on screen and takes the other four out of the tree", async () => {
-        const {container} = renderWithProviders(<Landing />);
-        await waitFor(() => expect(cost).toHaveBeenCalled());
-
-        // Pinned, all five scenes are mounted and inside the viewport the whole time, just
-        // transparent. Without `inert` + `aria-hidden` on the four that are not current, five
-        // screens of links are in the tab order at once and a reader has no idea where they are.
-        // Five since task 53: the onboarding left scene 4 for the first screen.
+        await waitFor(() => expect(container.querySelector(".arp-deck-pinned")).not.toBeNull());
         const scenes = [...container.querySelectorAll("[data-scene]")];
-        expect(scenes).toHaveLength(5);
-        const visible = scenes.filter((scene) => scene.getAttribute("aria-hidden") === null);
-        expect(visible, "exactly one scene should be in the accessibility tree").toHaveLength(1);
+        expect(scenes).toHaveLength(6);
+        const visible = scenes.filter((node) => node.getAttribute("aria-hidden") === null);
+        expect(visible).toHaveLength(1);
         expect(visible[0]?.getAttribute("data-scene")).toBe("0");
-        for (const scene of scenes.slice(1)) {
-            expect(scene.getAttribute("aria-hidden")).toBe("true");
-            expect(scene.hasAttribute("inert")).toBe(true);
-        }
+        for (const node of scenes.slice(1)) expect(node.hasAttribute("inert")).toBe(true);
     });
 
     it("shows no scene counter and no rail, which the user removed", async () => {
         const {container} = renderWithProviders(<Landing />);
-        await waitFor(() => expect(cost).toHaveBeenCalled());
-
-        // The user, 2026-10-29: the `01 / 06 · PULSE` label and the dots on the right go.
+        await waitFor(() => expect(listTools).toHaveBeenCalled());
         expect(container.textContent).not.toMatch(/\d{2} \/ \d{2}/);
     });
 
-    it("shows the title and no eyebrow", async () => {
+    it("under reduced motion, shows every scene at its end state", async () => {
+        reduceMotion(true);
+        withRealLine();
         const {container} = renderWithProviders(<Landing />);
-        await waitFor(() => expect(cost).toHaveBeenCalled());
-
-        // The user, 2026-11-09: the eyebrow goes, the title stays.
-        expect(container.textContent).not.toContain("Check before your agent installs or pays");
-        const heading = container.querySelector("h1");
-        expect(heading).not.toHaveClass("sr-only");
-        expect(heading?.textContent).toBe("The public pulse for tools and autonomous agents.");
+        await waitFor(() => expect(container.querySelector(".arp-deck-pinned")).not.toBeNull());
+        await waitFor(() =>
+            expect(
+                scene(container, 1).querySelectorAll(".arp-gx-sentence span").length,
+            ).toBeGreaterThan(0),
+        );
+        for (const word of scene(container, 1).querySelectorAll(".arp-gx-sentence span")) {
+            expect(word.getAttribute("data-on")).toBe("true");
+        }
+        for (const line of scene(container, 4).querySelectorAll(".arp-gx-lines li")) {
+            expect(line.getAttribute("data-on")).toBe("true");
+        }
+        await waitFor(() =>
+            expect(scene(container, 2).querySelectorAll(".arp-gx-reads li").length).toBe(3),
+        );
+        for (const row of scene(container, 2).querySelectorAll(".arp-gx-reads li")) {
+            expect(row.getAttribute("data-on")).toBe("true");
+        }
     });
 });
