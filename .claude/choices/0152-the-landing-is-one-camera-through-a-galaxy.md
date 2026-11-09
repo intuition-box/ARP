@@ -1,0 +1,85 @@
+# 0152 — The landing is one camera through a galaxy, and the claim field is on it
+
+**Status:** Accepted
+**Date:** 2026-11-09
+**Triggered by:** `docs/tasks/81-the-landing-galaxy.md`, the user's design session of 2026-11-09
+(`docs/design/landing-galaxy/LANDING-GALAXY.md`)
+
+## Context
+
+The landing was five scenes over `SourceField`: a 70× dive into a Saffron core after the hero, then
+four Saffron "seeds" that grew into covers and opened onto the next scene (ADR `0067`'s hand-over).
+The deck refused to pin below 900 px wide and under `prefers-reduced-motion` (ADR `0066`).
+
+The user redesigned it on 2026-11-09: the registry is a galaxy, every word of the public graph a star,
+and six scenes are six stops of one camera over it. Scenes 1 to 4 draw the atom page's claim field
+around one tool, every dot a star pulled into place. The design gives a camera stop for a phone and
+says what reduced motion does ("every scene jumps to its end state").
+
+## Decision
+
+1. **The galaxy replaces the Source field's dive and seeds.** `GalaxyField` (Canvas 2D, no
+   dependency) draws the stars, the camera and the atoms; `galaxy-geometry.ts` holds the arithmetic.
+   `SourceField`, its geometry and `scene-hand-over.ts` are deleted. **No Saffron cover carries a
+   hand-over any more**: this amends ADR `0067`. Its other half stands: Saffron still marks the
+   subject atom (the claim field's core, the mark, at rest as on the atom page — `rules/ui.md`'s
+   accent bullet names it since this ADR), your agent (the viewer's own), and a claim while it is
+   being written or read (the selected state). Panel heads and the "Then ask" card are neutral.
+2. **The claim field is on the landing**, as the atom page draws it: one ring per predicate, a dot
+   per claim, filled when a position stands behind it, sized by `dotDiameter` (positions, never
+   amount, ADR `0042`), the loupe's line at 35° then level (`elbowLine`, shared with `loupeLine`).
+   The rings turn by the landing's own offsets (`LANDING_RING_OFFSETS`) so no dot sits under the
+   ring's name at twelve o'clock. A ring draws at most six dots; the panel states the rest.
+3. **A dot never pops.** An atom leaves its star with the star's radius, colour and opacity and
+   becomes the claim over the first 60% of a timed glide; the star is not drawn while its atom is
+   away, and reappears where it was.
+4. **The deck pins on a phone and under reduced motion** (amends ADR `0066`'s bounds and
+   `rules/ui.md`). It stacks only below 560 px tall and before JavaScript runs. Under reduced
+   motion one gesture still moves one scene, but the camera and the atoms jump to the end state and
+   the copy only fades. The scene changes on the gesture and the camera carries the move; the scroll
+   position jumps to the scene's band unseen, so the native scrollbar and the footer after the last
+   scene still work.
+5. **The field reads one real tool**: the most declared tool on the chain the reader chose, ARP's
+   test identities left out, its claims and its latest line from `getPulseUsage`, and a paid word
+   from its own `SKILL.md`. When no tool has a declaration — the case on both chains on 2026-11-09,
+   because every declarer is one of ARP's test identities — the field is the empty field and every
+   panel says so.
+
+## Alternatives considered
+
+- **Keep `SourceField` behind the new copy** — rejected by the design: a scene draws no new
+  object, it moves stars that were there.
+- **Stack the deck on a phone and under reduced motion, as before** — the design has a camera stop
+  per scene at 390 px and an end state per scene under reduced motion; stacked, neither exists.
+- **Copy the claim field's geometry into the canvas** — the task says to extend
+  `claim-field-geometry.ts`, and two copies of the ring rule would drift.
+- **WebGL** — `docs/18` §6: points on circles.
+
+## Consequences
+
+**Positive:**
+- The landing shows the product's own figure, read from the chain, instead of an illustration.
+- One mechanism for every hand-over (the camera) instead of a dive plus four seeds.
+
+**Negative:**
+- Scroll-jacking now runs on phones and under reduced motion; its bounds (both ends hand back to
+  native scroll, `Home`/`End`, the scrollbar) are unchanged.
+- The landing reads GitHub once per visit for the paid word (cached 15 minutes); when GitHub does
+  not answer, that reading is left out.
+
+**Neutral (worth knowing):**
+- The reference's scene counter, rail and Next button are not built: the user removed the counter
+  and the rail on 2026-10-29, and the design file does not bring them back.
+- `scripts/measure/landing-fit.ts` measured the old deck's fit and is stale.
+- The scene's copy stays above the fixed activity bar: the deck reads the bar's height
+  (`[data-bottom-bar]`) into `--gx-floor`.
+- The pulse beats once per real line when scene 0 arrives, then holds still; no line, no beat.
+- Your agent reads from the field's upper right, not the reference's lower left, where at the
+  desktop stops it covered the heading.
+
+## References
+
+- Related rule: `.claude/rules/ui.md` (the pinned deck bullet)
+- Related doc: `docs/design/landing-galaxy/LANDING-GALAXY.md`, `docs/17_THE_ATOM_PAGE.md`
+- Related ADR: `0066`, `0067`, `0068`, `0042`
+- Post-mortem: `.claude/learning/72-the-landing-galaxy.md`

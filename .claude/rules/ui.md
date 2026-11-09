@@ -55,7 +55,8 @@ Strip these reflexes. If you find yourself reaching for one, stop.
   1. **It is motion, not state.** The accent carries a hand-over only while one is in flight.
      Nothing is left warm when the motion settles.
   2. **It is the mark, not a palette.** The Source Field's core and the seed spheres are the same
-     object the logo is. A border, a rule, a background or a tag does not get to cite this.
+     object the logo is. So is the claim field's core, the atom every ring is about, on the atom
+     page and on the landing's galaxy (ADR `0152`, which also retired the seeds). A border, a rule, a background or a tag does not get to cite this.
   3. **A figure never wears it decoratively.** Unchanged and non-negotiable: an amount, a count or a
      timestamp is Saffron only where ADR `0057` already allows it — the primary action's own cost
      inside the primary action's own card, and the viewer's own position.
@@ -93,8 +94,9 @@ Strip these reflexes. If you find yourself reaching for one, stop.
 - **A pinned scene deck owns the gesture, and nothing else on any page may** (ADR `0066`). Inside
   `SceneDeck` one wheel notch, swipe or key press plays a whole hand-over on a timer and the rest of
   that gesture is swallowed. It is scroll-jacking, it was asked for, and it is bounded: the
-  scrollbar stays native, `Home` and `End` still jump, both ends hand back to native scroll, and the
-  deck refuses to pin at all under `prefers-reduced-motion` or below 680×900. **Do not copy the
+  scrollbar stays native, `Home` and `End` still jump, and both ends hand back to native scroll.
+  Since task 81 (ADR `0152`) it pins on a phone and under `prefers-reduced-motion` too, where every
+  scene **jumps** to its end state; it stacks below 560px tall. **Do not copy the
   pattern to an ordinary page** — a document that fights the wheel has no defence of the kind listed
   there.
 - **One loader, and it is the mark.** `RingLoader` (ADR `0057` §6), static under
