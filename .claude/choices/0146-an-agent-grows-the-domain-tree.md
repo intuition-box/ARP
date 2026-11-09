@@ -22,6 +22,8 @@ The user's three answers, 2026-11-09:
    holds an ERC-8004 agent (`packages/protocol/src/sponsor/category.ts`), the shape of `/line`'s
    (ADR `0144`). The sponsor checks the signer holds the agent, spends the nonce once, and counts the
    category against `categoriesPerAgentPerDay` (default 3) as well as the global `categoriesPerDay`.
+   The per-agent count is keyed by the **holding address**, not by registry and token id, so one
+   address holding several agents shares one allowance — stricter than per agent, on purpose.
 2. **In the declaration.** `arp_declare_used` with a domain the tree lacks, plus `domain_parent`,
    `domain_reason` and `declarer`, answers `sign_category_first` with the typed data to sign instead
    of calls; `arp_propose_category` sends the signed request; the agent then asks for the declaration

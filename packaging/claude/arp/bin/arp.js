@@ -21041,7 +21041,7 @@ async function readIpfsJson(uri, fetcher, timeoutMs, maxBytes = 256 * 1024) {
   }
   throw new Error(failures.join("; "));
 }
-var DEFAULT_USER_AGENT = "ARP-verifier/0.1 (+https://github.com/intuition-box/ARP)", IPFS_GATEWAYS, IPFS_GATEWAY, MAX_DOCUMENT_HOPS = 3, REDIRECTS, DEFAULT_PROBE_TIMEOUT_MS = 8000, MCP_PROTOCOL_VERSION = "2025-06-18", OBSERVED_LIMIT = 240, PROBE_MAX_BODY_BYTES;
+var DEFAULT_USER_AGENT = "ARP-verifier/0.1 (+https://github.com/Wieedze/ARP)", IPFS_GATEWAYS, IPFS_GATEWAY, MAX_DOCUMENT_HOPS = 3, REDIRECTS, DEFAULT_PROBE_TIMEOUT_MS = 8000, MCP_PROTOCOL_VERSION = "2025-06-18", OBSERVED_LIMIT = 240, PROBE_MAX_BODY_BYTES;
 var init_probe = __esm(() => {
   init_dist();
   IPFS_GATEWAYS = ["https://gateway.pinata.cloud/ipfs/", "https://ipfs.io/ipfs/"];
@@ -22322,8 +22322,8 @@ var init_resolve_subject = __esm(() => {
 });
 
 // ../../packages/protocol/dist/declare/category.js
-function isCategoryIn(tree) {
-  return async (label) => tree.pathToRoot(label).found;
+function normaliseCategoryLabel(raw) {
+  return raw.normalize("NFKC").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/\s+/g, " ");
 }
 var init_category = () => {};
 
@@ -25906,7 +25906,7 @@ async function verifyCategoryRequest(signed, now) {
   return getAddress(recovered) === declared ? { status: "valid", address: declared } : { status: "mismatch", declared, recovered };
 }
 var CATEGORY_REQUEST_TYPES, CATEGORY_REQUEST_MAX_TTL_SECONDS = 3600, CATEGORY_REQUEST_MAX_LABEL_LENGTH = 64, CATEGORY_REQUEST_MAX_REASON_LENGTH = 500, isBytes322 = (value) => typeof value === "string" && isHex(value) && value.length === 66;
-var init_category = __esm(() => {
+var init_category2 = __esm(() => {
   init__esm();
   CATEGORY_REQUEST_TYPES = {
     CategoryRequest: [
@@ -25962,7 +25962,7 @@ var init_dist2 = __esm(() => {
   init_mint_gas();
   init_list_tool();
   init_line();
-  init_category();
+  init_category2();
 });
 
 // ../node/src/node-key.ts
@@ -33947,7 +33947,6 @@ var init_handlers = __esm(() => {
 var exports_line = {};
 __export(exports_line, {
   writeLineHere: () => writeLineHere,
-  writeLineChecked: () => writeLineChecked,
   lineFromArgs: () => lineFromArgs
 });
 function lineFromArgs(args) {
@@ -33965,21 +33964,10 @@ function lineFromArgs(args) {
     ...args.reason === undefined ? {} : { reason: args.reason }
   };
 }
-async function writeLineChecked(steps, input) {
-  if (input.domain !== undefined && !await steps.isCategory(input.domain.trim().toLowerCase())) {
-    throw new Error(`"${input.domain}" is not a category under tool`);
-  }
-  await sponsorApproval(steps.config);
-  return (steps.write ?? writeLine)(steps.config, steps.agent(), input);
-}
 async function writeLineHere(input) {
   if (chainId !== 13579)
     throw new Error("a line is written on testnet 13579 only for now");
-  return writeLineChecked({
-    config: loopConfig(),
-    isCategory: async (label) => isCategoryIn(await readDomainTree(domainWalk()))(label),
-    agent: agentFor
-  }, input);
+  return writeLine(loopConfig(), agentFor(), input);
 }
 var init_line2 = __esm(() => {
   init_dist2();
@@ -34445,17 +34433,6 @@ var init_tools = __esm(() => {
   ]);
 });
 
-// ../mcp/src/served-tools.ts
-function servedTools(mode2) {
-  if (mode2.desktop) {
-    return [...TOOLS.filter((t) => READ_TOOL_NAMES.has(t.name) && !DESKTOP_TOOL_NAMES.has(t.name)), ...DESKTOP_TOOLS];
-  }
-  return mode2.readOnly ? TOOLS.filter((t) => PLUGIN_TOOL_NAMES.has(t.name)) : TOOLS;
-}
-var init_served_tools = __esm(() => {
-  init_tools();
-});
-
 // ../mcp/src/serialise.ts
 function serialise(usage) {
   const side = (s) => ({
@@ -34604,7 +34581,8 @@ async function proposeCategory(id, args) {
   const signed = { request, chainId, signature };
   const verdict = await verifyCategoryRequest(signed, Math.floor(Date.now() / 1000));
   if (verdict.status !== "valid") {
-    return fail(id, -32602, `the request is ${verdict.status}: sign typed_data with the request's agent address`);
+    const detail = verdict.status === "malformed" ? ` (${verdict.reason})` : "";
+    return fail(id, -32602, `the request is ${verdict.status}${detail}: pass the \`request\` object as returned, not \`typed_data.message\`, and sign typed_data with its agent address`);
   }
   return text(id, await submitCategory(signed, {
     sponsorUrl: SPONSOR_URL,
@@ -34612,7 +34590,7 @@ async function proposeCategory(id, args) {
   }));
 }
 var TTL_SECONDS = 600;
-var init_category2 = __esm(() => {
+var init_category3 = __esm(() => {
   init_dist2();
   init__esm();
   init_config();
@@ -34716,7 +34694,7 @@ async function declareUsed2(id, args) {
     return text(id, overBudget(plan.totalValue) ?? serialiseDeclarePlan(plan));
   }
   const tree = domainRaw === undefined ? null : await readDomainTree(domainWalk());
-  const domain = domainRaw?.trim().toLowerCase();
+  const domain = domainRaw === undefined ? undefined : normaliseCategoryLabel(domainRaw);
   if (tree !== null && domain !== undefined && !tree.pathToRoot(domain).found) {
     const parent = args["domain_parent"];
     const domainReason = args["domain_reason"];
@@ -34741,7 +34719,7 @@ async function declareUsed2(id, args) {
     }
     return text(id, categoryToSign({
       domain,
-      parent: parent.trim().toLowerCase(),
+      parent: normaliseCategoryLabel(parent),
       reason: domainReason.trim(),
       declarer: declarerRaw,
       agentRegistry: `eip155:${agentChainId}:${registry}`,
@@ -34759,7 +34737,7 @@ async function declareUsed2(id, args) {
     const planned = await prepareUsageContext2({
       usesTripleId: tool.tripleId,
       edgePlanned: !tool.tripleExists,
-      ...domainRaw === undefined ? {} : { domain: domainRaw },
+      ...domain === undefined ? {} : { domain },
       ...outcome === undefined ? {} : { outcome },
       ...reason === undefined ? {} : { reason },
       inContextOf: IN_CONTEXT_OF,
@@ -34885,7 +34863,7 @@ async function declareSession(id, args) {
 var init_declare2 = __esm(() => {
   init_dist2();
   init_config();
-  init_category2();
+  init_category3();
   init_serialise();
 });
 
@@ -35086,7 +35064,7 @@ async function agentEndpoints(id, rawArgs) {
   const pulse = await agentPulse(agentChainId, agentTokenId, registry);
   const merged = { ...JSON.parse(content2.text), ...pulse };
   if (merged["registration_file"] === null && (pulse.signed_endpoints?.length ?? 0) > 0) {
-    merged["note"] = merged["in_graph"] === false ? `Not found in the graph this server reads (chain ${chainId}), so its document was not read. Its addresses are in signed_endpoints.` : "This agent registered without a document. Its addresses are in signed_endpoints.";
+    merged["note"] = "This agent registered without a document. Its addresses are in signed_endpoints.";
   }
   return text(id, merged);
 }
@@ -35343,15 +35321,7 @@ async function declaredEndpoints(id, args) {
     ...registryRaw === undefined ? {} : { registry: registryRaw }
   };
   const identity = await resolveAgent(directory, agent2);
-  if (identity === null) {
-    return text(id, {
-      caip19: toCaip19(agent2),
-      registration_file: null,
-      in_graph: false,
-      note: `Not found in the graph this server reads (chain ${chainId}), so its document was not read.`
-    });
-  }
-  const file = identity.registrationFile ?? null;
+  const file = identity?.registrationFile ?? null;
   if (file === null || file.trim() === "") {
     return text(id, {
       caip19: toCaip19(agent2),
@@ -36470,7 +36440,7 @@ var init_search_run = __esm(() => {
 });
 
 // ../mcp/src/handlers/pulse.ts
-import { chmodSync as chmodSync3, existsSync as existsSync6, mkdirSync as mkdirSync7, readFileSync as readFileSync7, rmSync } from "node:fs";
+import { chmodSync as chmodSync3, existsSync as existsSync6, mkdirSync as mkdirSync7, readFileSync as readFileSync7 } from "node:fs";
 import { homedir as homedir4 } from "node:os";
 import { join as join10, delimiter } from "node:path";
 function within(work, ms, stop) {
@@ -36516,7 +36486,6 @@ function searchInvocation(query, path, home, firstDownload = false) {
       "--prefix",
       home,
       "--yes",
-      "--logs-max=0",
       ...firstDownload ? [] : ["--fetch-retries=0", "--fetch-timeout=5000"],
       SKILLS_CLI,
       "find",
@@ -36547,7 +36516,6 @@ async function search(query, timeoutMs, stop, firstDownload = false) {
     const home = searchHome();
     mkdirSync7(home, { recursive: true, mode: 448 });
     chmodSync3(home, 448);
-    rmSync(join10(home, ".npm", "_logs"), { recursive: true, force: true });
     return { output: await runSearch(searchInvocation(query, process.env["PATH"], home, firstDownload), { timeoutMs, stop }) };
   } catch (error) {
     return { error: withoutPaths(error instanceof Error ? error.message.split(`
@@ -36992,7 +36960,7 @@ async function callTool(id, params) {
   const args = typeof raw2 === "object" && raw2 !== null && !Array.isArray(raw2) ? raw2 : {};
   if (DESKTOP && name !== null && DESKTOP_TOOL_NAMES.has(name))
     return desktopTool(id, name, args);
-  if (READ_ONLY && name !== null && !SERVED_NAMES.has(name)) {
+  if (READ_ONLY && name !== null && !PLUGIN_TOOL_NAMES.has(name)) {
     return fail(id, -32602, `unknown tool: ${name}`);
   }
   try {
@@ -37107,18 +37075,17 @@ async function main(argv = process.argv, stdin = process.stdin) {
 sends nothing — the planners return calls for your own key, signed by you.`);
   log(`The receipt key signs receipts and cannot move value (ADR 0080).`);
 }
-var PROTOCOL_VERSION = "2025-06-18", SERVER_INSTRUCTIONS, SERVED_TOOLS, SERVED_NAMES, READ_INSTRUCTIONS, DESKTOP_INSTRUCTIONS, handler, WILDCARD;
+var PROTOCOL_VERSION = "2025-06-18", SERVER_INSTRUCTIONS, SERVED_TOOLS, READ_INSTRUCTIONS, DESKTOP_INSTRUCTIONS, handler, WILDCARD;
 var init_server = __esm(async () => {
   init_node2();
   init_tools();
-  init_served_tools();
   init_handlers();
   init_content();
   init_client_session();
   init_config();
   init_reputation();
   init_declare2();
-  init_category2();
+  init_category3();
   init_positions();
   init_agents();
   init_reachability();
@@ -37155,8 +37122,7 @@ var init_server = __esm(async () => {
     "two apart. The only score is `arp_pulse`'s, which shows its parts; every other figure is what somebody declared or put behind it, or a fact read from elsewhere."
   ].join(`
 `);
-  SERVED_TOOLS = servedTools({ desktop: DESKTOP, readOnly: READ_ONLY });
-  SERVED_NAMES = new Set(SERVED_TOOLS.map((t) => t.name));
+  SERVED_TOOLS = DESKTOP ? [...TOOLS.filter((t) => READ_TOOL_NAMES.has(t.name) && !DESKTOP_TOOL_NAMES.has(t.name)), ...DESKTOP_TOOLS] : READ_ONLY ? TOOLS.filter((t) => PLUGIN_TOOL_NAMES.has(t.name)) : TOOLS;
   READ_INSTRUCTIONS = [
     "ARP is a public registry of skills, tools, MCP servers and APIs, with what each one is for and",
     "what agents wrote about it.",
@@ -38631,7 +38597,7 @@ import {
   mkdirSync as mkdirSync9,
   readFileSync as readFileSync11,
   renameSync,
-  rmSync as rmSync2,
+  rmSync,
   statSync as statSync4,
   writeFileSync as writeFileSync8
 } from "node:fs";
@@ -38709,7 +38675,7 @@ function apply(env, step2) {
     if (step2.before !== null)
       copyFileSync(step2.path, `${step2.path}.arp-backup-${stamp(env.now())}`);
     if (step2.after === null) {
-      rmSync2(step2.path, { force: true });
+      rmSync(step2.path, { force: true });
       return null;
     }
     mkdirSync9(dirname7(step2.path), { recursive: true });
@@ -38998,14 +38964,12 @@ usage
   arp --version
   arp --help
 
-docs: https://github.com/intuition-box/ARP/blob/main/docs/22_RUNNING_THE_NODE.md
+docs: https://github.com/Wieedze/ARP/blob/main/docs/22_RUNNING_THE_NODE.md
 `;
 var EXIT2 = { ok: 0, usage: 2, writeFailed: 5 };
 var CLI_PATH = fileURLToPath(import.meta.url);
 var ARGV = process.argv.slice(2);
-var asksHelp = (rest) => rest.some((arg) => arg === "--help" || arg === "-h");
-var WANTS_HELP = asksHelp(ARGV.slice(1));
-var STDIO_INPUT = ARGV[0] === "mcp" && !ARGV.includes("--http") && !WANTS_HELP ? bufferedCopy(process.stdin) : undefined;
+var STDIO_INPUT = ARGV[0] === "mcp" && !ARGV.includes("--http") ? bufferedCopy(process.stdin) : undefined;
 async function runNodeInit(rest) {
   const { nodeInit: nodeInit2, parseNodeInitFlags: parseNodeInitFlags2 } = await Promise.resolve().then(() => (init_node_init(), exports_node_init));
   const flags = parseNodeInitFlags2(rest);
@@ -39068,10 +39032,6 @@ async function shareCommand(rest) {
 }
 async function run(argv) {
   const [command, ...rest] = argv;
-  if (asksHelp(rest)) {
-    process.stdout.write(USAGE);
-    return EXIT2.ok;
-  }
   if (command === "init" && rest.includes("--node"))
     return runNodeInit(rest);
   switch (command) {

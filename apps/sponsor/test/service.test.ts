@@ -2066,6 +2066,19 @@ describe('POST /propose-category', () => {
     expect((await call(service, '/propose-category', old)).body.rule).toBe('signature');
   });
 
+  test('refuses an agent in a registry the service does not accept', async () => {
+    const w = fresh();
+    const body = await signed();
+    const other = await signCategoryRequest(
+      { ...body.request.request, agentRegistry: `eip155:${CHAIN}:0x00000000000000000000000000000000000000ff` },
+      CHAIN,
+      AGENT,
+    );
+    const res = await call(sponsor(w, { categories }), '/propose-category', { request: other });
+    expect(res.status).toBe(403);
+    expect(w.sent).toHaveLength(0);
+  });
+
   test('spends a nonce once', async () => {
     const w = fresh();
     const service = sponsor(w, { categories });

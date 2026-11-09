@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import {
   corroborationOf,
   isUsageOutcome,
+  normaliseCategoryLabel,
   parseSessionLog,
   prepareDeclareUsed,
   budgetRefusal,
@@ -153,7 +154,8 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
 
   // ADR `0135`: a qualifier is a triple about the edge, so it is planned after the edge's own call.
   const tree = domainRaw === undefined ? null : await readDomainTree(domainWalk());
-  const domain = domainRaw?.trim().toLowerCase();
+  // The sponsor's own normalisation (NFKC, accents, spaces), so the word checked, signed and written is one word.
+  const domain = domainRaw === undefined ? undefined : normaliseCategoryLabel(domainRaw);
   if (tree !== null && domain !== undefined && !tree.pathToRoot(domain).found) {
     const parent = args['domain_parent'];
     const domainReason = args['domain_reason'];
@@ -188,7 +190,7 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
       id,
       categoryToSign({
         domain,
-        parent: parent.trim().toLowerCase(),
+        parent: normaliseCategoryLabel(parent),
         reason: domainReason.trim(),
         declarer: declarerRaw,
         agentRegistry: `eip155:${agentChainId}:${registry}`,
@@ -207,7 +209,7 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
     const planned = await prepareUsageContext({
       usesTripleId: tool.tripleId,
       edgePlanned: !tool.tripleExists,
-      ...(domainRaw === undefined ? {} : { domain: domainRaw }),
+      ...(domain === undefined ? {} : { domain }),
       ...(outcome === undefined ? {} : { outcome }),
       ...(reason === undefined ? {} : { reason }),
       inContextOf: IN_CONTEXT_OF,

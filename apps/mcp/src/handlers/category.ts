@@ -69,6 +69,7 @@ export function categoryToSign(params: {
       primaryType: typed.primaryType,
       message: { ...request, expiresAt: String(request.expiresAt) },
     },
+    // The sponsor also checks the tool is a skill or repository: an agent or bare-URI atom is refused there.
     next:
       `Sign typed_data with ${request.agent} within ${TTL_SECONDS / 60} minutes, then call arp_propose_category ` +
       'with `request` and the `signature`. Once it answers `filed`, call arp_declare_used again with the same arguments.',
@@ -89,7 +90,12 @@ export async function proposeCategory(id: JsonRpcId, args: Record<string, unknow
   // Checked here first, so a wrong signer is told before the sponsor is asked.
   const verdict = await verifyCategoryRequest(signed, Math.floor(Date.now() / 1000));
   if (verdict.status !== 'valid') {
-    return fail(id, -32602, `the request is ${verdict.status}: sign typed_data with the request's agent address`);
+    const detail = verdict.status === 'malformed' ? ` (${verdict.reason})` : '';
+    return fail(
+      id,
+      -32602,
+      `the request is ${verdict.status}${detail}: pass the \`request\` object as returned, not \`typed_data.message\`, and sign typed_data with its agent address`,
+    );
   }
   return text(
     id,

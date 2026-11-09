@@ -34,7 +34,9 @@ unmerged (`archive/feat/59-category-step`) and are replayed on this branch.
 ## Do not do in this task
 
 - Mainnet. Everything here is testnet 13579 (ADR `0135`, `0144`).
-- The `/line` path (`arp line`, `desktop/loop.ts`): another session holds those files today. A
-  domain created through `/line` waits for its merge.
+- The `/line` path (`arp line`, `writeLine` in `desktop/loop.ts`): another session holds those files
+  today. A domain created through `/line` waits for its merge. The one touch to `loop.ts` is
+  `export` on `ensureAgent` and `registryRef`, which `arp_file_category` needs; the coordinating
+  session was told (2026-11-09).
 - Changing who the index reads (`ARP_DOMAIN_ATTESTORS`): an agent's own triples still do not count;
   the sponsor files them as ARP's attestor.
