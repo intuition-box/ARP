@@ -7,7 +7,7 @@ import list from "../data/arp-test-identities.json";
 /**
  * ARP's own test identities, and what this site leaves out because of them (task 74).
  *
- * The list is `data/arp-test-identities.json`, served as it is on `/test-identities` so a visitor
+ * The list is `apps/web/src/data/arp-test-identities.json`, served as it is on `/test-identities` so a visitor
  * reads the same thing the filter reads. Two rules, and only two:
  *
  * - **about** one of ARP's test agents (the subject or the object of a line): hidden;

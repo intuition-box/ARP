@@ -80,7 +80,7 @@ that match: none of your words, but each sees your IP. The hook records each ski
 `.arp/session.jsonl` in the project, and a skill's failures in `~/.arp/failures.jsonl`. It sends
 nothing; sharing failures is off until you run `arp share on`. `~/.arp/` also holds the keys ARP makes
 and the search package's cache. Every file, and every connection, is in
-[Running the node](docs/22_RUNNING_THE_NODE.md). Testing ARP for us: [for testers](docs/guide/testers.md).
+[Running the node](docs/22_RUNNING_THE_NODE.md). Testing ARP for us: [for testers](apps/web/public/docs/testers.md).
 
 To remove it:
 
@@ -91,7 +91,7 @@ rm -rf ~/.arp                           # keys, failures, cache: neither command
 rm -rf .arp                             # the hook's log, in each project
 ```
 
-Each piece, and what each command leaves: [Uninstall](docs/guide/uninstall.md).
+Each piece, and what each command leaves: [Uninstall](apps/web/public/docs/uninstall.md).
 
 ## Built on
 
@@ -168,7 +168,7 @@ Copy `.env.example` to `.env` before anything that talks to a chain.
 
 ### Contributing
 
-Start with [for developers](docs/guide/developers.md): the layout, the build, the tests, what is
+Start with [for developers](apps/web/public/docs/developers.md): the layout, the build, the tests, what is
 published and every environment variable. Then [`CLAUDE.md`](CLAUDE.md): it routes to the rules in `.claude/rules/`, the decisions in
 `.claude/choices/` and where the project stands, `.claude/STATE.md`. The mechanism is
 [`docs/12_THE_IDEA.md`](docs/12_THE_IDEA.md). Run `bun run check`, `bun run lint` and `bun run test`

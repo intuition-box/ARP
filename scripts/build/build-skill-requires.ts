@@ -49,6 +49,18 @@ for (const row of (measured as unknown as {rows: Row[]}).rows) {
     };
 }
 
+/** ARP's own skill moved to intuition-box/ARP on 2026-11-09, after this measurement. Both atoms stay
+ *  on chain, so the moved label carries the measured row's entries too. Same file, same text. */
+const MOVED: Record<string, string> = {
+    "github.com/Wieedze/ARP?skill=arp": "github.com/intuition-box/ARP?skill=arp",
+};
+for (const [from, to] of Object.entries(MOVED)) {
+    if (!read.includes(from)) continue;
+    read.push(to);
+    if (requires[from] !== undefined) requires[to] = requires[from];
+    if (about[from] !== undefined) about[to] = about[from];
+}
+
 const notFetchable = layouts.ambiguous
     .filter((row) => !row.sameContent)
     .map((row) => `github.com/${row.repo}?skill=${encodeURIComponent(row.skill)}`);

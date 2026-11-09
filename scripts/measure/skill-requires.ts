@@ -39,7 +39,7 @@ for (let at = 0; at < located.length; at += 8) {
     rows.push(...(await Promise.all(located.slice(at, at + 8).map(read))));
 }
 rows.push({
-    repo: "Wieedze/ARP",
+    repo: "intuition-box/ARP",
     skill: "arp",
     path: "skills/arp/SKILL.md",
     status: "read",

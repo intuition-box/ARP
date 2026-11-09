@@ -101,7 +101,12 @@ for (const row of (files as unknown as {rows: FileRow[]}).rows) {
  * the description is the author's own and a rewrite of the file is a rebuild away. No install
  * count: that number is skills.sh's, and there is none.
  */
-const FIRST_PARTY = [{repo: "Wieedze/ARP", skill: "arp", file: "skills/arp/SKILL.md"}];
+// Both repositories: the skill moved to intuition-box/ARP on 2026-11-09, and its Wieedze/ARP atom
+// stays on chain (no deletion), so a reader may still land on either label.
+const FIRST_PARTY = [
+    {repo: "intuition-box/ARP", skill: "arp", file: "skills/arp/SKILL.md"},
+    {repo: "Wieedze/ARP", skill: "arp", file: "skills/arp/SKILL.md"},
+];
 for (const own of FIRST_PARTY) {
     const line = readFileSync(own.file, "utf8")
         .split("\n")

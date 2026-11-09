@@ -1307,7 +1307,7 @@ a.arp-cf-card:hover {
 }
 
 .doc-prose li::marker {
-    color: var(--color-grey);
+    color: var(--color-steel);
 }
 
 .doc-prose :not(pre) > code {
