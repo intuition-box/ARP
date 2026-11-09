@@ -21041,7 +21041,7 @@ async function readIpfsJson(uri, fetcher, timeoutMs, maxBytes = 256 * 1024) {
   }
   throw new Error(failures.join("; "));
 }
-var DEFAULT_USER_AGENT = "ARP-verifier/0.1 (+https://github.com/Wieedze/ARP)", IPFS_GATEWAYS, IPFS_GATEWAY, MAX_DOCUMENT_HOPS = 3, REDIRECTS, DEFAULT_PROBE_TIMEOUT_MS = 8000, MCP_PROTOCOL_VERSION = "2025-06-18", OBSERVED_LIMIT = 240, PROBE_MAX_BODY_BYTES;
+var DEFAULT_USER_AGENT = "ARP-verifier/0.1 (+https://github.com/intuition-box/ARP)", IPFS_GATEWAYS, IPFS_GATEWAY, MAX_DOCUMENT_HOPS = 3, REDIRECTS, DEFAULT_PROBE_TIMEOUT_MS = 8000, MCP_PROTOCOL_VERSION = "2025-06-18", OBSERVED_LIMIT = 240, PROBE_MAX_BODY_BYTES;
 var init_probe = __esm(() => {
   init_dist();
   IPFS_GATEWAYS = ["https://gateway.pinata.cloud/ipfs/", "https://ipfs.io/ipfs/"];
@@ -22322,6 +22322,9 @@ var init_resolve_subject = __esm(() => {
 });
 
 // ../../packages/protocol/dist/declare/category.js
+function isCategoryIn(tree) {
+  return async (label) => tree.pathToRoot(label).found;
+}
 function normaliseCategoryLabel(raw) {
   return raw.normalize("NFKC").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/\s+/g, " ");
 }
@@ -33947,6 +33950,7 @@ var init_handlers = __esm(() => {
 var exports_line = {};
 __export(exports_line, {
   writeLineHere: () => writeLineHere,
+  writeLineChecked: () => writeLineChecked,
   lineFromArgs: () => lineFromArgs
 });
 function lineFromArgs(args) {
@@ -33964,10 +33968,21 @@ function lineFromArgs(args) {
     ...args.reason === undefined ? {} : { reason: args.reason }
   };
 }
+async function writeLineChecked(steps, input) {
+  if (input.domain !== undefined && !await steps.isCategory(input.domain.trim().toLowerCase())) {
+    throw new Error(`"${input.domain}" is not a category under tool`);
+  }
+  await sponsorApproval(steps.config);
+  return (steps.write ?? writeLine)(steps.config, steps.agent(), input);
+}
 async function writeLineHere(input) {
   if (chainId !== 13579)
     throw new Error("a line is written on testnet 13579 only for now");
-  return writeLine(loopConfig(), agentFor(), input);
+  return writeLineChecked({
+    config: loopConfig(),
+    isCategory: async (label) => isCategoryIn(await readDomainTree(domainWalk()))(label),
+    agent: agentFor
+  }, input);
 }
 var init_line2 = __esm(() => {
   init_dist2();
@@ -34431,6 +34446,17 @@ var init_tools = __esm(() => {
     "arp_pulse",
     "arp_tool_reputation"
   ]);
+});
+
+// ../mcp/src/served-tools.ts
+function servedTools(mode2) {
+  if (mode2.desktop) {
+    return [...TOOLS.filter((t) => READ_TOOL_NAMES.has(t.name) && !DESKTOP_TOOL_NAMES.has(t.name)), ...DESKTOP_TOOLS];
+  }
+  return mode2.readOnly ? TOOLS.filter((t) => PLUGIN_TOOL_NAMES.has(t.name)) : TOOLS;
+}
+var init_served_tools = __esm(() => {
+  init_tools();
 });
 
 // ../mcp/src/serialise.ts
@@ -35064,7 +35090,7 @@ async function agentEndpoints(id, rawArgs) {
   const pulse = await agentPulse(agentChainId, agentTokenId, registry);
   const merged = { ...JSON.parse(content2.text), ...pulse };
   if (merged["registration_file"] === null && (pulse.signed_endpoints?.length ?? 0) > 0) {
-    merged["note"] = "This agent registered without a document. Its addresses are in signed_endpoints.";
+    merged["note"] = merged["in_graph"] === false ? `Not found in the graph this server reads (chain ${chainId}), so its document was not read. Its addresses are in signed_endpoints.` : "This agent registered without a document. Its addresses are in signed_endpoints.";
   }
   return text(id, merged);
 }
@@ -35321,7 +35347,15 @@ async function declaredEndpoints(id, args) {
     ...registryRaw === undefined ? {} : { registry: registryRaw }
   };
   const identity = await resolveAgent(directory, agent2);
-  const file = identity?.registrationFile ?? null;
+  if (identity === null) {
+    return text(id, {
+      caip19: toCaip19(agent2),
+      registration_file: null,
+      in_graph: false,
+      note: `Not found in the graph this server reads (chain ${chainId}), so its document was not read.`
+    });
+  }
+  const file = identity.registrationFile ?? null;
   if (file === null || file.trim() === "") {
     return text(id, {
       caip19: toCaip19(agent2),
@@ -36440,7 +36474,7 @@ var init_search_run = __esm(() => {
 });
 
 // ../mcp/src/handlers/pulse.ts
-import { chmodSync as chmodSync3, existsSync as existsSync6, mkdirSync as mkdirSync7, readFileSync as readFileSync7 } from "node:fs";
+import { chmodSync as chmodSync3, existsSync as existsSync6, mkdirSync as mkdirSync7, readFileSync as readFileSync7, rmSync } from "node:fs";
 import { homedir as homedir4 } from "node:os";
 import { join as join10, delimiter } from "node:path";
 function within(work, ms, stop) {
@@ -36486,6 +36520,7 @@ function searchInvocation(query, path, home, firstDownload = false) {
       "--prefix",
       home,
       "--yes",
+      "--logs-max=0",
       ...firstDownload ? [] : ["--fetch-retries=0", "--fetch-timeout=5000"],
       SKILLS_CLI,
       "find",
@@ -36516,6 +36551,7 @@ async function search(query, timeoutMs, stop, firstDownload = false) {
     const home = searchHome();
     mkdirSync7(home, { recursive: true, mode: 448 });
     chmodSync3(home, 448);
+    rmSync(join10(home, ".npm", "_logs"), { recursive: true, force: true });
     return { output: await runSearch(searchInvocation(query, process.env["PATH"], home, firstDownload), { timeoutMs, stop }) };
   } catch (error) {
     return { error: withoutPaths(error instanceof Error ? error.message.split(`
@@ -36960,7 +36996,7 @@ async function callTool(id, params) {
   const args = typeof raw2 === "object" && raw2 !== null && !Array.isArray(raw2) ? raw2 : {};
   if (DESKTOP && name !== null && DESKTOP_TOOL_NAMES.has(name))
     return desktopTool(id, name, args);
-  if (READ_ONLY && name !== null && !PLUGIN_TOOL_NAMES.has(name)) {
+  if (READ_ONLY && name !== null && !SERVED_NAMES.has(name)) {
     return fail(id, -32602, `unknown tool: ${name}`);
   }
   try {
@@ -37075,10 +37111,11 @@ async function main(argv = process.argv, stdin = process.stdin) {
 sends nothing — the planners return calls for your own key, signed by you.`);
   log(`The receipt key signs receipts and cannot move value (ADR 0080).`);
 }
-var PROTOCOL_VERSION = "2025-06-18", SERVER_INSTRUCTIONS, SERVED_TOOLS, READ_INSTRUCTIONS, DESKTOP_INSTRUCTIONS, handler, WILDCARD;
+var PROTOCOL_VERSION = "2025-06-18", SERVER_INSTRUCTIONS, SERVED_TOOLS, SERVED_NAMES, READ_INSTRUCTIONS, DESKTOP_INSTRUCTIONS, handler, WILDCARD;
 var init_server = __esm(async () => {
   init_node2();
   init_tools();
+  init_served_tools();
   init_handlers();
   init_content();
   init_client_session();
@@ -37122,7 +37159,8 @@ var init_server = __esm(async () => {
     "two apart. The only score is `arp_pulse`'s, which shows its parts; every other figure is what somebody declared or put behind it, or a fact read from elsewhere."
   ].join(`
 `);
-  SERVED_TOOLS = DESKTOP ? [...TOOLS.filter((t) => READ_TOOL_NAMES.has(t.name) && !DESKTOP_TOOL_NAMES.has(t.name)), ...DESKTOP_TOOLS] : READ_ONLY ? TOOLS.filter((t) => PLUGIN_TOOL_NAMES.has(t.name)) : TOOLS;
+  SERVED_TOOLS = servedTools({ desktop: DESKTOP, readOnly: READ_ONLY });
+  SERVED_NAMES = new Set(SERVED_TOOLS.map((t) => t.name));
   READ_INSTRUCTIONS = [
     "ARP is a public registry of skills, tools, MCP servers and APIs, with what each one is for and",
     "what agents wrote about it.",
@@ -38597,7 +38635,7 @@ import {
   mkdirSync as mkdirSync9,
   readFileSync as readFileSync11,
   renameSync,
-  rmSync,
+  rmSync as rmSync2,
   statSync as statSync4,
   writeFileSync as writeFileSync8
 } from "node:fs";
@@ -38675,7 +38713,7 @@ function apply(env, step2) {
     if (step2.before !== null)
       copyFileSync(step2.path, `${step2.path}.arp-backup-${stamp(env.now())}`);
     if (step2.after === null) {
-      rmSync(step2.path, { force: true });
+      rmSync2(step2.path, { force: true });
       return null;
     }
     mkdirSync9(dirname7(step2.path), { recursive: true });
@@ -38964,12 +39002,14 @@ usage
   arp --version
   arp --help
 
-docs: https://github.com/Wieedze/ARP/blob/main/docs/22_RUNNING_THE_NODE.md
+docs: https://github.com/intuition-box/ARP/blob/main/docs/22_RUNNING_THE_NODE.md
 `;
 var EXIT2 = { ok: 0, usage: 2, writeFailed: 5 };
 var CLI_PATH = fileURLToPath(import.meta.url);
 var ARGV = process.argv.slice(2);
-var STDIO_INPUT = ARGV[0] === "mcp" && !ARGV.includes("--http") ? bufferedCopy(process.stdin) : undefined;
+var asksHelp = (rest) => rest.some((arg) => arg === "--help" || arg === "-h");
+var WANTS_HELP = asksHelp(ARGV.slice(1));
+var STDIO_INPUT = ARGV[0] === "mcp" && !ARGV.includes("--http") && !WANTS_HELP ? bufferedCopy(process.stdin) : undefined;
 async function runNodeInit(rest) {
   const { nodeInit: nodeInit2, parseNodeInitFlags: parseNodeInitFlags2 } = await Promise.resolve().then(() => (init_node_init(), exports_node_init));
   const flags = parseNodeInitFlags2(rest);
@@ -39032,6 +39072,10 @@ async function shareCommand(rest) {
 }
 async function run(argv) {
   const [command, ...rest] = argv;
+  if (asksHelp(rest)) {
+    process.stdout.write(USAGE);
+    return EXIT2.ok;
+  }
   if (command === "init" && rest.includes("--node"))
     return runNodeInit(rest);
   switch (command) {
