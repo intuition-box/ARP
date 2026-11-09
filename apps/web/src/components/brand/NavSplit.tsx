@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState, type ReactNode} from "react";
+import {useEffect, useRef, useState, type MouseEvent, type ReactNode} from "react";
 import {Link, useLocation} from "react-router-dom";
 
 import {controlClass} from "../../lib/control-class";
@@ -159,6 +159,17 @@ export function NavSplit({left, right}: {left: ReactNode; right: ReactNode}) {
     const menuOpen = openOn === pathname;
     const setMenuOpen = (open: boolean) => setOpenOn(open ? pathname : null);
     const menuButton = useRef<HTMLButtonElement>(null);
+    // The mark on the page already open: the path does not change, so `ScrollToTop` never fires,
+    // and the reader stayed at the last scene of the deck (user, 2026-11-09). Back to the top, and
+    // any `#scene` hash dropped so a reload does not glide back down.
+    const onHome = (event: MouseEvent<HTMLAnchorElement>) => {
+        if (pathname !== "/" || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) {
+            return;
+        }
+        event.preventDefault();
+        if (window.location.hash !== "") history.replaceState(null, "", "/");
+        window.scrollTo({top: 0, left: 0, behavior: "instant"});
+    };
     useEffect(() => {
         if (!menuOpen) return;
         const onKey = (event: KeyboardEvent) => {
@@ -191,7 +202,7 @@ export function NavSplit({left, right}: {left: ReactNode; right: ReactNode}) {
                 className="mx-auto flex w-full items-center justify-between md:hidden"
                 style={{minHeight: NAV_HEIGHT}}
             >
-                <Link to="/" aria-label="ARP, home" className="flex items-center">
+                <Link to="/" aria-label="ARP, home" onClick={onHome} className="flex items-center">
                     <SourceMark size={32} />
                 </Link>
                 {/* One name, "Menu"; `aria-expanded` carries open or closed. */}
@@ -234,7 +245,7 @@ export function NavSplit({left, right}: {left: ReactNode; right: ReactNode}) {
                     {left}
                 </div>
 
-                <Link to="/" aria-label="ARP, home" className="flex items-center justify-center">
+                <Link to="/" aria-label="ARP, home" onClick={onHome} className="flex items-center justify-center">
                     <SourceMark size={40} />
                 </Link>
 
