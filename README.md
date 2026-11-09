@@ -60,15 +60,38 @@ own test agents, so this part shows how it works, not what anyone else found.
 
 The CLI is on npm as [`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-protocol/cli): `npx -y @arp-protocol/cli init`. The Claude Code plugin carries its own copy.
 
+**Name ARP when you ask.** The agent reaches for ARP when you name it: "find me a skill for X with ARP".
+Asked only for a task, it may do the task without ARP.
+
 | where you work        | how                                                              | what you get                                                                                  |
 | --------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| **Claude Desktop**    | install the extension — one `.mcpb` file                         | sponsored on testnet, you sign nothing. `arp_pulse` reads results you pass it and runs no search |
+| **Claude Desktop**    | an extension, one `.mcpb` file: **not published yet**, so no download exists | sponsored on testnet, you sign nothing. `arp_pulse` reads results you pass it and runs no search |
 | **Claude Code**       | `claude plugin marketplace add intuition-box/ARP`, then `claude plugin install arp@arp`. Needs Node 22: ARP's program comes inside the plugin | `arp_pulse`, `arp_agent_endpoints`, `arp_tool_reputation`, and a local memory of what failed. `/arp:share` shows what would be public; sharing is off by default, and `/arp:share-send` needs a sponsoring service you run yourself for now |
 | Cursor, Gemini, Codex | `arp init` detects your runtime and wires it up                  | the full tool set: a line with a domain and a result comes back as calls you sign             |
 | sponsored setup       | `arp init --sponsored`                                           | the same as Claude Desktop                                                                    |
 | nothing installed     | point your agent at [`skills/arp/SKILL.md`](skills/arp/SKILL.md) | the procedure, as public reads and calls you sign                                             |
 
 Checking a tool or an agent needs nothing at all: no wallet, no account.
+
+### What it writes, and how to remove it
+
+A search reads skills.sh, GitHub and the npm registry, and contacts the addresses of up to ten agents
+that match: none of your words, but each sees your IP. The hook records each skill and MCP call in
+`.arp/session.jsonl` in the project, and a skill's failures in `~/.arp/failures.jsonl`. It sends
+nothing; sharing failures is off until you run `arp share on`. `~/.arp/` also holds the keys ARP makes
+and the search package's cache. Every file, and every connection, is in
+[Running the node](docs/22_RUNNING_THE_NODE.md). Testing ARP for us: [for testers](docs/guide/testers.md).
+
+To remove it:
+
+```bash
+claude plugin uninstall arp@arp && claude plugin marketplace remove arp   # the plugin
+npx -y @arp-protocol/cli uninstall      # what `init` added (or `arp uninstall` if installed globally)
+rm -rf ~/.arp                           # keys, failures, cache: neither command removes them
+rm -rf .arp                             # the hook's log, in each project
+```
+
+Each piece, and what each command leaves: [Uninstall](docs/guide/uninstall.md).
 
 ## Built on
 
@@ -118,6 +141,8 @@ ARP/
 
 ### Build against it
 
+`@arp-protocol/core` is **not on npm yet**: use it from this repository's workspace (`packages/protocol`).
+
 ```ts
 import { getToolUsage } from '@arp-protocol/core';
 
@@ -134,8 +159,22 @@ Requires [Bun](https://bun.sh) 1.2+, [Foundry](https://book.getfoundry.sh) and N
 
 ```bash
 bun install
-bun run dev      # http://localhost:5173
+bun run --cwd contracts deps   # the Solidity submodules: `bun run test` needs them, and Foundry
+bun run dev                    # http://localhost:5173
 bun run test
 ```
 
 Copy `.env.example` to `.env` before anything that talks to a chain.
+
+### Contributing
+
+Start with [for developers](docs/guide/developers.md): the layout, the build, the tests, what is
+published and every environment variable. Then [`CLAUDE.md`](CLAUDE.md): it routes to the rules in `.claude/rules/`, the decisions in
+`.claude/choices/` and where the project stands, `.claude/STATE.md`. The mechanism is
+[`docs/12_THE_IDEA.md`](docs/12_THE_IDEA.md). Run `bun run check`, `bun run lint` and `bun run test`
+before a pull request.
+
+### License
+
+MIT, see [`LICENSE`](LICENSE). Third-party material kept in this repository keeps its own licence:
+see the `NOTICE.md` beside it.
