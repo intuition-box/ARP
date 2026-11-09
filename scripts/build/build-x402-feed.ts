@@ -6,7 +6,11 @@
  *  Intuition testnet 13579, and keeps a record only when the payment checks on its own chain now: the
  *  transaction exists and succeeded, and it holds one transfer of an accepted asset (USDC on Base)
  *  from the wallet that wrote the line or from that agent's ERC-8004 `agentWallet`. Base is read at
- *  `https://mainnet.base.org` unless `ARP_X402_RPC_8453` names another RPC.
+ *  `https://mainnet.base.org` unless `ARP_X402_RPC_8453` names another RPC. `ARP_X402_NETWORKS` adds a
+ *  network and its asset, with `ARP_X402_RPC_<chain id>` to read it (ADR `0160`):
+ *
+ *      ARP_X402_NETWORKS=eip155:84532=0x036CbD53842c5426634e7929541eC2318f3dCF7e \
+ *      ARP_X402_RPC_84532=https://sepolia.base.org bun run scripts/build/build-x402-feed.ts
  *
  *  The file is a dated snapshot (ADR `0154`): rerun it to refresh. It refuses to write when a paying
  *  chain does not answer, so a record never goes missing because of an outage.
@@ -23,7 +27,7 @@ import {multiVaultReads} from "../../packages/protocol/src/declare/multivault.ts
 import {INTUITION_USES_TERM_ID, isContractRevert} from "../../packages/protocol/src/index.ts";
 import {X402_DEFAULT_NETWORKS} from "../../packages/protocol/src/arp/x402-networks.ts";
 import {buildX402Feed} from "../../packages/protocol/src/x402-feed.ts";
-import {PAID_WITH_LABEL, x402Reading} from "../../packages/protocol/src/x402-payment.ts";
+import {PAID_WITH_LABEL, x402NetworksFrom, x402Reading} from "../../packages/protocol/src/x402-payment.ts";
 
 const at = process.argv.indexOf("--out");
 const out = at === -1 ? "apps/web/public/feeds/x402-outcomes.json" : (process.argv[at + 1] ?? "");
@@ -58,7 +62,7 @@ async function agentKeys(identity: {atomId: string; label: string | null}): Prom
     return {owner, agentWallet: wallet === null || wallet === ZERO ? null : wallet};
 }
 
-const reading = x402Reading(X402_DEFAULT_NETWORKS, process.env);
+const reading = x402Reading(x402NetworksFrom(X402_DEFAULT_NETWORKS, process.env), process.env);
 const feed = await buildX402Feed({
     transport: createGraphqlTransport({url: deployment.chain.graphqlUrl, fetch: defaultFetch(), timeoutMs: 20_000}),
     trace: {chain: `eip155:${chainId}`, graphql: deployment.chain.graphqlUrl},

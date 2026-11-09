@@ -22489,6 +22489,25 @@ function x402TransferReads(rpcUrl) {
     getBlock: (args) => client.getBlock(args)
   };
 }
+function x402NetworksFrom(defaults, env) {
+  const table = new Map([...defaults].map(([network, entry]) => [network, { assets: [...entry.assets], rpcUrl: entry.rpcUrl }]));
+  const added = (env["ARP_X402_NETWORKS"] ?? "").split(",").map((entry) => entry.trim()).filter((entry) => entry !== "");
+  for (const entry of added) {
+    const match = NETWORK_ENTRY.exec(entry);
+    if (match === null)
+      throw new Error(`ARP_X402_NETWORKS: "${entry}" is not eip155:<chain id>=<asset address>`);
+    const network = match[1];
+    const asset = getAddress(match[2]);
+    const rpcUrl = env[`ARP_X402_RPC_${chainIdOfNetwork(network) ?? ""}`] ?? table.get(network)?.rpcUrl;
+    if (rpcUrl === undefined || rpcUrl === "") {
+      throw new Error(`ARP_X402_NETWORKS adds ${network}: set ARP_X402_RPC_${chainIdOfNetwork(network)} to an RPC that reads it`);
+    }
+    const known = table.get(network);
+    const assets = known === undefined ? [asset] : known.assets.includes(asset) ? known.assets : [...known.assets, asset];
+    table.set(network, { assets, rpcUrl });
+  }
+  return table;
+}
 function x402Policy(networks) {
   return new Map([...networks].map(([network, { assets }]) => [network, { assets }]));
 }
@@ -22509,12 +22528,13 @@ function x402Reading(networks, env) {
     }
   };
 }
-var PAID_WITH_LABEL = "paid with", TRANSFER_TOPIC, NETWORK, TX_HASH;
+var PAID_WITH_LABEL = "paid with", TRANSFER_TOPIC, NETWORK, TX_HASH, NETWORK_ENTRY;
 var init_x402_payment = __esm(() => {
   init__esm();
   TRANSFER_TOPIC = keccak256(stringToBytes("Transfer(address,address,uint256)"));
   NETWORK = /^eip155:([1-9][0-9]{0,9})$/;
   TX_HASH = /^0x[0-9a-f]{64}$/;
+  NETWORK_ENTRY = /^(eip155:[1-9][0-9]{0,9})=(0x[0-9a-fA-F]{40})$/;
 });
 
 // ../../packages/protocol/dist/tool-listing.js
@@ -34263,9 +34283,13 @@ __export(exports_line, {
   writeLineHere: () => writeLineHere,
   writeLineChecked: () => writeLineChecked,
   readLinePayment: () => readLinePayment,
+  lineNetworks: () => lineNetworks,
   lineFromArgs: () => lineFromArgs
 });
-function lineFromArgs(args) {
+function lineNetworks(env = process.env) {
+  return x402NetworksFrom(X402_DEFAULT_NETWORKS, env);
+}
+function lineFromArgs(args, env = process.env) {
   if (args.parent === undefined !== (args.why === undefined))
     return new Error("--parent and --why go together");
   if (args.paymentTx === undefined !== (args.network === undefined))
@@ -34273,8 +34297,15 @@ function lineFromArgs(args) {
   if (args.network !== undefined && chainIdOfNetwork(args.network) === null) {
     return new Error("--network is a CAIP-2 EVM network, such as eip155:8453 for Base");
   }
-  if (args.network !== undefined && !X402_DEFAULT_NETWORKS.has(args.network)) {
-    return new Error(`--network must be one of ${[...X402_DEFAULT_NETWORKS.keys()].join(", ")}`);
+  if (args.network !== undefined) {
+    let networks;
+    try {
+      networks = lineNetworks(env);
+    } catch (error) {
+      return error instanceof Error ? error : new Error(String(error));
+    }
+    if (!networks.has(args.network))
+      return new Error(`--network must be one of ${[...networks.keys()].join(", ")}`);
   }
   if (args.paymentTx !== undefined && !/^0x[0-9a-fA-F]{64}$/.test(args.paymentTx))
     return new Error("--payment-tx is a 32-byte transaction hash");
@@ -34356,7 +34387,7 @@ async function writeLineHere(input) {
     isCategory: async (label) => isCategoryIn(await readDomainTree(domainWalk()))(label),
     resolve: async (word) => resolveDomain(word, domainWords(await readDomainTree(domainWalk()))),
     agent: agentFor,
-    payments: x402Reading(X402_DEFAULT_NETWORKS, process.env)
+    payments: x402Reading(lineNetworks(), process.env)
   }, input);
 }
 var init_line2 = __esm(() => {

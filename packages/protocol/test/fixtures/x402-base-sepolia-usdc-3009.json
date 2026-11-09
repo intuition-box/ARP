@@ -1,0 +1,35 @@
+{
+  "_note": "A USDC transferWithAuthorization (EIP-3009) on Base Sepolia 84532, settled by the x402.org facilitator, read 2026-11-09 from https://sepolia.base.org with eth_getTransactionReceipt and eth_getBlockByNumber, trimmed to the fields x402-payment.ts reads. A stranger's test payment, used only as a recorded shape: no ARP line names it. Recorded by task 91.",
+  "network": "eip155:84532",
+  "receipt": {
+    "transactionHash": "0xed29a97b6c8db8d86eac928e7d4547e61c8975afe6653cba76dae11aa167fe3a",
+    "status": "0x1",
+    "blockNumber": "0x360abb4",
+    "from": "0xd407e409e34e0b9afb99ecceb609bdbcd5e7f1bf",
+    "to": "0x036cbd53842c5426634e7929541ec2318f3dcf7e",
+    "logs": [
+      {
+        "address": "0x036cbd53842c5426634e7929541ec2318f3dcf7e",
+        "topics": [
+          "0x98de503528ee59b575ef0c0a2576a82497bfc029a5685b209e9ec333479b10a5",
+          "0x000000000000000000000000011a56928886904a79a7f4b18f5b0b352a0fc9ac",
+          "0xd4b271f91b40fcd420abfed0102823c95d781eb160fa68d618ee0d0c2edd7c8f"
+        ],
+        "data": "0x"
+      },
+      {
+        "address": "0x036cbd53842c5426634e7929541ec2318f3dcf7e",
+        "topics": [
+          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "0x000000000000000000000000011a56928886904a79a7f4b18f5b0b352a0fc9ac",
+          "0x000000000000000000000000a849bbad82f9edafdf9a5550cc874276138779d9"
+        ],
+        "data": "0x00000000000000000000000000000000000000000000000000000000000007d0"
+      }
+    ]
+  },
+  "block": {
+    "number": "0x360abb4",
+    "timestamp": "0x6af229b0"
+  }
+}

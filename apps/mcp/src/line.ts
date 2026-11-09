@@ -17,7 +17,9 @@ import {
   USAGE_REASONS,
   transfersIn,
   X402_DEFAULT_NETWORKS,
+  x402NetworksFrom,
   x402Reading,
+  type X402NetworkTable,
   type X402NetworkPolicy,
   type X402Transfer,
   type X402TransferReads,
@@ -29,6 +31,11 @@ import { domainWords } from './domain-words.js';
 import type { AgentSender } from './desktop/agent-key.js';
 import { agentFor, loopConfig } from './desktop/handlers.js';
 import { sponsorApproval, writeLine, type LineInput, type LoopConfig, type WrittenLine } from './desktop/loop.js';
+
+/** Base by default, plus what `ARP_X402_NETWORKS` adds (task 91, ADR `0160`). Throws on a malformed setting. */
+export function lineNetworks(env: Readonly<Record<string, string | undefined>> = process.env): X402NetworkTable {
+  return x402NetworksFrom(X402_DEFAULT_NETWORKS, env);
+}
 
 /** A command line's strings as a line, or what is wrong with them. Closed words only. */
 export function lineFromArgs(args: {
@@ -42,14 +49,20 @@ export function lineFromArgs(args: {
   /** With `network`, the x402 settlement this outcome refers to (task 89, ADR `0159`). */
   paymentTx?: string | undefined;
   network?: string | undefined;
-}): LineInput | Error {
+}, env: Readonly<Record<string, string | undefined>> = process.env): LineInput | Error {
   if ((args.parent === undefined) !== (args.why === undefined)) return new Error('--parent and --why go together');
   if ((args.paymentTx === undefined) !== (args.network === undefined)) return new Error('--payment-tx and --network go together');
   if (args.network !== undefined && chainIdOfNetwork(args.network) === null) {
     return new Error('--network is a CAIP-2 EVM network, such as eip155:8453 for Base');
   }
-  if (args.network !== undefined && !X402_DEFAULT_NETWORKS.has(args.network)) {
-    return new Error(`--network must be one of ${[...X402_DEFAULT_NETWORKS.keys()].join(', ')}`);
+  if (args.network !== undefined) {
+    let networks: X402NetworkTable;
+    try {
+      networks = lineNetworks(env);
+    } catch (error) {
+      return error instanceof Error ? error : new Error(String(error));
+    }
+    if (!networks.has(args.network)) return new Error(`--network must be one of ${[...networks.keys()].join(', ')}`);
   }
   if (args.paymentTx !== undefined && !/^0x[0-9a-fA-F]{64}$/.test(args.paymentTx)) return new Error('--payment-tx is a 32-byte transaction hash');
   if (args.parent !== undefined && args.domain === undefined) return new Error('--parent and --why add a --domain');
@@ -160,7 +173,7 @@ export async function writeLineHere(input: LineInput): Promise<WrittenLine & { p
       isCategory: async (label) => isCategoryIn(await readDomainTree(domainWalk()))(label),
       resolve: async (word) => resolveDomain(word, domainWords(await readDomainTree(domainWalk()))),
       agent: agentFor,
-      payments: x402Reading(X402_DEFAULT_NETWORKS, process.env),
+      payments: x402Reading(lineNetworks(), process.env),
     },
     input,
   );

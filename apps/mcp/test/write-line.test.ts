@@ -195,6 +195,17 @@ describe("lineFromArgs", () => {
         expect(lineFromArgs({...args, outcome: "failed", paymentTx: "0x1234", network: "eip155:8453"})).toBeInstanceOf(Error);
     });
 
+    it("takes a network the operator added by configuration, and says why a bad setting fails (task 91)", () => {
+        const tx = `0x${"ef".repeat(32)}`;
+        const sepolia = {...args, outcome: "failed", reason: "no-delivery", paymentTx: tx, network: "eip155:84532"};
+        expect(lineFromArgs(sepolia, {})).toBeInstanceOf(Error);
+        const env = {ARP_X402_NETWORKS: "eip155:84532=0x036CbD53842c5426634e7929541eC2318f3dCF7e", ARP_X402_RPC_84532: "https://sepolia.base.org"};
+        expect(lineFromArgs(sepolia, env)).toMatchObject({payment: {network: "eip155:84532", txHash: tx}});
+        const missingRpc = lineFromArgs(sepolia, {ARP_X402_NETWORKS: env.ARP_X402_NETWORKS});
+        expect(missingRpc).toBeInstanceOf(Error);
+        expect((missingRpc as Error).message).toContain("ARP_X402_RPC_84532"); // checked to be an Error on the line above
+    });
+
     it("refuses anything else", () => {
         expect(lineFromArgs({...args, outcome: "maybe"})).toBeInstanceOf(Error);
         expect(lineFromArgs({...args, outcome: "failed", reason: "the moon"})).toBeInstanceOf(Error);

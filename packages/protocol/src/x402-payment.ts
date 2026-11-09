@@ -155,6 +155,36 @@ export function x402TransferReads(rpcUrl: string): X402TransferReads {
     };
 }
 
+/** A network table: the assets accepted on each paying network, and a public RPC to read it. */
+export type X402NetworkTable = ReadonlyMap<string, {assets: readonly Address[]; rpcUrl: string}>;
+
+const NETWORK_ENTRY = /^(eip155:[1-9][0-9]{0,9})=(0x[0-9a-fA-F]{40})$/;
+
+/**
+ * `defaults` plus the networks an operator adds by configuration (task 91, ADR `0160`):
+ * `ARP_X402_NETWORKS="eip155:84532=0x036C…CF7e"`, comma-separated, one accepted asset per entry. A
+ * network not in `defaults` has no public RPC here, so `ARP_X402_RPC_<chain id>` must name one.
+ * Throws on a malformed entry or a missing RPC, so a typo is never a network silently left out.
+ */
+export function x402NetworksFrom(defaults: X402NetworkTable, env: Readonly<Record<string, string | undefined>>): X402NetworkTable {
+    const table = new Map([...defaults].map(([network, entry]) => [network, {assets: [...entry.assets], rpcUrl: entry.rpcUrl}]));
+    const added = (env["ARP_X402_NETWORKS"] ?? "").split(",").map((entry) => entry.trim()).filter((entry) => entry !== "");
+    for (const entry of added) {
+        const match = NETWORK_ENTRY.exec(entry);
+        if (match === null) throw new Error(`ARP_X402_NETWORKS: "${entry}" is not eip155:<chain id>=<asset address>`);
+        const network = match[1] as string; // matched
+        const asset = getAddress(match[2] as string); // matched, 40 hex digits
+        const rpcUrl = env[`ARP_X402_RPC_${chainIdOfNetwork(network) ?? ""}`] ?? table.get(network)?.rpcUrl;
+        if (rpcUrl === undefined || rpcUrl === "") {
+            throw new Error(`ARP_X402_NETWORKS adds ${network}: set ARP_X402_RPC_${chainIdOfNetwork(network)} to an RPC that reads it`);
+        }
+        const known = table.get(network);
+        const assets = known === undefined ? [asset] : known.assets.includes(asset) ? known.assets : [...known.assets, asset];
+        table.set(network, {assets, rpcUrl});
+    }
+    return table;
+}
+
 /** A policy from a network table, such as `X402_DEFAULT_NETWORKS`. */
 export function x402Policy(networks: ReadonlyMap<string, {assets: readonly Address[]}>): X402NetworkPolicy {
     return new Map([...networks].map(([network, {assets}]) => [network, {assets}]));

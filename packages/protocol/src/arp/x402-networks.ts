@@ -5,8 +5,9 @@ import {getAddress, type Address} from "viem";
  * RPC to read it (task 89, ADR `0159`). Here because `rules/portability.md` lets `arp/` name a chain.
  *
  * Base, with native USDC, is what x402 sellers are paid in today and what x402 Doctor reads first
- * (`FUTURE.md`, x402 section). An operator adds a network by configuration; ARP **reads** these chains
- * and never signs or sends on them.
+ * (`FUTURE.md`, x402 section). An operator adds a network by configuration, `ARP_X402_NETWORKS` with
+ * `ARP_X402_RPC_<chain id>` (`x402NetworksFrom`, ADR `0160`); ARP **reads** these chains and never signs
+ * or sends on them.
  *
  * USDC on Base: `symbol()` answered `USDC` at this address on `https://mainnet.base.org`, 2026-11-09.
  */

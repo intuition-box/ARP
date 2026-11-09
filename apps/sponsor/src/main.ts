@@ -28,7 +28,8 @@
  *  from the graph on 2026-11-03 (`data/deployments/13579.json`, ADR `0092` item 7).
  *
  *  **An x402 line's payment is read on Base** (ADR `0159`), at `https://mainnet.base.org` unless
- *  `ARP_X402_RPC_8453` names another RPC. Read only: there is no account for that chain here.
+ *  `ARP_X402_RPC_8453` names another RPC. `ARP_X402_NETWORKS` adds a network and its asset, such as
+ *  Base Sepolia for a test (ADR `0160`). Read only: there is no account for those chains here.
  */
 import { fileURLToPath } from 'node:url';
 
@@ -40,6 +41,7 @@ import {
   multiVaultReads,
   resolveIdentityAtomStrict,
   X402_DEFAULT_NETWORKS,
+  x402NetworksFrom,
   x402Reading,
   type PreparedCall,
   type SponsorLimits,
@@ -362,7 +364,7 @@ const service = createSponsor({
     inContextOf: deployments.arp.endpointBinding.inContextOf as Hex,
     subject: lineSubjectCheck(deployments.chain.graphqlUrl),
     // ADR `0159`: an x402 line's payment, read on its own network. Read-only; this key never signs there.
-    payments: x402Reading(X402_DEFAULT_NETWORKS, process.env),
+    payments: x402Reading(x402NetworksFrom(X402_DEFAULT_NETWORKS, process.env), process.env),
   },
   categories: {
     ...CATEGORY_TREE,

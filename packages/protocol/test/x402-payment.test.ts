@@ -1,3 +1,5 @@
+import {readFileSync} from "node:fs";
+
 import {getAddress, hexToBigInt, type Hex} from "viem";
 import {describe, expect, it} from "vitest";
 
@@ -7,6 +9,7 @@ import {
     parsePaymentAtomLabel,
     paymentAtomLabel,
     transfersIn,
+    x402NetworksFrom,
     x402Policy,
     type X402TransferReads,
 } from "../src/x402-payment.js";
@@ -94,5 +97,45 @@ describe("checkX402Payment, on a recorded Base settlement", () => {
         const nft = {...(FIXTURE.receipt.logs[1] as Fixture["receipt"]["logs"][number])};
         nft.topics = [...nft.topics, `0x${"00".repeat(31)}01` as Hex];
         expect(transfersIn([nft], [getAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913")])).toHaveLength(0);
+    });
+});
+
+describe("x402NetworksFrom, a network added by configuration (task 91)", () => {
+    const SEPOLIA_USDC = getAddress("0x036CbD53842c5426634e7929541eC2318f3dCF7e");
+    const SEPOLIA = JSON.parse(readFileSync(new URL("./fixtures/x402-base-sepolia-usdc-3009.json", import.meta.url), "utf8")) as Fixture; // written by task 91
+    const env = {ARP_X402_NETWORKS: `eip155:84532=${SEPOLIA_USDC}`, ARP_X402_RPC_84532: "https://sepolia.base.org"};
+
+    it("is Base alone when nothing is set", () => {
+        expect([...x402NetworksFrom(X402_DEFAULT_NETWORKS, {}).keys()]).toEqual(["eip155:8453"]);
+    });
+
+    it("adds Base Sepolia and its USDC, and keeps Base", () => {
+        const table = x402NetworksFrom(X402_DEFAULT_NETWORKS, env);
+        expect(table.get("eip155:84532")).toEqual({assets: [SEPOLIA_USDC], rpcUrl: "https://sepolia.base.org"});
+        expect(table.get("eip155:8453")).toEqual(X402_DEFAULT_NETWORKS.get("eip155:8453"));
+    });
+
+    it("adds an asset to a default network without a second RPC setting, once", () => {
+        const other = getAddress(`0x${"11".repeat(20)}`);
+        const table = x402NetworksFrom(X402_DEFAULT_NETWORKS, {ARP_X402_NETWORKS: `eip155:8453=${other}, eip155:8453=${other}`});
+        expect(table.get("eip155:8453")?.assets).toEqual([getAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"), other]);
+    });
+
+    it("refuses a malformed entry and a network with no RPC, rather than leaving it out", () => {
+        expect(() => x402NetworksFrom(X402_DEFAULT_NETWORKS, {ARP_X402_NETWORKS: "base-sepolia=0x036C"})).toThrow(/eip155:<chain id>=<asset address>/);
+        expect(() => x402NetworksFrom(X402_DEFAULT_NETWORKS, {ARP_X402_NETWORKS: `eip155:84532=${SEPOLIA_USDC}`})).toThrow(/ARP_X402_RPC_84532/);
+    });
+
+    it("checks a recorded Base Sepolia settlement once the network is configured, and only then", async () => {
+        const ref = {network: "eip155:84532", txHash: SEPOLIA.receipt.transactionHash};
+        const payer = getAddress("0x011a56928886904a79a7f4b18f5b0b352a0fc9ac");
+        const reads = recordedReads(SEPOLIA);
+        expect(await checkX402Payment({ref, payers: [payer], policy: x402Policy(x402NetworksFrom(X402_DEFAULT_NETWORKS, env)), reads})).toEqual({
+            status: "paid",
+            transfer: {asset: SEPOLIA_USDC, payer, payTo: getAddress("0xa849bbad82f9edafdf9a5550cc874276138779d9"), amount: 2_000n},
+            paidAt: Number(hexToBigInt(SEPOLIA.block.timestamp)),
+        });
+        expect(await checkX402Payment({ref, payers: [payer], policy, reads})).toMatchObject({status: "refused", reason: expect.stringContaining("eip155:84532")});
+        expect((await checkX402Payment({ref, payers: [getAddress(SEPOLIA.receipt.from)], policy: x402Policy(x402NetworksFrom(X402_DEFAULT_NETWORKS, env)), reads})).status).toBe("refused");
     });
 });
