@@ -453,12 +453,12 @@ export function GalaxyField({
                 if (target !== atom.to) {
                     atom.from = atom.v;
                     atom.to = target;
-                    const joined = atom.kind === "reader" || atom.read !== null;
+                    const isJoiner = atom.kind === "reader" || atom.read !== null;
                     if (still || (target === 1 && current === 2)) atom.t0 = now;
-                    else if (target === 1 && joined)
+                    else if (target === 1 && isJoiner)
                         // Reached scene 3 or 4 before its reading: one after another, not at once.
                         atom.t0 = now + (atom.read ?? 0) * READ_JOIN.lateEveryS * 1000;
-                    else if (target === 0 && current === 1 && joined)
+                    else if (target === 0 && current === 1 && isJoiner)
                         // Back to scene 1: your agent first, then the last read first; the line
                         // stays put.
                         atom.t0 =
@@ -491,11 +491,11 @@ export function GalaxyField({
                 let r = starRadius(star, view.near);
                 let colour: string = STAR_TONES[star.t];
                 let a = sA;
-                const n = joined[i] ?? 0;
-                if (n > 0.001) {
-                    r *= 1 + n * 1.4;
-                    colour = mixHex(STAR_TONES[star.t], palette.fg, n);
-                    a = Math.max(a, n);
+                const lit = joined[i] ?? 0;
+                if (lit > 0.001) {
+                    r *= 1 + lit * 1.4;
+                    colour = mixHex(STAR_TONES[star.t], palette.fg, lit);
+                    a = Math.max(a, lit);
                 }
                 const b = beat[i] ?? 0;
                 if (b > 0) {

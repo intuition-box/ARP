@@ -340,9 +340,9 @@ export const WORDS_AT = {tool: 0.4, agent: 2.6, context: 4.8, outcome: 7.0} as c
 
 /**
  * Scene 5, the network: agents join the galaxy one after another, a star lighting up for each and
- * staying lit. Seconds after the camera settles.
+ * staying lit. Seconds after the camera settles. `most` is a visual cap on the stars drawn, not a
+ * count: no figure is printed from it.
  */
-/** `most` is a visual cap on the stars drawn, not a count: no figure is printed from it. */
 export const NETWORK = {from: 0.4, every: 0.45, most: 24} as const;
 
 /** When the `j`-th agent joins in scene 5. */
@@ -364,10 +364,6 @@ export function networkStars(count: number, seed = 29): number[] {
     return out;
 }
 
-/** A word lights in the panel this long after its atom leaves its star. */
-export const WORD_LIGHTS_AFTER = 0.9;
-
-/** Scene 2: the loupe starts reading after this, and holds each claim this long. */
 /**
  * Scene 2's tour: the loupe reads one claim every `forS`, starting late enough that the first
  * claim to join has time to land.
@@ -378,15 +374,10 @@ export const READ = {startS: 1.9, forS: 2.8} as const;
  * Which reading the loupe is on, or -1 when none. Under reduced motion the end state is every
  * reading at once, so the loupe tours nothing and no claim stays lit.
  */
-export function readingAt(
-    since: number,
-    count: number,
-    still: boolean,
-    start: number = READ.startS,
-): number {
+export function readingAt(since: number, count: number, still: boolean): number {
     if (count === 0 || still) return -1;
-    if (since < start) return -1;
-    return Math.floor((since - start) / READ.forS) % count;
+    if (since < READ.startS) return -1;
+    return Math.floor((since - READ.startS) / READ.forS) % count;
 }
 
 /**

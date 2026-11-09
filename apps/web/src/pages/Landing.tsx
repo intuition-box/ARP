@@ -266,6 +266,8 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
     return (
         <>
             {reached(0) ? (
+                // Not `Panel`: this one mounts as it arrives, with `arp-gx-arrive`, and `Panel`'s
+                // `arp-gx-rv` would hold it hidden until the scene's own arrival. Same markup.
                 <div
                     data-panel
                     role="group"
