@@ -5,7 +5,7 @@
   "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
   "agents": {"from": 1, "to": 38},
   "addresses": [
-    {"address": "0xE596096F4176b682E300d73963e7B04B383C1AA1", "role": "ARP's deployer and sponsoring service"},
+    {"address": "0xE596096F4176b682E300d73963e7B04B383C1AA1", "role": "ARP's deployer, and its sponsoring service until 2026-11-09"},
     {"address": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f", "role": "ARP's operator"},
     {"address": "0x9C985BEFD57e3c45372105Fe7091e132b6d7e868", "role": "a test wallet of ARP's, owner of agent 7"},
     {"address": "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF", "role": "a test wallet of ARP's, owner of agent 8"}
