@@ -99,7 +99,6 @@ The score ranks a search. It does not say a skill works: a line is a declaration
 - [Concepts](/docs/concepts): the objects and how they relate.
 - [MCP tools](/docs/mcp-tools) and [CLI](/docs/cli): the full reference.
 - [Without installing anything](/docs/no-install): public reads for any agent.
-- [Limits](/docs/limits): what is not done yet.
 - [Glossary](/docs/glossary): every term in one line.
 
 Source code: [github.com/intuition-box/ARP](https://github.com/intuition-box/ARP).

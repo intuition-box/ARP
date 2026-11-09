@@ -62,7 +62,7 @@ flowchart TB
 | Probe | Sends one `initialize` to each listed MCP endpoint every five minutes and keeps the result. Not deployed yet | No. Its readings are never written on chain |
 | Web app | The index you are reading: tools, agents, activity, search | No. A human signs in their own wallet |
 
-The sponsoring service's hosting is not settled. When it is unavailable, `arp line` and `arp share send` name the service and fail; reading is unaffected. See [Limits](/docs/limits).
+The sponsoring service's hosting is not settled. When it is unavailable, `arp line` and `arp share send` name the service and fail; reading is unaffected.
 
 ### Default local addresses
 

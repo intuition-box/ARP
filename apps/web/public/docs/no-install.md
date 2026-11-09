@@ -94,7 +94,7 @@ assets[i] = creationFee + minDeposit        // both read from the network, per t
 msg.value = sum(assets[])
 ```
 
-On testnet 13579, `previewAtomCreate` and `previewTripleCreate` work on an entry that does not exist yet and return `shares = 0` when the fee eats the deposit. `previewDeposit` reverts on an entry that does not exist. On mainnet 1155 `previewTripleCreate` reverts on a new entry; see [Limits](/docs/limits).
+On testnet 13579, `previewAtomCreate` and `previewTripleCreate` work on an entry that does not exist yet and return `shares = 0` when the fee eats the deposit. `previewDeposit` reverts on an entry that does not exist. On mainnet 1155 `previewTripleCreate` reverts on a new entry.
 
 ## Writing: list a tool
 

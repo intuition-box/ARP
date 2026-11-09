@@ -49,7 +49,6 @@ export const DOC_SECTIONS: readonly DocSection[] = [
         entries: [
             {slug: "architecture", title: "Architecture", summary: "What runs where, the services, and the repository's layout."},
             {slug: "networks", title: "Networks and contracts", summary: "Chains, addresses, endpoints, and where costs are read."},
-            {slug: "limits", title: "Limits", summary: "What is not done yet, stated once."},
             {slug: "developers", title: "For developers", summary: "The repository, building and testing, what is published, and every environment variable."},
             {slug: "glossary", title: "Glossary", summary: "Every term used in these pages, in one line each."},
         ],

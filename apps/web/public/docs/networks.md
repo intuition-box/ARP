@@ -101,4 +101,4 @@ Each chain has one deployment record in the repository. It is the source for eve
 - [`data/deployments/13579.json`](https://github.com/intuition-box/ARP/blob/main/data/deployments/13579.json)
 - [`data/deployments/1155.json`](https://github.com/intuition-box/ARP/blob/main/data/deployments/1155.json)
 
-See [Architecture](/docs/architecture) for which program talks to which address, and [Limits](/docs/limits) for what is not on mainnet yet.
+See [Architecture](/docs/architecture) for which program talks to which address.
