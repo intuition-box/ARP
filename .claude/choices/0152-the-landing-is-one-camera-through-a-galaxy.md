@@ -55,6 +55,12 @@ says what reduced motion does ("every scene jumps to its end state").
    panel mixes the two. A read that **failed** still says it failed: a sample never stands in for a
    failure. This overrides the design file's "no sample data ships" for the landing only.
 
+7. **Scene 1 builds one element at a time; the network is scene 5's** (amended 2026-11-09, the
+   user's request after watching it). Scene 1 shows the tool, then the agent and its ring, then
+   the context, then the outcome, its panel growing with each; nothing else joins there. Scene 5
+   lights one star per agent that declared the tool and invites the reader to join (« Join the
+   network », the onboarding). Task 81's addendum has the details.
+
 ## Alternatives considered
 
 - **Keep `SourceField` behind the new copy** — rejected by the design: a scene draws no new

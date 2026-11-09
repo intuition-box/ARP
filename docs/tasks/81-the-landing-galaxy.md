@@ -53,3 +53,27 @@ may appear or vanish from one frame to the next.
 - React to the pointer (`rules/ui.md`), except the loupe's existing keyboard and pointer reading on
   the atom page.
 - Change the nav (task 80) beyond folding it past the first scene, if `NavCoin` does not already.
+
+## Addendum, 2026-11-09 — scene 1 builds, the network moves to scene 5
+
+The user, after watching it: « sur la scène 1 on a du mal à voir tout ce qui est affiché d'un
+coup … À chaque nouvel élément qui arrive dans le schéma, un nouveau morceau du bloc apparaît …
+Je ne veux pas l'accumulation à la fin … Il faut juste comprendre l'effet de réseau en dernière
+page, en les invitant à joindre le réseau. » Built on `fix/81-scene1-build` (`2ec0579`,
+`c7dddd2`):
+
+- **Scene 1 builds one element at a time**, about 1.2 s apart after the camera settles: the tool
+  alone, and the panel appears holding only its name; the agent lands on the `used by` ring,
+  drawn as it arrives (ring first, whole by half the dot's trip), and the panel grows by « used
+  by agent 1 » and the *identity* row; then *context* and its ring; then *outcome* and its ring.
+  A piece appears as its dot lands, never as an empty slot. The *action* row is gone: the action,
+  « used by », arrives with the identity. Reduced motion shows the end state.
+- **No accumulation in scene 1**: the other claims join in scene 2 (which still starts from the
+  four-element field), and « N agents writing into them » is gone.
+- **Scene 5 carries the network**: one star per agent that declared the tool lights up after
+  another and stays lit (« Lit stars: sample. » while the field is the sample). The copy keeps
+  the design's heading and dim line and adds « Every line your agent writes, the next agent
+  reads. » The primary button is « Join the network » and opens the onboarding; « Open the agent
+  index » is the second button, « Read the skill » a quiet link. On a phone the comparison keeps
+  its « With ARP » half, and below 760 px tall it gives way to the copy.
+- Frame check at 1280 and 390, with the sample and with real data: 0 pops in 0→1, 1→2 and 4→5.

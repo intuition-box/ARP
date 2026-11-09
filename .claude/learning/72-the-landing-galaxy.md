@@ -48,3 +48,22 @@
 **Which column and tier of the evidence ladder does this serve, and does it move ARP up it?**
 
 Skill column, tier 1 (Declared): the landing reads the most declared tool's `uses` lines from the chain and shows them as declarations. It does not move ARP up the ladder; it presents the first rung honestly.
+
+## Addendum, 2026-11-09 — scene 1 builds, the network moves to scene 5
+
+The user found scene 1 unreadable: everything arrived, then accumulated. Scene 1 now builds one
+element at a time (tool, then agent with its ring and the identity row, then context, then
+outcome), the panel growing with each; the other claims wait for scene 2; the network effect —
+stars lighting up one per agent — moved to scene 5 with « Every line your agent writes, the next
+agent reads. » and « Join the network » (onboarding). `2ec0579`, `c7dddd2` on
+`fix/81-scene1-build`.
+
+- **What the review caught.** The invitation pushed scene 5's copy into the comparison panel on
+  phones 667–736 px tall (up to 196 px of overlap at 360×600, measured by the reviewer), and the
+  network stars showed the sample's five agents without saying so. Both fixed: the comparison
+  keeps one half on a phone and gives way below 760 px tall; « Lit stars: sample. » marks it.
+- **What it teaches.** A panel that mounts pieces as they arrive cannot be asserted in a DOM test
+  where the deck never leaves scene 0: the content tests run under reduced motion (the end state),
+  and one test asserts that nothing of the line is drawn in advance. The build-up itself is
+  checked in a browser.
+- **Frame check**: 0 pops in 0→1, 1→2, 4→5 at 1280 and 390, with the sample and with real data.
