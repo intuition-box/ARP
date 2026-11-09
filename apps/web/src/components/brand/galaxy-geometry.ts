@@ -1,4 +1,4 @@
-import {LANDING_DOTS_PER_RING} from "../../services/landing-field";
+import {LANDING_DOTS_PER_RING, type LandingField} from "../../services/landing-field";
 import {dotDiameter, landingOffset, ringAngle, type Point} from "../atom/claim-field-geometry";
 
 /**
@@ -374,10 +374,40 @@ export const READ = {startS: 0.6, forS: 2.8} as const;
  * Which reading the loupe is on, or -1 when none. Under reduced motion the end state is every
  * reading at once, so the loupe tours nothing and no claim stays lit.
  */
-export function readingAt(since: number, count: number, still: boolean): number {
+export function readingAt(
+    since: number,
+    count: number,
+    still: boolean,
+    start: number = READ.startS,
+): number {
     if (count === 0 || still) return -1;
-    if (since < READ.startS) return -1;
-    return Math.floor((since - READ.startS) / READ.forS) % count;
+    if (since < start) return -1;
+    return Math.floor((since - start) / READ.forS) % count;
+}
+
+/**
+ * Scene 2 fills the field the line left: the claims that are not the line's words join one after
+ * another once the camera settles, each from its star, and leave the same way back to scene 1,
+ * the last in first out. The line's dots never move: their slots are already their final ones.
+ * The user, 2026-11-09: « plein de points qui se réorganisent et ça fait brouillon ».
+ */
+export const FILL = {everyS: 0.35, outEveryS: 0.18} as const;
+
+/** How many claims join in scene 2: every drawn claim that is not one of the line's words. */
+export function fillCount(field: LandingField | null): number {
+    if (field === null) return 0;
+    const line = field.line;
+    const own = new Set([line?.keys.agent, line?.keys.context, line?.keys.outcome]);
+    return field.rings.reduce(
+        (sum, ring) => sum + ring.claims.filter((c) => !own.has(c.key)).length,
+        0,
+    );
+}
+
+/** When the loupe starts reading in scene 2: once the last joining claim has landed. */
+export function readStart(joining: number): number {
+    if (joining === 0) return READ.startS;
+    return (joining - 1) * FILL.everyS + GLIDE.inMs / 1000 + 0.2;
 }
 
 /* -------------------------------------------------------------------------- */

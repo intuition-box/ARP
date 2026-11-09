@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest";
 
 import {dotDiameter} from "../../atom/claim-field-geometry";
+import {SAMPLE_FIELD} from "../../../services/landing-sample";
 import {
     assignStars,
     atomAlpha,
@@ -11,7 +12,10 @@ import {
     cameraDuration,
     cameraFor,
     claimLook,
+    fillCount,
+    FILL,
     networkAt,
+    readStart,
     networkStars,
     NETWORK,
     WORDS_AT,
@@ -159,4 +163,19 @@ describe("the camera", () => {
             expect(y).toBeLessThan(800);
         }
     });
+});
+
+describe("scene 2's fill", () => {
+    it("counts every drawn claim that is not one of the line's words", () => {
+        // The sample: 5 + 3 + 3 drawn claims, three of them the line's words.
+        expect(fillCount(SAMPLE_FIELD)).toBe(8);
+        expect(fillCount(null)).toBe(0);
+    });
+
+    it("starts the loupe only once the last claim has landed", () => {
+        const joining = 8;
+        expect(readStart(joining)).toBeGreaterThan((joining - 1) * FILL.everyS + 1.3);
+        expect(readStart(0)).toBe(0.6);
+    });
+
 });

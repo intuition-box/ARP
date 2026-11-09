@@ -22,7 +22,10 @@ import {
     projection,
     READER_INDEX,
     READER_SLOT,
+    FILL,
+    fillCount,
     readingAt,
+    readStart,
     RING_NAMES,
     RING_RADII,
     slotOf,
@@ -395,6 +398,48 @@ export function GalaxyField({
                 joined[index] = lerp(joined[index] ?? 0, want, ease(6));
             });
 
+            // Every atom's progress first, so the stars below and the atoms after are drawn from
+            // the same frame's state: a star is hidden exactly while its atom is drawn, never one
+            // frame without either.
+            const n = atoms.length;
+            // Scene 2's fill order: the claims that are not the line's words, then your agent.
+            const fills = atoms.filter(
+                (a) => !a.leaving && ((a.kind === "claim" && a.at === null) || a.kind === "reader"),
+            );
+            const fillOf = new Map(fills.map((a, j) => [a.key, j]));
+            const arrival = arrivalOf(deck);
+            for (const [order, atom] of atoms.entries()) {
+                let target = 0;
+                if (!atom.leaving) {
+                    if (atom.kind === "reader") target = current >= 2 && current <= 4 ? 1 : 0;
+                    else if (current === 1)
+                        target =
+                            atom.at !== null && (still || deck.previous >= 2 || since > atom.at)
+                                ? 1
+                                : 0;
+                    else if (current >= 2 && current <= 4) target = 1;
+                }
+                if (target !== atom.to) {
+                    atom.from = atom.v;
+                    atom.to = target;
+                    const j = fillOf.get(atom.key);
+                    if (still) atom.t0 = now;
+                    else if (j !== undefined && target === 1 && current === 2)
+                        // Into scene 2: one after another once the camera has settled.
+                        atom.t0 = arrival + j * FILL.everyS * 1000;
+                    else if (j !== undefined && target === 0 && current === 1)
+                        // Back to scene 1: the last to join leaves first; the line stays put.
+                        atom.t0 = now + (fills.length - 1 - j) * FILL.outEveryS * 1000;
+                    else
+                        // By place in the list, last written first. Not by `k`: your agent's slot
+                        // is the last index, and a delay below zero would start it half way home.
+                        atom.t0 = now + (target === 0 ? (n - 1 - order) * GLIDE.staggerMs : 0);
+                    atom.dur = target === 1 ? GLIDE.inMs : GLIDE.outMs;
+                }
+                const q = still ? 1 : clamp((now - atom.t0) / atom.dur);
+                atom.v = lerp(atom.from, atom.to, cameraEase(q));
+            }
+
             // Which stars are away, being atoms right now.
             const away = new Set<number>();
             for (const atom of atoms) if (atom.v > 0.001) away.add(starOf[atom.k] ?? -1);
@@ -464,33 +509,14 @@ export function GalaxyField({
             ctx.globalAlpha = 1;
 
             const readings = field?.readings ?? [];
-            const reading = current === 2 ? readingAt(since, readings.length, still) : -1;
+            const reading =
+                current === 2
+                    ? readingAt(since, readings.length, still, readStart(fillCount(field)))
+                    : -1;
             const readKey = reading >= 0 ? readings[reading]?.claimKey : undefined;
 
-            const n = atoms.length;
             const where = new Map<string, {x: number; y: number; r: number}>();
-            for (const [order, atom] of atoms.entries()) {
-                let target = 0;
-                if (!atom.leaving) {
-                    if (atom.kind === "reader") target = current >= 2 && current <= 4 ? 1 : 0;
-                    else if (current === 1)
-                        target =
-                            atom.at !== null && (still || deck.previous >= 2 || since > atom.at)
-                                ? 1
-                                : 0;
-                    else if (current >= 2 && current <= 4) target = 1;
-                }
-                if (target !== atom.to) {
-                    atom.from = atom.v;
-                    atom.to = target;
-                    // By place in the list, last written first. Not by `k`: your agent's slot is
-                    // the last index, and a delay below zero would start it half way home.
-                    atom.t0 =
-                        now + (target === 0 && !still ? (n - 1 - order) * GLIDE.staggerMs : 0);
-                    atom.dur = target === 1 ? GLIDE.inMs : GLIDE.outMs;
-                }
-                const q = still ? 1 : clamp((now - atom.t0) / atom.dur);
-                atom.v = lerp(atom.from, atom.to, cameraEase(q));
+            for (const atom of atoms) {
                 if (atom.v <= 0.001) continue;
 
                 const star = stars[starOf[atom.k] ?? -1];
