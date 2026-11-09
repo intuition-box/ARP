@@ -1,0 +1,458 @@
+{
+  "at": "2026-11-09T15:05:04.229Z",
+  "chain": 13579,
+  "graphql": "https://testnet.intuition.sh/v1/graphql",
+  "listed": 286,
+  "byIdentityChain": {
+    "eip155:8453": 244,
+    "unresolved": 3,
+    "eip155:13579": 31,
+    "eip155:196": 3,
+    "eip155:56": 5
+  },
+  "documentRead": 189,
+  "declaresCallableEndpoint": 73,
+  "answersAtLeastOne": 38,
+  "answering": [
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22455",
+      "name": "DataQuant Pro",
+      "kinds": [
+        "a2a"
+      ],
+      "endpoints": [
+        "https://trywhee.github.io/agents/agent-dataquant/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22524",
+      "name": "Quantiva Intelligence",
+      "kinds": [
+        "a2a"
+      ],
+      "endpoints": [
+        "https://trywhee.github.io/agents/agent-quantiva/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22300",
+      "name": "DataAnalyst Pro",
+      "kinds": [
+        "a2a"
+      ],
+      "endpoints": [
+        "https://trywhee.github.io/agents/agent-dataanalyst/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22398",
+      "name": "InsightForge AI",
+      "kinds": [
+        "a2a"
+      ],
+      "endpoints": [
+        "https://trywhee.github.io/agents/agent-insightforge/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/2340",
+      "name": "🦞 Clawnch 🦞",
+      "kinds": [
+        "a2a"
+      ],
+      "endpoints": [
+        "https://clawn.ch/api/a2a"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/25382",
+      "name": "Crypto Mood Reader 2",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://onyxgrid-five.vercel.app/mcp",
+        "https://onyxgrid-five.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/26553",
+      "name": "QuantumCrypt",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://dataweb-sandy.vercel.app/mcp",
+        "https://dataweb-sandy.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22393",
+      "name": "nexarion",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://nexarion-api.vercel.app/mcp",
+        "https://nexarion-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22340",
+      "name": "sukmaxs",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://sukmaxs.vercel.app/mcp",
+        "https://sukmaxs.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22349",
+      "name": "luminaverse",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://luminaverse-api.vercel.app/mcp",
+        "https://luminaverse-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22414",
+      "name": "zephyrax",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://zephyrax-api.vercel.app/mcp",
+        "https://zephyrax-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22383",
+      "name": "mevguard",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://mevguard-api.vercel.app/mcp",
+        "https://mevguard-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22426",
+      "name": "electrax",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://electrax-api.vercel.app/mcp",
+        "https://electrax-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22338",
+      "name": "quantumswap",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://quantumswap-api.vercel.app/mcp",
+        "https://quantumswap-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22185",
+      "name": "axedraxos",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://axedraxos-api.vercel.app/mcp",
+        "https://axedraxos-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22379",
+      "name": "omniplay",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://omniplay-api.vercel.app/mcp",
+        "https://omniplay-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22385",
+      "name": "quantrax",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://quantrax-api.vercel.app/mcp",
+        "https://quantrax-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22335",
+      "name": "erni",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://erni-api.vercel.app/mcp",
+        "https://erni-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22396",
+      "name": "aegisverify",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://aegisverify-api.vercel.app/mcp",
+        "https://aegisverify-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22389",
+      "name": "yieldflow",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://yieldflow-api.vercel.app/mcp",
+        "https://yieldflow-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22419",
+      "name": "vortrax",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://vortrax-api.vercel.app/mcp",
+        "https://vortrax-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22352",
+      "name": "aegiszk",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://aegiszk-api.vercel.app/mcp",
+        "https://aegiszk-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22430",
+      "name": "novaris",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://novaris-api.vercel.app/mcp",
+        "https://novaris-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22387",
+      "name": "governancex",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://governancex-api.vercel.app/mcp",
+        "https://governancex-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22376",
+      "name": "assetaforge",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://assetaforge-api.vercel.app/mcp",
+        "https://assetaforge-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22400",
+      "name": "cipheraudit",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://cipheraudit-api.vercel.app/mcp",
+        "https://cipheraudit-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22353",
+      "name": "castmind",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://castmind-api.vercel.app/mcp",
+        "https://castmind-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22381",
+      "name": "oraclemind",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://oraclemind-api.vercel.app/mcp",
+        "https://oraclemind-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22436",
+      "name": "aethera",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://aethera-api-alpha.vercel.app/mcp",
+        "https://aethera-api-alpha.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22332",
+      "name": "AeroDropX",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://aero-drop-x-api.vercel.app/mcp",
+        "https://aero-drop-x-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22357",
+      "name": "aurasight",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://aurasight-api.vercel.app/mcp",
+        "https://aurasight-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/22362",
+      "name": "nexusnode",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://nexusnode-api.vercel.app/mcp",
+        "https://nexusnode-api.vercel.app/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/424242",
+      "name": "Cold Harbor Probe Agent",
+      "kinds": [
+        "a2a"
+      ],
+      "endpoints": [
+        "https://centralcity.ai/a2a/40c5c91b-d3d0-4557-a421-3fe8c10a716f/.well-known/agent-card.json"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/51042",
+      "name": "Mitto The Scanner",
+      "kinds": [
+        "a2a"
+      ],
+      "endpoints": [
+        "https://workagnt.ai/api/agents/public/mitto-the-scanner-02ad39/agent-card"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/35008",
+      "name": "D0xed Dev",
+      "kinds": [
+        "a2a",
+        "mcp"
+      ],
+      "endpoints": [
+        "https://api.helixa.xyz/.well-known/agent-card.json",
+        "https://api.helixa.xyz/api/mcp"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/35488",
+      "name": "x402-test-agent",
+      "kinds": [
+        "a2a",
+        "mcp"
+      ],
+      "endpoints": [
+        "https://api.helixa.xyz/.well-known/agent-card.json",
+        "https://api.helixa.xyz/api/mcp"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/45051",
+      "name": "SuitMaster",
+      "kinds": [
+        "a2a"
+      ],
+      "endpoints": [
+        "https://www.moltbook.com/u/suitmaster"
+      ]
+    },
+    {
+      "caip19": "eip155:8453/erc721:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432/14340",
+      "name": "Delx Agent",
+      "kinds": [
+        "mcp",
+        "a2a"
+      ],
+      "endpoints": [
+        "https://api.delx.ai/mcp",
+        "https://api.delx.ai/.well-known/agent-card.json"
+      ]
+    }
+  ]
+}

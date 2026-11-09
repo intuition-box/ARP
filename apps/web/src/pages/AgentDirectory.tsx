@@ -4,12 +4,31 @@ import type {AgentListOrder} from "@arp-protocol/core";
 
 import {CapabilityFilter, CapabilityResults} from "../components/agent/CapabilitySearch";
 import {CohortList} from "../components/agent/CohortList";
+import {ReachableList} from "../components/agent/ReachableList";
+import {Hint} from "../components/brand/Hint";
 import {PageLoading} from "../components/brand/PageLoading";
 import {useChainChoice} from "../lib/chain-choice";
 import {controlClass, linkClass} from "../lib/control-class";
 import {COHORT_PAGE_SIZE, useAgentCohort} from "../hooks/use-agent-cohort";
 import {COHORT_ORDERS, describeCohortFailure, orderLabel} from "../services/agent-cohort";
 import {agentRefOf} from "../services/agent-lookup";
+import {reachableReading, readingDay} from "../services/agents-reachable";
+
+type Scope = "reachable" | "all";
+const SCOPES: readonly {id: Scope; label: string}[] = [
+    {id: "reachable", label: "Reachable"},
+    {id: "all", label: "All"},
+];
+
+/** One cell of a segmented strip. Banged, and `border-transparent!` rather than no border: `index.css`'s
+ * unlayered `button { border: 1px solid … }` would otherwise draw a box inside the strip's own border. */
+function segmentClass(selected: boolean): string {
+    return `h-[34px] border-transparent! px-3 font-mono text-[11px] uppercase tracking-wider [&+&]:border-l-[color:var(--color-rule)]! ${
+        selected
+            ? "bg-[color:var(--color-raised)] text-[color:var(--color-fg)]!"
+            : "text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"
+    }`;
+}
 
 /**
  * `/agents` — the index.
@@ -48,6 +67,14 @@ export function AgentDirectory() {
     const [offset, setOffset] = useState(0);
     const [draft, setDraft] = useState("");
     const [filter, setFilter] = useState("");
+    // Reachable first (task 82): most agents in the index answer nothing, and a list that opens
+    // on them reads as a list of dead addresses.
+    const [chosenScope, setScope] = useState<Scope>("reachable");
+    const reading = reachableReading();
+    // The reading is one chain's directory. On another chain there is none, and the page lists the
+    // whole index as it did before task 82 rather than show one chain's figure beside another's.
+    const reachable = reading.directoryChainId === chain.chainId ? reading : null;
+    const scope: Scope = reachable === null ? "all" : chosenScope;
     const cohortQuery = useAgentCohort(order, offset);
     const view = cohortQuery.data;
     const isFiltered = filter.trim().length > 0;
@@ -89,6 +116,14 @@ export function AgentDirectory() {
                             ? "—"
                             : view.total.toLocaleString("en-US")}
                     </Fact>
+                    {reachable === null ? null : (
+                        <Fact
+                            label="Reachable"
+                            hint={`Answered one request on an endpoint it declared, ${readingDay(reachable.measuredAt)}.`}
+                        >
+                            {reachable.agents.length.toLocaleString("en-US")}
+                        </Fact>
+                    )}
                     <Fact label="Chain">{chain.label}</Fact>
                 </dl>
             </header>
@@ -98,13 +133,20 @@ export function AgentDirectory() {
                     capability. It replaced the "Or open one by id" form at the foot of the page
                     (task 46e). */}
                 <CapabilityFilter value={draft} onChange={setDraft} onSubmit={search} />
-                {isFiltered ? null : <OrderControl order={order} onChange={changeOrder} />}
+                {isFiltered ? null : (
+                    <div className="flex flex-wrap gap-3">
+                        {reachable === null ? null : <ScopeControl scope={scope} onChange={setScope} />}
+                        {scope === "all" ? <OrderControl order={order} onChange={changeOrder} /> : null}
+                    </div>
+                )}
             </div>
 
             {isFiltered ? (
                 <div className="mt-8">
                     <CapabilityResults domain={filter} />
                 </div>
+            ) : scope === "reachable" && reachable !== null ? (
+                <ReachableList agents={reachable.agents} />
             ) : cohortQuery.error !== null ? (
                 <CohortError
                     error={cohortQuery.error}
@@ -156,13 +198,45 @@ export function AgentDirectory() {
 }
 
 /** One boxed figure in the header. Mono label above, display numeral below. */
-function Fact({label, children}: {label: string; children: React.ReactNode}) {
+function Fact({label, hint, children}: {label: string; hint?: string; children: React.ReactNode}) {
     return (
         <div className="flex min-w-[7.5rem] flex-col gap-1.5 px-5 py-3.5 [&+&]:border-l [&+&]:border-l-[color:var(--color-rule)]">
-            <dt className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+            <dt className="flex items-center gap-1.5 font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
                 {label}
+                {hint === undefined ? null : (
+                    <Hint label={`About ${label.toLowerCase()}`} align="right">
+                        {hint}
+                    </Hint>
+                )}
             </dt>
             <dd className="type-face text-[26px] leading-none tabular-nums">{children}</dd>
+        </div>
+    );
+}
+
+/** Which agents to list: the ones that answered, or the whole index. */
+function ScopeControl({scope, onChange}: {scope: Scope; onChange: (next: Scope) => void}) {
+    const labelId = useId();
+    return (
+        <div
+            role="group"
+            aria-labelledby={labelId}
+            className="flex overflow-hidden rounded-[var(--radius-control)] border border-[color:var(--color-rule)]"
+        >
+            <span id={labelId} className="sr-only">
+                Which agents
+            </span>
+            {SCOPES.map((entry) => (
+                <button
+                    key={entry.id}
+                    type="button"
+                    aria-pressed={entry.id === scope}
+                    onClick={() => onChange(entry.id)}
+                    className={segmentClass(entry.id === scope)}
+                >
+                    {entry.label}
+                </button>
+            ))}
         </div>
     );
 }
@@ -200,14 +274,7 @@ function OrderControl({
                         type="button"
                         aria-pressed={selected}
                         onClick={() => onChange(entry.id)}
-                        // Banged, and `border-transparent!` rather than no border: `index.css`'s
-                        // unlayered `button { border: 1px solid … }` would otherwise draw a box
-                        // inside the strip's own border on every cell.
-                        className={`h-[34px] border-transparent! px-3 font-mono text-[11px] uppercase tracking-wider [&+&]:border-l-[color:var(--color-rule)]! ${
-                            selected
-                                ? "bg-[color:var(--color-raised)] text-[color:var(--color-fg)]!"
-                                : "text-[color:var(--color-steel)]! hover:text-[color:var(--color-fg)]!"
-                        }`}
+                        className={segmentClass(selected)}
                     >
                         {entry.label}
                     </button>

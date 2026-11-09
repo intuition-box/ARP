@@ -3,6 +3,7 @@ import {describe, expect, it, vi} from "vitest";
 
 import type {CohortRow, CohortView} from "../services/agent-cohort";
 import {renderWithProviders} from "../test/render";
+import {reachableReading} from "../services/agents-reachable";
 import {AgentDirectory} from "./AgentDirectory";
 
 const navigate = vi.fn();
@@ -97,6 +98,7 @@ describe("the agent index", () => {
 
     it("leaves the support cell empty when nobody supports, and says so to a screen reader", () => {
         renderWithProviders(<AgentDirectory />);
+        fireEvent.click(screen.getByRole("button", {name: "All"}));
         const jeed = closest(screen.getByText("Jeed"), "li");
         expect(within(jeed).queryByText(/TRUST/)).toBeNull();
         expect(within(jeed).getByText("no support")).toBeInTheDocument();
@@ -107,5 +109,34 @@ describe("the agent index", () => {
     it("has no separate lookup form any more", () => {
         renderWithProviders(<AgentDirectory />);
         expect(screen.queryByText(/Or open one/)).toBeNull();
+    });
+});
+
+describe("reachable first (task 82)", () => {
+    it("opens on the agents that answered, each linking to its page, with the reading's count", () => {
+        renderWithProviders(<AgentDirectory />);
+        expect(screen.getByRole("button", {name: "Reachable"})).toHaveAttribute("aria-pressed", "true");
+        const reading = reachableReading();
+        expect(screen.getAllByText(reading.agents.length.toLocaleString("en-US")).length).toBeGreaterThan(0);
+        const first = reading.agents[0];
+        if (first === undefined) return;
+        expect(screen.getAllByRole("link", {name: new RegExp(first.name)})[0]).toHaveAttribute(
+            "href",
+            `/agent/${first.chainId}/${first.tokenId}`,
+        );
+    });
+
+    it("shows the whole index and its order control under All", () => {
+        renderWithProviders(<AgentDirectory />);
+        expect(screen.queryByRole("group", {name: "Order the index"})).toBeNull();
+        fireEvent.click(screen.getByRole("button", {name: "All"}));
+        expect(screen.getByRole("group", {name: "Order the index"})).toBeInTheDocument();
+    });
+
+    it("lists the whole index on a chain the reading was not taken on, with no reachable figure", () => {
+        renderWithProviders(<AgentDirectory />, {mainnet: true});
+        expect(screen.queryByRole("button", {name: "Reachable"})).toBeNull();
+        expect(screen.queryByText("Reachable")).toBeNull();
+        expect(screen.getByRole("group", {name: "Order the index"})).toBeInTheDocument();
     });
 });
