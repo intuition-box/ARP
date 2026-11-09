@@ -1042,7 +1042,9 @@ a.arp-cf-card:hover {
     border: 1px solid var(--color-rule-strong);
     border-radius: 14px;
     background: var(--color-bg);
-    transition: width 380ms var(--ease-out-quart);
+    transition:
+        width 380ms var(--ease-out-quart),
+        margin-left 380ms var(--ease-out-quart);
 }
 
 /* The circle: the bar's own background and border, a little taller than it. */
@@ -1059,6 +1061,8 @@ a.arp-cf-card:hover {
     border: 1px solid var(--color-rule-strong);
     border-radius: 999px;
     background: var(--color-bg);
+    transform-origin: left center;
+    transition: transform 380ms var(--ease-out-quart);
 }
 
 /* Hides the circle's right arc between the bar's top and bottom edges, so the
@@ -1279,6 +1283,19 @@ a.arp-cf-card:hover {
 .arp-coin.is-retracted .arp-coin-bar {
     width: 52px;
     padding: 0;
+    /* Out of the content's column and into the window's left edge, so the coin does not sit on
+       the page's first column of text (user, 2026-11-09, with a screenshot of /tools). */
+    margin-left: 0;
+    /* The bar's own box would show as a frame beside the smaller coin. */
+    border-color: transparent;
+    background: transparent;
+}
+
+/* Smaller once retracted: 56px instead of 80, from its left edge, so it fits the margin the
+   content leaves on a wide window. Below about 1370px there is no margin left and the coin, which
+   keeps its opaque background, covers the page's edge. */
+.arp-coin.is-retracted .arp-coin-coin {
+    transform: scale(0.7);
 }
 
 .arp-coin.is-retracted .arp-coin-bar > :not(.arp-coin-coin),
@@ -1388,6 +1405,7 @@ a.arp-cf-card:hover {
 
 @media (prefers-reduced-motion: reduce) {
     .arp-coin .arp-coin-bar,
+    .arp-coin .arp-coin-coin,
     .arp-coin .arp-coin-seam {
         transition: none;
     }
