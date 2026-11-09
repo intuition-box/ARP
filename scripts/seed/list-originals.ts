@@ -58,6 +58,12 @@ const listing: Call[] = [];
 const tags: Call[] = [];
 for (const g of groups.filter((x) => !x.listed)) {
   const plan = await planToolListing({ url: g.original, reads });
+  // Each listing plans its repository's atom when it is missing, so a second listing in the same plan
+  // would create it again and revert (it did, 2026-11-09). List one, send it, run this again.
+  if (plan.calls.some((c) => c.kind === 'create-atom' && c.why.includes(': 2 atom(s)')) && listing.length > 0) {
+    console.log(`${g.skill} would create its repository's atom again: stopped here, send this plan and run again`);
+    break;
+  }
   for (const call of plan.calls) {
     listing.push({ kind: call.kind, chainId, to: multiVault, value: call.value.toString(), data: call.data, why: `list the original ${g.skill}: ${call.why}` });
   }
