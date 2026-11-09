@@ -71,7 +71,10 @@ Strip these reflexes. If you find yourself reaching for one, stop.
   page, `--color-bg` panels, `--color-raised` selected rows and drawers.
 - **Negative space is content.** Don't fill the canvas. Empty space carries meaning.
 - **Borders, not shadows.** Hairlines (`--color-rule`, 1px) for separation, `--color-rule-strong`
-  for control borders and table head rules. No `box-shadow`, no glow, no gradients.
+  for control borders and table head rules. No `box-shadow`, no glow, no gradients. **One
+  exception** (ADR `0152` §8, the user, 2026-11-09): the landing's scene 1 sentence, once fully
+  written, takes a soft paper glow (`text-shadow` from `--color-fg` at low alpha, never Saffron,
+  no blur of the letters). Nothing else may cite it.
 - **No explanatory sentence inside a card, a row or a panel** (ADR `0057` §5, and the user's
   standing instruction). A figure that genuinely needs a caveat gets a `Hint` — a 15px "?" that
   opens one sentence on hover **and** keyboard focus. Explanations live in the code comment, the ADR

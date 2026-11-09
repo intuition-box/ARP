@@ -59,7 +59,16 @@ says what reduced motion does ("every scene jumps to its end state").
    user's request after watching it). Scene 1 shows the tool, then the agent and its ring, then
    the context, then the outcome, its panel growing with each; nothing else joins there. Scene 5
    lights one star per agent that declared the tool and invites the reader to join (« Join the
-   network », the onboarding). Task 81's addendum has the details.
+   network », the onboarding). Task 81's addendum has the details. Scene 2 fills the field one
+   claim after another once the camera settles, and empties it the same way back to scene 1; the
+   line's dots never move (« plein de points qui se réorganisent et ça fait brouillon »).
+8. **The sentence glows once it is whole** (amended 2026-11-09, the user: « mettre un effet de
+   glow sur la phrase en bas à droite une fois qu'elle est pleinement construite »). When scene 1's
+   outcome has landed, the panel's sentence fades in a soft `text-shadow` from `--color-fg` at low
+   alpha and keeps it while the scene stays; reduced motion shows it without the fade. Not
+   Saffron: the accent stays on the primary action, the selected state and the viewer's own
+   position. It relaxes `rules/ui.md`'s "no glow", which the user classed as negotiable on
+   2026-11-02, for this one sentence only; the rule names the exception.
 
 ## Alternatives considered
 

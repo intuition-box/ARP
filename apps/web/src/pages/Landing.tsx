@@ -5,7 +5,14 @@ import type {RecentDeclaration} from "@arp-protocol/core";
 import {GalaxyField} from "../components/brand/GalaxyField";
 import {NoActivityYet} from "../components/brand/NoActivityYet";
 import {SceneDeck} from "../components/brand/SceneDeck";
-import {cameraDuration, cameraFor, readingAt, WORDS_AT} from "../components/brand/galaxy-geometry";
+import {
+    cameraDuration,
+    cameraFor,
+    fillCount,
+    readingAt,
+    readStart,
+    WORDS_AT,
+} from "../components/brand/galaxy-geometry";
 import {useDeck, useSceneTime} from "../components/brand/scene-context";
 import {useOnboarding} from "../components/onboarding/onboarding-context";
 import {useLandingField, type LandingFieldRead} from "../hooks/use-landing-field";
@@ -225,6 +232,9 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
  */
 const STAGES = [WORDS_AT.tool, WORDS_AT.agent, WORDS_AT.context, WORDS_AT.outcome] as const;
 
+/** The sentence glows this long after its last piece appears, so the glow reads as « done ». */
+const GLOW_AFTER = 0.5;
+
 /** A piece of the panel appears this long after its atom leaves its star: as it lands. */
 const PIECE_AFTER = 0.6;
 
@@ -257,6 +267,9 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
     const showAgent = reached(1);
     const showContext = reached(2) && line.context !== null;
     const showOutcome = reached(3) && line.outcome !== null;
+    // Whole once its last word has landed, and a beat later the sentence glows (ADR `0152` §8).
+    const last = line.outcome !== null ? 3 : line.context !== null ? 2 : 1;
+    const whole = written > (STAGES[last] ?? 0) + PIECE_AFTER + GLOW_AFTER;
     return (
         <>
             {reached(0) ? (
@@ -270,7 +283,7 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
                         <i aria-hidden="true" />
                         {label}
                     </div>
-                    <p className="arp-gx-sentence">
+                    <p className={`arp-gx-sentence ${whole ? "is-whole" : ""}`}>
                         {/* Tool first, then who used it (the user, 2026-11-09: « hyperframes
                             used by agent 1, c'est plus compréhensible »). The graph's triple is
                             still `agent uses tool`; this reads it from the tool's side. */}
@@ -350,7 +363,9 @@ function SceneTravels({
     const sample = read.status === "ok" && read.sample;
     const readings = field?.readings ?? [];
     const ended = since === Infinity;
-    const reading = ended ? -1 : readingAt(since, readings.length, deck.still);
+    const reading = ended
+        ? -1
+        : readingAt(since, readings.length, deck.still, readStart(fillCount(field)));
     const tool = field?.tool?.name;
 
     return (

@@ -392,6 +392,8 @@ describe("Landing", () => {
                 (em) => em.textContent,
             ),
         ).toEqual(["identity", "context", "outcome"]);
+        // The finished sentence glows (ADR 0152 §8); under reduced motion, at once.
+        expect(scene(container, 1).querySelector(".arp-gx-sentence")).toHaveClass("is-whole");
         for (const line of scene(container, 4).querySelectorAll(".arp-gx-lines li")) {
             expect(line.getAttribute("data-on")).toBe("true");
         }

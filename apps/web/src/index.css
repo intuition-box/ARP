@@ -1747,6 +1747,24 @@ a.arp-cf-card:hover {
     color: var(--color-fg);
 }
 
+/* The one glow on the site (ADR 0152 §8, `rules/ui.md`): scene 1's sentence, once whole. Paper,
+   never Saffron; a halo around the letters, not a blur of them, so the text keeps its contrast. */
+.arp-gx-sentence {
+    transition: text-shadow 500ms var(--ease-gx-in);
+}
+
+.arp-gx-sentence.is-whole {
+    text-shadow:
+        0 0 18px color-mix(in srgb, var(--color-fg) 45%, transparent),
+        0 0 6px color-mix(in srgb, var(--color-fg) 25%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arp-gx-sentence {
+        transition: none;
+    }
+}
+
 .arp-gx-sentence .is-pr {
     color: var(--color-steel);
 }
