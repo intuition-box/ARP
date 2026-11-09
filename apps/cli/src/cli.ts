@@ -64,7 +64,7 @@ usage
   arp --version
   arp --help
 
-docs: https://github.com/Wieedze/ARP/blob/main/docs/22_RUNNING_THE_NODE.md
+docs: https://github.com/intuition-box/ARP/blob/main/docs/22_RUNNING_THE_NODE.md
 `;
 
 /** Exit codes, mapped to what went wrong rather than all 1 (clig.dev, "The Basics"). */
@@ -80,8 +80,11 @@ const CLI_PATH = fileURLToPath(import.meta.url);
  * `init` prompts on it and the hook reads it itself.
  */
 const ARGV = process.argv.slice(2);
+/** `--help` after any command prints the usage: `arp mcp --help` once started a server on mainnet. */
+const asksHelp = (rest: readonly string[]) => rest.some((arg) => arg === '--help' || arg === '-h');
+const WANTS_HELP = asksHelp(ARGV.slice(1));
 const STDIO_INPUT =
-  ARGV[0] === 'mcp' && !ARGV.includes('--http') ? bufferedCopy(process.stdin) : undefined;
+  ARGV[0] === 'mcp' && !ARGV.includes('--http') && !WANTS_HELP ? bufferedCopy(process.stdin) : undefined;
 
 /** `arp init --node`: the handshake, not the runtime installer. Kept apart so neither loads the other. */
 async function runNodeInit(rest: readonly string[]): Promise<number> {
@@ -140,6 +143,10 @@ async function shareCommand(rest: readonly string[]): Promise<number> {
 
 async function run(argv: readonly string[]): Promise<number> {
   const [command, ...rest] = argv;
+  if (asksHelp(rest)) {
+    process.stdout.write(USAGE);
+    return EXIT.ok;
+  }
   if (command === 'init' && rest.includes('--node')) return runNodeInit(rest);
   switch (command) {
     case 'mcp': {

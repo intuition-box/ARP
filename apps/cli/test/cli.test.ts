@@ -127,3 +127,23 @@ test('packaging/ is what `bun run packages` writes from this build: nothing stal
   expect(proc.stderr.toString()).toBe('');
   expect(proc.exitCode).toBe(0);
 });
+
+test('--help after a command prints the usage and starts nothing', () => {
+  for (const command of ['mcp', 'backfill', 'node', 'hook', 'init', 'uninstall', 'line', 'share']) {
+    const { code, out } = arp([command, '--help'], '', { ARP_HOME: join(dir, '.arp') });
+    expect(code).toBe(0);
+    expect(out).toContain('usage');
+  }
+  expect(existsSync(join(dir, '.arp'))).toBe(false);
+});
+
+test('line makes no agent key when the sponsor does not answer', () => {
+  const { code, err } = arp(['line', '--tool', 'https://github.com/a/b', '--outcome', 'failed'], '', {
+    ARP_HOME: join(dir, '.arp'),
+    ARP_SPONSOR: 'http://127.0.0.1:9',
+    ARP_TARGET: 'testnet',
+  });
+  expect(code).toBe(1);
+  expect(err).toContain('did not answer');
+  expect(existsSync(join(dir, '.arp', 'agent-key'))).toBe(false);
+});
