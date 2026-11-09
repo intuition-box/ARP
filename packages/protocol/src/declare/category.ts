@@ -96,20 +96,9 @@ export function isCategoryIn(
     return async (label) => tree.pathToRoot(label).found;
 }
 
-/**
- * Lowercase, accents stripped, inner whitespace collapsed to one space. Applied before anything is
- * hashed: `Design` and `design` would be two nodes for ever on a graph that deletes nothing.
- */
-export function normaliseCategoryLabel(raw: string): string {
-    // NFKC first, so compatibility forms (full-width letters, ligatures) fold before accents go.
-    return raw
-        .normalize("NFKC")
-        .normalize("NFD")
-        .replace(/[̀-ͯ]/g, "")
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, " ");
-}
+import {normaliseCategoryLabel} from "./label.js";
+
+export {normaliseCategoryLabel};
 
 /**
  * One word by default, two when necessary, a hyphen never (the user's rule, ADR `0088`). A label

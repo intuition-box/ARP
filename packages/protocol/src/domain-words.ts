@@ -1,4 +1,4 @@
-import {normaliseCategoryLabel} from "./declare/category.js";
+import {normaliseCategoryLabel} from "./declare/label.js";
 
 /**
  * From a person's or an agent's words to a node of the domain tree (task 84, ADR `0155`). Pure: the

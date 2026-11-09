@@ -49,11 +49,6 @@ function normaliseToolUrl(input) {
   const port = url.port === "" || url.port === "80" || url.port === "443" ? "" : `:${url.port}`;
   return `https://${host}${port}${path}${query}`;
 }
-// ../../packages/protocol/dist/declare/category.js
-import { stringToHex } from "viem";
-function normaliseCategoryLabel(raw) {
-  return raw.normalize("NFKC").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/\s+/g, " ");
-}
 // ../../packages/protocol/dist/session.js
 function refForInvocation(name, source, fetched) {
   const bare = name.includes(":") ? name.split(":").pop() ?? name : name;
@@ -215,19 +210,6 @@ function readRequires(markdown) {
     }
   }
   return { cli, runs, login: null, description };
-}
-// ../../packages/protocol/dist/domain-words.js
-function tokens(text) {
-  return normaliseCategoryLabel(text).split(/[^a-z0-9]+/).filter((t) => t.length > 1);
-}
-function domainInText(text, words) {
-  const padded = ` ${tokens(text).join(" ")} `;
-  const hit = (phrase) => padded.includes(` ${tokens(phrase).join(" ")} `);
-  const label = [...words.labels].filter((l) => tokens(l).length > 0 && hit(l)).sort((a, b) => b.length - a.length)[0];
-  if (label !== undefined)
-    return label;
-  const alias = Object.keys(words.aliases).filter((a) => words.labels.includes(words.aliases[a]) && hit(a)).sort((a, b) => b.length - a.length)[0];
-  return alias === undefined ? null : words.aliases[alias];
 }
 // ../../packages/protocol/dist/content-path.js
 function skillRefFromUrl(url) {
@@ -569,6 +551,25 @@ function toolCallOf(raw) {
 import { existsSync, mkdirSync as mkdirSync2, readFileSync as readFileSync2 } from "node:fs";
 import { homedir as homedir2 } from "node:os";
 import { dirname as dirname2, join as join3 } from "node:path";
+
+// ../../packages/protocol/src/declare/label.ts
+function normaliseCategoryLabel2(raw) {
+  return raw.normalize("NFKC").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/\s+/g, " ");
+}
+
+// ../../packages/protocol/src/domain-words.ts
+function tokens(text) {
+  return normaliseCategoryLabel2(text).split(/[^a-z0-9]+/).filter((t) => t.length > 1);
+}
+function domainInText2(text, words) {
+  const padded = ` ${tokens(text).join(" ")} `;
+  const hit = (phrase) => padded.includes(` ${tokens(phrase).join(" ")} `);
+  const label = [...words.labels].filter((l) => tokens(l).length > 0 && hit(l)).sort((a, b) => b.length - a.length)[0];
+  if (label !== undefined)
+    return label;
+  const alias = Object.keys(words.aliases).filter((a) => words.labels.includes(words.aliases[a]) && hit(a)).sort((a, b) => b.length - a.length)[0];
+  return alias === undefined ? null : words.aliases[alias];
+}
 // ../../data/catalogue/domain-aliases.json
 var domain_aliases_default = {
   _note: "Words a person or an agent uses, mapped to a node of ARP's domain tree (OASF 1.1.0 names, plus ARP's own `design`), task 84. Read locally by the MCP server, the CLI and the hook: the words never leave the machine (the user, 2026-11-09). Every target is checked against data/catalogue/oasf-1.1.0-skills.json by packages/protocol/test/domain-words.test.ts. ARP's old category words map to the one node that held them; the split ones (method, quality) have no alias, and a refusal suggests nodes instead.",
@@ -1511,7 +1512,7 @@ function lastUserWords(transcript) {
   return words;
 }
 function contextOf(words, skill) {
-  return domainInText(words, WORDS) ?? SKILL_NODE[skill.split(":").pop() ?? skill] ?? null;
+  return domainInText2(words, WORDS) ?? SKILL_NODE[skill.split(":").pop() ?? skill] ?? null;
 }
 function answerOf(response) {
   const blocks = Array.isArray(response) ? response : typeof response === "object" && response !== null && Array.isArray(response.content) ? response.content : [response];

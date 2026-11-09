@@ -4,13 +4,14 @@ import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import {
-  domainInText,
   installedFromReceipts,
   installedFromSkillLock,
   readRequires,
   type UsageReason,
 } from '@arp-protocol/core';
 
+// The pure module, not the package index: the published hook carries no dependency (ADR `0145`).
+import { domainInText } from '../../../packages/protocol/src/domain-words.ts';
 import aliasTable from '../../../data/catalogue/domain-aliases.json';
 import skillNodes from '../../../data/catalogue/skill-nodes-13579.json';
 

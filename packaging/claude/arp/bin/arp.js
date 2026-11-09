@@ -22325,12 +22325,14 @@ var init_resolve_subject = __esm(() => {
   init_subject();
 });
 
+// ../../packages/protocol/dist/declare/label.js
+function normaliseCategoryLabel(raw) {
+  return raw.normalize("NFKC").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/\s+/g, " ");
+}
+
 // ../../packages/protocol/dist/declare/category.js
 function isCategoryIn(tree) {
   return async (label) => tree.pathToRoot(label).found;
-}
-function normaliseCategoryLabel(raw) {
-  return raw.normalize("NFKC").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/\s+/g, " ");
 }
 var init_category = () => {};
 
@@ -23792,9 +23794,7 @@ function domainInText(text, words) {
   return alias === undefined ? null : words.aliases[alias];
 }
 var SUGGESTIONS = 5;
-var init_domain_words = __esm(() => {
-  init_category();
-});
+var init_domain_words = () => {};
 
 // ../../packages/protocol/dist/declare/usage-context.js
 function isUsageOutcome2(value) {
@@ -37511,6 +37511,26 @@ function appendOwn(path, text2) {
 }
 var init_append = () => {};
 
+// ../../packages/protocol/src/declare/label.ts
+function normaliseCategoryLabel2(raw2) {
+  return raw2.normalize("NFKC").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/\s+/g, " ");
+}
+
+// ../../packages/protocol/src/domain-words.ts
+function tokens2(text2) {
+  return normaliseCategoryLabel2(text2).split(/[^a-z0-9]+/).filter((t) => t.length > 1);
+}
+function domainInText2(text2, words) {
+  const padded = ` ${tokens2(text2).join(" ")} `;
+  const hit = (phrase) => padded.includes(` ${tokens2(phrase).join(" ")} `);
+  const label = [...words.labels].filter((l) => tokens2(l).length > 0 && hit(l)).sort((a, b) => b.length - a.length)[0];
+  if (label !== undefined)
+    return label;
+  const alias = Object.keys(words.aliases).filter((a) => words.labels.includes(words.aliases[a]) && hit(a)).sort((a, b) => b.length - a.length)[0];
+  return alias === undefined ? null : words.aliases[alias];
+}
+var init_domain_words3 = () => {};
+
 // ../../data/catalogue/skill-nodes-13579.json
 var skill_nodes_13579_default;
 var init_skill_nodes_13579 = __esm(() => {
@@ -38317,7 +38337,7 @@ function askedBySkill(command, markdown, directory2) {
   return programsOf(command).some((program) => named.has(program) || program.includes(".") && new RegExp(`(?:^|[\\s\`'"/(])${escaped(program)}(?=[\\s\`'")]|$)`, "m").test(markdown));
 }
 function contextOf(words, skill) {
-  return domainInText(words, WORDS) ?? SKILL_NODE[skill.split(":").pop() ?? skill] ?? null;
+  return domainInText2(words, WORDS) ?? SKILL_NODE[skill.split(":").pop() ?? skill] ?? null;
 }
 function skillDirectory(name, cwd) {
   const roots = [join11(cwd, ".claude", "skills"), join11(homedir5(), ".claude", "skills")];
@@ -38346,6 +38366,7 @@ var MISSING_KEY, MISSING_KEY_VARIABLE, MISSING_PROGRAM, MISSING_FILE, RUNNERS, e
 var init_skill_failure = __esm(() => {
   init_append();
   init_dist2();
+  init_domain_words3();
   init_domain_aliases();
   init_skill_nodes_13579();
   init_classify();
