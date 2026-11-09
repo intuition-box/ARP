@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-151 decisions. Newest last. `choices/README.md` says when to write one.
+152 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -188,3 +188,4 @@ Read these before relying on them.
 | [0151](0151-the-nav-is-a-coin-the-mark-leaves-the-centre.md) | 2026-11-09 | Accepted | The nav is a coin: the mark leaves the centre |
 | [0152](0152-the-landing-is-one-camera-through-a-galaxy.md) | 2026-11-09 | Accepted | The landing is one camera through a galaxy, and the claim field is on it |
 | [0153](0153-search-reads-skills-sh-and-agents-open-on-reachable.md) | 2026-11-09 | Accepted | The search reads skills.sh's index, and the agent list opens on the reachable |
+| [0155](0155-words-to-the-tree-stay-local.md) | 2026-11-09 | Accepted | A word names a node through a local alias table; the words never leave the machine |
