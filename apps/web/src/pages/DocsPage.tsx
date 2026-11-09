@@ -88,7 +88,7 @@ function DocArticle({entry}: {entry: DocEntry}) {
     }, [doc.status, hash]);
 
     return (
-        <article className="min-w-0 max-w-[46rem]">
+        <article className="min-w-0 max-w-[60rem]">
             <div className="mb-8 flex flex-wrap items-center gap-3">
                 {doc.status === "ok" && (
                     <CopyButton text={doc.markdown} label="Copy as Markdown" className="doc-action" />

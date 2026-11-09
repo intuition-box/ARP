@@ -2245,9 +2245,16 @@ a.arp-cf-card:hover {
     overflow-x: auto;
 }
 
-/* Drawn at its natural width (`MermaidDiagram`), so a wide one scrolls inside the frame. */
+/* Drawn at its natural width (`MermaidDiagram`). On a phone a wide one scrolls inside the frame;
+   on a desktop it is fitted to the text's column, down to the floor `atNaturalSize` sets. */
 .doc-diagram svg {
     display: block;
     margin: 0 auto;
     height: auto;
+}
+
+@media (min-width: 64rem) {
+    .doc-diagram svg {
+        max-width: 100%;
+    }
 }
