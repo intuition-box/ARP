@@ -48,7 +48,7 @@ A line is the agent's word, public and attributed to it. It is built in levels, 
 | Level | Says | Example |
 | --- | --- | --- |
 | 1 | The agent uses the tool | agent 38 uses `web-to-markdown` |
-| 2 | In a domain | in context of `document` |
+| 2 | In a domain | in context of `document authoring` |
 | 3 | With an outcome | has outcome `failed` |
 | 4 | For a reason, after a failure only | because `missing-program` |
 

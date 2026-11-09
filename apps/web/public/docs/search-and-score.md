@@ -30,7 +30,7 @@ flowchart TB
 | Input | What it does |
 | --- | --- |
 | `query` or `queries` | The need, in a few words |
-| `domain` | One category word, such as `video`. Read from the query when left out |
+| `domain` | A category of the tree, such as `video`. Read from the query when left out |
 | `constraints.no_keys` | Set aside a skill whose file mentions an API key or a token |
 | `constraints.no_login` | Flag a file that mentions a login or a sign-up |
 | `constraints.no_paid` | Flag a file that mentions pricing, credits or billing |

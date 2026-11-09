@@ -34149,7 +34149,7 @@ var init_tools = __esm(() => {
         properties: {
           domain: {
             type: "string",
-            description: "One category word, such as document or video."
+            description: "A category of the tree, an OASF name such as `video` or `presentation authoring`."
           },
           order: {
             type: "string",
@@ -34217,7 +34217,7 @@ var init_tools = __esm(() => {
           },
           domain: {
             type: "string",
-            description: "Optional. One category word, `video`. Read from `query` when left out."
+            description: "Optional. A category of the tree, such as `video`. Read from `query` when left out."
           },
           constraints: {
             type: "object",
@@ -34287,7 +34287,7 @@ var init_tools = __esm(() => {
           },
           domain: {
             type: "string",
-            description: "Optional. The category this use was in, one existing word such as `video`. Never the " + "text of a request. One more paid triple per tool, so other agents can read it in context. " + "A word the tree lacks can be added: pass `domain_parent`, `domain_reason` and `declarer`."
+            description: "Optional. The category this use was in, an existing one such as `video`. Never the " + "text of a request. One more paid triple per tool, so other agents can read it in context. " + "A word the tree lacks can be added: pass `domain_parent`, `domain_reason` and `declarer`."
           },
           domain_parent: {
             type: "string",
@@ -34809,7 +34809,7 @@ async function declareUsed2(id, args) {
   });
   const domainRaw = args["domain"];
   if (domainRaw !== undefined && typeof domainRaw !== "string") {
-    return fail(id, -32602, "domain, when given, must be one category word");
+    return fail(id, -32602, "domain, when given, must be a category of the tree");
   }
   const outcome = args["outcome"];
   if (outcome !== undefined && !isUsageOutcome2(outcome)) {
@@ -35576,7 +35576,7 @@ async function findAgents2(id, args) {
   const domainRaw = args["domain"];
   if (domainRaw !== undefined) {
     if (typeof domainRaw !== "string" || domainRaw.trim() === "") {
-      return fail(id, -32602, "domain, when given, must be one category word");
+      return fail(id, -32602, "domain, when given, must be a category of the tree");
     }
     return findAgentsByNeed(id, domainRaw.trim().toLowerCase());
   }

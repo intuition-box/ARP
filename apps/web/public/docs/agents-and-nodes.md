@@ -38,7 +38,7 @@ The ARP MCP server prepares reads and nothing else: it never pays. The payment c
 ## Finding an agent
 
 - **`arp_pulse`** answers a need in one search. Besides skills to install, it returns agents: those somebody declared using in the searched domain (`used_here`), and those whose published offer matches the words of the need (`offers_matching_need`).
-- **`arp_find_agents`** (full tool set, from `arp init`) lists the agents the graph holds, a page at a time, ordered by how many public statements exist about each (`evidence-quantity`) or by how much people put behind each (`economic-conviction`). Neither order is a rating. With `domain` (one category word, such as `document`) it returns the agents declared used in that domain or under it.
+- **`arp_find_agents`** (full tool set, from `arp init`) lists the agents the graph holds, a page at a time, ordered by how many public statements exist about each (`evidence-quantity`) or by how much people put behind each (`economic-conviction`). Neither order is a rating. With `domain` (a category of the tree, such as `document authoring`) it returns the agents declared used in that domain or under it.
 
 ## Checking an agent before paying
 

@@ -60,7 +60,7 @@ export const TOOLS = [
       properties: {
         domain: {
           type: 'string',
-          description: 'One category word, such as document or video.',
+          description: 'A category of the tree, an OASF name such as `video` or `presentation authoring`.',
         },
         order: {
           type: 'string',
@@ -174,7 +174,7 @@ export const TOOLS = [
         },
         domain: {
           type: 'string',
-          description: 'Optional. One category word, `video`. Read from `query` when left out.',
+          description: 'Optional. A category of the tree, such as `video`. Read from `query` when left out.',
         },
         constraints: {
           type: 'object',
@@ -261,7 +261,7 @@ export const TOOLS = [
         domain: {
           type: 'string',
           description:
-            'Optional. The category this use was in, one existing word such as `video`. Never the ' +
+            'Optional. The category this use was in, an existing one such as `video`. Never the ' +
             "text of a request. One more paid triple per tool, so other agents can read it in context. " +
             'A word the tree lacks can be added: pass `domain_parent`, `domain_reason` and `declarer`.',
         },

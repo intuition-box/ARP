@@ -64,7 +64,7 @@ Results come ordered by `score`, shown with its parts. Fewer than 3 wallets sayi
 | `queries` | string[] | Up to 4 short phrases, 2 to 4 words each, worded differently. Preferred over `query` |
 | `query` | string | A few words for the need |
 | `search_output` | string | The text of `npx skills find <query>`, when the host cannot run `npx`. Replaces `query` |
-| `domain` | string | One category word, such as `video`. Read from the query when left out |
+| `domain` | string | A category of the tree, such as `video`. Read from the query when left out |
 | `constraints` | object | What this person cannot or will not accept. Stays local. Fields below |
 | `limit` | number | Distinct contents to return, 1 to 20. Defaults to 5 |
 
@@ -101,7 +101,7 @@ Agents listed in ARP, a page at a time. Neither order is a score. `total` is the
 
 | Input | Type | Description |
 | --- | --- | --- |
-| `domain` | string | One category word, such as `document` |
+| `domain` | string | A category of the tree, such as `document authoring` |
 | `order` | `evidence-quantity` \| `economic-conviction` | By how many public statements exist, or by how much is behind it. Defaults to `evidence-quantity` |
 | `limit` | number | 1 to 100. Defaults to 25 |
 | `offset` | number | Defaults to 0 |
@@ -149,7 +149,7 @@ Plan the public declaration that an agent used a set of tools, attached to its E
 | `agent_token_id` | string, required | Your token id, as a decimal string |
 | `registry` | string | The identity registry, when not the canonical one |
 | `tools` | string[], required | Tool URIs: a schema URI, an MCP endpoint, an `ipfs://` document. The id derives from the URI |
-| `domain` | string | One existing category word, such as `video`. Never the text of a request |
+| `domain` | string | An existing category, such as `video`. Never the text of a request |
 | `outcome` | `worked` \| `failed` | How this use went, in your own name. Never a verdict on the tool |
 | `reason` | `missing-key` \| `missing-program` \| `missing-file` \| `not-the-right-tool` | With `outcome: failed` only |
 | `budget_wei` | string | What you have left to spend. A plan costing more is refused, with its total |

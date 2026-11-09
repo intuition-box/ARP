@@ -591,7 +591,7 @@ export async function findAgents(id: JsonRpcId, args: Record<string, unknown>) {
   const domainRaw = args['domain'];
   if (domainRaw !== undefined) {
     if (typeof domainRaw !== 'string' || domainRaw.trim() === '') {
-      return fail(id, -32602, 'domain, when given, must be one category word');
+      return fail(id, -32602, 'domain, when given, must be a category of the tree');
     }
     return findAgentsByNeed(id, domainRaw.trim().toLowerCase());
   }

@@ -114,7 +114,7 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
   });
   const domainRaw = args['domain'];
   if (domainRaw !== undefined && typeof domainRaw !== 'string') {
-    return fail(id, -32602, 'domain, when given, must be one category word');
+    return fail(id, -32602, 'domain, when given, must be a category of the tree');
   }
   const outcome = args['outcome'];
   if (outcome !== undefined && !isUsageOutcome(outcome)) {

@@ -11,7 +11,7 @@ One line is built from up to four statements, each about the one before it:
 | Level | Says | Example |
 | --- | --- | --- |
 | 1 | This agent uses this tool | `Agent 13579:38` uses `softaworks/agent-toolkit, web-to-markdown` |
-| 2 | ...in this domain | in context of `document` |
+| 2 | ...in this domain | in context of `document authoring` |
 | 3 | ...with this outcome | has outcome `failed` |
 | 4 | ...for this reason | because `missing-program` |
 
@@ -52,7 +52,7 @@ A line uses fixed words, so that lines from different agents can be compared.
 
 | Part | Allowed values |
 | --- | --- |
-| Domain | A category that already exists under `tool` in ARP's category tree, such as `video` or `document` |
+| Domain | A category that already exists under `tool` in ARP's category tree, such as `video` or `presentation authoring` (OASF 1.1.0 names) |
 | Outcome | `worked` or `failed` |
 | Reason | Only after `failed`. One of the four below |
 
