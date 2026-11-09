@@ -1,5 +1,11 @@
-import { checkCategoryLimits, planCategory } from '@arp-protocol/core';
-import type { Hex } from 'viem';
+import {
+  checkCategoryLimits,
+  planCategory,
+  verifyCategoryRequest,
+  type SignedCategoryRequest,
+} from '@arp-protocol/core';
+import type { Address, Hex } from 'viem';
+import { SPONSOR_CHAIN_ID } from '../key-file.ts';
 import { chainUnreadable, isBytes32, json, type Body, type SponsorContext } from './context.ts';
 
 /** A label is one word or a listed compound; this only bounds what is hashed and logged. */
@@ -15,6 +21,8 @@ export type CategoryLogEntry = {
   parent: string | null;
   newCategory: boolean;
   subjectId: Hex;
+  /** The agent that signed for it (ADR `0146`), `null` for an unsigned tag. */
+  agent: Address | null;
   reason: string;
   transactions: Hex[];
   /** `partial` when a send after the first reverted or was not confirmed: what landed is indexed. */
@@ -31,9 +39,16 @@ export type CategoryLogEntry = {
  *
  * An existing category is a valid choice: then only the tag is written (the user, 2026-11-03).
  *
- * Open to the web app's local origins, like `/list-tool`: path C proposes a category right after a
- * tool is listed (the user, 2026-11-03, ADR `0124`). Every accepted proposal is logged with its
- * reason, under its daily cap inside the budget.
+ * Two ways in (task 73, ADR `0146`):
+ *
+ * - **Signed by an agent** (`body.request`, `SignedCategoryRequest`): the signer must hold the
+ *   registered agent it names. Only this way adds a category to the tree, counted against that
+ *   agent's own daily cap as well as the global one. The nonce is spent once.
+ * - **Unsigned**, from the web app's local origins like `/list-tool`: path C files the tool it just
+ *   listed under a category that already exists (the user, 2026-11-09). A new category is refused
+ *   with rule `agent`.
+ *
+ * Every accepted proposal is logged with its reason, under its daily cap inside the budget.
  */
 export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<Response> {
   const { options, reads, limits, ledger, now, exclusive, assertMultiVault } = ctx;
@@ -45,7 +60,44 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
       503,
     );
   }
-  const { label, parent, subjectId, reason } = body;
+  let agent: Address | null = null;
+  let nonceKey: string | null = null;
+  let fields: Body = body;
+  if (body.request !== undefined) {
+    if (ctx.chainId !== SPONSOR_CHAIN_ID) {
+      return json(
+        { error: `a category is filed on testnet ${SPONSOR_CHAIN_ID} only`, rule: 'chain' },
+        403,
+      );
+    }
+    const verdict = await verifyCategoryRequest(body.request, Math.floor(now() / 1000));
+    if (verdict.status !== 'valid') {
+      return json({ error: `request is ${verdict.status}`, rule: 'signature', verdict }, 401);
+    }
+    const signed = body.request as SignedCategoryRequest; // Checked by `verifyCategoryRequest`.
+    if (signed.chainId !== ctx.chainId) {
+      return json({ error: `request is for chain ${signed.chainId}`, rule: 'signature' }, 400);
+    }
+    const registered = await ctx.ownerOfAgent(signed.request.agentRegistry, signed.request.agentId);
+    if ('unreadable' in registered) return registered.unreadable;
+    if ('error' in registered) return json({ error: registered.error }, registered.status);
+    if (registered.owner !== verdict.address) {
+      return json(
+        {
+          error: `agent ${signed.request.agentId} is held by ${registered.owner}, not ${verdict.address}`,
+          rule: 'agent',
+        },
+        403,
+      );
+    }
+    const own = ctx.refuseOwnAgent(registered.owner, signed.request.agentId);
+    if (own !== null) return own;
+    agent = verdict.address;
+    nonceKey = `category-nonce:${signed.request.nonce.toLowerCase()}`;
+    const { label: l, parent: p, subject, reason: r } = signed.request;
+    fields = { label: l, parent: p === '' ? undefined : p, subjectId: subject, reason: r === '' ? undefined : r };
+  }
+  const { label, parent, subjectId, reason } = fields;
   if (typeof label !== 'string' || label.length === 0 || label.length > MAX_LABEL_LENGTH) {
     return json(
       { error: `label is required, at most ${MAX_LABEL_LENGTH} characters`, rule: 'empty' },
@@ -97,6 +149,13 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
   if (first.label === 'tool') {
     return json({ error: '"tool" is the root, not a category to tag with', rule: 'root' }, 422);
   }
+  // Only an agent's signed request grows the tree (ADR `0146`); a person tags with what exists.
+  if (first.newCategory && agent === null) {
+    return json(
+      { error: 'a new category is added by a registered agent, with a signed request', rule: 'agent' },
+      403,
+    );
+  }
   if (first.calls.length === 0) return answer(first, []);
 
   // The parent is in the key: one cap slot per label, parent and subject, so a second parent for
@@ -108,6 +167,7 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
     checkCategoryLimits(ledger.relevant(now()), {
       proposal: key,
       newCategory: first.newCategory,
+      ...(agent === null ? {} : { agent }),
       value,
       now: now(),
       limits,
@@ -116,6 +176,9 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
   if (!early.ok) return json({ error: early.reason, rule: 'limit' }, 429);
 
   return exclusive(async () => {
+    if (nonceKey !== null && ledger.has('category', nonceKey)) {
+      return json({ error: 'this request was already used', rule: 'nonce' }, 409);
+    }
     const prefix = `${key}#`;
     if (ledger.pending().some((r) => r.kind === 'category' && (r.key ?? '').startsWith(prefix))) {
       return json(
@@ -148,6 +211,10 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
     const decision = limitOf(current.totalValue);
     if (!decision.ok) return json({ error: decision.reason, rule: 'limit' }, 429);
 
+    // Spent before the first send, and kept whatever lands: a replay must not be paid twice.
+    if (nonceKey !== null && agent !== null) {
+      ledger.append({ kind: 'category', subject: agent, value: 0n, at: now(), key: nonceKey });
+    }
     const sent: Hex[] = [];
     // Every write that lands is logged, finished or not: the review list must see what the index
     // now reads, and a partial category is one.
@@ -160,6 +227,7 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
         parent: current.parent,
         newCategory: current.newCategory,
         subjectId,
+        agent,
         reason: (reason ?? '').trim(),
         transactions: sent,
         status,
@@ -171,7 +239,7 @@ export async function proposeCategory(ctx: SponsorContext, body: Body): Promise<
       const recordKey = `${prefix}${offset + index}`;
       ledger.reserve({
         kind: 'category',
-        subject: ctx.wallet.address,
+        subject: agent ?? ctx.wallet.address,
         value: call.value,
         at: now(),
         key: recordKey,

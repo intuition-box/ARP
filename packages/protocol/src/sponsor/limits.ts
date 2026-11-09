@@ -65,6 +65,12 @@ export type SponsorLimits = {
      */
     categoriesPerDay: number;
     /**
+     * New categories one agent may have the service write a UTC day (task 73, ADR `0146`). Only a
+     * signed request adds a category, so each one has an agent to count against; {@link categoriesPerDay}
+     * still bounds them all, because a fresh agent costs little on testnet.
+     */
+    categoriesPerAgentPerDay: number;
+    /**
      * Tags with an existing category the service writes a UTC day (path C's common case, the user
      * 2026-11-03). One triple each, counted apart from new categories.
      */
@@ -419,12 +425,14 @@ export function checkCategoryLimits(
         proposal: string;
         /** False for a tag with an existing category, counted against `categoryTagsPerDay`. */
         newCategory: boolean;
+        /** The agent's address behind a signed request (ADR `0146`); counted against `categoriesPerAgentPerDay`. */
+        agent?: Address;
         value: bigint;
         now: number;
         limits: SponsorLimits;
     },
 ): LimitDecision {
-    const {proposal, newCategory, value, now, limits} = params;
+    const {proposal, newCategory, agent, value, now, limits} = params;
     // Keys start `category:` for a new category and `category-tag:` for a tag, so each is counted
     // against its own cap.
     const kindPrefix = newCategory ? "category:" : "category-tag:";
@@ -446,6 +454,25 @@ export function checkCategoryLimits(
                 return key.slice(0, key.lastIndexOf("#"));
             }),
     );
+    if (newCategory && agent !== undefined && !proposals.has(proposal)) {
+        const own = new Set(
+            records
+                .filter(
+                    (r) =>
+                        r.kind === "category" &&
+                        utcDay(r.at) === day &&
+                        same(r.subject, agent) &&
+                        (r.key ?? "").startsWith("category:"),
+                )
+                .map((r) => {
+                    const key = r.key ?? "";
+                    return key.slice(0, key.lastIndexOf("#"));
+                }),
+        );
+        if (own.size >= limits.categoriesPerAgentPerDay) {
+            return {ok: false, reason: `${limits.categoriesPerAgentPerDay} new categories a day for ${agent}, reached`};
+        }
+    }
     if (!proposals.has(proposal) && proposals.size >= cap) {
         return {
             ok: false,

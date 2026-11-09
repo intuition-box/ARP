@@ -23,6 +23,7 @@ export function info(ctx: SponsorContext): Record<string, unknown> {
       anonymousListingsPerDay: limits.anonymousListingsPerDay,
       listingsPerDay: limits.listingsPerDay,
       categoriesPerDay: limits.categoriesPerDay,
+      categoriesPerAgentPerDay: limits.categoriesPerAgentPerDay,
       categoryTagsPerDay: limits.categoryTagsPerDay,
       linesPerAgentPerDay: limits.linesPerAgentPerDay,
       linesPerDay: limits.linesPerDay,
