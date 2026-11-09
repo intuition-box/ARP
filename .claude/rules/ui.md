@@ -54,9 +54,10 @@ Strip these reflexes. If you find yourself reaching for one, stop.
   bullet above on 2026-10-28). Three conditions, and they are the whole of the exception:
   1. **It is motion, not state.** The accent carries a hand-over only while one is in flight.
      Nothing is left warm when the motion settles.
-  2. **It is the mark, not a palette.** The Source Field's core and the seed spheres are the same
-     object the logo is. So is the claim field's core, the atom every ring is about, on the atom
-     page and on the landing's galaxy (ADR `0152`, which also retired the seeds). A border, a rule, a background or a tag does not get to cite this.
+  2. **It is the mark, not a palette.** The claim field's core, the atom every ring is about, is the
+     same object the logo is, on the atom page and on the landing's galaxy. (Until ADR `0152` this
+     named the Source Field's core and its seed spheres; both left with task 81.) A border, a rule,
+     a background or a tag does not get to cite this.
   3. **A figure never wears it decoratively.** Unchanged and non-negotiable: an amount, a count or a
      timestamp is Saffron only where ADR `0057` already allows it — the primary action's own cost
      inside the primary action's own card, and the viewer's own position.

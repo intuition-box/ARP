@@ -14,6 +14,12 @@ Read both before writing code; open the reference at 1280 and 390 px and play ev
 3. Scene 2 uses the claim field's loupe to read four claims, each tied to a row of the panel.
 4. No kicker line above any heading, no lede under the hero heading.
 5. The copy is exactly the design file's.
+6. **Amended the same day:** while the chain answers with nothing (on testnet every real line is
+   one of ARP's hidden test identities), scenes 0 to 2 show the reference's sample, and every
+   panel showing it says « Sample ». Real data replaces it as soon as it exists; no panel mixes the
+   two; a failed read still says it failed. The samples live in `services/landing-sample.ts`. This
+   overrides deliverable 4's "real data only" and the first "Do not do" item for the landing's
+   sample (ADR `0152` §6).
 
 ## Deliverables
 

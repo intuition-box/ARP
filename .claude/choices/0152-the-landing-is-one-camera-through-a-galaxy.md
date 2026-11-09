@@ -41,9 +41,16 @@ says what reduced motion does ("every scene jumps to its end state").
    scene still work.
 5. **The field reads one real tool**: the most declared tool on the chain the reader chose, ARP's
    test identities left out, its claims and its latest line from `getPulseUsage`, and a paid word
-   from its own `SKILL.md`. When no tool has a declaration — the case on both chains on 2026-11-09,
-   because every declarer is one of ARP's test identities — the field is the empty field and every
-   panel says so.
+   from its own `SKILL.md`.
+6. **While the chain answers with nothing, scenes 0 to 2 show a sample, marked « Sample »**
+   (amended 2026-11-09, the user's decision for the landing only: « on peut faire des mock data,
+   c'est pas grave »). On 2026-11-09 both chains answer with nothing, because every declarer is one
+   of ARP's test identities. The sample is the design reference's — made-up ERC-8004 ids, made-up
+   counts, `hyperframes` as the tool — and lives in one module, `services/landing-sample.ts`. Every
+   panel that shows it says so (« Lines · testnet · sample », « · sample » in a panel head,
+   « Sample. » at its foot). Real data replaces it as soon as it exists, decided per panel, and no
+   panel mixes the two. A read that **failed** still says it failed: a sample never stands in for a
+   failure. This overrides the design file's "no sample data ships" for the landing only.
 
 ## Alternatives considered
 
@@ -66,6 +73,8 @@ says what reduced motion does ("every scene jumps to its end state").
   native scroll, `Home`/`End`, the scrollbar) are unchanged.
 - The landing reads GitHub once per visit for the paid word (cached 15 minutes); when GitHub does
   not answer, that reading is left out.
+- Until a real line exists, a first-time visitor sees made-up ids. The « Sample » marks are the
+  whole of the defence, so a panel that shows the sample without one is a defect.
 
 **Neutral (worth knowing):**
 - The reference's scene counter, rail and Next button are not built: the user removed the counter
