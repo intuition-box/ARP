@@ -25,6 +25,17 @@ written on chain: the correspondence waits for the user's review.
   662 categorised skills, 493 sit in categories with an OASF equivalent and 169 in categories to split or
   keep as an ARP node.
 
+## Funding the attestor, 2026-11-09
+
+The user asked for it (« envoie-lui-même 2 »), under ADR `0037`'s three conditions: the treasury key
+was read from `~/.arp/sponsor.key` by `readKeyFile` and never printed, its address was checked against
+`0xE596096F4176b682E300d73963e7B04B383C1AA1` before signing, and this is the record.
+
+- 2 tTRUST from the treasury `0xE596…1AA1` to the attestor `0x906f…f91f`, testnet 13579, block 9376543,
+  tx `0x414c97bcb933c59a2d5402c4b3fa9de851c5fcecb8aa3c93606d820f00e617e7`, status success.
+- After: attestor 3.0052 tTRUST, treasury 2.2853 tTRUST. The transfer is outside the sponsor's ledger,
+  so its daily budget does not count it.
+
 ## Next, after the review
 
 1. Per skill, the finest OASF node (many current categories are mixed).
