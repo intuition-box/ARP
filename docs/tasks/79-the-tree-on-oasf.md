@@ -1,8 +1,7 @@
 # Task 79 — The domain tree on OASF
 
-**Status:** in progress, 2026-11-09, on `feat/79-oasf-tree` (worktree `../ARP-tree`), not pushed. Nothing
-written on chain: the correspondence waits for the user's review.
-**ADR:** `0150` (to write once the review is done).
+**Status:** built and written on testnet 13579, 2026-11-09, on `feat/79-oasf-tree` (worktree `../ARP-tree`), not pushed.
+**ADR:** `0150`.
 **Rules:** `code.md`, `portability.md`, `claims.md`, `workflow.md`.
 
 ## The user's decisions, 2026-11-09
@@ -49,14 +48,39 @@ was read from `~/.arp/sponsor.key` by `readKeyFile` and never printed, its addre
 - After: attestor 3.0052 tTRUST, treasury 2.2853 tTRUST. The transfer is outside the sponsor's ledger,
   so its daily budget does not count it.
 
-## Next, after the review
+## Written on testnet, 2026-11-09
 
-1. Per skill, the finest OASF node (many current categories are mixed).
-2. ADR `0150`, `docs/25` §8 rewritten, the alias table for the search (`writing` → [1101]).
-3. The testnet rewrite, signed by the attestor key under ADR `0037` with the user's explicit go: the
-   OASF nodes that carry something, the re-tags, the withdrawals.
-4. A test with real sessions: does an agent choose well among OASF's entries?
-5. The NOTICE line for OASF (Apache-2.0), with the session that holds `NOTICE`.
+The user's go: « 1 oui, 2 oui » for the review and the write, « je te fais confiance » for the review of the
+68 low rows, and « ok je pense que je suis d'accord avec tout » for the rest (ADR `0150`).
+
+- **The tree:** `scripts/seed/oasf-tree.ts` planned 1,095 calls (238 atoms, 843 triples, 14 deposits,
+  2.176 tTRUST), signed by the attestor `0x906f…`. 1,094 landed; call 940 reverted on a tag planned twice
+  (`azure-reliability`, two catalogue URLs for one atom), which already existed. The planner now plans each
+  triple once.
+- **The originals:** `scripts/seed/list-originals.ts` listed the 26 skills of `inference-sh/skills` and tagged
+  them at their copies' node: 76 calls after a re-plan (the first plan created the repository atom twice; the
+  planner now stops before that).
+- **The old tree retired:** 628 redeems by the attestor, 51 by the treasury. `maintained` and other tags that
+  are not the tree's were kept.
+- **Read back** with `readDomainTree`: 243 edges, not truncated, 14 of OASF's 18 categories in use;
+  `presentation authoring → office productivity → research, knowledge and productivity → tool`;
+  `method`, `collaboration`, `payment`, `card` no longer in the tree.
+- **The record:** `data/catalogue/oasf-tree-13579.json`, every transaction hash.
+- **Keys:** each signer's address was checked by a dry run before sending (ADR `0037`). The treasury key was
+  read from its file into the sender's environment and never printed.
+- **Balances after:** attestor 1.2177 tTRUST, treasury 2.3343 tTRUST.
+
+## Not done here, a task of its own
+
+1. **Finding by words:** aliases and a matcher from a person's words to the nearest OASF nodes (ADR `0150`
+   point 7). Until then `inferDomain` matches a node's label word for word, which OASF's multi-word names make
+   rarer: "presentation authoring" needs both words.
+2. **Suggestions when filing:** three candidate nodes for an agent (point 6), from the classifier measured in
+   the scratchpad (bge-small, 31% exact, 86% on its surest tenth); where it runs is open.
+3. **Hiding copies in the search** from `data/catalogue/skill-originals-13579.json`.
+4. **The test with real sessions:** does an agent choose well among OASF's entries?
+5. `packages/protocol/src/skill-domains.ts` (`classifySkill`) still names the old categories; only seeding
+   and audit scripts use it.
 
 ## Do not do in this task
 
