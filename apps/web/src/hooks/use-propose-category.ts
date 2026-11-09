@@ -7,7 +7,7 @@ import {
 } from "../services/propose-category";
 import {SPONSOR_URL} from "../services/sponsor-url";
 
-/** Tag a tool with a category, or file a new one, and hold the answer (task 59). */
+/** File a tool under an existing category and hold the answer (task 59, ADR `0146`). */
 export function useProposeCategory(): {
     available: boolean;
     submit: (request: CategoryRequest) => void;
