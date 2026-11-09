@@ -27,3 +27,7 @@ None directly: it makes the test round possible, which is the only way a third p
 ## Follow-up, 2026-11-09: cookies and accessibility
 
 The user asked for both in the footer (« il manque un footer aussi avec accessibilité », « mention légale, cookie ? »). Two more French pages in `apps/web/src/services/legal.ts`, routed and in the footer: `/cookies` (no cookie, no tracker, so no consent banner; what the browser's local storage keeps and why it needs no consent) and `/accessibilite` (not audited against the RGAA so not declared conforming, what is done, known limits, how to report). Branch `feat/76-footer-a11y`.
+
+## Follow-up, 2026-11-09: the legal pages in English
+
+The user asked for every legal page in English (« toutes les conditions et autres mentions légales doivent être en anglais »). `apps/web/src/services/legal.ts` is translated, with the same content. The slugs are now `/legal-notice`, `/privacy`, `/cookies`, `/terms`, `/accessibility` and `/contact`; the French ones above are history and no longer route. The placeholders read `[… TO BE COMPLETED]`, and a `VITE_PUBLIC_RELEASE=1` build still fails while one is left. The accessibility page's known limit "legal pages in French" is gone.

@@ -26,16 +26,13 @@ function Text({text}: {text: string}) {
     );
 }
 
-/** One of the four legal pages (task 74). French, with one English line saying what it is. */
+/** One of the legal pages (task 74), in English since 2026-11-09. */
 export function LegalPage({slug}: {slug: LegalSlug}) {
     const doc = LEGAL[slug];
     return (
-        <article className="max-w-[72ch]" lang="fr">
+        <article className="max-w-[72ch]">
             <BackLink to="/" label="home" />
-            <p className={`${LABEL} mt-6`} lang="en">
-                {doc.english}
-            </p>
-            <h1 className="type-display mt-4">{doc.title}</h1>
+            <h1 className="type-display mt-6">{doc.title}</h1>
             {doc.sections.map((section) => (
                 <section key={section.heading} className="mt-10">
                     <h2 className={`${LABEL} mb-3`}>{section.heading}</h2>

@@ -3,16 +3,15 @@ import {Link} from "react-router-dom";
 /**
  * The footer's links: the docs, the code, and the legal pages, nothing else (the user, 2026-11-09).
  * `/test-identities` stays reachable from every empty state that hides something; `/account` from
- * the wallet menu; `/llms.txt` from the docs. The legal pages are in French and the labels say what
- * each is in English.
+ * the wallet menu; `/llms.txt` from the docs.
  */
 
 const LEGAL: readonly {label: string; to: string}[] = [
-    {label: "Legal notice", to: "/mentions-legales"},
-    {label: "Privacy", to: "/confidentialite"},
+    {label: "Legal notice", to: "/legal-notice"},
+    {label: "Privacy", to: "/privacy"},
     {label: "Cookies", to: "/cookies"},
-    {label: "Terms", to: "/conditions"},
-    {label: "Accessibility", to: "/accessibilite"},
+    {label: "Terms", to: "/terms"},
+    {label: "Accessibility", to: "/accessibility"},
     {label: "Contact", to: "/contact"},
 ];
 

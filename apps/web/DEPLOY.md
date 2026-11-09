@@ -4,7 +4,7 @@ The web app is a static build served by nginx, from `apps/web/Dockerfile`. Task 
 
 ## Before it goes online
 
-The legal pages hold `[… À COMPLÉTER]` placeholders (`src/services/legal.ts`): the editor's name,
+The legal pages hold `[… TO BE COMPLETED]` placeholders (`src/services/legal.ts`): the editor's name,
 address, phone and e-mail, the publication director, the host, and how long the host keeps its logs.
 Fill them, then build with `VITE_PUBLIC_RELEASE=1`: that build **fails** while one placeholder is
 left, or while `VITE_SITE_URL` is unset.

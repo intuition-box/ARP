@@ -1,249 +1,236 @@
 /**
- * The site's legal pages, in French (task 74): legal notice, privacy, cookies, terms, accessibility,
- * contact (cookies and accessibility added in task 76).
+ * The site's legal pages, in English (task 74; translated from French on the user's request,
+ * 2026-11-09): legal notice, privacy, cookies, terms, accessibility, contact (cookies and
+ * accessibility added in task 76).
  *
- * Every personal or host detail is a visible placeholder, `[… À COMPLÉTER]`. `vite.config.ts`
+ * Every personal or host detail is a visible placeholder, `[… TO BE COMPLETED]`. `vite.config.ts`
  * refuses a release build (`VITE_PUBLIC_RELEASE=1`) while one remains, so the site cannot go
  * online with them unfilled. The privacy page lists what the code contacts; when a page starts
  * calling a new host, it belongs here too.
  */
 
-export const LEGAL_SLUGS = [
-    "mentions-legales",
-    "confidentialite",
-    "cookies",
-    "conditions",
-    "accessibilite",
-    "contact",
-] as const;
+export const LEGAL_SLUGS = ["legal-notice", "privacy", "cookies", "terms", "accessibility", "contact"] as const;
 export type LegalSlug = (typeof LEGAL_SLUGS)[number];
 
 /** A paragraph, or a list when it is an array. */
 export type LegalBlock = string | readonly string[];
 export type LegalSection = {heading: string; blocks: readonly LegalBlock[]};
-export type LegalDoc = {title: string; english: string; sections: readonly LegalSection[]};
+export type LegalDoc = {title: string; sections: readonly LegalSection[]};
 
 /** What a placeholder looks like, for the release check and for the page that marks them. */
-export const PLACEHOLDER = /\[[^[\]"]*À COMPLÉTER\]/g;
+export const PLACEHOLDER = /\[[^[\]"]*TO BE COMPLETED\]/g;
 
-const EDITOR = "[NOM ET PRÉNOM DE L'ÉDITEUR À COMPLÉTER]";
-const EMAIL = "[ADRESSE E-MAIL DE CONTACT À COMPLÉTER]";
+const EDITOR = "[PUBLISHER'S FULL NAME TO BE COMPLETED]";
+const EMAIL = "[CONTACT E-MAIL ADDRESS TO BE COMPLETED]";
 const REPO = "https://github.com/intuition-box/ARP";
 
 export const LEGAL: Record<LegalSlug, LegalDoc> = {
-    "mentions-legales": {
-        title: "Mentions légales",
-        english: "Legal notice, in French.",
+    "legal-notice": {
+        title: "Legal notice",
         sections: [
             {
-                heading: "Éditeur",
+                heading: "Publisher",
                 blocks: [
-                    "Ce site est édité par une personne physique, à titre non professionnel :",
+                    "This site is published by a private individual, on a non-professional basis:",
                     [
                         EDITOR,
-                        "[ADRESSE POSTALE DE L'ÉDITEUR À COMPLÉTER]",
-                        "[NUMÉRO DE TÉLÉPHONE DE L'ÉDITEUR À COMPLÉTER]",
+                        "[PUBLISHER'S POSTAL ADDRESS TO BE COMPLETED]",
+                        "[PUBLISHER'S PHONE NUMBER TO BE COMPLETED]",
                         EMAIL,
                     ],
                 ],
             },
             {
-                heading: "Directeur de la publication",
-                blocks: ["[NOM DU DIRECTEUR DE LA PUBLICATION À COMPLÉTER]"],
+                heading: "Publication director",
+                blocks: ["[NAME OF THE PUBLICATION DIRECTOR TO BE COMPLETED]"],
             },
             {
-                heading: "Hébergeur",
+                heading: "Host",
                 blocks: [
                     [
-                        "[RAISON SOCIALE DE L'HÉBERGEUR À COMPLÉTER]",
-                        "[ADRESSE DE L'HÉBERGEUR À COMPLÉTER]",
-                        "[TÉLÉPHONE DE L'HÉBERGEUR À COMPLÉTER]",
+                        "[HOST'S COMPANY NAME TO BE COMPLETED]",
+                        "[HOST'S ADDRESS TO BE COMPLETED]",
+                        "[HOST'S PHONE NUMBER TO BE COMPLETED]",
                     ],
                 ],
             },
             {
-                heading: "Code source",
+                heading: "Source code",
                 blocks: [
-                    `Le code de ce site et d'ARP est public, sous licence MIT : ${REPO}.`,
-                    "Ce site est un test, sur un réseau de test : voir les conditions d'utilisation.",
+                    `The code of this site and of ARP is public, under the MIT licence: ${REPO}.`,
+                    "This site is a test, on a test network: see the terms of use.",
                 ],
             },
         ],
     },
-    confidentialite: {
-        title: "Confidentialité",
-        english: "Privacy policy, in French.",
+    privacy: {
+        title: "Privacy",
         sections: [
             {
-                heading: "En bref",
+                heading: "In short",
                 blocks: [
-                    "ARP ne conserve aucune donnée sur vous. Ce site est un ensemble de fichiers statiques : il n'a ni compte, ni base de données, ni formulaire envoyé à ARP.",
-                    "Pas de cookie, pas de mesure d'audience, pas de publicité, pas de traceur.",
+                    "ARP keeps no data about you. This site is a set of static files: it has no account, no database and no form sent to ARP.",
+                    "No cookie, no audience measurement, no advertising, no tracker.",
                 ],
             },
             {
-                heading: "Responsable du traitement",
-                blocks: [`${EDITOR}, joignable à ${EMAIL}.`],
+                heading: "Data controller",
+                blocks: [`${EDITOR}, reachable at ${EMAIL}.`],
             },
             {
-                heading: "Ce que votre navigateur garde",
+                heading: "What your browser keeps",
                 blocks: [
-                    "Le stockage local de votre navigateur (pas un cookie, et rien n'en sort vers ARP) garde quelques préférences : le parcours choisi dans « Get started », la barre d'activité ouverte ou fermée, le réseau choisi quand la version du site propose le réseau principal et, si vous connectez un portefeuille, l'état de la connexion et les délégations que vous signez. Vous pouvez l'effacer à tout moment depuis les réglages de votre navigateur.",
-                    "Si vous connectez un portefeuille, son adresse est lue dans votre navigateur, pour afficher vos positions. Elle n'est envoyée à aucun serveur d'ARP.",
+                    "Your browser's local storage (not a cookie, and nothing in it leaves for ARP) keeps a few preferences: the path chosen in “Get started”, the activity bar open or closed, the network chosen when this version of the site offers mainnet and, if you connect a wallet, the connection state and the delegations you sign. You can clear it at any time from your browser's settings.",
+                    "If you connect a wallet, its address is read in your browser, to show your positions. It is sent to no ARP server.",
                 ],
             },
             {
-                heading: "Les services que votre navigateur contacte",
+                heading: "The services your browser contacts",
                 blocks: [
-                    "Pour afficher les pages, votre navigateur s'adresse directement à des services tiers, qui voient votre adresse IP et l'heure de la requête :",
+                    "To show the pages, your browser talks directly to third-party services, which see your IP address and the time of the request:",
                     [
-                        "Intuition, pour lire le graphe et le réseau de test (testnet.intuition.sh, testnet.rpc.intuition.systems) ;",
-                        "GitHub (api.github.com, raw.githubusercontent.com), pour lire le fichier d'un skill sur sa page ;",
-                        "la passerelle IPFS ipfs.io, et les adresses d'image que les agents déclarent eux-mêmes, pour leurs images ;",
-                        "les réseaux publics Base, BNB Chain et Ethereum, seulement si vous importez un agent qui y est inscrit ;",
-                        "[ADRESSE DU SERVICE DE CHIFFRES D'ARP À COMPLÉTER, OU RETIRER CETTE LIGNE SI VITE_ARP_API_URL N'EST PAS DÉFINI], pour le nombre d'installations et d'étoiles des skills.",
+                        "Intuition, to read the graph and the test network (testnet.intuition.sh, testnet.rpc.intuition.systems);",
+                        "GitHub (api.github.com, raw.githubusercontent.com), to read a skill's file on its page;",
+                        "the IPFS gateway ipfs.io, and the image addresses agents declare themselves, for their images;",
+                        "the public Base, BNB Chain and Ethereum networks, only if you import an agent registered there;",
+                        "[ADDRESS OF ARP'S FIGURES SERVICE TO BE COMPLETED, OR REMOVE THIS LINE IF VITE_ARP_API_URL IS NOT SET], for skills' install and star counts.",
                     ],
-                    "Les polices sont servies par ce site, pas par Google.",
+                    "Fonts are served by this site, not by Google.",
                 ],
             },
             {
-                heading: "Ce que vous écrivez sur la chaîne",
+                heading: "What you write on the chain",
                 blocks: [
-                    "Une transaction que vous signez est publique et permanente : elle est inscrite sur un réseau que ni ARP ni personne ne peut effacer. Ne signez rien que vous ne voulez pas voir publié.",
+                    "A transaction you sign is public and permanent: it is written to a network that neither ARP nor anyone else can erase. Do not sign anything you do not want published.",
                 ],
             },
             {
-                heading: "Les journaux de l'hébergeur",
+                heading: "The host's logs",
                 blocks: [
-                    "Le serveur qui envoie ces pages tient un journal technique des requêtes (adresse IP, date, page demandée, navigateur), pour la sécurité et le bon fonctionnement. Il est conservé [DURÉE DE CONSERVATION DES JOURNAUX À COMPLÉTER], puis effacé.",
+                    "The server that sends these pages keeps a technical log of requests (IP address, date, page requested, browser), for security and proper operation. It is kept [LOG RETENTION PERIOD TO BE COMPLETED], then erased.",
                 ],
             },
             {
-                heading: "Vos droits",
+                heading: "Your rights",
                 blocks: [
-                    `Vous pouvez demander l'accès, la rectification ou l'effacement des données vous concernant, ou vous opposer à leur traitement, en écrivant à ${EMAIL}. Vous pouvez aussi saisir la CNIL (cnil.fr).`,
+                    `You can ask to access, correct or erase data about you, or object to its processing, by writing to ${EMAIL}. You can also complain to the CNIL, the French data protection authority (cnil.fr).`,
                 ],
             },
         ],
     },
     cookies: {
         title: "Cookies",
-        english: "Cookies, in French.",
         sections: [
             {
-                heading: "Aucun cookie",
+                heading: "No cookie",
                 blocks: [
-                    "Ce site ne dépose lui-même aucun cookie. Il n'utilise ni mesure d'audience, ni publicité, ni bouton de réseau social, ni aucun autre traceur. C'est pourquoi il ne vous demande pas votre consentement : il n'y a rien à accepter ni à refuser.",
+                    "This site sets no cookie of its own. It uses no audience measurement, no advertising, no social network button and no other tracker. That is why it does not ask for your consent: there is nothing to accept or refuse.",
                 ],
             },
             {
-                heading: "Le stockage local de votre navigateur",
+                heading: "Your browser's local storage",
                 blocks: [
-                    "Pour se souvenir de vos choix, le site écrit quelques valeurs dans le stockage local de votre navigateur. Elles restent sur votre appareil, ne sont envoyées à personne et ne servent qu'au fonctionnement que vous avez demandé :",
+                    "To remember your choices, the site writes a few values to your browser's local storage. They stay on your device, are sent to no one and serve only the function you asked for:",
                     [
-                        "le parcours choisi dans « Get started » ;",
-                        "la barre d'activité, ouverte ou fermée ;",
-                        "le réseau choisi, test ou principal, seulement dans une version du site qui propose le réseau principal ;",
-                        "si vous connectez un portefeuille : l'état de la connexion, gardé par la bibliothèque de connexion, et les délégations que vous signez.",
+                        "the path chosen in “Get started”;",
+                        "the activity bar, open or closed;",
+                        "the network chosen, test or main, only in a version of the site that offers mainnet;",
+                        "if you connect a wallet: the connection state, kept by the connection library, and the delegations you sign.",
                     ],
-                    "Ces valeurs sont strictement nécessaires au service que vous demandez ; elles ne requièrent pas de consentement. Vous pouvez les effacer à tout moment en supprimant les données de ce site dans les réglages de votre navigateur.",
+                    "These values are strictly necessary for the service you request; they do not require consent. You can clear them at any time by deleting this site's data in your browser's settings.",
                 ],
             },
             {
-                heading: "Les sites tiers",
+                heading: "Third-party sites",
                 blocks: [
-                    "Les services que votre navigateur contacte pour afficher les pages sont listés dans la page Confidentialité. Le site ne les appelle pas pour vous suivre ; les images que les agents déclarent sont chargées depuis des adresses qu'il ne contrôle pas.",
+                    "The services your browser contacts to show the pages are listed on the Privacy page. The site does not call them to track you; the images agents declare are loaded from addresses it does not control.",
                 ],
             },
         ],
     },
-    conditions: {
-        title: "Conditions d'utilisation",
-        english: "Terms of use, in French.",
+    terms: {
+        title: "Terms of use",
         sections: [
             {
-                heading: "Un test",
+                heading: "A test",
                 blocks: [
-                    "Ce site est une version de test d'ARP. Il fonctionne uniquement sur le réseau de test d'Intuition (testnet, chaîne 13579). Le jeton de ce réseau, le tTRUST, n'a aucune valeur : il ne s'achète pas et ne se revend pas.",
-                    "Ce que vous y lisez peut changer, disparaître ou être faux. Les données du réseau de test peuvent être effacées par ceux qui le font tourner.",
+                    "This site is a test version of ARP. It runs only on Intuition's test network (testnet, chain 13579). That network's token, tTRUST, has no value: it cannot be bought or sold.",
+                    "What you read here can change, disappear or be wrong. The test network's data can be erased by those who run it.",
                 ],
             },
             {
-                heading: "Sans garantie",
+                heading: "No warranty",
                 blocks: [
-                    "Le site et le logiciel sont fournis tels quels, sans garantie d'aucune sorte, ni de disponibilité, ni d'exactitude, ni d'adéquation à un usage. Dans les limites permises par la loi, l'éditeur n'est pas responsable des dommages qui en résulteraient.",
-                    "ARP n'héberge ni ne vérifie les skills, outils et agents qu'il liste : ils appartiennent à leurs auteurs. Ce que vous installez ou payez ailleurs relève de votre décision et des conditions de ces auteurs.",
+                    "The site and the software are provided as is, without warranty of any kind, whether of availability, accuracy or fitness for a purpose. To the extent permitted by law, the publisher is not liable for any resulting damage.",
+                    "ARP neither hosts nor checks the skills, tools and agents it lists: they belong to their authors. What you install or pay for elsewhere is your decision and subject to those authors' terms.",
                 ],
             },
             {
-                heading: "Ce que vous publiez",
+                heading: "What you publish",
                 blocks: [
-                    "Une ligne écrite sur la chaîne est publique, signée par vous et permanente. Vous en êtes responsable.",
+                    "A line written on the chain is public, signed by you and permanent. You are responsible for it.",
                 ],
             },
             {
                 heading: "Licence",
-                blocks: [`Le code d'ARP est un logiciel libre sous licence MIT : ${REPO}.`],
+                blocks: [`ARP's code is free software under the MIT licence: ${REPO}.`],
             },
             {
-                heading: "Droit applicable",
-                blocks: ["Ces conditions sont régies par le droit français."],
+                heading: "Governing law",
+                blocks: ["These terms are governed by French law."],
             },
         ],
     },
-    accessibilite: {
-        title: "Accessibilité",
-        english: "Accessibility statement, in French.",
+    accessibility: {
+        title: "Accessibility",
         sections: [
             {
-                heading: "État de conformité",
+                heading: "Compliance status",
                 blocks: [
-                    "Ce site n'a pas fait l'objet d'un audit de conformité au référentiel général d'amélioration de l'accessibilité (RGAA). Il n'est donc pas déclaré conforme. C'est un site de test, édité par une personne physique.",
+                    "This site has not been audited against the French accessibility framework (RGAA). It is therefore not declared compliant. It is a test site, published by a private individual.",
                 ],
             },
             {
-                heading: "Ce qui est fait",
+                heading: "What is done",
                 blocks: [
                     [
-                        "les couleurs du texte respectent le contraste AA des WCAG sur fond sombre, vérifié par un script du code source ;",
-                        "les éléments interactifs sont conçus pour être atteignables au clavier, avec un indicateur de focus visible ;",
-                        "les aides « ? » s'ouvrent au survol et au focus clavier ;",
-                        "les champs de formulaire ont une étiquette et les boutons à icône un nom accessible ;",
-                        "les animations s'arrêtent quand votre système demande moins de mouvement ;",
-                        "les pages de documentation existent aussi en texte brut (/docs/<page>.md, ou toutes ensemble dans /llms-full.txt), avec les schémas sous forme de texte.",
+                        "text colours meet the WCAG AA contrast ratio on the dark background, checked by a script in the source code;",
+                        "interactive elements are designed to be reachable with the keyboard, with a visible focus indicator;",
+                        "the “?” hints open on hover and on keyboard focus;",
+                        "form fields have a label and icon buttons an accessible name;",
+                        "animations stop when your system asks for reduced motion;",
+                        "the documentation pages also exist as plain text (/docs/<page>.md, or all together in /llms-full.txt), with the diagrams as text.",
                     ],
                 ],
             },
             {
-                heading: "Limites connues",
+                heading: "Known limits",
                 blocks: [
                     [
-                        "la page d'accueil fait défiler des scènes au rythme de la molette ; elle reste lisible en défilement normal quand votre système demande moins de mouvement, ou sur un petit écran ;",
-                        "les schémas de la documentation sont des images sans description longue : leur texte source est dans la version brute ;",
-                        "le site n'existe qu'en thème sombre ;",
-                        "les pages juridiques sont en français, le reste du site en anglais.",
+                        "the home page moves through scenes with the scroll wheel; it stays readable with normal scrolling when your system asks for reduced motion, or on a small screen;",
+                        "the documentation's diagrams are images without a long description: their source text is in the plain-text version;",
+                        "the site exists in a dark theme only.",
                     ],
                 ],
             },
             {
-                heading: "Signaler un problème",
+                heading: "Report a problem",
                 blocks: [
-                    `Si un contenu ou une fonction vous est inaccessible, écrivez à ${EMAIL} ou ouvrez une issue sur ${REPO}/issues. Nous chercherons une alternative ou une correction.`,
+                    `If some content or function is inaccessible to you, write to ${EMAIL} or open an issue at ${REPO}/issues. We will look for an alternative or a fix.`,
                 ],
             },
         ],
     },
     contact: {
         title: "Contact",
-        english: "Contact, in French.",
         sections: [
             {
-                heading: "Écrire",
+                heading: "Write",
                 blocks: [EMAIL],
             },
             {
-                heading: "Un problème ou une question sur ARP",
-                blocks: [`Ouvrez une issue sur ${REPO}/issues.`],
+                heading: "A problem or a question about ARP",
+                blocks: [`Open an issue at ${REPO}/issues.`],
             },
         ],
     },

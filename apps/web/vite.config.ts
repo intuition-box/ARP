@@ -60,7 +60,7 @@ const SITEMAP_PATHS = [
  * The public site's build (task 74).
  *
  * - A **release** build (`VITE_PUBLIC_RELEASE=1`) fails while a legal page still holds a
- *   `[… À COMPLÉTER]` placeholder, so the site cannot go online with them unfilled.
+ *   `[… TO BE COMPLETED]` placeholder, so the site cannot go online with them unfilled.
  * - `robots.txt` and `sitemap.xml` are written with `VITE_SITE_URL`, the address the site is served
  *   at; without it there is no absolute URL to give, so no sitemap is written and robots says so.
  */

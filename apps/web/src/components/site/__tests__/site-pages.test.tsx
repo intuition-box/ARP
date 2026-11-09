@@ -19,25 +19,24 @@ describe("the site's own pages (task 74)", () => {
         expect(screen.getByRole("link", {name: "Agents"}).getAttribute("href")).toBe("/agents");
     });
 
-    it("prints the legal notice in French, says so in English, and shows a blank as a blank", async () => {
-        renderAt("/mentions-legales");
-        expect(await screen.findByRole("heading", {name: "Mentions légales"})).toBeTruthy();
-        expect(screen.getByText("Legal notice, in French.")).toBeTruthy();
-        expect(screen.getByText("[NOM ET PRÉNOM DE L'ÉDITEUR À COMPLÉTER]")).toBeTruthy();
+    it("prints the legal notice in English, and shows a blank as a blank", async () => {
+        renderAt("/legal-notice");
+        expect(await screen.findByRole("heading", {name: "Legal notice"})).toBeTruthy();
+        expect(screen.getByText("[PUBLISHER'S FULL NAME TO BE COMPLETED]")).toBeTruthy();
     });
 
     it("says there is no cookie, and says what the browser keeps instead", async () => {
         renderAt("/cookies");
         expect(await screen.findByRole("heading", {name: "Cookies"})).toBeTruthy();
-        expect(screen.getByRole("heading", {name: "Aucun cookie"})).toBeTruthy();
-        expect(screen.getByRole("heading", {name: "Le stockage local de votre navigateur"})).toBeTruthy();
+        expect(screen.getByRole("heading", {name: "No cookie"})).toBeTruthy();
+        expect(screen.getByRole("heading", {name: "Your browser's local storage"})).toBeTruthy();
     });
 
     it("states plainly that accessibility was not audited, and how to report a problem", async () => {
-        renderAt("/accessibilite");
-        expect(await screen.findByRole("heading", {name: "Accessibilité"})).toBeTruthy();
-        expect(screen.getByText(/n'a pas fait l'objet d'un audit/)).toBeTruthy();
-        expect(screen.getByRole("heading", {name: "Signaler un problème"})).toBeTruthy();
+        renderAt("/accessibility");
+        expect(await screen.findByRole("heading", {name: "Accessibility"})).toBeTruthy();
+        expect(screen.getByText(/has not been audited/)).toBeTruthy();
+        expect(screen.getByRole("heading", {name: "Report a problem"})).toBeTruthy();
     });
 
     it("prints the public list of what is hidden, from the file the filter reads", async () => {
@@ -54,11 +53,11 @@ describe("the site's own pages (task 74)", () => {
         expect(screen.queryByRole("link", {name: "Hidden here"})).toBeNull();
         expect(screen.queryByRole("link", {name: "llms.txt"})).toBeNull();
         expect(href("GitHub")).toBe("https://github.com/intuition-box/ARP");
-        expect(href("Legal notice")).toBe("/mentions-legales");
-        expect(href("Privacy")).toBe("/confidentialite");
+        expect(href("Legal notice")).toBe("/legal-notice");
+        expect(href("Privacy")).toBe("/privacy");
         expect(href("Cookies")).toBe("/cookies");
-        expect(href("Terms")).toBe("/conditions");
-        expect(href("Accessibility")).toBe("/accessibilite");
+        expect(href("Terms")).toBe("/terms");
+        expect(href("Accessibility")).toBe("/accessibility");
         expect(href("Contact")).toBe("/contact");
     });
 });
