@@ -110,7 +110,9 @@ export function AgentDirectory() {
                 {/* One cell per fact, and only facts. The reference has three — AGENTS, STAKED,
                     RECEIPTS — and the other two would be fabricated here: the cohort read does not
                     sum staked value across the index, and receipts do not exist. */}
-                <dl className="flex overflow-hidden rounded-[var(--radius-card)] border border-[color:var(--color-rule)]">
+                {/* No `overflow-hidden`: it clipped the Reachable hint inside the strip. The cells
+                    paint no background, so the rounded corners need no clipping. */}
+                <dl className="flex rounded-[var(--radius-card)] border border-[color:var(--color-rule)]">
                     <Fact label="In the index">
                         {view?.total === null || view === undefined
                             ? "—"

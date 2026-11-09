@@ -65,7 +65,7 @@ export function Hint({
                     // is 220px, which is already narrower than any phone; the `min()` only engages
                     // below a 252px viewport, so it is a floor rather than the thing that makes it
                     // fit. An earlier version of this comment credited it with the fit.
-                    className={`absolute bottom-[calc(100%+6px)] ${align === "right" ? "right-0" : "left-0"} z-10 w-[min(220px,calc(100vw-2rem))] rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-raised)] px-3 py-2 text-[length:var(--text-body-sm)] leading-[var(--leading-body)] text-[color:var(--color-silver)]`}
+                    className={`absolute bottom-[calc(100%+6px)] ${align === "right" ? "right-0" : "left-0"} z-10 w-[min(220px,calc(100vw-2rem))] rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-raised)] px-3 py-2 font-sans text-[length:var(--text-body-sm)] font-normal leading-[var(--leading-body)] tracking-normal normal-case text-[color:var(--color-silver)]`}
                 >
                     {children}
                 </span>
