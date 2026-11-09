@@ -617,13 +617,14 @@ export function GalaxyField({
                 if (atom.kind === "reader") show = current === 2 || (current === 3 && !small);
                 if (current === 2 && atom.kind === "claim") show = show && readKey === atom.key;
                 if (current === 3 && atom.kind === "claim") show = false;
-                // Scene 1 names only the line's own words and the claim being written: six agents'
-                // ids side by side cover each other and the ring's name.
+                // Scene 1 names a claim while it is being written, and lets the name go after: the
+                // panel's sentence holds the words, and names left on the field cover each other,
+                // the neighbouring dots and the ring's name. Still, the line's own words stay.
                 const ownWord =
                     atom.key === line?.keys.agent ||
                     atom.key === line?.keys.context ||
                     atom.key === line?.keys.outcome;
-                if (current === 1 && atom.kind === "claim" && !ownWord && atom.hl < 0.3)
+                if (current === 1 && atom.kind === "claim" && !(still ? ownWord : atom.hl >= 0.3))
                     show = false;
                 show =
                     show &&
