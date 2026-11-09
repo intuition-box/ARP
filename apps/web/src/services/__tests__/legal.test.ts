@@ -19,4 +19,11 @@ describe("the legal pages (task 74)", () => {
         expect(left.length).toBeGreaterThan(0);
         expect(left.every((entry) => entry.startsWith("[") && entry.endsWith("TO BE COMPLETED]"))).toBe(true);
     });
+
+    it("misses no bracketed blank: every [ … ] in the text is one the release check sees", () => {
+        // A blank worded so that the pattern skips it would go online printed as is.
+        const brackets = JSON.stringify(LEGAL).match(/\[[^[\]"]*\]/g) ?? [];
+        expect(brackets.length).toBeGreaterThan(0);
+        expect([...brackets].sort()).toEqual([...remainingPlaceholders()].sort());
+    });
 });

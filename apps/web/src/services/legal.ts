@@ -93,7 +93,7 @@ export const LEGAL: Record<LegalSlug, LegalDoc> = {
                         "GitHub (api.github.com, raw.githubusercontent.com), to read a skill's file on its page;",
                         "the IPFS gateway ipfs.io, and the image addresses agents declare themselves, for their images;",
                         "the public Base, BNB Chain and Ethereum networks, only if you import an agent registered there;",
-                        "[ADDRESS OF ARP'S FIGURES SERVICE TO BE COMPLETED, OR REMOVE THIS LINE IF VITE_ARP_API_URL IS NOT SET], for skills' install and star counts.",
+                        "[ADDRESS OF ARP'S FIGURES SERVICE, OR REMOVE THIS LINE IF VITE_ARP_API_URL IS NOT SET, TO BE COMPLETED], for skills' install and star counts.",
                     ],
                     "Fonts are served by this site, not by Google.",
                 ],
