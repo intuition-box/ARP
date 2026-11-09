@@ -10,8 +10,8 @@ The old ladder ranked a signal by **what it cost to produce**. It no longer desc
 
 - **Proven** was an action passed by a delegation enforcer. `TrustStakeCapEnforcer` was built to cap an
   operator's spend under that operator's delegation, but it never fired on mainnet (0 `StakeCapChecked`
-  logs, `scripts/measure/enforcer-events.ts`, 2026-10-27, `security.md`), the only delegations ever signed
-  were ARP's own operator's, and delegations were set aside on 2026-11-03.
+  logs, `scripts/measure/enforcer-events.ts`, 2026-10-27, `security.md`), the only delegations ARP knows of
+  were its own operator's, and delegations were set aside on 2026-11-03.
 - **Staked** was "capital that can be lost". A sponsored line costs its writer nothing, and the score
   never reads the deposit (ADR `0138`). By that definition ARP's lines were rated, not staked.
 - **Asserted** and **rated** are what ARP now produces itself: the identity through the sponsor and
@@ -65,7 +65,7 @@ there is no second vocabulary for agents.
 
 This is where an enforcer earns its place: it bounds what **your** agent spends of **your** credits
 with another agent, which is the product (`docs/12` point 5, `security.md` row 3). Until now the only
-delegations signed were ARP's own operator's.
+delegations ARP knows of were its own operator's.
 
 **Reuse audited code, build as little as possible** (the user, 2026-11-09):
 

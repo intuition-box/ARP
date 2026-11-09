@@ -1,6 +1,6 @@
 # Task 76 — The evidence ladder, ordered by who produced the signal
 
-**Status:** in progress, 2026-11-09, on `docs/76-the-ladder` (worktree `../ARP-tree`), not pushed.
+**Status:** verified 2026-11-09, `task-verifier` PASS (round 2), post-mortem `learning/67`, on `docs/76-the-ladder` (worktree `../ARP-tree`), not pushed.
 **ADR:** `0147`.
 **Rules:** `workflow.md`, `claims.md`. Docs only (the user: « pour le moment on définit les docs »).
 

@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-73 entries, one per completed task. Written by `task-verifier` on a pass.
+74 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -79,3 +79,4 @@
 | [64](64-the-tree-grows.md) | `docs/tasks/73-the-tree-grows.md` | PASS | The domain tree grows from the agents |
 | [65](65-the-public-site.md) | `docs/tasks/74-the-public-site.md` | PASS (round 3) | The public site, and everything around it |
 | [66](66-a-line-adds-its-domain.md) | `docs/tasks/75-a-line-adds-its-domain.md` | PASS | A line adds the domain it names |
+| [67](67-the-ladder.md) | `docs/tasks/76-the-ladder.md` | PASS (round 2; round 1 FAIL on six claims items) | The evidence ladder, ordered by who produced the signal |
