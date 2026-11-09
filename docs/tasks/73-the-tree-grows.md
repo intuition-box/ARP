@@ -1,6 +1,6 @@
 # Task 73 — The domain tree grows from the agents
 
-**Status:** **verified 2026-11-09** (`task-verifier` PASS, `.claude/learning/63-the-tree-grows.md`; `ui-reviewer` and `intuition-integrator` PASS), on `feat/73-tree-grows` (worktree `../ARP-tree`), not pushed. Merges after 72 and 74, rebased.
+**Status:** **verified 2026-11-09** (`task-verifier` PASS, `.claude/learning/64-the-tree-grows.md`; `ui-reviewer` and `intuition-integrator` PASS), on `feat/73-tree-grows` (worktree `../ARP-tree`), not pushed. Merges after 72 and 74, rebased.
 **ADR:** `0146`. Builds on task 59 (ADR `0115`, `0124`), whose last eight commits were archived
 unmerged (`archive/feat/59-category-step`) and are replayed on this branch.
 **Rules:** `code.md`, `security.md`, `portability.md`, `ui.md` (the web step), `claims.md`, `workflow.md`.

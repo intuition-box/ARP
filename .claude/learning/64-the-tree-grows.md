@@ -1,4 +1,4 @@
-# 63 — The domain tree grows from the agents
+# 64 — The domain tree grows from the agents
 
 **Task:** `docs/tasks/73-the-tree-grows.md`
 **Completed:** 2026-11-09
