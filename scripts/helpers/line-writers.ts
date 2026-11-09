@@ -5,8 +5,15 @@ import deployment from "../../data/deployments/13579.json";
 import {multiVaultReads} from "../../packages/protocol/src/declare/multivault.ts";
 import {BECAUSE_LABEL, HAS_OUTCOME_LABEL} from "../../packages/protocol/src/declare/usage-context.ts";
 
-/** The signers recorded in `data/measurements/pulse-walk-2026-11-05.jsonl`: the user's own key and ARP's treasury. */
-const OUR_WALLETS = ["0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f", "0xE596096F4176b682E300d73963e7B04B383C1AA1"] as const;
+/**
+ * The signers recorded in `data/measurements/pulse-walk-2026-11-05.jsonl`: the user's own key and
+ * ARP's treasury; and since 2026-11-09 the hosted sponsor's own key (ADR `0149`), whose lines are ARP's too.
+ */
+const OUR_WALLETS = [
+    "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+    "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+    "0x77939A4c276f3E549276CEB3A09CDa1fF58b7ec9",
+] as const;
 export const OURS = new Set(OUR_WALLETS.map((wallet) => wallet.toLowerCase()));
 export const USES = "0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800"; // as in `scripts/measure/line-cost.ts`
 const PAGE = 250;

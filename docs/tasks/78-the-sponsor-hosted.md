@@ -1,6 +1,6 @@
 # Task 78 — The sponsor, hosted beside the site
 
-**Status:** built and verified, 2026-11-09; waits on the new key's address.
+**Status:** built and verified, 2026-11-09; the new key's address recorded; waits on its funding and on Coolify.
 **Decision:** the user, 2026-11-09: « le sponsor et la landing iront dans un seul project coolify »;
 the public host name is a variable filled in Coolify; the hosted sponsor gets **a new key**, not the
 deployer's (which holds real TRUST on mainnet 1155). ADR `0149`.
@@ -49,3 +49,12 @@ Checked: protocol vitest 1163 passed, 4 skipped; sponsor tsc and 135 tests; MCP 
 was built and run with a throwaway unfunded key: the public `Host` answered 200, another 403; files
 planted in the context (`.dev.vars`, `.wrangler`, `.agents`, a `.key`) were absent from it; the
 service restarted after `docker stop` and after `docker kill`.
+
+## The new key, 2026-11-09
+
+The user created it and gave its address, `0x77939A4c276f3E549276CEB3A09CDa1fF58b7ec9` (checksum
+verified). It is in `data/deployments/13579.json` `arp.sponsor` (the old address kept as
+`sponsorV1`), in `ARP_DOMAIN_ATTESTORS`, and in `scripts/helpers/line-writers.ts` `OUR_WALLETS`, so
+its lines are counted as ARP's in `scripts/measure/proof-of-work.ts`. Its testnet balance read 0 on
+2026-11-09. `docs/31_HOW_IT_WORKS.md:159` and the site's pages still say the sponsor runs on one
+machine, which stays true until it is deployed.
