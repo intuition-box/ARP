@@ -9,7 +9,7 @@ import {
 } from "react";
 import {Link, useLocation} from "react-router-dom";
 
-import {isCurrentSection, useRetractOnScroll} from "./nav-coin";
+import {isCurrentSection} from "./nav-coin";
 import {TrailContext, type Trail} from "./nav-trail";
 import {SourceMark} from "./SourceMark";
 
@@ -25,17 +25,11 @@ import {SourceMark} from "./SourceMark";
  *
  * ## The circle and the bar are one outline
  *
- * The coin has the bar's own background and border. A **seam** (a block of the bar's background,
- * inside the coin, under the mark) hides the coin's right arc between the bar's top and bottom
- * edges, so the circle's outline runs straight into the bar's: one shape, a circle drawn out into a
- * bar. The seam's box is measured against the two sizes below; change a size and re-measure it.
- *
- * ## It retracts into the circle when you scroll down
- *
- * The one motion the user asked for (_« elle se rétracte dans le cercle de gauche quand on scroll
- * vers le bas »_): scrolling down past 140px folds the bar back into the coin and the seam fades,
- * so the circle closes. Scrolling up, or pressing the coin, brings it back. Under
- * `prefers-reduced-motion` it switches without easing. Driven by scroll, never by the pointer.
+ * The circle sits at the bar's left, the mark inside it and « ARP » right of it in the bar. The
+ * bar and the circle are glass (user, 2026-11-09): translucent over a background blur. The bar is
+ * cut out under the circle so two translucent layers never overlap, and the circle's outline is
+ * masked between the bar's edges so it runs into the bar's: one shape. Nothing moves on scroll; the
+ * retract that was here put the circle on the page's text.
  *
  * ## Phone
  *
@@ -116,17 +110,6 @@ export function NavCoin({
     // Open for the path it was opened on: a route change closes it without an effect.
     const [openOn, setOpenOn] = useState<string | null>(null);
     const open = openOn === pathname;
-    const sheetOpenRef = useRef(open);
-    useEffect(() => {
-        sheetOpenRef.current = open;
-    });
-    const headerRef = useRef<HTMLElement>(null);
-    // Read from a scroll listener, so through refs: the open sheet and the focus as they are then.
-    // Keyboard focus only: a tab clicked with the mouse keeps focus too, and that must not pin the
-    // bar open for the rest of the visit.
-    const [retracted, setRetracted] = useRetractOnScroll(
-        () => !sheetOpenRef.current && headerRef.current?.querySelector(":focus-visible") == null,
-    );
     const setOpen = (next: boolean) => setOpenOn(next ? pathname : null);
     const sheetId = useId();
     const menuRef = useRef<HTMLButtonElement>(null);
@@ -134,12 +117,6 @@ export function NavCoin({
     const current = tabs.find((tab) => isCurrentSection(tab.to, pathname));
     const startCurrent = isCurrentSection(start.section, pathname);
     const onCoin = (event: MouseEvent<HTMLAnchorElement>) => {
-        // Retracted, the coin is the way back to the bar, not a link home.
-        if (retracted) {
-            event.preventDefault();
-            setRetracted(false);
-            return;
-        }
         // Home on the page already open: the path does not change, so `ScrollToTop` never fires
         // and the reader stayed at the deck's last scene (user, 2026-11-09). Back to the top, and
         // any `#scene` hash dropped so a reload does not glide back down.
@@ -174,33 +151,19 @@ export function NavCoin({
     }, [open]);
 
     return (
-        <header
-            ref={headerRef}
-            className={`arp-coin ${retracted ? "is-retracted" : ""}`}
-            // Focus arriving in the nav (Shift+Tab from the page) brings the bar back, so the
-            // next Tab reaches a tab rather than nothing.
-            // Keyboard only: a mouse press on the retracted coin also focuses it, and expanding
-            // then would turn the click that follows into a trip home.
-            onFocus={(event) => {
-                if (event.target instanceof Element && event.target.matches(":focus-visible"))
-                    setRetracted(false);
-            }}
-        >
+        <header className="arp-coin">
             <div className="arp-coin-bar">
-                <Link
-                    to="/"
-                    className="arp-coin-coin"
-                    aria-label={retracted ? "Show the navigation" : "ARP, home"}
-                    // Retracted, it discloses the bar, so it says the bar is collapsed.
-                    {...(retracted ? {"aria-expanded": false} : {})}
-                    onClick={onCoin}
-                >
-                    <span className="arp-coin-seam" aria-hidden="true" />
+                <Link to="/" className="arp-coin-coin" aria-label="ARP, home" onClick={onCoin}>
                     {/* Two rings, scaled up by CSS: the look the user approved. */}
-                    <span className="arp-coin-mark">
+                    <span className="arp-coin-mark" aria-hidden="true">
                         <SourceMark size={56} />
                     </span>
                 </Link>
+                {/* The name, right of the circle, inside the bar (user, 2026-11-09). The circle
+                    already carries the accessible name, so this is not read twice. */}
+                <span className="arp-coin-name" aria-hidden="true">
+                    ARP
+                </span>
 
                 <nav className="arp-coin-track" aria-label="Main">
                     {tabs.map((tab) => (

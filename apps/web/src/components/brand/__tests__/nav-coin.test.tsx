@@ -51,8 +51,7 @@ function renderAt(
 
 /**
  * The coin nav. What a type checker cannot see: which tab is current (the old prefix rule lit the
- * wrong one once), that the sheet answers the keyboard, and that the bar retracts on scroll down
- * and comes back on scroll up.
+ * wrong one once), that the sheet answers the keyboard, and that the bar stays put on scroll.
  */
 describe("NavCoin", () => {
     it("marks the current tab, and somebody else's agent belongs to Agents", () => {
@@ -128,17 +127,13 @@ describe("NavCoin", () => {
         ).toBe("Agents");
     });
 
-    it("retracts on scroll down and comes back on scroll up or on the coin", () => {
+    it("shows ARP beside the mark, and nothing moves on scroll", () => {
         const {container} = renderAt("/tools");
-        const header = container.querySelector(".arp-coin")!;
+        expect(screen.getByRole("link", {name: "ARP, home"})).toBeTruthy();
+        expect(container.querySelector(".arp-coin-bar .arp-coin-name")!.textContent).toBe("ARP");
+        const before = container.querySelector(".arp-coin")!.className;
         scrollTo(400);
-        expect(header.classList.contains("is-retracted")).toBe(true);
-        scrollTo(300);
-        expect(header.classList.contains("is-retracted")).toBe(false);
-        scrollTo(600);
-        const coin = screen.getByRole("link", {name: "Show the navigation"});
-        fireEvent.click(coin);
-        expect(header.classList.contains("is-retracted")).toBe(false);
+        expect(container.querySelector(".arp-coin")!.className).toBe(before);
         scrollTo(0);
     });
 
@@ -167,36 +162,5 @@ describe("NavCoin", () => {
         fireEvent.click(screen.getByRole("link", {name: "ARP, home"}));
         expect(scroll).not.toHaveBeenCalledWith({top: 0, left: 0, behavior: "instant"});
         scroll.mockRestore();
-    });
-
-    it("does not retract while the phone sheet is open", () => {
-        const {container} = renderAt("/tools");
-        fireEvent.click(screen.getByRole("button", {name: "Menu"}));
-        scrollTo(0);
-        scrollTo(400);
-        expect(container.querySelector(".arp-coin")!.classList.contains("is-retracted")).toBe(
-            false,
-        );
-        scrollTo(0);
-    });
-
-    it("does not retract while a tab holds keyboard focus", () => {
-        const {container} = renderAt("/tools");
-        const tab = screen.getByRole("navigation", {name: "Main"}).querySelector("a")!;
-        tab.focus();
-        const visible = vi.spyOn(Element.prototype, "querySelector").mockImplementation(function (
-            this: Element,
-            selector: string,
-        ) {
-            return selector === ":focus-visible" ? tab : null;
-        });
-        scrollTo(0);
-        scrollTo(400);
-        visible.mockRestore();
-        expect(container.querySelector(".arp-coin")!.classList.contains("is-retracted")).toBe(
-            false,
-        );
-        expect(document.activeElement).toBe(tab);
-        scrollTo(0);
     });
 });

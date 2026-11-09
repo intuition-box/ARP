@@ -127,6 +127,8 @@
 
     /* Archivo carries display at 800/125% width and prose at 400–700 normal.
        Geist Mono carries every address, id, hash, amount, timestamp and label. */
+    /* The nav's glass (user, 2026-11-09): the panel colour, translucent over a blur. */
+    --glass-bar: color-mix(in srgb, var(--color-bg) 80%, transparent);
     --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
     --font-sans: "Archivo", system-ui, sans-serif;
     --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -1021,7 +1023,7 @@ a.arp-cf-card:hover {
     position: sticky;
     top: 0;
     z-index: 20;
-    background: var(--color-ground);
+    /* No band: only the bar and its circle carry a background (user, 2026-11-09). */
     padding: 20px 22px 14px 26px;
 }
 
@@ -1039,12 +1041,32 @@ a.arp-cf-card:hover {
        to the header's edge on any viewport wider than the bar. */
     margin: 0 auto 0 max(0px, calc((100% - 1320px) / 2));
     padding: 0 10px 0 64px;
-    border: 1px solid var(--color-rule-strong);
     border-radius: 14px;
-    background: var(--color-bg);
-    transition:
-        width 380ms var(--ease-out-quart),
-        margin-left 380ms var(--ease-out-quart);
+}
+
+/* The bar's glass and outline, on a layer of their own (user, 2026-11-09): translucent over a blur
+   of what scrolls under it; no shadow, glow or gradient (rules/ui.md). A layer, because the cut-out
+   below would also cut the circle if it were on the bar itself. Two translucent layers where the
+   circle overlaps the bar would read darker, so this one is cut out under the circle: its centre
+   is 26px from the bar's left edge (left -14px + 40px), its radius 40px. */
+.arp-coin .arp-coin-bar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: inherit;
+    background: var(--glass-bar);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-mask: radial-gradient(circle 40px at 26px 50%, transparent 99.5%, #000 100%);
+    mask: radial-gradient(circle 40px at 26px 50%, transparent 99.5%, #000 100%);
+    pointer-events: none;
+}
+
+.arp-coin .arp-coin-bar > * {
+    position: relative;
+    z-index: 1;
 }
 
 /* The circle: the bar's own background and border, a little taller than it. */
@@ -1058,24 +1080,35 @@ a.arp-cf-card:hover {
     width: 80px;
     height: 80px;
     margin-top: -40px;
-    border: 1px solid var(--color-rule-strong);
     border-radius: 999px;
-    background: var(--color-bg);
-    transform-origin: left center;
-    transition: transform 380ms var(--ease-out-quart);
+    background: var(--glass-bar);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    backdrop-filter: blur(14px) saturate(1.2);
 }
 
-/* Hides the circle's right arc between the bar's top and bottom edges, so the
-   two outlines read as one. Measured: the bar's edges cross the circle at
-   y = 11 and y = 69 of its 80px box. */
-.arp-coin .arp-coin-seam {
+/* Where the blur is not supported, the glass is opaque, so text never shows through unblurred. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .arp-coin {
+        --glass-bar: var(--color-bg);
+    }
+}
+
+/* The circle's outline, without its right arc between the bar's top and bottom edges (y = 11 and
+   y = 69 of its 80px box), so it runs straight into the bar's outline: one shape. A mask rather
+   than the old opaque seam, which a translucent bar would show. */
+.arp-coin .arp-coin-coin::before {
+    content: "";
     position: absolute;
-    top: 11px;
-    left: 39px;
-    width: 44px;
-    height: 56px;
-    background: var(--color-bg);
-    transition: opacity 200ms 180ms;
+    inset: 0;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: inherit;
+    pointer-events: none;
+    -webkit-mask:
+        linear-gradient(to right, #000 40px, transparent 40px),
+        linear-gradient(to bottom, #000 11px, transparent 11px, transparent 69px, #000 69px);
+    mask:
+        linear-gradient(to right, #000 40px, transparent 40px),
+        linear-gradient(to bottom, #000 11px, transparent 11px, transparent 69px, #000 69px);
 }
 
 .arp-coin .arp-coin-mark {
@@ -1087,6 +1120,18 @@ a.arp-cf-card:hover {
 .arp-coin .arp-coin-mark svg {
     width: 76px;
     height: 76px;
+}
+
+.arp-coin .arp-coin-name {
+    grid-column: 1;
+    justify-self: start;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-stretch: 125%;
+    font-size: 20px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--color-fg);
 }
 
 .arp-coin .arp-coin-track {
@@ -1279,53 +1324,6 @@ a.arp-cf-card:hover {
     gap: 10px;
 }
 
-/* Retracted: the bar folds back into the circle and the circle closes. */
-.arp-coin.is-retracted .arp-coin-bar {
-    width: 52px;
-    padding: 0;
-    /* Out of the content's column and into the window's left edge, so the coin does not sit on
-       the page's first column of text (user, 2026-11-09, with a screenshot of /tools). */
-    margin-left: 0;
-    /* The bar's own box would show as a frame beside the smaller coin. */
-    border-color: transparent;
-    background: transparent;
-}
-
-/* Smaller once retracted: 56px instead of 80, from its left edge, so it fits the margin the
-   content leaves on a wide window. Below about 1370px there is no margin left and the coin, which
-   keeps its opaque background, covers the page's edge. */
-.arp-coin.is-retracted .arp-coin-coin {
-    transform: scale(0.7);
-}
-
-.arp-coin.is-retracted .arp-coin-bar > :not(.arp-coin-coin),
-.arp-coin.is-retracted .arp-coin-sheet {
-    display: none;
-}
-
-/* Hidden, not removed: the header keeps its height, so retracting never moves
-   the page. A height change shifts the scroll position, which reads as a
-   scroll up and expands the bar again, in a loop. */
-.arp-coin.is-retracted .arp-coin-trail {
-    visibility: hidden;
-}
-
-.arp-coin.is-retracted .arp-coin-seam {
-    opacity: 0;
-}
-
-/* Retracted, the coin is all there is: the header keeps its height (above)
-   but drops its band, so the page reads through it and takes its clicks.
-   Only the coin answers the pointer (user, 2026-11-09, with a screenshot). */
-.arp-coin.is-retracted {
-    background: transparent;
-    pointer-events: none;
-}
-
-.arp-coin.is-retracted .arp-coin-coin {
-    pointer-events: auto;
-}
-
 /* Phone, measured on the component's own width. */
 /* The header's own padding cannot follow its own container query: a container
    query matches ancestors, never the container itself. The viewport stands in. */
@@ -1337,10 +1335,15 @@ a.arp-cf-card:hover {
 
 @container (max-width: 859px) {
     .arp-coin .arp-coin-bar {
-        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-columns: auto minmax(0, 1fr) auto;
         gap: 10px;
         height: 52px;
         padding: 0 8px 0 54px;
+    }
+
+    .arp-coin .arp-coin-bar::before {
+        -webkit-mask: radial-gradient(circle 32px at 22px 50%, transparent 99.5%, #000 100%);
+        mask: radial-gradient(circle 32px at 22px 50%, transparent 99.5%, #000 100%);
     }
 
     .arp-coin .arp-coin-coin {
@@ -1350,11 +1353,14 @@ a.arp-cf-card:hover {
         margin-top: -32px;
     }
 
-    .arp-coin .arp-coin-seam {
-        top: 6px;
-        left: 31px;
-        width: 33px;
-        height: 50px;
+    /* Bar edges at y = 6 and y = 58 of the 64px circle. */
+    .arp-coin .arp-coin-coin::before {
+        -webkit-mask:
+            linear-gradient(to right, #000 32px, transparent 32px),
+            linear-gradient(to bottom, #000 6px, transparent 6px, transparent 58px, #000 58px);
+        mask:
+            linear-gradient(to right, #000 32px, transparent 32px),
+            linear-gradient(to bottom, #000 6px, transparent 6px, transparent 58px, #000 58px);
     }
 
     .arp-coin .arp-coin-mark svg {
@@ -1368,7 +1374,7 @@ a.arp-cf-card:hover {
 
     .arp-coin .arp-coin-here {
         display: flex;
-        grid-column: 1;
+        grid-column: 2;
         justify-self: start;
     }
 
@@ -1378,7 +1384,7 @@ a.arp-cf-card:hover {
     }
 
     .arp-coin .arp-coin-end {
-        grid-column: 2;
+        grid-column: 3;
     }
 
     .arp-coin .arp-coin-end > .arp-coin-start,
@@ -1396,18 +1402,6 @@ a.arp-cf-card:hover {
         overflow: hidden;
         white-space: nowrap;
         padding-top: 18px;
-    }
-
-    .arp-coin.is-retracted .arp-coin-bar {
-        width: 40px;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .arp-coin .arp-coin-bar,
-    .arp-coin .arp-coin-coin,
-    .arp-coin .arp-coin-seam {
-        transition: none;
     }
 }
 

@@ -323,10 +323,9 @@ function drawSeeds(
 
         // The farthest corner of the viewport, the real top included. Until 2026-11-09 this
         // stopped at `NAV`, on the premise that an opaque sticky nav hid the band above it. The
-        // coin nav (ADR `0151`) retracts on scroll and its band goes transparent, so on the deck
-        // the top band is visible and the cover left it dark, with the top-left corner, at the
-        // frame a scene swaps. Reaching the real corners covers a band the opaque nav hides when
-        // it is expanded, which costs nothing.
+        // nav's band has been translucent since 2026-11-09 (it was a retracting coin before), so
+        // on the deck the top band is visible and the cover must reach it, with the top-left
+        // corner, at the frame a scene swaps.
         const far =
             Math.max(
                 ...(
