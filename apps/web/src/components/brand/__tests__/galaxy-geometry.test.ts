@@ -97,10 +97,10 @@ describe("the field", () => {
         expect(angle(one)).not.toBeCloseTo(angle(two));
     });
 
-    it("builds scene 1 one element at a time, about 1.2 s apart, the tool first", () => {
+    it("builds scene 1 one element at a time, 2.2 s apart, the tool first", () => {
         const times = [WORDS_AT.tool, WORDS_AT.agent, WORDS_AT.context, WORDS_AT.outcome];
         for (let i = 1; i < times.length; i += 1) {
-            expect(times[i]! - times[i - 1]!).toBeCloseTo(1.2);
+            expect(times[i]! - times[i - 1]!).toBeCloseTo(2.2);
         }
     });
 

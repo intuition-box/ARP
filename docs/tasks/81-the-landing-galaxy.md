@@ -62,7 +62,7 @@ Je ne veux pas l'accumulation à la fin … Il faut juste comprendre l'effet de 
 page, en les invitant à joindre le réseau. » Built on `fix/81-scene1-build` (`2ec0579`,
 `c7dddd2`):
 
-- **Scene 1 builds one element at a time**, about 1.2 s apart after the camera settles: the tool
+- **Scene 1 builds one element at a time**, 2.2 s apart after the camera settles (1.2 s until the user asked for slower, 2026-11-09): the tool
   alone, and the panel appears holding only its name; the agent lands on the `used by` ring,
   drawn as it arrives (ring first, whole by half the dot's trip), and the panel grows by « used
   by agent 1 » and the *identity* row; then *context* and its ring; then *outcome* and its ring.

@@ -330,12 +330,13 @@ export function fieldVisibility(camera: Camera): number {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Scene 1 builds the line one element at a time, about 1.2 s apart, in seconds after the camera
+ * Scene 1 builds the line one element at a time, 2.2 s apart (slowed from 1.2 s, the user,
+ * 2026-11-09: « plus lent entre chaque point »), in seconds after the camera
  * settles: the tool alone at the centre, then the agent that used it (with the `used by` ring),
  * then the context (its ring), then the outcome (its ring). Nothing else joins in scene 1: the
  * user, 2026-11-09, « je ne veux pas l'accumulation à la fin ». The other claims join in scene 2.
  */
-export const WORDS_AT = {tool: 0.4, agent: 1.6, context: 2.8, outcome: 4.0} as const;
+export const WORDS_AT = {tool: 0.4, agent: 2.6, context: 4.8, outcome: 7.0} as const;
 
 /**
  * Scene 5, the network: agents join the galaxy one after another, a star lighting up for each and
