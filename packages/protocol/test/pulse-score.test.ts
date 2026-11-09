@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {inferDomain, lineWeight, priorFromRank, scoreSkill, signalOf, unconfirmedNote, entersList, WALLETS_TO_MOVE, type SignalContext} from "../src/pulse-score.js";
+import {lineWeight, priorFromRank, scoreSkill, signalOf, unconfirmedNote, entersList, WALLETS_TO_MOVE, type SignalContext} from "../src/pulse-score.js";
 import type {UsageReason} from "../src/declare/usage-context.js";
 import type {PulseUsage} from "../src/pulse-usage.js";
 
@@ -247,22 +247,3 @@ describe("unconfirmedNote", () => {
     });
 });
 
-describe("inferDomain", () => {
-    const labels = ["video", "web", "card-payment", "ai"];
-
-    it("finds a label among whole words", () => {
-        expect(inferDomain("remove silence from a Video", labels)).toBe("video");
-    });
-
-    it("does not match inside a word", () => {
-        expect(inferDomain("email webhook", labels)).toBeNull();
-    });
-
-    it("prefers the longest label", () => {
-        expect(inferDomain("video card-payment", labels)).toBe("card-payment");
-    });
-
-    it("returns null when nothing is named", () => {
-        expect(inferDomain("turn a script into a voice-over", labels)).toBeNull();
-    });
-});

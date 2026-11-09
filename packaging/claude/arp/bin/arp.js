@@ -37193,7 +37193,6 @@ async function answer(id, args, budget, cancelled) {
 var DEFAULT_LIMIT3 = 5, MAX_LIMIT = 20, MAX_PHRASES = 4, SKILLS_CLI = "skills@1.7.6", PULSE_BUDGET, PROBE_MS = 3000, bounded = (words) => words.slice(0, 30).map((word) => word.slice(0, 80));
 var init_pulse2 = __esm(() => {
   init_dist2();
-  init_dist2();
   init_node2();
   init__esm();
   init_domain_words2();
@@ -37516,7 +37515,7 @@ var init_append = () => {};
 var skill_nodes_13579_default;
 var init_skill_nodes_13579 = __esm(() => {
   skill_nodes_13579_default = {
-    _note: "For the hook, which reads no network (task 84): the nodes of ARP's testnet tree as written by task 79 (data/catalogue/oasf-tree-13579.json), and the node each skill name is filed at, when the name is filed at one node only. Generated from data/catalogue/oasf-skill-tags-proposal-13579.json, rows not reviewed out.",
+    _note: "For the hook, which reads no network (task 84): the nodes of ARP's testnet tree as written by task 79 (data/catalogue/oasf-tree-13579.json), and the node each skill name is filed at, when the name is filed at one node only. Built by scripts/build/build-skill-nodes.ts from data/catalogue/oasf-skill-tags-proposal-13579.json, rows not reviewed out.",
     chainId: 13579,
     oasfVersion: "1.1.0",
     nodes: [
@@ -38317,7 +38316,7 @@ function askedBySkill(command, markdown, directory2) {
   const named = new Set([...cli, ...runs]);
   return programsOf(command).some((program) => named.has(program) || program.includes(".") && new RegExp(`(?:^|[\\s\`'"/(])${escaped(program)}(?=[\\s\`'")]|$)`, "m").test(markdown));
 }
-function contextOf(words, skill, description) {
+function contextOf(words, skill) {
   return domainInText(words, WORDS) ?? SKILL_NODE[skill.split(":").pop() ?? skill] ?? null;
 }
 function skillDirectory(name, cwd) {
@@ -38466,7 +38465,7 @@ function readTranscript(text2, fallback2) {
       const skill = active.find((candidate) => askedBySkill(command, candidate.markdown, candidate.directory));
       if (skill === undefined)
         continue;
-      const domain = contextOf(words, skill.name, readRequires(skill.markdown).description);
+      const domain = contextOf(words, skill.name);
       failures.push({ at, session, skill: skill.name, source: null, ...domain === null ? {} : { domain }, reason });
     }
   }
@@ -38514,7 +38513,6 @@ function backfill(root2 = join12(homedir6(), ".claude", "projects")) {
 }
 var BODY, lastPart = (name) => name.split(":").pop() ?? name;
 var init_backfill = __esm(() => {
-  init_dist2();
   init_classify();
   init_skill_failure();
   BODY = /^Base directory for this skill: ([^\n]+)/;

@@ -684,7 +684,7 @@ var domain_aliases_default = {
 };
 // ../../data/catalogue/skill-nodes-13579.json
 var skill_nodes_13579_default = {
-  _note: "For the hook, which reads no network (task 84): the nodes of ARP's testnet tree as written by task 79 (data/catalogue/oasf-tree-13579.json), and the node each skill name is filed at, when the name is filed at one node only. Generated from data/catalogue/oasf-skill-tags-proposal-13579.json, rows not reviewed out.",
+  _note: "For the hook, which reads no network (task 84): the nodes of ARP's testnet tree as written by task 79 (data/catalogue/oasf-tree-13579.json), and the node each skill name is filed at, when the name is filed at one node only. Built by scripts/build/build-skill-nodes.ts from data/catalogue/oasf-skill-tags-proposal-13579.json, rows not reviewed out.",
   chainId: 13579,
   oasfVersion: "1.1.0",
   nodes: [
@@ -1510,7 +1510,7 @@ function lastUserWords(transcript) {
   }
   return words;
 }
-function contextOf(words, skill, description) {
+function contextOf(words, skill) {
   return domainInText(words, WORDS) ?? SKILL_NODE[skill.split(":").pop() ?? skill] ?? null;
 }
 function answerOf(response) {
@@ -1640,7 +1640,7 @@ function recordSkillFailure(call, cwd) {
         continue;
       const search = foundBySearch(cwd, call.session, skill.name);
       const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync2(call.transcript, "utf8")) : "";
-      const domain = search?.domain ?? contextOf(words, skill.name, readRequires(markdown).description);
+      const domain = search?.domain ?? contextOf(words, skill.name);
       appendFailure({
         at: new Date().toISOString(),
         session: call.session,

@@ -105,14 +105,11 @@ export function lastUserWords(transcript: string): string {
 }
 
 /**
- * The context of a failure, in the tree's words, or `null`. First what the person asked for, whole
- * words only, then the table that tags the catalogue, on the skill's name and description. Both are
- * reproducible and invent nothing, and the person's words stay here.
+ * The context of a failure, a node of the tree, or `null`: a node or a word for one found whole in what
+ * the person asked for, else the node the skill is filed at. Both read local data only, and the person's
+ * words stay here.
  */
-export function contextOf(words: string, skill: string, description: string | null): string | null {
-  // First what the person asked for (a node or a word for one), then where the skill is filed. The
-  // description is no longer guessed from: a keyword table named the old categories (task 84).
-  void description;
+export function contextOf(words: string, skill: string): string | null {
   return domainInText(words, WORDS) ?? SKILL_NODE[skill.split(':').pop() ?? skill] ?? null;
 }
 
@@ -280,7 +277,7 @@ export function recordSkillFailure(call: ToolCall, cwd: string): void {
 
       const search = foundBySearch(cwd, call.session, skill.name);
       const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync(call.transcript, 'utf8')) : '';
-      const domain = search?.domain ?? contextOf(words, skill.name, readRequires(markdown).description);
+      const domain = search?.domain ?? contextOf(words, skill.name);
       appendFailure({
         at: new Date().toISOString(),
         session: call.session,

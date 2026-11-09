@@ -3,6 +3,8 @@ import { homedir } from 'node:os';
 import { join, delimiter } from 'node:path';
 
 import {
+  domainInText,
+  resolveDomain,
   findDeclaredTools,
   fuseSearches,
   findToolAtoms,
@@ -32,7 +34,6 @@ import {
   workedInDomain,
   yourFailures,
 } from '@arp-protocol/core';
-import { domainInText, resolveDomain } from '@arp-protocol/core';
 import { arpHome } from '@arp-protocol/core/node';
 import { stringToHex } from 'viem';
 

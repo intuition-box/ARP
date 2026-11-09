@@ -21,6 +21,17 @@ describe("the alias table", () => {
     });
 });
 
+describe("the aliases the testnet tree can answer", () => {
+    it("counts those whose node is written on 13579, so the figure in ADR 0155 is printed, not kept by hand", () => {
+        const written = new Set(
+            (JSON.parse(readFileSync(new URL("../../../data/catalogue/skill-nodes-13579.json", import.meta.url), "utf8")) as {nodes: string[]}).nodes,
+        );
+        const reach = Object.values(table.aliases).filter((label) => written.has(label)).length;
+        expect(reach).toBe(85);
+        expect(Object.keys(table.aliases).length).toBe(106);
+    });
+});
+
 describe("resolveDomain", () => {
     it("takes a node's own name, in any case", () => {
         expect(resolveDomain("Presentation Authoring", words)).toEqual({status: "node", label: "presentation authoring", via: "label"});

@@ -152,12 +152,3 @@ export function scoreSkill(input: {rank: number | null; total: number; worked: n
     };
 }
 
-/**
- * The domain a need's words name: the longest tree label among them, whole words only. `null` when none
- * does, and then the score reads every declaration. It guesses nothing beyond the words.
- */
-export function inferDomain(query: string, labels: readonly string[]): string | null {
-    const words = ` ${query.toLowerCase().replace(/[^a-z0-9-]+/g, " ").trim()} `;
-    const matches = labels.filter((label) => words.includes(` ${label.toLowerCase()} `));
-    return [...matches].sort((a, b) => b.length - a.length)[0] ?? null;
-}

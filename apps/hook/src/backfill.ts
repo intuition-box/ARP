@@ -11,7 +11,6 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
 
-import { readRequires } from '@arp-protocol/core';
 
 import { isCancelled } from './classify.ts';
 import {
@@ -123,7 +122,7 @@ export function readTranscript(text: string, fallback: string): { uses: number; 
       if (reason === null) continue;
       const skill = active.find((candidate) => askedBySkill(command, candidate.markdown, candidate.directory));
       if (skill === undefined) continue;
-      const domain = contextOf(words, skill.name, readRequires(skill.markdown).description);
+      const domain = contextOf(words, skill.name);
       failures.push({ at, session, skill: skill.name, source: null, ...(domain === null ? {} : { domain }), reason });
     }
   }

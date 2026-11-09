@@ -142,12 +142,12 @@ test('with no search, the context comes from what the person asked, and their wo
 });
 
 test('the person\'s words win, then where the skill is filed; nothing is guessed from a description (task 84)', () => {
-  expect(contextOf('cut a video', 'pdf', null)).toBe('video');
-  expect(contextOf('make slides for the board', 'gizmo', null)).toBe('presentation authoring');
-  expect(contextOf('do the thing', 'tools:pdf', null)).toBe('pdf manipulation');
-  expect(contextOf('do the thing', 'gizmo', 'Reads your stripe account')).toBeNull();
-  expect(contextOf('videos', 'gizmo', null)).toBeNull();
-  expect(contextOf('tool', 'gizmo', null)).toBeNull();
+  expect(contextOf('cut a video', 'pdf')).toBe('video');
+  expect(contextOf('make slides for the board', 'gizmo')).toBe('presentation authoring');
+  expect(contextOf('do the thing', 'tools:pdf')).toBe('pdf manipulation');
+  expect(contextOf('do the thing', 'gizmo')).toBeNull();
+  expect(contextOf('videos', 'gizmo')).toBeNull();
+  expect(contextOf('tool', 'gizmo')).toBeNull();
 });
 
 test('a skill installed by the skills CLI takes its source from the lock file', () => {
