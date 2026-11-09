@@ -18,6 +18,10 @@ import {
   signLineRequest,
   signListToolRequest,
   thingUri,
+  TRANSFER_TOPIC,
+  X402_DEFAULT_NETWORKS,
+  x402Policy,
+  type X402TransferReads,
   type MultiVaultReads,
   type PreparedCall,
   type SponsorLimits,
@@ -2178,6 +2182,7 @@ describe('POST /line', () => {
         domain: 'video',
         outcome: 'failed',
         reason: 'missing-key',
+        payment: '',
         nonce: keccak256(stringToBytes(`line-${++nonce}`)),
         expiresAt: Math.floor(NOW / 1000) + 600,
         ...over,
@@ -2332,6 +2337,85 @@ describe('POST /line', () => {
     const service = lineService(w, { wallet: first, ledger });
     expect((await call(service, '/line', { request: await request() })).status).toBe(502);
     expect(ledger.relevant(NOW).filter((r) => r.kind === 'line')).toHaveLength(0);
+  });
+
+  describe('with an x402 payment (ADR 0159)', () => {
+    const TX = `0x${'ef'.repeat(32)}` as Hex;
+    const USDC = getAddress('0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913');
+    const word = (address: Address) => `0x${address.slice(2).toLowerCase().padStart(64, '0')}` as Hex;
+    /** A recorded-shape Base receipt: one USDC transfer from `payer`, sent by a facilitator. */
+    const base = (payer: Address, state: 'ok' | 'down' = 'ok'): X402TransferReads => ({
+      getTransactionReceipt: async ({ hash }) => {
+        if (state === 'down') throw new Error('fetch failed');
+        if (hash !== TX) throw new Error('not found');
+        return {
+          status: 'success',
+          blockNumber: 1n,
+          logs: [{ address: USDC, topics: [TRANSFER_TOPIC, word(payer), word(CALLEE.address)], data: `0x${(20_000).toString(16).padStart(64, '0')}` }],
+        };
+      },
+      getBlock: async () => ({ timestamp: BigInt(Math.floor(NOW / 1000) - 60) }),
+    });
+    const paid = (w: World, reads: X402TransferReads, over: Partial<Parameters<typeof createSponsor>[0]> = {}) =>
+      lineService(w, {
+        lines: {
+          inContextOf: IN_CONTEXT,
+          subject: async () => 'other',
+          payments: { policy: x402Policy(X402_DEFAULT_NETWORKS), readsFor: () => reads },
+        },
+        ...over,
+      });
+    const withPayment = (over: Record<string, unknown> = {}) =>
+      request({ domain: '', reason: 'no-delivery', payment: `eip155:8453/tx/${TX}`, ...over });
+
+    test('lets a line be about an endpoint, and writes the payment as one more level in the agent name', async () => {
+      const w = seeded();
+      const answer = await post(paid(w, base(AGENT.address)), { request: await withPayment() });
+      expect(answer.status).toBe(200);
+      expect(w.sent.filter((c) => c.kind === 'create-triple')).toHaveLength(4);
+      expect((answer.body.levels as Hex[]).length).toBe(4);
+      const deposits = w.sent.filter((c) => c.kind === 'deposit');
+      expect(deposits).toHaveLength(4);
+      for (const d of deposits) {
+        expect(decodeFunctionData({ abi: depositAbi, data: d.data }).args[0]).toBe(AGENT.address);
+      }
+    });
+
+    test('accepts a payment from the agent wallet the registry names', async () => {
+      const w = seeded();
+      const service = paid(w, base(STRANGER.address), { owners: owners(undefined, { '7': STRANGER.address }) });
+      expect((await post(service, { request: await withPayment() })).status).toBe(200);
+    });
+
+    test('refuses a payment the agent did not make, before anything is sent', async () => {
+      const w = seeded();
+      const answer = await post(paid(w, base(STRANGER.address)), { request: await withPayment() });
+      expect(answer.status).toBe(422);
+      expect(answer.body.rule).toBe('payment');
+      expect(w.sent).toHaveLength(0);
+    });
+
+    test('refuses a network it does not read', async () => {
+      const w = seeded();
+      const answer = await post(paid(w, base(AGENT.address)), { request: await withPayment({ payment: `eip155:1/tx/${TX}` }) });
+      expect(answer.status).toBe(422);
+      expect(answer.body.rule).toBe('network');
+      expect(w.sent).toHaveLength(0);
+    });
+
+    test('says try again when the paying chain does not answer', async () => {
+      const w = seeded();
+      const answer = await post(paid(w, base(AGENT.address, 'down')), { request: await withPayment() });
+      expect(answer.status).toBe(503);
+      expect(w.sent).toHaveLength(0);
+    });
+
+    test('is off when no paying network is configured', async () => {
+      const w = seeded();
+      const service = lineService(w, { lines: { inContextOf: IN_CONTEXT, subject: async () => 'other' } });
+      expect((await post(service, { request: await withPayment() })).status).toBe(503);
+      expect(w.sent).toHaveLength(0);
+    });
   });
 
   test('writes an outcome with no domain on the edge itself', async () => {

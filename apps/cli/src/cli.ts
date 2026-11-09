@@ -41,6 +41,7 @@ usage
 
   arp line           write one public line on testnet 13579 through ARP's sponsor: --tool <url>
                      --outcome worked|failed [--domain <category>] [--reason <reason>]
+                     [--payment-tx <hash> --network eip155:8453]  an x402 payment, read on Base
   arp init           add the MCP server and the hook to every runtime found here
   arp uninstall      remove them, and only them
   arp doctor         check what is installed and that the server answers
@@ -177,7 +178,8 @@ async function run(argv: readonly string[]): Promise<number> {
       if (toolUrl === undefined || outcome === undefined) {
         process.stderr.write(
           'usage: arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>]\n' +
-            '       [--parent <category> --why <text>]   adds a --domain the tree lacks, under --parent\n',
+            '       [--parent <category> --why <text>]   adds a --domain the tree lacks, under --parent\n' +
+            '       [--payment-tx <hash> --network eip155:8453]   the x402 payment this outcome refers to\n',
         );
         return EXIT.usage;
       }
@@ -190,6 +192,8 @@ async function run(argv: readonly string[]): Promise<number> {
         reason: flag('reason'),
         parent: flag('parent'),
         why: flag('why'),
+        paymentTx: flag('payment-tx'),
+        network: flag('network'),
       });
       if (input instanceof Error) {
         process.stderr.write(`arp line: ${input.message}\n`);

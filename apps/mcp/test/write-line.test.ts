@@ -2,8 +2,18 @@ import {mkdtempSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 
-import {verifyCategoryRequest, verifyLineRequest, type DomainResolution, type SignedCategoryRequest, type SignedLineRequest} from "@arp-protocol/core";
-import type {Hex} from "viem";
+import {
+    TRANSFER_TOPIC,
+    verifyCategoryRequest,
+    verifyLineRequest,
+    X402_DEFAULT_NETWORKS,
+    x402Policy,
+    type DomainResolution,
+    type SignedCategoryRequest,
+    type SignedLineRequest,
+    type X402TransferReads,
+} from "@arp-protocol/core";
+import {getAddress, type Hex} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 import {afterEach, describe, expect, it} from "vitest";
 
@@ -173,6 +183,18 @@ describe("lineFromArgs", () => {
         expect(lineFromArgs({...args, outcome: "worked", domain: "slides", parent: "design", why: "  "})).toBeInstanceOf(Error);
     });
 
+    it("takes an x402 payment as a network and a hash, together (ADR 0159)", () => {
+        const tx = `0x${"EF".repeat(32)}`;
+        expect(lineFromArgs({...args, outcome: "failed", reason: "no-delivery", paymentTx: tx, network: "eip155:8453"})).toMatchObject({
+            reason: "no-delivery",
+            payment: {network: "eip155:8453", txHash: tx.toLowerCase()},
+        });
+        expect(lineFromArgs({...args, outcome: "failed", paymentTx: tx})).toBeInstanceOf(Error);
+        expect(lineFromArgs({...args, outcome: "failed", paymentTx: tx, network: "base"})).toBeInstanceOf(Error);
+        expect(lineFromArgs({...args, outcome: "failed", paymentTx: tx, network: "eip155:1"})).toBeInstanceOf(Error);
+        expect(lineFromArgs({...args, outcome: "failed", paymentTx: "0x1234", network: "eip155:8453"})).toBeInstanceOf(Error);
+    });
+
     it("refuses anything else", () => {
         expect(lineFromArgs({...args, outcome: "maybe"})).toBeInstanceOf(Error);
         expect(lineFromArgs({...args, outcome: "failed", reason: "the moon"})).toBeInstanceOf(Error);
@@ -260,5 +282,46 @@ describe("writeLineChecked", () => {
         }};
         await expect(writeLineChecked(steps, {...INPUT, domain: " Video "})).resolves.toMatchObject({termId: ATOM});
         expect(keys).toBe(1);
+    });
+
+    describe("with an x402 payment", () => {
+        const TX = `0x${"ef".repeat(32)}` as Hex;
+        const USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
+        const word = (address: string) => `0x${address.slice(2).toLowerCase().padStart(64, "0")}` as Hex;
+        const reads = (logs: boolean): X402TransferReads => ({
+            getTransactionReceipt: async () => ({
+                status: "success",
+                blockNumber: 1n,
+                logs: logs
+                    ? [{address: USDC, topics: [TRANSFER_TOPIC, word(account.address), word(SPONSOR)], data: `0x${(20_000).toString(16).padStart(64, "0")}`}]
+                    : [],
+            }),
+            getBlock: async () => ({timestamp: 1n}),
+        });
+        const payments = (withLogs: boolean) => ({policy: x402Policy(X402_DEFAULT_NETWORKS), readsFor: () => reads(withLogs)});
+        const PAID = {...INPUT, reason: "no-delivery", payment: {network: "eip155:8453", txHash: TX}} as const;
+
+        it("reads the payment before any key, and refuses one that moves no accepted asset", async () => {
+            const {config, asked} = setup(() => ok);
+            let keys = 0;
+            const steps = {config, isCategory: async () => true, payments: payments(false), agent: () => {
+                keys += 1;
+                throw new Error("no key in this test");
+            }};
+            await expect(writeLineChecked(steps, PAID)).rejects.toThrow("moves no accepted asset");
+            expect(asked).toEqual([]);
+            expect(keys).toBe(0);
+        });
+
+        it("signs the payment it read, and says what the transaction moved", async () => {
+            let signed: SignedLineRequest | undefined;
+            const {config, agent} = setup((body) => {
+                signed = body.request;
+                return ok;
+            });
+            const written = await writeLineChecked({config, isCategory: async () => true, payments: payments(true), agent: () => agent}, PAID);
+            expect(signed?.request.payment).toBe(`eip155:8453/tx/${TX}`);
+            expect(written.payment?.transfers).toEqual([{asset: USDC, payer: account.address, payTo: getAddress(SPONSOR), amount: "20000"}]);
+        });
     });
 });

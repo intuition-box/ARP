@@ -387,7 +387,39 @@ export type {
  * What stays is why the namespace exists at all: `rules/portability.md` makes this the one place in
  * the package allowed to name a chain, because an L3 is not in viem's registry.
  */
-export {ARP_DOMAIN_ATTESTORS, intuitionMainnet, intuitionTestnet} from "./arp/index.js";
+export {ARP_DOMAIN_ATTESTORS, intuitionMainnet, intuitionTestnet, X402_DEFAULT_NETWORKS} from "./arp/index.js";
+
+/**
+ * An x402 line's payment and the outcomes feed built from them (task 89, ADR `0159`). Reads the paying
+ * chain, never signs on it.
+ */
+export {
+    checkX402Payment,
+    chainIdOfNetwork,
+    PAID_WITH_LABEL,
+    parsePaymentAtomLabel,
+    paymentAtomLabel,
+    TRANSFER_TOPIC,
+    transfersIn,
+    x402Policy,
+    x402Reading,
+    x402TransferReads,
+    type X402NetworkPolicy,
+    type X402PaymentCheck,
+    type X402PaymentRef,
+    type X402Transfer,
+    type X402TransferReads,
+} from "./x402-payment.js";
+export {
+    buildX402Feed,
+    X402_FEED_NOTE,
+    X402_FEED_SCHEMA,
+    type X402AgentKeys,
+    type X402EndpointSummary,
+    type X402Feed,
+    type X402FeedConfig,
+    type X402FeedRecord,
+} from "./x402-feed.js";
 
 export {
     getAccountActivity,

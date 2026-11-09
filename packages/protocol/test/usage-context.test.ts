@@ -129,8 +129,28 @@ describe("prepareUsageContext", () => {
         expect(await plan([EDGE], {reason: "missing-key"})).toMatchObject({status: "refused", rule: "reason_without_failure"});
     });
 
-    it("has four reasons and no fifth", () => {
-        expect(USAGE_REASONS).toEqual(["missing-key", "missing-program", "missing-file", "not-the-right-tool"]);
+    it("puts the payment on the outcome, as one more triple (ADR 0159)", async () => {
+        const payment = `eip155:8453/tx/0x${"ef".repeat(32)}`;
+        const result = await plan([EDGE], {outcome: "failed", reason: "no-delivery", payment});
+        if (result.status !== "planned" || result.outcomeTripleId === null || result.paymentTripleId === null) {
+            throw new Error("expected a plan");
+        }
+        const last = result.calls.filter((call) => call.kind === "create-triple").at(-1);
+        const args = decodeFunctionData({abi: multiVaultDeclareAbi, data: last?.data ?? "0x"}).args;
+        expect((args?.[0] as Hex[])[0]).toBe(result.outcomeTripleId);
+        expect((args?.[1] as Hex[])[0]).toBe(atomIdFor("paid with"));
+        expect((args?.[2] as Hex[])[0]).toBe(atomIdFor(payment));
+    });
+
+    it("refuses a payment with no outcome to attach it to", async () => {
+        expect(await plan([EDGE], {domain: "video", payment: `eip155:8453/tx/0x${"ef".repeat(32)}`})).toMatchObject({
+            status: "refused",
+            rule: "payment_without_outcome",
+        });
+    });
+
+    it("has five reasons and no sixth", () => {
+        expect(USAGE_REASONS).toEqual(["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"]);
         expect(isUsageReason("because I said so")).toBe(false);
     });
 

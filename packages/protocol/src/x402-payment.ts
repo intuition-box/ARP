@@ -1,0 +1,184 @@
+import {createPublicClient, getAddress, hexToBigInt, http, isHex, keccak256, stringToBytes, type Address, type Hex} from "viem";
+
+import {ChainUnreadableError, isTransactionAbsent} from "./chain-errors.js";
+
+/**
+ * The payment an x402 line refers to, and the check of it at read time (task 89, ADR `0159`).
+ *
+ * A line about an x402 endpoint can name the transaction that settled the payment, as one more level:
+ * `(T3, paid with, "eip155:8453/tx/0x…")`, where T3 is the line's outcome. **Only the network and the
+ * hash are written.** The payer, the recipient, the amount and the asset are in the transaction, and
+ * a copy on Intuition would be a second source for one datum (`docs/02`): they are read from it,
+ * here, every time.
+ *
+ * The payer is read from the token's `Transfer` log, **never from `tx.from`**, which is the x402
+ * facilitator that submitted an EIP-3009 authorisation, or a delegation's redeemer (ADR `0148`).
+ *
+ * Nothing here signs, sends or spends. It reads a receipt and a block on the paying chain.
+ */
+
+/** The predicate of the payment level. A plain string, so its id is the same on every chain. */
+export const PAID_WITH_LABEL = "paid with";
+
+/** ERC-20 `Transfer(address indexed from, address indexed to, uint256 value)`. */
+export const TRANSFER_TOPIC: Hex = keccak256(stringToBytes("Transfer(address,address,uint256)"));
+
+const NETWORK = /^eip155:([1-9][0-9]{0,9})$/;
+const TX_HASH = /^0x[0-9a-f]{64}$/;
+const PAYMENT_LABEL = /^(eip155:[1-9][0-9]{0,9})\/tx\/(0x[0-9a-f]{64})$/;
+
+/** A payment as a line names it: a CAIP-2 network and a settlement transaction. */
+export type X402PaymentRef = {network: string; txHash: Hex};
+
+/** The EVM chain id of a CAIP-2 `eip155:<id>` network, or `null` for anything else. */
+export function chainIdOfNetwork(network: string): number | null {
+    const match = NETWORK.exec(network);
+    return match === null ? null : Number(match[1]);
+}
+
+/**
+ * The payment's atom label, in one spelling: lower case, so one payment is one atom on the graph.
+ * Throws on a network that is not `eip155:<id>` or a hash that is not 32 bytes.
+ */
+export function paymentAtomLabel(ref: X402PaymentRef): string {
+    const txHash = ref.txHash.toLowerCase();
+    if (chainIdOfNetwork(ref.network) === null) throw new Error(`network ${ref.network} is not eip155:<chain id>`);
+    if (!TX_HASH.test(txHash)) throw new Error(`${ref.txHash} is not a transaction hash`);
+    return `${ref.network}/tx/${txHash}`;
+}
+
+/** The payment a label names, or `null` when the label is not one this module writes. */
+export function parsePaymentAtomLabel(label: string): X402PaymentRef | null {
+    const match = PAYMENT_LABEL.exec(label);
+    if (match === null) return null;
+    return {network: match[1] as string, txHash: match[2] as Hex}; // both groups matched
+}
+
+/** The networks a payment may be on, with the assets accepted on each. Configuration, never a constant here. */
+export type X402NetworkPolicy = ReadonlyMap<string, {assets: readonly Address[]}>;
+
+/** The two reads a check makes on the paying chain. A viem `PublicClient` satisfies it. */
+export type X402TransferReads = {
+    getTransactionReceipt(args: {hash: Hex}): Promise<{
+        status: "success" | "reverted";
+        blockNumber: bigint;
+        logs: readonly {address: Address; topics: readonly Hex[]; data: Hex}[];
+    }>;
+    getBlock(args: {blockNumber: bigint}): Promise<{timestamp: bigint}>;
+};
+
+/** One token transfer in a transaction, as its log says. */
+export type X402Transfer = {asset: Address; payer: Address; payTo: Address; amount: bigint};
+
+export type X402PaymentCheck =
+    | {status: "paid"; transfer: X402Transfer; paidAt: number}
+    | {status: "refused"; reason: string}
+    | {status: "unreadable"; reason: string};
+
+/** Every ERC-20 transfer of an accepted asset in a transaction's logs. ERC-721 has a fourth topic, and is left out. */
+export function transfersIn(
+    logs: readonly {address: Address; topics: readonly Hex[]; data: Hex}[],
+    assets: readonly Address[],
+): X402Transfer[] {
+    const accepted = new Set(assets.map((asset) => asset.toLowerCase()));
+    const word = (topic: Hex | undefined) => getAddress(`0x${(topic ?? "").slice(26)}`);
+    return logs
+        .filter(
+            (log) =>
+                accepted.has(log.address.toLowerCase()) &&
+                log.topics.length === 3 &&
+                log.topics[0]?.toLowerCase() === TRANSFER_TOPIC &&
+                isHex(log.data) &&
+                log.data.length === 66,
+        )
+        .map((log) => ({
+            asset: getAddress(log.address),
+            payer: word(log.topics[1]),
+            payTo: word(log.topics[2]),
+            amount: hexToBigInt(log.data),
+        }));
+}
+
+/**
+ * Read a payment and keep it only when it is one transfer, of an accepted asset, from one of `payers`.
+ *
+ * - `payers` are the addresses the line's writer can pay from: the wallet that stands behind the line
+ *   and, when the agent has one, its ERC-8004 `agentWallet`. The caller says which; this reads none.
+ * - Several transfers from those addresses in one transaction are refused: which one the line is
+ *   about cannot be told, and a guess would be ARP's word, not the payer's.
+ * - A transfer to the payer itself, or of nothing, pays no one.
+ *
+ * `refused` is an answer about the payment. `unreadable` is the chain not answering, and says nothing.
+ */
+export async function checkX402Payment(params: {
+    ref: X402PaymentRef;
+    payers: readonly Address[];
+    policy: X402NetworkPolicy;
+    reads: X402TransferReads;
+}): Promise<X402PaymentCheck> {
+    const {ref, policy, reads} = params;
+    const allowed = policy.get(ref.network);
+    if (allowed === undefined) return {status: "refused", reason: `network ${ref.network} is not one this reader accepts`};
+    if (!TX_HASH.test(ref.txHash.toLowerCase())) return {status: "refused", reason: `${ref.txHash} is not a transaction hash`};
+    let receipt;
+    try {
+        receipt = await reads.getTransactionReceipt({hash: ref.txHash});
+    } catch (error) {
+        if (isTransactionAbsent(error)) return {status: "refused", reason: `transaction ${ref.txHash} not found on ${ref.network}`};
+        return {status: "unreadable", reason: new ChainUnreadableError(`transaction ${ref.txHash}`, error).message};
+    }
+    if (receipt.status !== "success") return {status: "refused", reason: `transaction ${ref.txHash} reverted`};
+    const payers = new Set(params.payers.map((payer) => payer.toLowerCase()));
+    const from = transfersIn(receipt.logs, allowed.assets).filter((transfer) => payers.has(transfer.payer.toLowerCase()));
+    if (from.length === 0) {
+        return {status: "refused", reason: `no transfer of an accepted asset from ${[...params.payers].join(" or ")} in ${ref.txHash}`};
+    }
+    if (from.length > 1) return {status: "refused", reason: `${from.length} transfers from the payer in ${ref.txHash}; which one is meant cannot be told`};
+    const transfer = from[0] as X402Transfer; // length checked above
+    if (transfer.payTo === transfer.payer) return {status: "refused", reason: "the transfer pays its own sender"};
+    if (transfer.amount === 0n) return {status: "refused", reason: "the transfer moves nothing"};
+    let block;
+    try {
+        block = await reads.getBlock({blockNumber: receipt.blockNumber});
+    } catch (error) {
+        return {status: "unreadable", reason: new ChainUnreadableError(`block ${receipt.blockNumber}`, error).message};
+    }
+    return {status: "paid", transfer, paidAt: Number(block.timestamp)};
+}
+
+/** Read-only reads of a paying chain over one RPC URL. Nothing here can sign: there is no account. */
+export function x402TransferReads(rpcUrl: string): X402TransferReads {
+    const client = createPublicClient({transport: http(rpcUrl, {timeout: 20_000})});
+    return {
+        getTransactionReceipt: (args) => client.getTransactionReceipt(args),
+        getBlock: (args) => client.getBlock(args),
+    };
+}
+
+/** A policy from a network table, such as `X402_DEFAULT_NETWORKS`. */
+export function x402Policy(networks: ReadonlyMap<string, {assets: readonly Address[]}>): X402NetworkPolicy {
+    return new Map([...networks].map(([network, {assets}]) => [network, {assets}]));
+}
+
+/**
+ * The policy and a read-only client per network, from a network table and an environment: the RPC of
+ * chain `<id>` is `ARP_X402_RPC_<id>` when set, the table's public one otherwise. Clients are made once.
+ */
+export function x402Reading(
+    networks: ReadonlyMap<string, {assets: readonly Address[]; rpcUrl: string}>,
+    env: Readonly<Record<string, string | undefined>>,
+): {policy: X402NetworkPolicy; readsFor(network: string): X402TransferReads} {
+    const clients = new Map<string, X402TransferReads>();
+    return {
+        policy: x402Policy(networks),
+        readsFor(network) {
+            const known = clients.get(network);
+            if (known !== undefined) return known;
+            const entry = networks.get(network);
+            if (entry === undefined) throw new Error(`network ${network} is not configured`);
+            const reads = x402TransferReads(env[`ARP_X402_RPC_${chainIdOfNetwork(network) ?? ""}`] ?? entry.rpcUrl);
+            clients.set(network, reads);
+            return reads;
+        },
+    };
+}

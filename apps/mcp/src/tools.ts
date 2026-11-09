@@ -298,10 +298,10 @@ export const TOOLS = [
         },
         reason: {
           type: 'string',
-          enum: ['missing-key', 'missing-program', 'missing-file', 'not-the-right-tool'],
+          enum: ['missing-key', 'missing-program', 'missing-file', 'not-the-right-tool', 'no-delivery'],
           description:
             'Optional, with `outcome: failed`. Why it failed, one more paid triple per tool. An agent that can ' +
-            'supply what was missing is not told this failure concerns it.',
+            'supply what was missing is not told this failure concerns it. `no-delivery`: paid, got nothing back.',
         },
       },
       required: ['agent_chain_id', 'agent_token_id', 'tools'],

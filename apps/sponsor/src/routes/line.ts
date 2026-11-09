@@ -1,5 +1,7 @@
 import {
   checkLineLimits,
+  checkX402Payment,
+  parsePaymentAtomLabel,
   encodeCreateTriple,
   planDepositApproval,
   planSponsoredDeposit,
@@ -7,9 +9,9 @@ import {
   verifyLineRequest,
   type SignedLineRequest,
 } from '@arp-protocol/core';
-import type { Hex } from 'viem';
+import { getAddress, type Address, type Hex } from 'viem';
 import { SPONSOR_CHAIN_ID } from '../key-file.ts';
-import { chainUnreadable, json, type Body, type SponsorContext } from './context.ts';
+import { chainUnreadable, json, REGISTRY, type Body, type SponsorContext } from './context.ts';
 
 /**
  * One line, form B, paid by the service (ADR `0144`): the `uses` edge if missing, the domain, the
@@ -18,10 +20,15 @@ import { chainUnreadable, json, type Body, type SponsorContext } from './context
  *
  * **No proof of use** is asked, unlike `/deposit`: a line is the agent's word. Testnet 13579 only, under
  * a per-agent and a total daily cap and the shared budget.
+ *
+ * **An x402 line** (task 89, ADR `0159`) names its payment, and adds `(outcome, paid with, payment)`.
+ * The service reads that transaction on its own network, read-only, before it spends anything: one
+ * transfer of an accepted asset from the agent's holder or its `agentWallet`. That is also what lets a
+ * line be about an endpoint, which ADR `0144` refused: lifting an endpoint now costs a real payment.
  */
 export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
   const { options, chainId, wallet, reads, limits, ledger, now, multiVault } = ctx;
-  const { exclusive, sendToMultiVault, ownerOfAgent, refuseOwnAgent, unconfirmed, assertMultiVault } = ctx;
+  const { exclusive, sendToMultiVault, ownerOfAgent, refuseOwnAgent, unconfirmed, assertMultiVault, owners } = ctx;
   const lines = options.lines ?? null;
   if (lines === null || options.categories === undefined || options.categories === null) {
     return json({ error: 'writing a line is not configured on this service', rule: 'config' }, 503);
@@ -62,6 +69,35 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
   const subject = subjectRead.atom;
   const categories = options.categories;
 
+  const payment = request.payment === '' ? null : parsePaymentAtomLabel(request.payment);
+  if (payment !== null) {
+    const payments = lines.payments ?? null;
+    if (payments === null) {
+      return json({ error: 'a line with a payment is not configured on this service', rule: 'config' }, 503);
+    }
+    if (!payments.policy.has(payment.network)) {
+      return json(
+        { error: `network ${payment.network} is not one this service reads: ${[...payments.policy.keys()].join(', ')}`, rule: 'network' },
+        422,
+      );
+    }
+    const payers: Address[] = [agent];
+    try {
+      const wallet = await owners.agentWalletOf(getAddress(REGISTRY.exec(request.agentRegistry)?.[2] ?? ''), BigInt(request.agentId));
+      if (wallet !== null) payers.push(getAddress(wallet));
+    } catch (error) {
+      return chainUnreadable(String(error instanceof Error ? error.message : error));
+    }
+    const checked = await checkX402Payment({
+      ref: payment,
+      payers,
+      policy: payments.policy,
+      reads: payments.readsFor(payment.network),
+    });
+    if (checked.status === 'unreadable') return chainUnreadable(checked.reason);
+    if (checked.status === 'refused') return json({ error: `the payment does not check: ${checked.reason}`, rule: 'payment' }, 422);
+  }
+
   return exclusive(async () => {
     const key = `line:${request.nonce.toLowerCase()}`;
     if (ledger.has('line', key)) return json({ error: 'this request was already used', rule: 'nonce' }, 409);
@@ -75,8 +111,11 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
         return json({ error: 'the tool has no atom: list it first (POST /list-tool)', rule: 'tool' }, 422);
       }
       const about = await lines.subject(request.tool);
-      if (about === 'other') {
-        return json({ error: 'a sponsored line is about a skill or repository on GitHub', rule: 'tool' }, 422);
+      if (about === 'other' && payment === null) {
+        return json(
+          { error: 'a sponsored line is about a skill or repository on GitHub, or an x402 endpoint with its payment', rule: 'tool' },
+          422,
+        );
       }
       if (about === 'unseen') {
         return json({ error: 'the index has no document for this tool yet', rule: 'tool', retry: true }, 422);
@@ -91,6 +130,7 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
         ...(request.domain === '' ? {} : { domain: request.domain }),
         outcome: request.outcome,
         ...(request.reason === '' ? {} : { reason: request.reason }),
+        ...(request.payment === '' ? {} : { payment: request.payment }),
         inContextOf: lines.inContextOf,
         isCategory: categories.isCategory,
         reads,
@@ -100,7 +140,7 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
     }
     if (plan.status === 'refused') return json({ error: plan.detail, rule: plan.rule }, 422);
 
-    const levels = [usesId, plan.contextTripleId, plan.outcomeTripleId, plan.reasonTripleId].filter(
+    const levels = [usesId, plan.contextTripleId, plan.outcomeTripleId, plan.reasonTripleId, plan.paymentTripleId].filter(
       (term): term is Hex => term !== null,
     );
     const curve = await reads.defaultCurveId();

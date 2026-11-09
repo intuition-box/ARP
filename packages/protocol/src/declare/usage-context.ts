@@ -1,5 +1,6 @@
 import {stringToHex, type Address, type Hex} from "viem";
 
+import {PAID_WITH_LABEL} from "../x402-payment.js";
 import {encodeCreateAtom, encodeCreateTriple, encodeDeposit, type MultiVaultReads} from "./multivault.js";
 import type {PreparedCall} from "./types.js";
 
@@ -32,14 +33,17 @@ export type UsageOutcome = (typeof USAGE_OUTCOMES)[number];
 /** A plain string, so its id follows from the word and is the same on every chain. */
 export const HAS_OUTCOME_LABEL = "has outcome";
 
-/** Why a use failed. Closed for the same reason as the outcomes (ADR `0138`). */
-export const USAGE_REASONS = ["missing-key", "missing-program", "missing-file", "not-the-right-tool"] as const;
+/**
+ * Why a use failed. Closed for the same reason as the outcomes (ADR `0138`). `no-delivery` is a paid call
+ * that gave nothing back (ADR `0159`): it is written about an x402 endpoint, usually with its payment.
+ */
+export const USAGE_REASONS = ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"] as const;
 export type UsageReason = (typeof USAGE_REASONS)[number];
 export const BECAUSE_LABEL = "because";
 
 export type UsageContextRefusal = {
     status: "refused";
-    rule: "nothing_to_add" | "not_declared" | "unknown_domain" | "reason_without_failure";
+    rule: "nothing_to_add" | "not_declared" | "unknown_domain" | "reason_without_failure" | "payment_without_outcome";
     detail: string;
 };
 
@@ -49,6 +53,8 @@ export type UsageContextPlan = {
     contextTripleId: Hex | null;
     outcomeTripleId: Hex | null;
     reasonTripleId: Hex | null;
+    /** `(outcome, paid with, payment)`, ADR `0159`. */
+    paymentTripleId: Hex | null;
     calls: PreparedCall[];
     /**
      * Qualifiers already on chain, which this plan does not create. Without a `declarer` nobody can
@@ -80,6 +86,11 @@ export async function prepareUsageContext(params: {
     outcome?: UsageOutcome;
     /** Only with `outcome: "failed"`. */
     reason?: UsageReason;
+    /**
+     * The x402 payment the outcome refers to, as `paymentAtomLabel` writes it (ADR `0159`). Only with an
+     * outcome. Its format is the caller's to check: this plans the triple and reads no paying chain.
+     */
+    payment?: string;
     /** The predicate this chain's other nested claims use. Read from the deployment record. */
     inContextOf: Hex;
     /** Whether a label is a category under `tool`, read from the index. */
@@ -97,6 +108,9 @@ export async function prepareUsageContext(params: {
     const domain = params.domain?.trim().toLowerCase();
     if (params.reason !== undefined && params.outcome !== "failed") {
         return {status: "refused", rule: "reason_without_failure", detail: "a reason only follows a failure"};
+    }
+    if (params.payment !== undefined && params.outcome === undefined) {
+        return {status: "refused", rule: "payment_without_outcome", detail: "a payment is attached to an outcome"};
     }
     if (domain === undefined && params.outcome === undefined) {
         return {status: "refused", rule: "nothing_to_add", detail: "give a domain or an outcome"};
@@ -186,12 +200,19 @@ export async function prepareUsageContext(params: {
         const reasonId = await atom(params.reason, `the word "${params.reason}"`);
         reasonTripleId = await triple(outcomeTripleId, predicate, reasonId, `say it failed because of ${params.reason}`);
     }
+    let paymentTripleId: Hex | null = null;
+    if (params.payment !== undefined && outcomeTripleId !== null) {
+        const predicate = await atom(PAID_WITH_LABEL, `the word "${PAID_WITH_LABEL}"`);
+        const paymentId = await atom(params.payment, `the payment ${params.payment}`);
+        paymentTripleId = await triple(outcomeTripleId, predicate, paymentId, `say this outcome was paid with ${params.payment}`);
+    }
     return {
         status: "planned",
         chainId: reads.chainId,
         contextTripleId,
         outcomeTripleId,
         reasonTripleId,
+        paymentTripleId,
         calls,
         alreadyWritten,
         totalValue: calls.reduce((sum, call) => sum + call.value, 0n),

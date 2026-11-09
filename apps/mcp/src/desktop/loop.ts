@@ -34,6 +34,7 @@ import {
   encodeApproveDeposit,
   INTUITION_USES_TERM_ID,
   multiVaultDeclareAbi,
+  paymentAtomLabel,
   receiptMatchesContent,
   signCategoryRequest,
   signLineRequest,
@@ -48,6 +49,7 @@ import {
   type SkillPrompt,
   type UsageOutcome,
   type UsageReason,
+  type X402PaymentRef,
 } from '@arp-protocol/core';
 
 import { DESKTOP_CHAIN_ID, type AgentSender } from './agent-key.js';
@@ -317,6 +319,8 @@ export type LineInput = {
   reason?: UsageReason;
   /** A `domain` the tree lacks: the existing category it goes under, and why none fits (task 75, ADR `0146`). */
   newDomain?: { parent: string; why: string };
+  /** The x402 payment this outcome refers to (task 89, ADR `0159`): its CAIP-2 network and settlement transaction. */
+  payment?: X402PaymentRef;
 };
 /** `toolUrl` is the spelling it was listed under, which can differ from the one asked: GitHub's own wins. */
 export type WrittenLine = { toolUrl: string; termId: Hex; levels: Hex[]; created: boolean; transactions: Hex[] };
@@ -378,6 +382,7 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, input: L
         domain: input.domain ?? '',
         outcome: input.outcome,
         reason: input.reason ?? '',
+        payment: input.payment === undefined ? '' : paymentAtomLabel(input.payment),
         nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
         expiresAt: expiresAt(),
       },

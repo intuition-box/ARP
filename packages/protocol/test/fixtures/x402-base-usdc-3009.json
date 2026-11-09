@@ -1,0 +1,35 @@
+{
+  "_note": "A USDC transferWithAuthorization (EIP-3009) on Base 8453, read 2026-11-09 from https://mainnet.base.org with eth_getTransactionReceipt and eth_getBlockByNumber, trimmed to the fields x402-payment.ts reads. A stranger's payment, used only as a recorded shape: no ARP line names it. Recorded by task 89.",
+  "network": "eip155:8453",
+  "receipt": {
+    "transactionHash": "0xf5478e6ac2df02fb9ed6796d72f1574483061668b6b7875843a9fb2e2c5718a0",
+    "status": "0x1",
+    "blockNumber": "0x34bfd75",
+    "from": "0x59b7ebc67a3d627fabaf06768c818638452ae704",
+    "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "logs": [
+      {
+        "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "topics": [
+          "0x98de503528ee59b575ef0c0a2576a82497bfc029a5685b209e9ec333479b10a5",
+          "0x00000000000000000000000031cf39f6f50aea9ea53b726f747560e52727f691",
+          "0x14125f74f0cb60d3372e83b6be34dff26c8212967902d587cb10aa89b18a968a"
+        ],
+        "data": "0x"
+      },
+      {
+        "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "topics": [
+          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "0x00000000000000000000000031cf39f6f50aea9ea53b726f747560e52727f691",
+          "0x0000000000000000000000007284d41b5b852f2bd4c99bdf95043d84452d299c"
+        ],
+        "data": "0x0000000000000000000000000000000000000000000000000000000000004e20"
+      }
+    ]
+  },
+  "block": {
+    "number": "0x34bfd75",
+    "timestamp": "0x6af21fb2"
+  }
+}

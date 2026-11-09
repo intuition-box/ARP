@@ -6778,6 +6778,46 @@ query AttestedToolUsage($toolId: String!, $uses: String!, $curveId: numeric!, $a
 }`;
 });
 
+// ../../packages/graphql/dist/queries/x402-feed.js
+var LEVEL = `term_id
+        subject_id
+        predicate_id
+        creator_id
+        created_at
+        subject {
+            term_id
+            label
+        }
+        object {
+            term_id
+            label
+            value {
+                thing {
+                    url
+                }
+            }
+        }
+        positions(where: {shares: {_gt: "0"}}) {
+            account_id
+        }`, X402_PAYMENT_LEVELS_QUERY, X402_LEVELS_BY_ID_QUERY, X402_REASONS_QUERY;
+var init_x402_feed = __esm(() => {
+  X402_PAYMENT_LEVELS_QUERY = `query X402PaymentLevels($paidWith: String!, $limit: Int!, $offset: Int!) {
+    triples(where: {predicate_id: {_eq: $paidWith}}, order_by: {term_id: asc}, limit: $limit, offset: $offset) {
+        ${LEVEL}
+    }
+}`;
+  X402_LEVELS_BY_ID_QUERY = `query X402LevelsById($ids: [String!]!, $limit: Int!) {
+    triples(where: {term_id: {_in: $ids}}, limit: $limit) {
+        ${LEVEL}
+    }
+}`;
+  X402_REASONS_QUERY = `query X402Reasons($ids: [String!]!, $because: String!, $limit: Int!) {
+    triples(where: {subject_id: {_in: $ids}, predicate_id: {_eq: $because}}, order_by: {term_id: asc}, limit: $limit) {
+        ${LEVEL}
+    }
+}`;
+});
+
 // ../../packages/graphql/dist/index.js
 var init_dist = __esm(() => {
   init_http();
@@ -6786,6 +6826,7 @@ var init_dist = __esm(() => {
   init_atom_standing();
   init_tool_listing();
   init_tool_usage();
+  init_x402_feed();
 });
 
 // ../../node_modules/.bun/abitype@1.2.3+1cd18485b0404aca/node_modules/abitype/dist/esm/version.js
@@ -19637,10 +19678,12 @@ var init__esm = __esm(() => {
   init_http3();
   init_base();
   init_contract();
+  init_transaction();
   init_decodeEventLog();
   init_encodeFunctionData();
   init_getAddress();
   init_isAddress();
+  init_fromHex();
   init_toBytes();
   init_toHex();
   init_keccak256();
@@ -20000,6 +20043,11 @@ function isContractRevert(error) {
     cursor = cursor.cause;
   }
   return false;
+}
+function isTransactionAbsent(error) {
+  if (!(error instanceof BaseError))
+    return false;
+  return error.walk((cause) => cause instanceof TransactionNotFoundError || cause instanceof TransactionReceiptNotFoundError) !== null;
 }
 var init_chain_errors = __esm(() => {
   init__esm();
@@ -22392,10 +22440,81 @@ var init_attestors = __esm(() => {
   ];
 });
 
+// ../../packages/protocol/dist/arp/x402-networks.js
+var X402_DEFAULT_NETWORKS;
+var init_x402_networks = __esm(() => {
+  init__esm();
+  X402_DEFAULT_NETWORKS = new Map([
+    [
+      "eip155:8453",
+      { assets: [getAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913")], rpcUrl: "https://mainnet.base.org" }
+    ]
+  ]);
+});
+
 // ../../packages/protocol/dist/arp/index.js
 var init_arp = __esm(() => {
   init_chains2();
   init_attestors();
+  init_x402_networks();
+});
+
+// ../../packages/protocol/dist/x402-payment.js
+function chainIdOfNetwork(network) {
+  const match = NETWORK.exec(network);
+  return match === null ? null : Number(match[1]);
+}
+function paymentAtomLabel(ref) {
+  const txHash = ref.txHash.toLowerCase();
+  if (chainIdOfNetwork(ref.network) === null)
+    throw new Error(`network ${ref.network} is not eip155:<chain id>`);
+  if (!TX_HASH.test(txHash))
+    throw new Error(`${ref.txHash} is not a transaction hash`);
+  return `${ref.network}/tx/${txHash}`;
+}
+function transfersIn(logs, assets) {
+  const accepted = new Set(assets.map((asset) => asset.toLowerCase()));
+  const word = (topic) => getAddress(`0x${(topic ?? "").slice(26)}`);
+  return logs.filter((log) => accepted.has(log.address.toLowerCase()) && log.topics.length === 3 && log.topics[0]?.toLowerCase() === TRANSFER_TOPIC && isHex(log.data) && log.data.length === 66).map((log) => ({
+    asset: getAddress(log.address),
+    payer: word(log.topics[1]),
+    payTo: word(log.topics[2]),
+    amount: hexToBigInt(log.data)
+  }));
+}
+function x402TransferReads(rpcUrl) {
+  const client = createPublicClient({ transport: http(rpcUrl, { timeout: 20000 }) });
+  return {
+    getTransactionReceipt: (args) => client.getTransactionReceipt(args),
+    getBlock: (args) => client.getBlock(args)
+  };
+}
+function x402Policy(networks) {
+  return new Map([...networks].map(([network, { assets }]) => [network, { assets }]));
+}
+function x402Reading(networks, env) {
+  const clients = new Map;
+  return {
+    policy: x402Policy(networks),
+    readsFor(network) {
+      const known = clients.get(network);
+      if (known !== undefined)
+        return known;
+      const entry = networks.get(network);
+      if (entry === undefined)
+        throw new Error(`network ${network} is not configured`);
+      const reads = x402TransferReads(env[`ARP_X402_RPC_${chainIdOfNetwork(network) ?? ""}`] ?? entry.rpcUrl);
+      clients.set(network, reads);
+      return reads;
+    }
+  };
+}
+var PAID_WITH_LABEL = "paid with", TRANSFER_TOPIC, NETWORK, TX_HASH;
+var init_x402_payment = __esm(() => {
+  init__esm();
+  TRANSFER_TOPIC = keccak256(stringToBytes("Transfer(address,address,uint256)"));
+  NETWORK = /^eip155:([1-9][0-9]{0,9})$/;
+  TX_HASH = /^0x[0-9a-f]{64}$/;
 });
 
 // ../../packages/protocol/dist/tool-listing.js
@@ -23822,6 +23941,9 @@ async function prepareUsageContext2(params) {
   if (params.reason !== undefined && params.outcome !== "failed") {
     return { status: "refused", rule: "reason_without_failure", detail: "a reason only follows a failure" };
   }
+  if (params.payment !== undefined && params.outcome === undefined) {
+    return { status: "refused", rule: "payment_without_outcome", detail: "a payment is attached to an outcome" };
+  }
   if (domain === undefined && params.outcome === undefined) {
     return { status: "refused", rule: "nothing_to_add", detail: "give a domain or an outcome" };
   }
@@ -23905,12 +24027,19 @@ async function prepareUsageContext2(params) {
     const reasonId = await atom(params.reason, `the word "${params.reason}"`);
     reasonTripleId = await triple(outcomeTripleId, predicate, reasonId, `say it failed because of ${params.reason}`);
   }
+  let paymentTripleId = null;
+  if (params.payment !== undefined && outcomeTripleId !== null) {
+    const predicate = await atom(PAID_WITH_LABEL, `the word "${PAID_WITH_LABEL}"`);
+    const paymentId = await atom(params.payment, `the payment ${params.payment}`);
+    paymentTripleId = await triple(outcomeTripleId, predicate, paymentId, `say this outcome was paid with ${params.payment}`);
+  }
   return {
     status: "planned",
     chainId: reads.chainId,
     contextTripleId,
     outcomeTripleId,
     reasonTripleId,
+    paymentTripleId,
     calls,
     alreadyWritten,
     totalValue: calls.reduce((sum, call2) => sum + call2.value, 0n)
@@ -23930,9 +24059,10 @@ function budgetRefusal2(totalValue, budget) {
 var USAGE_OUTCOMES2, HAS_OUTCOME_LABEL2 = "has outcome", USAGE_REASONS2, BECAUSE_LABEL2 = "because";
 var init_usage_context = __esm(() => {
   init__esm();
+  init_x402_payment();
   init_multivault();
   USAGE_OUTCOMES2 = ["worked", "failed"];
-  USAGE_REASONS2 = ["missing-key", "missing-program", "missing-file", "not-the-right-tool"];
+  USAGE_REASONS2 = ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"];
 });
 
 // ../../packages/protocol/dist/local-failures.js
@@ -25753,7 +25883,7 @@ var init_list_tool = __esm(() => {
 // ../../packages/protocol/dist/sponsor/line.js
 function lineRequestTypedData(request, chainId) {
   return {
-    domain: { name: "ARP Line Request", version: "1", chainId },
+    domain: { name: "ARP Line Request", version: "2", chainId },
     types: LINE_REQUEST_TYPES,
     primaryType: "LineRequest",
     message: { ...request, expiresAt: BigInt(request.expiresAt) }
@@ -25773,6 +25903,7 @@ var init_line = __esm(() => {
       { name: "domain", type: "string" },
       { name: "outcome", type: "string" },
       { name: "reason", type: "string" },
+      { name: "payment", type: "string" },
       { name: "nonce", type: "bytes32" },
       { name: "expiresAt", type: "uint256" }
     ]
@@ -25933,6 +26064,7 @@ var init_dist2 = __esm(() => {
   init_tool_usage2();
   init_declare();
   init_arp();
+  init_x402_payment();
   init_registered_tools();
   init_tool_listing2();
   init_reachability_plan();
@@ -25961,6 +26093,7 @@ var init_dist2 = __esm(() => {
   init_list_tool();
   init_line();
   init_category2();
+  init_chain_errors();
   init_skills_index();
   init_sieve();
 });
@@ -33896,6 +34029,7 @@ async function writeLine(config, agent, input) {
       domain: input.domain ?? "",
       outcome: input.outcome,
       reason: input.reason ?? "",
+      payment: input.payment === undefined ? "" : paymentAtomLabel(input.payment),
       nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
       expiresAt: expiresAt()
     }, DESKTOP_CHAIN_ID, agent.account);
@@ -34128,11 +34262,22 @@ var exports_line = {};
 __export(exports_line, {
   writeLineHere: () => writeLineHere,
   writeLineChecked: () => writeLineChecked,
+  readLinePayment: () => readLinePayment,
   lineFromArgs: () => lineFromArgs
 });
 function lineFromArgs(args) {
   if (args.parent === undefined !== (args.why === undefined))
     return new Error("--parent and --why go together");
+  if (args.paymentTx === undefined !== (args.network === undefined))
+    return new Error("--payment-tx and --network go together");
+  if (args.network !== undefined && chainIdOfNetwork(args.network) === null) {
+    return new Error("--network is a CAIP-2 EVM network, such as eip155:8453 for Base");
+  }
+  if (args.network !== undefined && !X402_DEFAULT_NETWORKS.has(args.network)) {
+    return new Error(`--network must be one of ${[...X402_DEFAULT_NETWORKS.keys()].join(", ")}`);
+  }
+  if (args.paymentTx !== undefined && !/^0x[0-9a-fA-F]{64}$/.test(args.paymentTx))
+    return new Error("--payment-tx is a 32-byte transaction hash");
   if (args.parent !== undefined && args.domain === undefined)
     return new Error("--parent and --why add a --domain");
   if (args.why !== undefined && args.why.trim() === "")
@@ -34149,11 +34294,40 @@ function lineFromArgs(args) {
     outcome: args.outcome,
     ...args.domain === undefined ? {} : { domain: args.domain },
     ...args.reason === undefined ? {} : { reason: args.reason },
-    ...args.parent === undefined || args.why === undefined ? {} : { newDomain: { parent: args.parent, why: args.why.trim() } }
+    ...args.parent === undefined || args.why === undefined ? {} : { newDomain: { parent: args.parent, why: args.why.trim() } },
+    ...args.paymentTx === undefined || args.network === undefined ? {} : { payment: { network: args.network, txHash: args.paymentTx.toLowerCase() } }
   };
+}
+async function readLinePayment(input, reading) {
+  if (input.payment === undefined)
+    return null;
+  const { network, txHash } = input.payment;
+  const assets = reading.policy.get(network)?.assets ?? [];
+  const reads2 = reading.readsFor(network);
+  let receipt;
+  try {
+    receipt = await reads2.getTransactionReceipt({ hash: txHash });
+  } catch (error) {
+    if (isTransactionAbsent(error))
+      throw new Error(`transaction ${txHash} not found on ${network}`);
+    throw new Error(`${network} could not be read: ${error instanceof Error ? error.message.split(`
+`)[0] : String(error)}`);
+  }
+  if (receipt.status !== "success")
+    throw new Error(`the payment ${txHash} reverted on ${network}`);
+  const transfers = transfersIn(receipt.logs, assets);
+  if (transfers.length === 0)
+    throw new Error(`${txHash} on ${network} moves no accepted asset (${assets.join(", ")})`);
+  return { network, txHash, transfers: transfers.map((transfer) => ({ ...transfer, amount: transfer.amount.toString() })) };
 }
 async function writeLineChecked(steps, input) {
   let line = input;
+  let payment = null;
+  if (input.payment !== undefined) {
+    if (steps.payments === undefined)
+      throw new Error("this build reads no payment network");
+    payment = await readLinePayment(input, steps.payments);
+  }
   if (input.domain !== undefined) {
     const domain = normaliseCategoryLabel(input.domain);
     const resolved = await steps.isCategory(domain) ? null : await steps.resolve?.(domain);
@@ -34171,7 +34345,8 @@ async function writeLineChecked(steps, input) {
     }
   }
   await sponsorApproval(steps.config);
-  return (steps.write ?? writeLine)(steps.config, steps.agent(), line);
+  const written = await (steps.write ?? writeLine)(steps.config, steps.agent(), line);
+  return payment === null ? written : { ...written, payment };
 }
 async function writeLineHere(input) {
   if (chainId !== 13579)
@@ -34180,7 +34355,8 @@ async function writeLineHere(input) {
     config: loopConfig(),
     isCategory: async (label) => isCategoryIn(await readDomainTree(domainWalk()))(label),
     resolve: async (word) => resolveDomain(word, domainWords(await readDomainTree(domainWalk()))),
-    agent: agentFor
+    agent: agentFor,
+    payments: x402Reading(X402_DEFAULT_NETWORKS, process.env)
   }, input);
 }
 var init_line2 = __esm(() => {
@@ -34415,8 +34591,8 @@ var init_tools = __esm(() => {
           },
           reason: {
             type: "string",
-            enum: ["missing-key", "missing-program", "missing-file", "not-the-right-tool"],
-            description: "Optional, with `outcome: failed`. Why it failed, one more paid triple per tool. An agent that can " + "supply what was missing is not told this failure concerns it."
+            enum: ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"],
+            description: "Optional, with `outcome: failed`. Why it failed, one more paid triple per tool. An agent that can " + "supply what was missing is not told this failure concerns it. `no-delivery`: paid, got nothing back."
           }
         },
         required: ["agent_chain_id", "agent_token_id", "tools"]
@@ -42035,7 +42211,7 @@ function createNode(options) {
       if (body instanceof Response)
         return body;
       const { paymentTxHash: hash3, requesterAddress: requester3 } = body;
-      if (typeof hash3 !== "string" || !TX_HASH.test(hash3)) {
+      if (typeof hash3 !== "string" || !TX_HASH2.test(hash3)) {
         return json2({ error: "paymentTxHash must be a 32-byte 0x-prefixed hex hash" }, 400);
       }
       if (typeof requester3 !== "string" || !isAddress(requester3)) {
@@ -42045,7 +42221,7 @@ function createNode(options) {
       if (typeof verifier !== "string" || !isAddress(verifier)) {
         return json2({ error: "verifier must be the address the receipt is for (an enforcer or a service)" }, 400);
       }
-      if (typeof termId !== "string" || !TX_HASH.test(termId)) {
+      if (typeof termId !== "string" || !TX_HASH2.test(termId)) {
         return json2({ error: "termId must be the 32-byte term the requester will deposit on" }, 400);
       }
       const payment = hash3;
@@ -42112,7 +42288,7 @@ var MAX_OFFER_FIELD2 = 500, echo = async (payload, context) => ({
   echoed: payload,
   note: "No handler configured, so this node proves the protocol and nothing about the agent. Set " + "ARP_NODE_HANDLER to a module exporting `handle(payload, context)`.",
   paidWei: context.paid.toString()
-}), DEFAULT_LIMITS, TX_HASH, RATE_WINDOW_MS = 60000, RATE_SWEEP_AT = 1e4, json2, Timeout;
+}), DEFAULT_LIMITS, TX_HASH2, RATE_WINDOW_MS = 60000, RATE_SWEEP_AT = 1e4, json2, Timeout;
 var init_task = __esm(() => {
   init_dist2();
   init_node2();
@@ -42123,7 +42299,7 @@ var init_task = __esm(() => {
     requestsPerMinute: 30,
     receiptTtlSeconds: 86400
   };
-  TX_HASH = /^0x[0-9a-fA-F]{64}$/;
+  TX_HASH2 = /^0x[0-9a-fA-F]{64}$/;
   json2 = jsonResponse;
   Timeout = class Timeout extends Error {
   };
@@ -43382,6 +43558,7 @@ usage
 
   arp line           write one public line on testnet 13579 through ARP's sponsor: --tool <url>
                      --outcome worked|failed [--domain <category>] [--reason <reason>]
+                     [--payment-tx <hash> --network eip155:8453]  an x402 payment, read on Base
   arp init           add the MCP server and the hook to every runtime found here
   arp uninstall      remove them, and only them
   arp doctor         check what is installed and that the server answers
@@ -43509,6 +43686,7 @@ async function run(argv) {
       if (toolUrl === undefined || outcome === undefined) {
         process.stderr.write(`usage: arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>]
        [--parent <category> --why <text>]   adds a --domain the tree lacks, under --parent
+       [--payment-tx <hash> --network eip155:8453]   the x402 payment this outcome refers to
 `);
         return EXIT2.usage;
       }
@@ -43520,7 +43698,9 @@ async function run(argv) {
         domain: flag("domain"),
         reason: flag("reason"),
         parent: flag("parent"),
-        why: flag("why")
+        why: flag("why"),
+        paymentTx: flag("payment-tx"),
+        network: flag("network")
       });
       if (input instanceof Error) {
         process.stderr.write(`arp line: ${input.message}

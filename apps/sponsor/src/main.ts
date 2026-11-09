@@ -26,6 +26,9 @@
  *  **Publication is on when `INTUITION_PIN_API_KEY` is set** (task 37c). The document is pinned with
  *  Intuition's `uploadJsonToIpfs` (`docs/tasks/37` §4.3), and the two predicates are the ones read
  *  from the graph on 2026-11-03 (`data/deployments/13579.json`, ADR `0092` item 7).
+ *
+ *  **An x402 line's payment is read on Base** (ADR `0159`), at `https://mainnet.base.org` unless
+ *  `ARP_X402_RPC_8453` names another RPC. Read only: there is no account for that chain here.
  */
 import { fileURLToPath } from 'node:url';
 
@@ -36,6 +39,8 @@ import {
   intuitionTestnet,
   multiVaultReads,
   resolveIdentityAtomStrict,
+  X402_DEFAULT_NETWORKS,
+  x402Reading,
   type PreparedCall,
   type SponsorLimits,
 } from '@arp-protocol/core';
@@ -356,6 +361,8 @@ const service = createSponsor({
   lines: {
     inContextOf: deployments.arp.endpointBinding.inContextOf as Hex,
     subject: lineSubjectCheck(deployments.chain.graphqlUrl),
+    // ADR `0159`: an x402 line's payment, read on its own network. Read-only; this key never signs there.
+    payments: x402Reading(X402_DEFAULT_NETWORKS, process.env),
   },
   categories: {
     ...CATEGORY_TREE,

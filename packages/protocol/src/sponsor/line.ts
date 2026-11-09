@@ -1,6 +1,7 @@
 import {getAddress, isAddress, isHex, recoverTypedDataAddress, type Address, type Hex} from "viem";
 
 import {isUsageOutcome, isUsageReason, type UsageOutcome, type UsageReason} from "../declare/usage-context.js";
+import {parsePaymentAtomLabel} from "../x402-payment.js";
 
 /**
  * What an agent signs to have ARP's sponsoring service write one line about a tool it used (ADR `0144`):
@@ -13,6 +14,10 @@ import {isUsageOutcome, isUsageReason, type UsageOutcome, type UsageReason} from
  *
  * **Nothing on chain checks this signature**, so the domain has no `verifyingContract`, as in
  * `request.ts`. The service spends each `nonce` once, in its ledger.
+ *
+ * **Version 2** (task 89, ADR `0159`) adds `payment`: the x402 settlement the line refers to, as
+ * `eip155:<chain>/tx/<hash>`, or `""`. The agent signs which payment it claims; the service reads that
+ * transaction on its own chain before it writes anything. A version 1 request no longer verifies.
  */
 export const LINE_REQUEST_TYPES = {
     LineRequest: [
@@ -23,6 +28,7 @@ export const LINE_REQUEST_TYPES = {
         {name: "domain", type: "string"},
         {name: "outcome", type: "string"},
         {name: "reason", type: "string"},
+        {name: "payment", type: "string"},
         {name: "nonce", type: "bytes32"},
         {name: "expiresAt", type: "uint256"},
     ],
@@ -44,6 +50,8 @@ export type LineRequest = {
     outcome: UsageOutcome;
     /** Only with `failed`. `""` for none. */
     reason: UsageReason | "";
+    /** The x402 payment, `eip155:<chain>/tx/<hash>` in lower case (`paymentAtomLabel`), or `""` for none. */
+    payment: string;
     nonce: Hex;
     /** Unix seconds. */
     expiresAt: number;
@@ -59,7 +67,7 @@ export type LineRequestVerdict =
 
 export function lineRequestTypedData(request: LineRequest, chainId: number) {
     return {
-        domain: {name: "ARP Line Request", version: "1", chainId} as const,
+        domain: {name: "ARP Line Request", version: "2", chainId} as const,
         types: LINE_REQUEST_TYPES,
         primaryType: "LineRequest" as const,
         message: {...request, expiresAt: BigInt(request.expiresAt)},
@@ -87,7 +95,7 @@ export async function verifyLineRequest(signed: unknown, now: number): Promise<L
     if (typeof request !== "object" || request === null) return {status: "malformed", reason: "no request"};
     if (typeof chainId !== "number" || !Number.isInteger(chainId)) return {status: "malformed", reason: "chainId"};
     if (typeof signature !== "string" || !isHex(signature)) return {status: "malformed", reason: "signature"};
-    const {agent, agentRegistry, agentId, tool, domain, outcome, reason, nonce, expiresAt} = request;
+    const {agent, agentRegistry, agentId, tool, domain, outcome, reason, payment, nonce, expiresAt} = request;
     if (typeof agent !== "string" || !isAddress(agent)) return {status: "malformed", reason: "agent"};
     if (typeof agentRegistry !== "string" || typeof agentId !== "string") return {status: "malformed", reason: "agent reference"};
     if (!isBytes32(tool)) return {status: "malformed", reason: "tool"};
@@ -95,6 +103,9 @@ export async function verifyLineRequest(signed: unknown, now: number): Promise<L
     if (!isUsageOutcome(outcome)) return {status: "malformed", reason: "outcome"};
     if (reason !== "" && !isUsageReason(reason)) return {status: "malformed", reason: "reason"};
     if (reason !== "" && outcome !== "failed") return {status: "malformed", reason: "a reason only follows a failure"};
+    if (typeof payment !== "string" || (payment !== "" && parsePaymentAtomLabel(payment) === null)) {
+        return {status: "malformed", reason: "payment is eip155:<chain>/tx/<hash>, lower case, or empty"};
+    }
     if (!isBytes32(nonce)) return {status: "malformed", reason: "nonce"};
     if (typeof expiresAt !== "number" || !Number.isInteger(expiresAt)) return {status: "malformed", reason: "expiresAt"};
     if (expiresAt <= now) return {status: "expired", expiresAt};

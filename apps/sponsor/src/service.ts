@@ -69,6 +69,8 @@ import type {
   SponsorLimits,
   StrictIdentityAtom,
   TypedDataVerifier,
+  X402NetworkPolicy,
+  X402TransferReads,
 } from '@arp-protocol/core';
 import { redactUrls, refuseForeignRequest } from '@arp-protocol/core/node';
 import { getAddress, isAddress, type Address, type Hex } from 'viem';
@@ -191,8 +193,16 @@ export type SponsorOptions = {
     attestors: readonly Address[];
     log(entry: CategoryLogEntry): void;
   } | null;
-  /** What `POST /line` needs (ADR `0144`), with `categories` for the domain. Absent, it answers 503. */
-  lines?: { inContextOf: Hex; subject(atomId: Hex): Promise<'github' | 'other' | 'unseen'> } | null;
+  /**
+   * What `POST /line` needs (ADR `0144`), with `categories` for the domain. Absent, it answers 503.
+   * `payments` reads an x402 line's payment on its own network (ADR `0159`); absent, a line with a
+   * payment answers 503 and every other line is unchanged.
+   */
+  lines?: {
+    inContextOf: Hex;
+    subject(atomId: Hex): Promise<'github' | 'other' | 'unseen'>;
+    payments?: { policy: X402NetworkPolicy; readsFor(network: string): X402TransferReads } | null;
+  } | null;
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;
   /** Where a failed request's detail goes, redacted. `console.error` by default. */
