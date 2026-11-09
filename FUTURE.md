@@ -470,3 +470,55 @@ passed every check with one operator on both sides. The score counts distinct wa
 (`pulse-score.ts`), so several wallets buy several votes.
 
 Ordered after the effect on the search and the depth of the tree are established.
+
+## x402: check before paying, and say what happened after
+
+**Asked 2026-11-09**, as of strong interest: _« il nous faut des notes pour le futur pour x402 car
+ça m'intéresse aussi énormément »_. It followed a reply from Fizzl's founder (x402 Doctor) to an
+outreach email of 2026-11-05, which said the problem is larger on the "after paying" side than
+the "before paying" side. The email is private and is not quoted here. Everything below comes
+from Fizzl's public pages, read 2026-11-09, and none of it was run.
+
+**What Fizzl publishes.**
+
+| What | Where | Terms |
+| --- | --- | --- |
+| Preflight before paying: `go`, `caution` or `no_go`. It checks the price against the listing, whether the payout address can receive, the OFAC list, testnet-only offers and the 30-day record | `GET https://x402-doctor.fizzl.eu/api/v1/preflight?url=…&max_usd=…`, 0.001 USD over x402, in the OpenAPI at `/openapi.json` (v2.5.0) | Paid per call, no account |
+| Signed receipt on every paid answer, EIP-191, tied to the on-chain payment through `payment.payer` and `nonce` | signer at `/.well-known/x402-doctor-signer.json`, free check at `POST /api/v1/verify` | |
+| Trust Index: about 40,800 paid services checked daily against the CDP Bazaar, Circle's marketplace and five other lists | `GET /api/trust?url=…`, `POST /api/trust/batch`, daily dump on the `trust-data` branch of `github.com/Fizzl13/x402-doctor` and on Hugging Face `x402Fizzl/x402-trust-index` | Free, no key, rate-limited, CC BY 4.0 on the trust page; the terms say "free to use, as they are" (`fizzl.eu/terms`, 2026-10-23) |
+| A refusal: the buyer that did not pay tells the seller why, using one of 12 fixed reasons, with no payer identity | Draft extension, `x402-foundation/x402#4087`; posted to the seller's `/.well-known/x402-refusal` | Draft 0.1, "no x402 buyer reports refusals to sellers yet" |
+| 20 fraud classes, with what a check before paying catches: 8 caught, 10 partly, 2 not, by their count | `fizzl.eu/guides/agent-payment-fraud-classes/` | |
+| Remote MCP server and a Claude Code plugin | `https://x402-doctor.fizzl.eu/mcp`; `/plugin marketplace add Fizzl13/x402-doctor` | |
+
+**What was not found:** a public API for a buyer to report a failure after paying. The guide says an
+endpoint turns `caution` once three or more payers report failures (`payments_fail_after_preflight`),
+but no route for those reports is in the OpenAPI.
+
+**Four ways it meets ARP. Ideas, not decided.**
+
+1. **The "after" side is an ARP line.** A form B line (`docs/28`, ADR `0138`) with `failed` and a
+   closed reason is a public, attributed, permanent outcome report. That is the half Fizzl's own
+   API does not expose. Their three-payer rule matches ARP's three-wallet threshold (ADR `0143`).
+   Fizzl collects the reports, and ARP adds a record that anyone can read again.
+2. **Read the Trust Index as a dated fact.** For an x402 endpoint, `arp_agent_endpoints` or the
+   probe could show "payable / no_go per Fizzl, on date D". It is never on chain, the same
+   treatment as the probe (ADR `0093`). It is read-only, under CC BY, and the source is named.
+3. **One vocabulary for "did not pay".** ARP's closed reasons could reuse the 12 refusal codes of
+   #4087 for an x402 service, and ARP could comment on the issue.
+4. **A Fizzl receipt as proof of a paid call.** It proves a payment happened and nothing about
+   what was delivered. Accepting it is a new signature site, so it goes on the list in
+   `security.md` before it ships.
+
+**What blocks it today.**
+
+- ARP's node is paid in native tTRUST, not x402 (`apps/node/src/task.ts`, `verifyPayment`), and
+  x402 waits for the mainnet port (ADR `0102`, `docs/tasks/41`). So Doctor cannot preflight an ARP
+  node yet.
+- Task 65 §8 showed what a check before paying does not answer: whether the node holds the
+  thing. Six of six runs paid, three of them for a note that did not exist. Fizzl's preflight
+  checks that the endpoint can be paid, not that it holds the thing either.
+- The placement note of 2026-11-05 pauses x402 behind the skills work.
+
+**When it is picked up:** start with point 1, as a conversation with Fizzl about whether ARP lines
+on x402 endpoints are useful to them. Then do point 2, which is the cheapest. Do 41b, the node
+answering 402, with Doctor's `diagnose` as its test.
