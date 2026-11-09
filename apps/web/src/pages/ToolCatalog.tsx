@@ -154,7 +154,8 @@ export function ToolCatalog() {
 
             {/* Every control is in the rail, which holds still while the list scrolls (user,
                 2026-11-09): the index, the order and the domains read as one column. Below `md`
-                it stacks above the list, where it is still short enough to scroll past. */}
+                it stacks above the list, and the full domain list comes first: on a phone the
+                tools start several thousand px down. */}
             <div className="grid gap-x-10 gap-y-8 md:grid-cols-[13rem_minmax(0,1fr)] md:items-start">
                 <div className="tool-rail flex flex-col gap-8">
                     {/* **Two indexes, one read.** Skills and repositories are filed in the same
@@ -177,7 +178,7 @@ export function ToolCatalog() {
                             // No Signal outside ARP's own tests yet, which are hidden (task 74).
                             view !== undefined &&
                             !view.rows.some((row) => (row.sponsoredDeposits ?? 0) > 0) ? (
-                                <Hint label="About: no signals yet" align="right">
+                                <Hint label="About: no signals yet" align="left">
                                     No signals yet. A Signal appears when an agent writes a line
                                     about a tool it used. ARP&apos;s own tests are hidden, listed on
                                     /test-identities.
