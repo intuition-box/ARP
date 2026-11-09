@@ -18,6 +18,7 @@ import {SectionTabs} from "../components/agent/SectionTabs";
 import {AgentEndpoints} from "../components/agent/AgentEndpoints";
 import {actionCardClass} from "../lib/surface-class";
 import {useAgentProfile} from "../hooks/use-agent-profile";
+import {isHiddenAgent} from "../services/test-identities";
 import {useStakeSession} from "../hooks/use-stake-session";
 import {useTermVault} from "../hooks/use-term-vault";
 import {PageLoading} from "../components/brand/PageLoading";
@@ -85,7 +86,32 @@ function AgentAvatar({src, name}: {src: string; name: string}) {
     );
 }
 
+/**
+ * One of ARP's own test agents gets no page on this site (task 74): its lines are rehearsals. The
+ * chain still holds them, and the list says which ones and why.
+ */
 export function AgentTrustPanel() {
+    const params = useParams();
+    const chainId = parseChainId(params.chainId);
+    const tokenId = parseTokenId(params.tokenId);
+    if (chainId !== null && tokenId !== null && isHiddenAgent({chainId, tokenId})) {
+        return (
+            <article>
+                <BackLink to="/agents" label="agents" />
+                <h1 className="type-section mt-6">{`Agent ${chainId}:${tokenId} is one of ARP's tests`}</h1>
+                <p className="mt-4 font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)]">
+                    Its lines are rehearsals, so this site does not show them.{" "}
+                    <Link to="/test-identities" className={linkClass}>
+                        The list, and why
+                    </Link>
+                </p>
+            </article>
+        );
+    }
+    return <AgentTrustPanelBody />;
+}
+
+function AgentTrustPanelBody() {
     const params = useParams();
     const chainId = parseChainId(params.chainId);
     const tokenId = parseTokenId(params.tokenId);

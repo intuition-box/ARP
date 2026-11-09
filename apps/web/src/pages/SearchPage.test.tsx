@@ -43,6 +43,7 @@ const agents = (names: string[]): CohortView => ({
     offset: 0,
     hasPrevious: false,
     hasNext: false,
+    hiddenCount: 0,
     rows: names.map((name) => ({
         key: name,
         sigilId: "0x01",

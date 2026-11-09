@@ -2,6 +2,7 @@ import type {SigilModule} from "../components/brand/sigil-geometry";
 import {ListAgentsFailedError, NoListingSourceError} from "@arp-protocol/core";
 import type {AgentListing, AgentListOrder, AgentPage} from "@arp-protocol/core";
 
+import {isHiddenListing} from "./test-identities";
 import {describeAtomPositions, formatTrust, shortTrust} from "./trust-format";
 
 /**
@@ -79,6 +80,8 @@ export type CohortView = {
     hasPrevious: boolean;
     hasNext: boolean;
     rows: CohortRow[];
+    /** Rows of this page left out because they are ARP's own test identities (task 74). */
+    hiddenCount: number;
 };
 
 /**
@@ -175,21 +178,25 @@ function rangeLabelFor(page: AgentPage, rowCount: number): string {
 
 /** One page in, everything the directory renders out. */
 export function buildCohortView(page: AgentPage, symbol: string): CohortView {
-    const rows = page.agents.map((listing, index) => toCohortRow(listing, index, symbol));
-    const rangeEnd = page.offset + rows.length;
+    // The range and the paging are the read's, so they count every row it returned; only the rows
+    // shown leave ARP's test identities out.
+    const all = page.agents.map((listing, index) => toCohortRow(listing, index, symbol));
+    const rows = all.filter((_, index) => !isHiddenListing(page.agents[index]!)); // same length as `all`.
+    const rangeEnd = page.offset + all.length;
 
     return {
         sourceId: page.sourceId,
         order: page.order,
         total: page.total,
-        rangeLabel: rangeLabelFor(page, rows.length),
+        rangeLabel: rangeLabelFor(page, all.length),
         limit: page.limit,
         offset: page.offset,
         hasPrevious: page.offset > 0,
         // A short page is the end of the cohort whatever the total says, and a
         // total the source did not report is not a reason to hide the control.
-        hasNext: rows.length === page.limit && (page.total === null || rangeEnd < page.total),
+        hasNext: all.length === page.limit && (page.total === null || rangeEnd < page.total),
         rows,
+        hiddenCount: all.length - rows.length,
     };
 }
 

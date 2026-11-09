@@ -672,7 +672,8 @@ describe("a skill's page", () => {
     });
 
     it("lists the wallets the sponsor deposited for on a skill's own page", async () => {
-        vi.stubEnv("VITE_ARP_SPONSOR_ADDRESS", "0xE596096F4176b682E300d73963e7B04B383C1AA1");
+        // A sponsor that is not one of ARP's listed test addresses (task 74).
+        vi.stubEnv("VITE_ARP_SPONSOR_ADDRESS", "0x1111111111111111111111111111111111111111");
         vi.mocked(getToolWallets).mockResolvedValueOnce([
             {account: "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42", deposits: 2, assets: 2_000n},
         ]);
@@ -688,6 +689,24 @@ describe("a skill's page", () => {
         vi.unstubAllEnvs();
     });
 
+    it("shows no wallets when the sponsor is one of ARP's test addresses (task 74)", async () => {
+        vi.stubEnv("VITE_ARP_SPONSOR_ADDRESS", "0xE596096F4176b682E300d73963e7B04B383C1AA1");
+        vi.mocked(getToolWallets).mockResolvedValueOnce([
+            {account: "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42", deposits: 2, assets: 2_000n},
+        ]);
+        read.mockResolvedValue(
+            standing({
+                label: "github.com/example/pack?skill=render-video",
+                url: "https://github.com/example/pack?skill=render-video",
+            }),
+        );
+        renderAt();
+        expect(await screen.findByRole("heading", {name: "render-video", level: 1})).toBeTruthy();
+        expect(screen.queryByRole("heading", {name: "Wallets"})).toBeNull();
+        expect(getToolWallets).not.toHaveBeenCalled();
+        vi.unstubAllEnvs();
+    });
+
     it("keeps the generic page for an atom that is not a skill", async () => {
         read.mockResolvedValue(standing());
         renderAt();
@@ -698,7 +717,7 @@ describe("a skill's page", () => {
 
 describe("a repository's page", () => {
     it("lists the wallets the sponsor deposited for", async () => {
-        vi.stubEnv("VITE_ARP_SPONSOR_ADDRESS", "0xE596096F4176b682E300d73963e7B04B383C1AA1");
+        vi.stubEnv("VITE_ARP_SPONSOR_ADDRESS", "0x1111111111111111111111111111111111111111");
         vi.mocked(getToolWallets).mockResolvedValueOnce([
             {account: "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42", deposits: 1, assets: 1_000n},
         ]);

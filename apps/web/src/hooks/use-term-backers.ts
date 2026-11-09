@@ -2,6 +2,7 @@ import {useQuery} from "@tanstack/react-query";
 import {getTermBackers, type TermBacker} from "@arp-protocol/core";
 
 import {useChainChoice} from "../lib/chain-choice";
+import {visibleBackers} from "../services/test-identities";
 
 /**
  * Who holds a position on a term, largest first.
@@ -27,7 +28,8 @@ function termBackersQueryOptions(
         queryKey: termBackersQueryKey(chain.chainId, termId, String(curveId ?? "none")),
         queryFn: async (): Promise<TermBacker[]> => {
             if (termId === null || curveId === undefined) throw new Error("no term");
-            return read(termId, curveId, {graphqlUrl: chain.graphqlUrl});
+            // The listed test wallets are not shown as backers (task 74).
+            return visibleBackers(await read(termId, curveId, {graphqlUrl: chain.graphqlUrl}));
         },
         // Nothing until the curve is known: a term holds a different set per curve.
         enabled: termId !== null && curveId !== undefined,

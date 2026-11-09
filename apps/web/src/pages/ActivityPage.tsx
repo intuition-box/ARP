@@ -5,6 +5,7 @@ import type {Hex} from "viem";
 
 import {Positions} from "../components/activity/Positions";
 import {DisplayTabs} from "../components/brand/DisplayTabs";
+import {NoActivityYet} from "../components/brand/NoActivityYet";
 import {Segmented} from "../components/tool/ToolCatalogControls";
 import {useActivityTrace} from "../hooks/use-activity-trace";
 import {useAgentActivity} from "../hooks/use-agent-activity";
@@ -405,7 +406,14 @@ export function ActivityPage({feed, reads}: {feed?: AgentFeed; reads?: ChainRead
                                 : ""
                         }`}
                     </h2>
-                    {shown.length === 0 ? (
+                    {shown.length === 0 &&
+                    onChain.status === "success" &&
+                    kind === "all" &&
+                    view === "everyone" ? (
+                        <div className={`${CELL} border-t border-[color:var(--color-rule)] py-3`}>
+                            <NoActivityYet />
+                        </div>
+                    ) : shown.length === 0 ? (
                         <p
                             className={`${CELL} border-t border-[color:var(--color-rule)] py-3 text-[color:var(--color-steel)]`}
                         >

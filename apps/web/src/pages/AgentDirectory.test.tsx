@@ -37,6 +37,7 @@ const VIEW: CohortView = {
     offset: 0,
     hasPrevious: false,
     hasNext: false,
+    hiddenCount: 0,
     rows: [
         row({key: "a", name: "Captain Dackie"}),
         row({

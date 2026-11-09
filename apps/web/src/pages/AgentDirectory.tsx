@@ -1,12 +1,12 @@
 import {useId, useState} from "react";
-import {useNavigate} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import type {AgentListOrder} from "@arp-protocol/core";
 
 import {CapabilityFilter, CapabilityResults} from "../components/agent/CapabilitySearch";
 import {CohortList} from "../components/agent/CohortList";
 import {PageLoading} from "../components/brand/PageLoading";
 import {useChainChoice} from "../lib/chain-choice";
-import {controlClass} from "../lib/control-class";
+import {controlClass, linkClass} from "../lib/control-class";
 import {COHORT_PAGE_SIZE, useAgentCohort} from "../hooks/use-agent-cohort";
 import {COHORT_ORDERS, describeCohortFailure, orderLabel} from "../services/agent-cohort";
 import {agentRefOf} from "../services/agent-lookup";
@@ -126,6 +126,14 @@ export function AgentDirectory() {
                             className="font-mono text-[length:var(--text-body-sm)] text-[color:var(--color-steel)] tabular-nums"
                         >
                             {view.rangeLabel}
+                            {view.hiddenCount === 0 ? null : (
+                                <>
+                                    {` · ${view.hiddenCount} `}
+                                    <Link to="/test-identities" className={linkClass}>
+                                        ARP test {view.hiddenCount === 1 ? "identity" : "identities"} hidden
+                                    </Link>
+                                </>
+                            )}
                             {cohortQuery.isPlaceholderData ? " · reading…" : ""}
                         </p>
                         <div className="flex gap-3">

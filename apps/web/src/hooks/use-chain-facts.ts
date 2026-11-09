@@ -3,12 +3,19 @@ import {getRecentStakes, type RecentStake} from "@arp-protocol/core";
 
 import {useChainChoice} from "../lib/chain-choice";
 import {chainFacts, type ChainFact} from "../services/chain-facts-view";
+import {hiddenAtomIds, visibleStakes} from "../services/test-identities";
 import {recentQueryOptions, type RecentFetcher} from "./use-recent-declarations";
 
 export type StakesFetcher = (config: {
     graphqlUrl: string;
     limit?: number;
 }) => Promise<RecentStake[]>;
+
+/** Stakes about or by ARP's own test identities are left out, as declarations are (task 74). */
+const getVisibleRecentStakes: StakesFetcher = async (config) => {
+    const [rows, hidden] = await Promise.all([getRecentStakes(config), hiddenAtomIds(config.graphqlUrl)]);
+    return visibleStakes(rows, hidden);
+};
 
 export type ChainReads = {fetchRecent?: RecentFetcher; fetchStakes?: StakesFetcher};
 
@@ -30,7 +37,7 @@ export function useChainFacts(reads: ChainReads = {}): {
         ...recentQueryOptions(chain, LIMIT, reads.fetchRecent),
         refetchInterval: POLL_MS,
     });
-    const fetchStakes = reads.fetchStakes ?? getRecentStakes;
+    const fetchStakes = reads.fetchStakes ?? getVisibleRecentStakes;
     const stakes = useQuery({
         queryKey: ["intuition", chain.chainId, "recent-stakes", LIMIT] as const,
         queryFn: () => fetchStakes({graphqlUrl: chain.graphqlUrl, limit: LIMIT}),

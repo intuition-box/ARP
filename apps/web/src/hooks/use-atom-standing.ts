@@ -5,6 +5,7 @@ import {getAtomStanding, type AtomStanding} from "@arp-protocol/core";
 import {useChainChoice} from "../lib/chain-choice";
 import {DOMAIN_ATTESTORS} from "../services/domain-filter";
 import {buildAtomView, type AtomView} from "../services/atom-standing-view";
+import {hiddenAtomIds, visibleStanding} from "../services/test-identities";
 
 /**
  * One atom and everything pointing at it.
@@ -38,10 +39,19 @@ export function atomStandingQueryKey(chainId: number, atomId: string | null) {
     return ["intuition", chainId, "atom-standing", atomId, DOMAIN_ATTESTORS] as const;
 }
 
+/** ARP's own test agents' lines are left out of every atom's page (task 74). */
+const getVisibleAtomStanding: AtomStandingFetcher = async (atomId, config) => {
+    const [standing, hidden] = await Promise.all([
+        getAtomStanding(atomId, config),
+        hiddenAtomIds(config.graphqlUrl),
+    ]);
+    return visibleStanding(standing, hidden);
+};
+
 export function atomStandingQueryOptions(
     chain: {chainId: number; graphqlUrl: string; symbol: string},
     atomId: string | null,
-    fetchStanding: AtomStandingFetcher = getAtomStanding,
+    fetchStanding: AtomStandingFetcher = getVisibleAtomStanding,
 ) {
     return {
         queryKey: atomStandingQueryKey(chain.chainId, atomId),

@@ -123,7 +123,7 @@ describe("Landing", () => {
     it("says nothing has happened rather than showing a sample, when the chain is empty", async () => {
         renderWithProviders(<Landing />);
         // Mainnet returns zero today. The handoff's own instruction: never sample data.
-        expect(await screen.findByText(/No declaration on this chain yet/i)).toBeTruthy();
+        expect(await screen.findByText("No activity yet.")).toBeTruthy();
         // And the same for the two cards of Fig. 01, which the reference fills with sample names.
         expect(
             await screen.findByText(/No agent has declared using anything here yet/i),
@@ -158,8 +158,7 @@ describe("Landing", () => {
         // `findAll`: the beat card and both cards of Fig. 01 each say it, which is the point —
         // three independent reads of the same query, none of them claiming an empty chain.
         expect(await screen.findAllByText(/The graph did not answer/i)).toHaveLength(3);
-        expect(screen.queryByText(/Nobody has run the loop here/i)).toBeNull();
-        expect(screen.queryByText(/No declaration on this chain yet/i)).toBeNull();
+        expect(screen.queryByText("No activity yet.")).toBeNull();
         expect(screen.queryByText(/No agent has declared using anything here yet/i)).toBeNull();
     });
 

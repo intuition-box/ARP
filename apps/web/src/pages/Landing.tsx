@@ -10,6 +10,7 @@ import {SourceField} from "../components/brand/SourceField";
 import {Words} from "../components/brand/Words";
 import {useScene} from "../components/brand/scene-context";
 import {clamp, smooth} from "../components/brand/source-field-geometry";
+import {NoActivityYet} from "../components/brand/NoActivityYet";
 import {useRecentDeclarations} from "../hooks/use-recent-declarations";
 import {useDeclarationCost} from "../hooks/use-declaration-cost";
 import {useChainChoice} from "../lib/chain-choice";
@@ -251,14 +252,9 @@ function Beat({read}: {read: Read<RecentDeclaration[]>}) {
                     </span>
                 </>
             ) : newest === undefined ? (
-                <>
-                    <span className="text-[13px] text-[color:var(--color-fg)]">
-                        No declaration on this chain yet.
-                    </span>
-                    <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                        Nobody has run the loop here, including us.
-                    </span>
-                </>
+                <span className="text-[13px]">
+                    <NoActivityYet />
+                </span>
             ) : (
                 <>
                     <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
@@ -710,7 +706,7 @@ const MANIFESTO = [
  * beside it — the README's "Build against ARP" and ADR `0045`'s invariant, which is the request
  * path and not the runtime.
  *
- * `@arp-protocol/core` is named without `npm`, deliberately: **the package is not published.**
+ * The command is the CLI's, which is on npm; `@arp-protocol/core` is not, so it is not named (task 74).
  */
 function SceneBuild() {
     return (
@@ -764,7 +760,7 @@ function SceneBuild() {
                         Open the agent index
                     </Link>
                     <a
-                        href="https://github.com/Wieedze/ARP/blob/main/skills/arp/SKILL.md"
+                        href="https://github.com/intuition-box/ARP/blob/main/skills/arp/SKILL.md"
                         target="_blank"
                         rel="noreferrer"
                         className={`font-mono text-[12px] ${linkClass}`}
@@ -772,7 +768,7 @@ function SceneBuild() {
                         Read the skill, nothing to install →
                     </a>
                     <code className="ml-auto font-mono text-[11px] text-[color:var(--color-steel)]">
-                        @arp-protocol/core
+                        npx -y @arp-protocol/cli init
                     </code>
                 </div>
             </Reveal>
@@ -795,10 +791,10 @@ const COLUMNS = [
         label: "With ARP",
         ours: true,
         lines: [
-            "One package, or just read the skill",
+            "One command, or just read the skill",
             "Read the chain directly, no key, no account",
             "Check the figures yourself: the score shows its parts",
-            "Unplug ARP's servers: every read and declaration still works",
+            "Unplug ARP's servers: every read, and every line you sign, still works",
         ],
     },
 ] as const;

@@ -2,6 +2,7 @@ import {useQuery} from "@tanstack/react-query";
 import {getRecentDeclarations, type RecentDeclaration} from "@arp-protocol/core";
 
 import {useChainChoice} from "../lib/chain-choice";
+import {hiddenAtomIds, visibleDeclarations} from "../services/test-identities";
 
 /**
  * The newest declarations an identified agent wrote.
@@ -23,10 +24,22 @@ function recentQueryKey(chainId: number, limit: number) {
     return ["intuition", chainId, "recent-declarations", limit] as const;
 }
 
+/**
+ * The default read leaves out ARP's own test identities (`services/test-identities.ts`, task 74),
+ * so every surface built on it — the landing's pulse, `/activity`, the bar — shows the same rows.
+ */
+export const getVisibleRecentDeclarations: RecentFetcher = async (config) => {
+    const [rows, hidden] = await Promise.all([
+        getRecentDeclarations(config),
+        hiddenAtomIds(config.graphqlUrl),
+    ]);
+    return visibleDeclarations(rows, hidden);
+};
+
 export function recentQueryOptions(
     chain: {chainId: number; graphqlUrl: string},
     limit = 8,
-    fetchRecent: RecentFetcher = getRecentDeclarations,
+    fetchRecent: RecentFetcher = getVisibleRecentDeclarations,
 ) {
     return {
         queryKey: recentQueryKey(chain.chainId, limit),

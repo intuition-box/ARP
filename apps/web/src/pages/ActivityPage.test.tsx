@@ -224,7 +224,7 @@ describe("the activity page", () => {
         expect(screen.queryByRole("table", {name: /public/i})).toBeNull();
     });
 
-    it("says nothing is declared yet when the indexer has nothing", async () => {
+    it("says there is no activity yet, how to be the first, and where the hidden tests are", async () => {
         const feed = new AgentFeed(new ActivityLog(), {
             url: undefined,
             open: () => {
@@ -233,7 +233,9 @@ describe("the activity page", () => {
             readReceipt: async () => null,
         });
         renderWithProviders(<ActivityPage feed={feed} reads={NOTHING} />);
-        expect(await screen.findByText(/Nothing declared on/)).toBeTruthy();
+        expect(await screen.findByText("No activity yet.")).toBeTruthy();
+        expect(screen.getByRole("link", {name: "get started"}).getAttribute("href")).toBe("/start/claude");
+        expect(screen.getByRole("link", {name: "hidden"}).getAttribute("href")).toBe("/test-identities");
     });
 });
 

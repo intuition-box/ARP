@@ -360,14 +360,51 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
  * `ToolCatalogList` while this copy, the one that file imports its types from, kept the stale
  * version (`rules/claims.md` failure 5).
  */
+/**
+ * What ARP's own tests left on a tool, removed (task 74, `services/test-identities.ts`).
+ *
+ * `hiddenAtoms` are the identity atoms of ARP's test agents. `sponsorHidden` says the sponsoring
+ * address is on the list, and then **every** Signal is one of its deposits, so none is shown. A
+ * tool whose declarers are all hidden loses its declared row; the catalogue keeps it as registered.
+ */
+export type HiddenTests = {hiddenAtoms: ReadonlySet<string>; sponsorHidden: boolean};
+
+function withoutTests(tool: ToolListing, hidden: HiddenTests): ToolListing | null {
+    const declarers = tool.declarers.filter((atom) => !hidden.hiddenAtoms.has(atom.toLowerCase()));
+    if (declarers.length === 0 && tool.declarers.length > 0) return null;
+    const changed = declarers.length !== tool.declarers.length;
+    return {
+        ...tool,
+        declarers,
+        edgeCount: changed ? declarers.length : tool.edgeCount,
+        sponsoredDeposits: hidden.sponsorHidden ? 0 : tool.sponsoredDeposits,
+        sponsoredWallets: hidden.sponsorHidden ? 0 : tool.sponsoredWallets,
+    };
+}
+
 export function buildToolCatalogView(
     page: ToolListingPage,
     registered?: RegisteredToolsPage,
+    hidden?: HiddenTests,
 ): ToolCatalogView {
-    const rows = page.tools.map(rowOf);
+    const tools =
+        hidden === undefined
+            ? page.tools
+            : page.tools.flatMap((tool) => {
+                  const kept = withoutTests(tool, hidden);
+                  return kept === null ? [] : [kept];
+              });
+    const rows = tools.map(rowOf);
     const declared = new Set(rows.map((row) => row.key.toLowerCase()));
     for (const tool of registered?.tools ?? []) {
-        if (!declared.has(tool.atomId.toLowerCase())) rows.push(registeredRowOf(tool));
+        if (declared.has(tool.atomId.toLowerCase())) continue;
+        // Its `uses` edges are the same population `listTools` read: with the read whole and no
+        // visible declarer left there, every one of them was a test's.
+        rows.push(
+            registeredRowOf(
+                hidden === undefined || page.truncated ? tool : {...tool, declarations: 0},
+            ),
+        );
     }
     return {
         rows,

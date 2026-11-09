@@ -51,6 +51,9 @@ function registeredPageOf(tools: RegisteredTool[]): RegisteredToolsPage {
 /** Nothing registered — the live state on both chains as of 2026-10-21. */
 const noneRegistered = async () => registeredPageOf([]);
 
+/** No test identity found on the graph, so nothing is filtered. */
+const noneHidden = async (): Promise<ReadonlySet<string>> => new Set<string>();
+
 describe("toolCatalogQueryKey", () => {
     it("keys on the order, because two orders are two sequences", () => {
         // A page from one order must never be served from cache for the other.
@@ -87,6 +90,7 @@ describe("toolCatalogQueryOptions", () => {
             2,
             fetchListing,
             noneRegistered,
+            noneHidden,
         );
         const view = await options.queryFn();
 
@@ -110,6 +114,7 @@ describe("toolCatalogQueryOptions", () => {
             1,
             fetchListing,
             noneRegistered,
+            noneHidden,
         );
         await options.queryFn();
         expect(fetchListing).toHaveBeenCalledWith("conviction", 1, sponsor);
@@ -126,6 +131,7 @@ describe("toolCatalogQueryOptions", () => {
             1,
             async () => pageOf(),
             noneRegistered,
+            noneHidden,
         );
         expect(options.placeholderData).toBeDefined();
     });
@@ -137,6 +143,7 @@ describe("toolCatalogQueryOptions", () => {
             1,
             async () => pageOf(),
             noneRegistered,
+            noneHidden,
         );
         expect(options.retry).toBe(1);
     });
@@ -157,6 +164,7 @@ describe("toolCatalogQueryOptions", () => {
             1,
             async () => pageOf(),
             async () => registeredPageOf([registered("0xfeed")]),
+            noneHidden,
         );
         const view = await options.queryFn();
 
@@ -178,6 +186,7 @@ describe("toolCatalogQueryOptions", () => {
             1,
             async () => pageOf(),
             async () => registeredPageOf([registered("0xBA5844B5", {label: "should not appear"})]),
+            noneHidden,
         );
         const view = await options.queryFn();
 
@@ -195,7 +204,38 @@ describe("toolCatalogQueryOptions", () => {
                 ...registeredPageOf([]),
                 truncated: true,
             }),
+            noneHidden,
         );
         expect((await options.queryFn()).truncated).toBe(true);
+    });
+
+    it("leaves out what ARP's own tests wrote, and keeps the tool in the catalogue", async () => {
+        // Task 74: a tool declared only by ARP's test agents loses its declared row and its Signals,
+        // and stays listed as registered with no declaration.
+        const sponsor = "0xE596096F4176b682E300d73963e7B04B383C1AA1";
+        const options = toolCatalogQueryOptions(
+            {chainId: 13579, graphqlUrl: "https://indexer.test", sponsor},
+            "conviction",
+            1,
+            async () => ({
+                ...pageOf(),
+                tools: [
+                    tool("0xba5844b5", {declarers: ["0xAAA"], edgeCount: 3, sponsoredDeposits: 3}),
+                    tool("0xc0ffee", {declarers: ["0xaaa", "0xbbb"], edgeCount: 2, sponsoredDeposits: 2}),
+                ],
+            }),
+            async () => registeredPageOf([registered("0xba5844b5", {declarations: 3})]),
+            async () => new Set(["0xaaa"]),
+        );
+        const view = await options.queryFn();
+
+        const only = view.rows.find((row) => row.key === "0xba5844b5");
+        expect(only?.provenance).toBe("registered");
+        expect(only?.declarations).toBe(0);
+        const mixed = view.rows.find((row) => row.key === "0xc0ffee");
+        expect(mixed?.declarers).toEqual(["0xbbb"]);
+        expect(mixed?.declarations).toBe(1);
+        // Every Signal is a deposit the listed sponsor signed.
+        expect(mixed?.sponsoredDeposits).toBe(0);
     });
 });

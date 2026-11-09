@@ -11,6 +11,7 @@ import {PageLoading} from "../components/brand/PageLoading";
 import {ToolCatalogList} from "../components/tool/ToolCatalogList";
 import {useDomainTree} from "../hooks/use-domain-tree";
 import {useTagIndex} from "../hooks/use-tag-index";
+import {NoActivityYet} from "../components/brand/NoActivityYet";
 import {useReadsSignals, useToolCatalog} from "../hooks/use-tool-catalog";
 import {
     livenessOf,
@@ -171,6 +172,12 @@ export function ToolCatalog() {
                 at `--text-display` put four controls against a single word. */}
             <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-[color:var(--color-rule)] py-3.5">
                 <Segmented label="Order" selected={axis} onChange={setAxis} options={axes} />
+                {/* No Signal outside ARP's own tests yet, which are hidden (task 74). */}
+                {view !== undefined && !view.rows.some((row) => (row.sponsoredDeposits ?? 0) > 0) ? (
+                    <span className="text-[length:var(--text-body-sm)]">
+                        <NoActivityYet what="No signals yet." />
+                    </span>
+                ) : null}
             </div>
 
             {/* The rail is a column, not a drawer: at 13rem it costs a fifth of the width and

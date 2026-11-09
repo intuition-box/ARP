@@ -2,6 +2,7 @@ import {keepPreviousData, useQuery} from "@tanstack/react-query";
 import {findAgents, type FindAgentsPage} from "@arp-protocol/core";
 
 import {useChainChoice} from "../lib/chain-choice";
+import {hiddenAtomIds} from "../services/test-identities";
 
 /**
  * Candidates for a job, from what agents declared about themselves.
@@ -13,8 +14,14 @@ import {useChainChoice} from "../lib/chain-choice";
 
 export type FindAgentsFetcher = (domain: string, graphqlUrl: string) => Promise<FindAgentsPage>;
 
-const fetchCandidates: FindAgentsFetcher = (domain, graphqlUrl) =>
-    findAgents(domain, {graphqlUrl, limit: 50});
+/** ARP's own test agents are left out, as everywhere else (task 74). */
+const fetchCandidates: FindAgentsFetcher = async (domain, graphqlUrl) => {
+    const [page, hidden] = await Promise.all([
+        findAgents(domain, {graphqlUrl, limit: 50}),
+        hiddenAtomIds(graphqlUrl),
+    ]);
+    return {...page, agents: page.agents.filter((agent) => !hidden.has(agent.atomId.toLowerCase()))};
+};
 
 function findAgentsQueryKey(chainId: number, domain: string) {
     return ["intuition", chainId, "find-agents", domain] as const;

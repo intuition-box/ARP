@@ -11,6 +11,7 @@ import {buildToolCatalogView, type ToolCatalogView} from "../services/tool-catal
 import {useChainChoice} from "../lib/chain-choice";
 import {deployments} from "../lib/deployments";
 import {sponsorAddressFor} from "../lib/sponsor";
+import {hiddenAtomIds, isHiddenAddress} from "../services/test-identities";
 
 /**
  * The tool catalogue's read.
@@ -89,17 +90,23 @@ export function toolCatalogQueryOptions(
     curveId: number,
     fetchListing: ToolCatalogFetcher = fetchToolListing(chain.graphqlUrl),
     fetchRegistered: RegisteredToolsFetcher = fetchRegisteredTools(chain.graphqlUrl),
+    fetchHidden: (graphqlUrl: string) => Promise<ReadonlySet<string>> = hiddenAtomIds,
 ) {
     const sponsor = chain.sponsor ?? null;
     return {
         queryKey: toolCatalogQueryKey(chain.chainId, order, curveId, sponsor),
         queryFn: async (): Promise<ToolCatalogView> => {
             // In parallel: independent reads of the same endpoint, and neither needs the other.
-            const [declared, registered] = await Promise.all([
+            const [declared, registered, hiddenAtoms] = await Promise.all([
                 fetchListing(order, curveId, sponsor),
                 fetchRegistered(curveId),
+                fetchHidden(chain.graphqlUrl),
             ]);
-            return buildToolCatalogView(declared, registered);
+            // ARP's own tests are left out of the figures, not the catalogue (task 74).
+            return buildToolCatalogView(declared, registered, {
+                hiddenAtoms,
+                sponsorHidden: isHiddenAddress(sponsor),
+            });
         },
         // Graph reads, and both populations move on the order of days at most.
         staleTime: 120_000,
