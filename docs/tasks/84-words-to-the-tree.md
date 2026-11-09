@@ -1,6 +1,6 @@
 # Task 84 — Words to the tree
 
-**Status:** built 2026-11-09 on `feat/84-domain-aliases` (worktree `../ARP-tree`), not pushed.
+**Status:** verified 2026-11-09, `task-verifier` PASS (round 2), commit `49f186d`, post-mortem `.claude/learning/75-words-to-the-tree.md`; on `feat/84-domain-aliases`, not pushed.
 **ADR:** `0155`.
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
 

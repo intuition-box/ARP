@@ -11,7 +11,6 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
 
-
 import { isCancelled } from './classify.ts';
 import {
   appendFailure,
