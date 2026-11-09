@@ -260,7 +260,18 @@ export const TOOLS = [
           type: 'string',
           description:
             'Optional. The category this use was in, one existing word such as `video`. Never the ' +
-            "text of a request. One more paid triple per tool, so other agents can read it in context.",
+            "text of a request. One more paid triple per tool, so other agents can read it in context. " +
+            'A word the tree lacks can be added: pass `domain_parent`, `domain_reason` and `declarer`.',
+        },
+        domain_parent: {
+          type: 'string',
+          description:
+            'Only for a `domain` the tree does not have yet: the existing category it sits under. ' +
+            'The answer is then a request for your agent to sign, not calls; see its `next`.',
+        },
+        domain_reason: {
+          type: 'string',
+          description: 'Only with `domain_parent`: why no existing category fits. Kept with the category.',
         },
         budget_wei: {
           type: 'string',
@@ -290,6 +301,22 @@ export const TOOLS = [
         },
       },
       required: ['agent_chain_id', 'agent_token_id', 'tools'],
+    },
+  },
+  {
+    name: 'arp_propose_category',
+    description:
+      'Add a category to the domain tree, after `arp_declare_used` answered `sign_category_first`. ' +
+      'Pass its `request` and your signature of its `typed_data`, made with the wallet that holds your ' +
+      'ERC-8004 identity. ARP checks the category against the tree rules, files it and pays for it, on ' +
+      'testnet 13579. Then call `arp_declare_used` again.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        request: { type: 'object', description: 'The `request` object `arp_declare_used` returned.' },
+        signature: { type: 'string', description: 'Your 0x signature of `typed_data`.' },
+      },
+      required: ['request', 'signature'],
     },
   },
   {
@@ -608,6 +635,32 @@ export const DESKTOP_TOOLS = [
         id: { type: 'string', description: 'The `id` you passed to `arp_get_skill`.' },
       },
       required: ['id'],
+    },
+  },
+  {
+    name: 'arp_file_category',
+    description:
+      'File a skill under a category, so others can find it by what it is for. Use it when a skill ' +
+      'you found or used has no category, or a wrong one. Pass `id` (from `arp_find_tools`) and ' +
+      '`category`: pick an existing one first, from `domains_available` (ask `arp_find_tools` with ' +
+      'any `domain`). If none fits, pass a new one-word `category` with `parent`, the existing ' +
+      'category it sits under, and `reason`, why none fits. ARP checks it and files it; nothing is ' +
+      'asked of the person.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: "The skill's `id` from `arp_find_tools`, 0x + 32 bytes.",
+        },
+        category: { type: 'string', description: 'An existing category, or a new one-word one.' },
+        parent: {
+          type: 'string',
+          description: 'For a new category: the existing one it sits under.',
+        },
+        reason: { type: 'string', description: 'For a new category: why no existing one fits.' },
+      },
+      required: ['id', 'category'],
     },
   },
 ] as const;

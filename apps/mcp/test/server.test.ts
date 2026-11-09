@@ -380,6 +380,7 @@ describe("the handshake", () => {
             "arp_pulse",
             "arp_tool_reputation",
             "arp_declare_used",
+            "arp_propose_category",
             // Beside `arp_declare_used` rather than replacing it, because the two take their list
             // from different places: that one from what the agent believes it used, this one from
             // the runtime hook's own log (`docs/tasks/31`).
@@ -579,6 +580,23 @@ describe("arp_declare_used", () => {
             expect(body?.["error"]).toMatchObject({code: -32602});
             expect((body?.["error"] as {message: string}).message).toContain(words);
         }
+    });
+
+    it("asks for a parent, a reason and the signing agent before adding a domain the tree lacks", async () => {
+        const base = {agent_chain_id: 13579, agent_token_id: "8", tools: ["ipfs://bafkreistub"], domain: "slides"};
+        const message = async (args: Record<string, unknown>) => errorOf((await call(args)).body).message;
+        expect(await message(base)).toContain("domain_parent and domain_reason");
+        expect(await message({...base, domain_parent: "marketing"})).toContain("domain_reason");
+        expect(await message({...base, domain_parent: "marketing", domain_reason: "decks"})).toContain("declarer");
+        // The stub's tool has no atom yet, so nothing can be filed under it.
+        expect(
+            await message({
+                ...base,
+                domain_parent: "marketing",
+                domain_reason: "decks",
+                declarer: "0x0000000000000000000000000000000000000001",
+            }),
+        ).toContain("declare it without a domain first");
     });
 
     it("rejects a malformed identity rather than planning against a guess", async () => {

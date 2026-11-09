@@ -849,6 +849,18 @@ export {
     type SignedLineRequest,
 } from "./sponsor/line.js";
 export {
+    CATEGORY_REQUEST_MAX_LABEL_LENGTH,
+    CATEGORY_REQUEST_MAX_REASON_LENGTH,
+    CATEGORY_REQUEST_TYPES,
+    categoryRequestTypedData,
+    signCategoryRequest,
+    verifyCategoryRequest,
+    type CategoryRequest as SponsorCategoryRequest,
+    type CategoryRequestSigner,
+    type CategoryRequestVerdict,
+    type SignedCategoryRequest,
+} from "./sponsor/category.js";
+export {
     checkSponsorProof,
     type AgentIdentityRef,
     type AgentKeyReads,

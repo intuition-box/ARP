@@ -19,7 +19,7 @@ sponsor pays the deposit, and **the position stays the agent's**.
 | `POST /gas`              | the one-time gas for the agent's approval                          |
 | `POST /deposit`          | a deposit on a use the agent proved, with a receipt or a payment   |
 | `POST /list-tool`        | listing a tool nobody has listed yet                               |
-| `POST /propose-category` | a new category, or a tag with an existing one                      |
+| `POST /propose-category` | a new category (a registered agent's signed request only), or a tag with an existing one |
 | `POST /publish`          | publishing a signed delegation (built, switched off for now)      |
 | `GET /`                  | the service's address, limits and what is switched on              |
 

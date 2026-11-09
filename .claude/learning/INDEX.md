@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-70 entries, one per completed task. Written by `task-verifier` on a pass.
+71 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -76,3 +76,4 @@
 | [61](61-tools-page-signals-and-wallets.md) | no task file; the spec is `.claude/choices/0143-tools-page-unknown-is-not-dead-and-most-used.md` | PASS, after one FAIL of 12 items: stale wording, gate wording, test names, and no RepoPage wallets test | /tools says Signals, not Usage, and shows the wallets behind it |
 | [62](62-the-local-package.md) | `docs/tasks/70-the-local-package.md` | PASS, at the second reading | The whole package, working locally |
 | [63](63-the-docs.md) | `docs/tasks/72-the-docs.md` | PASS (second round; first round failed on one visible `docs/NN` link text) | The docs on the site |
+| [64](64-the-tree-grows.md) | `docs/tasks/73-the-tree-grows.md` | PASS | The domain tree grows from the agents |

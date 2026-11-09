@@ -513,6 +513,7 @@ describe("limits", () => {
         listingsPerAddressPerDay: 2,
         anonymousListingsPerDay: 2,
         categoriesPerDay: 2,
+        categoriesPerAgentPerDay: 1,
         categoryTagsPerDay: 2,
         linesPerAgentPerDay: 5,
         linesPerDay: 30,

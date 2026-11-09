@@ -161,6 +161,8 @@ const limits: SponsorLimits = {
   listingsPerDay: count('SPONSOR_LISTINGS_PER_DAY', 50),
   // Task 59, ADR `0124`: new categories the service writes as an attestor, all proposers together.
   categoriesPerDay: count('SPONSOR_CATEGORIES_PER_DAY', 10),
+  // Task 73, ADR `0146`: only a signed agent adds a category, and this is its own share.
+  categoriesPerAgentPerDay: count('SPONSOR_CATEGORIES_PER_AGENT_PER_DAY', 3),
   categoryTagsPerDay: count('SPONSOR_CATEGORY_TAGS_PER_DAY', 50),
   // ADR `0144`: a line asks no proof of use, so these and the budget are what bound it.
   linesPerAgentPerDay: count('SPONSOR_LINES_PER_AGENT_PER_DAY', 5),
@@ -416,7 +418,7 @@ export async function main(): Promise<void> {
     `  listing    ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : `${limits.listingsPerAddressPerDay}/address/day, ${limits.anonymousListingsPerDay} unsigned/day, ${limits.listingsPerDay}/day in all`}\n`,
   );
   process.stderr.write(
-    `  categories ${limits.categoriesPerDay} new/day, ${limits.categoryTagsPerDay} tags/day, log ${CATEGORY_LOG}\n`,
+    `  categories ${limits.categoriesPerDay} new/day (${limits.categoriesPerAgentPerDay} per agent), ${limits.categoryTagsPerDay} tags/day, log ${CATEGORY_LOG}\n`,
   );
   process.stderr.write(`  ledger     ${LEDGER}\n`);
   process.stderr.write(

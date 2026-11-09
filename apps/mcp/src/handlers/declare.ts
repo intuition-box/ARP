@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import {
   corroborationOf,
   isUsageOutcome,
+  normaliseCategoryLabel,
   parseSessionLog,
   prepareDeclareUsed,
   budgetRefusal,
@@ -27,8 +28,10 @@ import {
   GRAPHQL,
   IN_CONTEXT_OF,
   reads,
+  record,
   toolAtoms,
 } from '../config.js';
+import { categoryToSign } from './category.js';
 import { type JsonRpcId, fail, text, isAddress } from '../rpc.js';
 import { UNSIGNED_CAVEAT, serialiseDeclarePlan } from '../serialise.js';
 
@@ -151,6 +154,52 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
 
   // ADR `0135`: a qualifier is a triple about the edge, so it is planned after the edge's own call.
   const tree = domainRaw === undefined ? null : await readDomainTree(domainWalk());
+  // The sponsor's own normalisation (NFKC, accents, spaces), so the word checked, signed and written is one word.
+  const domain = domainRaw === undefined ? undefined : normaliseCategoryLabel(domainRaw);
+  if (tree !== null && domain !== undefined && !tree.pathToRoot(domain).found) {
+    const parent = args['domain_parent'];
+    const domainReason = args['domain_reason'];
+    if (parent === undefined && domainReason === undefined) {
+      return fail(
+        id,
+        -32602,
+        `"${domain}" is not a category under tool. Pick an existing one, or pass domain_parent and domain_reason to add it`,
+      );
+    }
+    if (typeof parent !== 'string' || parent.trim() === '' || typeof domainReason !== 'string' || domainReason.trim() === '') {
+      return fail(id, -32602, 'a new domain needs domain_parent, an existing category, and domain_reason, why none fits');
+    }
+    // Task 73, ADR `0146`: only a registered agent's signed request grows the tree.
+    if (declarerRaw === undefined) {
+      return fail(id, -32602, 'a new domain is signed by your agent: pass declarer, the address that holds it');
+    }
+    const first = plan.tools[0];
+    if (first === undefined) return fail(id, -32602, 'no tool to file under the new domain');
+    if (!first.atomExists) {
+      return fail(
+        id,
+        -32602,
+        'this tool is not on the graph yet, so nothing can be filed under a new domain: declare it without a domain first',
+      );
+    }
+    const registry = registryRaw ?? (chainId === agentChainId ? record.arp?.identityRegistry : undefined);
+    if (typeof registry !== 'string' || !isAddress(registry)) {
+      return fail(id, -32602, 'a new domain needs registry, the identity registry that holds your agent');
+    }
+    return text(
+      id,
+      categoryToSign({
+        domain,
+        parent: normaliseCategoryLabel(parent),
+        reason: domainReason.trim(),
+        declarer: declarerRaw,
+        agentRegistry: `eip155:${agentChainId}:${registry}`,
+        agentId: agentTokenId,
+        subject: first.atomId,
+        nowSeconds: Math.floor(Date.now() / 1000),
+      }),
+    );
+  }
   const qualifiers: PreparedCall[] = [];
   const alreadyWritten: string[] = [];
   const existing = plan.tools.filter((tool) => tool.tripleExists).map((tool) => tool.tripleId);
@@ -160,7 +209,7 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
     const planned = await prepareUsageContext({
       usesTripleId: tool.tripleId,
       edgePlanned: !tool.tripleExists,
-      ...(domainRaw === undefined ? {} : { domain: domainRaw }),
+      ...(domain === undefined ? {} : { domain }),
       ...(outcome === undefined ? {} : { outcome }),
       ...(reason === undefined ? {} : { reason }),
       inContextOf: IN_CONTEXT_OF,

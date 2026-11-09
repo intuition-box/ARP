@@ -12,6 +12,7 @@ import {Install} from "../components/atom/AtomPageParts";
 import {BackLink} from "../components/brand/BackLink";
 import {Hint} from "../components/brand/Hint";
 import {PageLoading} from "../components/brand/PageLoading";
+import {ChooseCategory} from "../components/tool/ChooseCategory";
 import {useAgentActivity} from "../hooks/use-agent-activity";
 import {controlClass, linkClass} from "../lib/control-class";
 import {START_PATHS, isStartProfile, rememberProfile} from "../lib/start-paths";
@@ -328,47 +329,54 @@ function AddTool() {
         return <div className="mt-3 text-[length:var(--text-body-sm)]">{wallet}</div>;
 
     return (
-        <form
-            className="mt-4 flex flex-col gap-2"
-            onSubmit={(event) => {
-                event.preventDefault();
-                if (url.trim() === "" || listing.pending) return;
-                listing.submit(url.trim());
-            }}
-        >
-            <label
-                htmlFor="start-add-url"
-                className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]"
+        <>
+            <form
+                className="mt-4 flex flex-col gap-2"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    if (url.trim() === "" || listing.pending) return;
+                    listing.submit(url.trim());
+                }}
             >
-                Tool or skill URL
-            </label>
-            <div className="flex gap-2">
-                <input
-                    id="start-add-url"
-                    value={url}
-                    onChange={(event) => setUrl(event.target.value)}
-                    placeholder="github.com/owner/repo?skill=name"
-                    className="min-w-0 flex-1 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-2.5 font-mono text-[13px]"
-                />
-                <button type="submit" disabled={listing.pending} className={controlClass}>
-                    Add it
-                </button>
-            </div>
-            <p
-                aria-live="polite"
-                className="min-h-5 text-[length:var(--text-body-sm)] text-[color:var(--color-silver)]"
-            >
-                {listing.pending ? "Adding…" : result !== null && listToolMessage(result)}
-                {!listing.pending && result?.status === "listed" && (
-                    <>
-                        {" "}
-                        <Link to={`/atom/${result.atomId}`} className={linkClass}>
-                            Open its page →
-                        </Link>
-                    </>
-                )}
-                {!listing.pending && result !== null && offerWallet && <> {wallet}</>}
-            </p>
-        </form>
+                <label
+                    htmlFor="start-add-url"
+                    className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]"
+                >
+                    Tool or skill URL
+                </label>
+                <div className="flex gap-2">
+                    <input
+                        id="start-add-url"
+                        value={url}
+                        onChange={(event) => setUrl(event.target.value)}
+                        placeholder="github.com/owner/repo?skill=name"
+                        className="min-w-0 flex-1 rounded-[var(--radius-control)] border border-[color:var(--color-rule-strong)] bg-[color:var(--color-bg)] px-3.5 py-2.5 font-mono text-[13px]"
+                    />
+                    <button type="submit" disabled={listing.pending} className={controlClass}>
+                        Add it
+                    </button>
+                </div>
+                <p
+                    aria-live="polite"
+                    className="min-h-5 text-[length:var(--text-body-sm)] text-[color:var(--color-silver)]"
+                >
+                    {listing.pending ? "Adding…" : result !== null && listToolMessage(result)}
+                    {!listing.pending && result?.status === "listed" && (
+                        <>
+                            {" "}
+                            <Link to={`/atom/${result.atomId}`} className={linkClass}>
+                                Open its page →
+                            </Link>
+                        </>
+                    )}
+                    {!listing.pending && result !== null && offerWallet && <> {wallet}</>}
+                </p>
+            </form>
+            {/* Its own form, after the listing: a tool added on the web is categorised here too, so
+            the search can find it by what it is for (task 59, the user's decision of 2026-11-03). */}
+            {!listing.pending && result?.status === "listed" && (
+                <ChooseCategory subjectId={result.atomId} />
+            )}
+        </>
     );
 }

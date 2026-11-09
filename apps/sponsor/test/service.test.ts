@@ -14,6 +14,7 @@ import {
   planCategory,
   planToolListing,
   multiVaultDeclareAbi,
+  signCategoryRequest,
   signLineRequest,
   signListToolRequest,
   thingUri,
@@ -80,6 +81,7 @@ const LIMITS: SponsorLimits = {
   listingsPerAddressPerDay: 2,
   anonymousListingsPerDay: 2,
   categoriesPerDay: 2,
+  categoriesPerAgentPerDay: 1,
   categoryTagsPerDay: 2,
   listingsPerDay: 4,
   linesPerAgentPerDay: 2,
@@ -1858,6 +1860,28 @@ describe('POST /propose-category', () => {
     w.terms = new Set([OBJECT.toLowerCase()]);
     return w;
   };
+  let nonce = 0;
+  /** The same proposal, signed by the agent `account` holds (ADR `0146`): agent 7 is `AGENT`, 8 is `CALLEE`. */
+  const signed = async (over: Record<string, unknown> = {}, account = AGENT, agentId = '7') => {
+    const p = proposal(over);
+    return {
+      request: await signCategoryRequest(
+        {
+          agent: account.address,
+          agentRegistry: REGISTRY,
+          agentId,
+          label: String(p.label),
+          parent: String(p.parent ?? ''),
+          subject: p.subjectId as Hex,
+          reason: String(p.reason ?? ''),
+          nonce: keccak256(stringToBytes(`category-${++nonce}`)),
+          expiresAt: Math.floor(NOW / 1000) + 600,
+        },
+        CHAIN,
+        account,
+      ),
+    };
+  };
 
   afterEach(() => {
     logged.length = 0;
@@ -1865,7 +1889,7 @@ describe('POST /propose-category', () => {
 
   test('writes the atom, the parent edge and the tag on the MultiVault, and logs the reason', async () => {
     const w = fresh();
-    const res = await call(sponsor(w, { categories }), '/propose-category', proposal());
+    const res = await call(sponsor(w, { categories }), '/propose-category', await signed());
     expect(res.status).toBe(200);
     expect(res.body.label).toBe('typography');
     expect(w.sent.map((c) => c.kind)).toEqual(['create-atom', 'create-triple', 'create-triple']);
@@ -1876,6 +1900,7 @@ describe('POST /propose-category', () => {
         label: 'typography',
         parent: 'design',
         reason: 'none of the design children is about type',
+        agent: AGENT.address,
         transactions: expect.arrayContaining([expect.any(String)]),
       }),
     ]);
@@ -1962,14 +1987,15 @@ describe('POST /propose-category', () => {
   test('counts the same label under another parent as another proposal', async () => {
     const w = fresh();
     const service = sponsor(w, { categories });
-    expect((await call(service, '/propose-category', proposal())).status).toBe(200);
-    expect((await call(service, '/propose-category', proposal({ parent: 'tool' }))).status).toBe(
-      200,
-    );
+    expect((await call(service, '/propose-category', await signed())).status).toBe(200);
+    expect(
+      (await call(service, '/propose-category', await signed({ parent: 'tool' }, CALLEE, '8')))
+        .status,
+    ).toBe(200);
     const third = await call(
       service,
       '/propose-category',
-      proposal({ parent: 'tool', label: 'icons' }),
+      await signed({ parent: 'tool', label: 'icons' }, CALLEE, '8'),
     );
     expect(third.status).toBe(429);
   });
@@ -1982,7 +2008,7 @@ describe('POST /propose-category', () => {
     );
     if (planned.status !== 'planned') throw new Error('expected a plan');
     w.terms.add(planned.subDomainTripleId!.toLowerCase());
-    const res = await call(sponsor(w, { categories }), '/propose-category', proposal());
+    const res = await call(sponsor(w, { categories }), '/propose-category', await signed());
     expect(res.status).toBe(200);
     expect(w.sent.map((c) => c.kind)).toEqual(['create-atom', 'create-triple', 'deposit']);
     const { args } = decodeFunctionData({ abi: depositAbi, data: w.sent[2]!.data });
@@ -1993,13 +2019,84 @@ describe('POST /propose-category', () => {
   test('stops at the daily cap of new categories', async () => {
     const w = fresh();
     const service = sponsor(w, { categories });
-    for (const label of ['typography', 'icons']) {
-      expect((await call(service, '/propose-category', proposal({ label }))).status).toBe(200);
-    }
-    const third = await call(service, '/propose-category', proposal({ label: 'colour' }));
+    expect((await call(service, '/propose-category', await signed())).status).toBe(200);
+    expect(
+      (await call(service, '/propose-category', await signed({ label: 'icons' }, CALLEE, '8')))
+        .status,
+    ).toBe(200);
+    const third = await call(
+      service,
+      '/propose-category',
+      await signed({ label: 'colour' }, CALLEE, '8'),
+    );
     expect(third.status).toBe(429);
     expect(third.body.rule).toBe('limit');
     expect(w.sent).toHaveLength(6);
+  });
+
+  test('refuses a new category without an agent signature, and still tags with an existing one', async () => {
+    const w = fresh();
+    const service = sponsor(w, { categories });
+    const unsigned = await call(service, '/propose-category', proposal());
+    expect(unsigned.status).toBe(403);
+    expect(unsigned.body.rule).toBe('agent');
+    expect(w.sent).toHaveLength(0);
+    expect((await call(service, '/propose-category', { label: 'design', subjectId: OBJECT })).status).toBe(200);
+  });
+
+  test('refuses a signer that does not hold the agent it names', async () => {
+    const w = fresh();
+    const res = await call(
+      sponsor(w, { categories }),
+      '/propose-category',
+      await signed({}, STRANGER, '7'),
+    );
+    expect(res.status).toBe(403);
+    expect(res.body.rule).toBe('agent');
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('refuses a tampered request and an expired one', async () => {
+    const service = sponsor(fresh(), { categories });
+    const body = await signed();
+    const tampered = { request: { ...body.request, request: { ...body.request.request, label: 'colour' } } };
+    expect((await call(service, '/propose-category', tampered)).status).toBe(401);
+    const old = await signed({});
+    old.request.request.expiresAt = Math.floor(NOW / 1000) - 1;
+    expect((await call(service, '/propose-category', old)).body.rule).toBe('signature');
+  });
+
+  test('refuses an agent in a registry the service does not accept', async () => {
+    const w = fresh();
+    const body = await signed();
+    const other = await signCategoryRequest(
+      { ...body.request.request, agentRegistry: `eip155:${CHAIN}:0x00000000000000000000000000000000000000ff` },
+      CHAIN,
+      AGENT,
+    );
+    const res = await call(sponsor(w, { categories }), '/propose-category', { request: other });
+    expect(res.status).toBe(403);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('spends a nonce once', async () => {
+    const w = fresh();
+    const service = sponsor(w, { categories });
+    const body = await signed();
+    expect((await call(service, '/propose-category', body)).status).toBe(200);
+    const again = await call(service, '/propose-category', body);
+    expect(again.status).toBe(409);
+    expect(again.body.rule).toBe('nonce');
+    expect(w.sent).toHaveLength(3);
+  });
+
+  test('counts new categories against the signing agent', async () => {
+    const w = fresh();
+    const service = sponsor(w, { categories });
+    expect((await call(service, '/propose-category', await signed())).status).toBe(200);
+    const second = await call(service, '/propose-category', await signed({ label: 'icons' }));
+    expect(second.status).toBe(429);
+    expect(String(second.body.error)).toContain(AGENT.address);
   });
 
   test('answers 503 when not configured', async () => {
