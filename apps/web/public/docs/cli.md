@@ -96,7 +96,7 @@ With sharing off, `arp share send` sends nothing and says so. A failure stays lo
 Write one public line on testnet 13579 through ARP's sponsoring service. The words are closed.
 
 ```bash
-arp line --tool https://github.com/owner/repo --outcome worked --domain document
+arp line --tool https://github.com/owner/repo --outcome worked --domain "document authoring"
 arp line --tool https://github.com/owner/repo --outcome failed --reason missing-key
 arp line --tool https://github.com/owner/repo --outcome worked --domain slides --parent design --why "no category for decks"
 ```

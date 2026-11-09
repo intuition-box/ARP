@@ -30,8 +30,11 @@ The user's decisions, 2026-11-09:
 5. **Testnet is the bench, mainnet starts empty.** Nothing of ARP's old categories is carried: what does not
    map is retired by redeeming the attestors' positions, and no `same as` layer is kept for them.
 6. **Filing a skill is a person's or an agent's act; the machine only suggests.** A classifier was measured
-   (`bge-small-en-v1.5`, pinned): 31% exact agreement with the reviewed proposal, 58% on the category, 86%
-   [76–93] on the tenth it is surest of. Too weak to file alone; good enough to offer three candidates.
+   (`bge-small-en-v1.5`, pinned; flat prediction with the design node; `data/measurements/oasf-classifier-2026-11-09.json`,
+   `scripts/measure/oasf-classifier/run.sh`): against the reviewed proposal, n = 656, 204 exact (31% [28–35]),
+   378 on the category (58% [54–61]), 57 of 66 on the tenth it is surest of (86% [76–93]). The reference is
+   itself a model's reading, so these are agreement, not accuracy. Too weak to file alone; good enough to offer
+   three candidates.
 7. **Finding is where the machine works**: a person's or an agent's words are matched to the nearest OASF
    nodes (embeddings, plus aliases), because a wrong guess there costs a search, not a permanent write.
    How and where that model runs is a task of its own.

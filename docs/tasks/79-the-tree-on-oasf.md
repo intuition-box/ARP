@@ -32,8 +32,8 @@ and `card` the only ARP nodes; no sub-domain seeded, a `suggestedWord` kept on l
 merged and checked: every skill once, every id in the taxonomy, identical copies aligned.
 
 - Confidence: 325 high, 269 medium, 68 low. 290 skills land outside their old category's OASF subtree.
-- 179 OASF leaf nodes used, 242 with their ancestors: what the rewrite would write.
-- `design` on 37 skills, `card` on none (no categorised skill moves money).
+- 179 OASF nodes carry a skill (178 after the review), 242 with their ancestors.
+- `design` on 36 skills (33 written, 3 were reviewed out), `card` on none (no categorised skill moves money).
 - Recurring gaps in OASF, from the low rows: generic multi-model runners (`inference`, 13), storyboards,
   pricing, diagrams, research reproduction, skill routers.
 
@@ -54,9 +54,10 @@ The user's go: « 1 oui, 2 oui » for the review and the write, « je te fais co
 68 low rows, and « ok je pense que je suis d'accord avec tout » for the rest (ADR `0150`).
 
 - **The tree:** `scripts/seed/oasf-tree.ts` planned 1,095 calls (238 atoms, 843 triples, 14 deposits,
-  2.176 tTRUST), signed by the attestor `0x906f…`. 1,094 landed; call 940 reverted on a tag planned twice
-  (`azure-reliability`, two catalogue URLs for one atom), which already existed. The planner now plans each
-  triple once.
+  2.176 tTRUST), signed by the attestor `0x906f…`. All 1,095 landed. Call 940 landed in the fourth wave,
+  but reading its receipt failed under the RPC's bandwidth quota, so the sender did not count it and the fifth
+  wave sent it again; that resend reverted at estimation because the tag now existed. The other 155 calls went
+  as a new plan. (The planner gained a guard against planning a triple twice; it was not the cause.)
 - **The originals:** `scripts/seed/list-originals.ts` listed the 26 skills of `inference-sh/skills` and tagged
   them at their copies' node: 76 calls after a re-plan (the first plan created the repository atom twice; the
   planner now stops before that).
@@ -76,7 +77,9 @@ The user's go: « 1 oui, 2 oui » for the review and the write, « je te fais co
    point 7). Until then `inferDomain` matches a node's label word for word, which OASF's multi-word names make
    rarer: "presentation authoring" needs both words.
 2. **Suggestions when filing:** three candidate nodes for an agent (point 6), from the classifier measured in
-   the scratchpad (bge-small, 31% exact, 86% on its surest tenth); where it runs is open.
+   `data/measurements/oasf-classifier-2026-11-09.json` (`scripts/measure/oasf-classifier/run.sh`; bge-small,
+   flat, with the design node: 31% exact [28–35], 58% category [54–61], 86% [76–93] on its surest tenth);
+   where it runs is open.
 3. **Hiding copies in the search** from `data/catalogue/skill-originals-13579.json`.
 4. **The test with real sessions:** does an agent choose well among OASF's entries?
 5. `packages/protocol/src/skill-domains.ts` (`classifySkill`) still names the old categories; only seeding

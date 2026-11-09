@@ -312,6 +312,6 @@ The per-skill placement is `data/catalogue/oasf-skill-tags-proposal-13579.json`;
 
 ## Evidence ladder
 
-This document serves the **staked** tier and is the first thing in the repo that could move the
-classification layer onto it: a tool's domain is asserted today in a quoted sentence nobody can
-contradict, and the proposal makes it a claim with a price and a counter-side.
+_Written under the cost ladder ADR `0147` replaced:_ this document served the **staked** tier, making a
+tool's domain a claim with a price and a counter-side. Under `docs/32` it serves the **skill** column: a
+domain is the context a declared or observed line points into, and since §9 that vocabulary is OASF's.

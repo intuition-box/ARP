@@ -3,7 +3,7 @@
  "what": "OASF 1.1.0 skill placement from name+description; agreement with the task-79 proposal (data/catalogue/oasf-skill-tags-proposal-13579.json) excluding reviewed=='skip'",
  "caveat": "The reference is itself a model's reading of the same truncated descriptions; only the 62 low-confidence rows were looked at again (reviewed=ok). These numbers are agreement with that proposal, not accuracy against an independent truth. Margin thresholds are read off the same 656 rows they are measured on: no held-out split.",
  "inputs": {
-  "repo": "/home/max/Project/ARP-tree",
+  "repo": ".",
   "commit": "afca226fb1bb405909ecffe063e3d98cc55a9f7b",
   "sha256": {
    "oasf-1.1.0-skills.json": "03e92af94267e9cf94f6fc34190d5c2de4adebc14f118efa2191276f55b9714c",
@@ -57,9 +57,9 @@
  ],
  "determinism": "run twice; out/metrics.json byte-identical",
  "files": {
-  "scripts": "/tmp/claude-1000/-home-max-Project-ARP/99d33be0-b575-4300-8789-888590c08f9b/scratchpad/clf/scripts/",
-  "texts": "/tmp/claude-1000/-home-max-Project-ARP/99d33be0-b575-4300-8789-888590c08f9b/scratchpad/clf/out/texts.json",
-  "perRowPredictions": "/tmp/claude-1000/-home-max-Project-ARP/99d33be0-b575-4300-8789-888590c08f9b/scratchpad/clf/out/metrics-predictions.json"
+  "scripts": "<work-dir>/scripts/",
+  "texts": "<work-dir>/out/texts.json",
+  "perRowPredictions": "<work-dir>/out/metrics-predictions.json"
  },
  "notRun": [
   "held-out split or cross-validation for margin thresholds",

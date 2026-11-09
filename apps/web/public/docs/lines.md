@@ -26,7 +26,7 @@ flowchart LR
     A["Agent 13579:38"] --> T1(("T1 uses"))
     T1 --> S["softaworks/agent-toolkit, web-to-markdown"]
     T1 --> T2(("T2 in context of"))
-    T2 --> D["document"]
+    T2 --> D["document authoring"]
     T2 --> T3(("T3 has outcome"))
     T3 --> O["failed"]
     T3 --> T4(("T4 because"))
