@@ -69,6 +69,14 @@ describe('arp_agent_endpoints', () => {
   const ask = (args: Record<string, unknown>) =>
     agentEndpoints(1, { agent_chain_id: 13579, agent_token_id: '2', ...args }).then(answer);
 
+  it('says an agent it could not find was not read, not that it has no document', async () => {
+    mocks.getAgentEndpoints.mockResolvedValueOnce([]);
+    const out = await ask({ registry: ELSEWHERE });
+    expect(out['in_graph']).toBe(false);
+    expect(String(out['note'])).toContain('Not found in the graph');
+    expect(String(out['note'])).not.toContain('registered without a document');
+  });
+
   it('reads an agent on the known registry with its canonical atom', async () => {
     const out = await ask({ registry: OWN });
     expect(out['lines']).toHaveLength(1);

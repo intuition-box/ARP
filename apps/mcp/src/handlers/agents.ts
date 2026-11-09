@@ -69,7 +69,10 @@ export async function agentEndpoints(id: JsonRpcId, rawArgs: Record<string, unkn
   const merged: Record<string, unknown> = { ...(JSON.parse(content.text) as Record<string, unknown>), ...pulse }; // our own JSON
   // "Published no way in" is about the document, and a signed address is a way in.
   if (merged['registration_file'] === null && (pulse.signed_endpoints?.length ?? 0) > 0) {
-    merged['note'] = 'This agent registered without a document. Its addresses are in signed_endpoints.';
+    merged['note'] =
+      merged['in_graph'] === false
+        ? `Not found in the graph this server reads (chain ${chainId}), so its document was not read. Its addresses are in signed_endpoints.`
+        : 'This agent registered without a document. Its addresses are in signed_endpoints.';
   }
   return text(id, merged);
 }
@@ -441,7 +444,16 @@ async function declaredEndpoints(id: JsonRpcId, args: Record<string, unknown>) {
     ...(registryRaw === undefined ? {} : { registry: registryRaw }),
   };
   const identity = await resolveAgent(directory, agent);
-  const file = identity?.registrationFile ?? null;
+  if (identity === null) {
+    // Nothing read means nothing known: a token absent from this graph may well have a document.
+    return text(id, {
+      caip19: toCaip19(agent),
+      registration_file: null,
+      in_graph: false,
+      note: `Not found in the graph this server reads (chain ${chainId}), so its document was not read.`,
+    });
+  }
+  const file = identity.registrationFile ?? null;
   if (file === null || file.trim() === '') {
     return text(id, {
       caip19: toCaip19(agent),
