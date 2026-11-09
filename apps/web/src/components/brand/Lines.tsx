@@ -5,9 +5,7 @@ import {cssVars} from "../../lib/css-vars";
  *
  * The unit here is a **line the writer wrote**, not a line the browser wrapped — these headings are
  * two short statements ("Start by reading." / "It costs nothing.") and the second is dim, so they
- * are already two elements for a reason that has nothing to do with motion. {@link
- * import("./Words").Words} is the other case, where the unit is a word and the line has to be
- * measured because it moves with the viewport.
+ * are already two elements for a reason that has nothing to do with motion.
  *
  * ## It carries its own size, and that is load-bearing
  *

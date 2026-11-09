@@ -212,11 +212,7 @@
        line, measured at runtime, because `--text-display` is a clamp() and the
        wrap moves with the viewport. */
     --word-rise: 380ms;
-    --word-step: 34ms;
     --line-step: 110ms;
-    /* Total stagger of one heading, never more. Past ~600ms the reader is
-       waiting instead of reading, so a long line compresses its own step. */
-    --stagger-ceiling: 560ms;
 
     /* List rows, the first `LIST_CAP` of them only — see `Reveal`'s docstring.
        Tuned on three rows, an uncapped stagger is a 16s wait on two hundred. */
@@ -243,7 +239,6 @@
     /* ---------------------------------------------------------------------- */
     --reveal-index: 0; /* which sibling, for the stagger */
     --reveal-after: 0ms; /* a group that waits for another group */
-    --word-delay: 0ms; /* computed per word from its rendered line */
     --line-index: 0; /* which authored line of a heading */
     --row-index: 0; /* which row of a list */
     --orbit-for: 90s; /* how long one ring of the claim field takes to turn */
@@ -561,35 +556,10 @@ summary:focus-visible,
    `.arp-scene-played`, so excluding it only here would lose the tie. */
 .arp-scene-played .arp-rev,
 .arp-scene-played .arp-line,
-.arp-scene-played .arp-word,
 .arp-scene-played .arp-row {
     opacity: 1;
     transform: none;
     transition: none;
-}
-
-/* ---- word scale: the hero's h1, one word at a time ---------------------- */
-
-/* `inline-block` keeps the space OUTSIDE the word, so the line wraps exactly
-   where it would for plain text. The delay is computed from the word's rendered
-   line at runtime (`--word-delay`), never from its index: an index-based stagger
-   crosses a clamp() line break and reads as a glitch at some widths only. */
-.arp-word {
-    display: inline-block;
-}
-
-.arp-scene[data-on="false"]:not(.arp-scene-played) .arp-words .arp-word {
-    opacity: 0;
-    transform: translateY(0.32em);
-}
-
-.arp-scene[data-on="true"]:not(.arp-scene-played) .arp-words .arp-word {
-    opacity: 1;
-    transform: none;
-    transition:
-        opacity var(--word-rise) var(--ease-out-quart),
-        transform var(--word-rise) var(--ease-out-quart);
-    transition-delay: var(--word-delay);
 }
 
 /* ---- authored-line scale: an h2 whose two lines are written as two ------- */
@@ -1081,7 +1051,6 @@ a.arp-cf-card:hover {
 @media (prefers-reduced-motion: reduce) {
     .arp-rev,
     .arp-scene,
-    .arp-word,
     .arp-line,
     .arp-row,
     .arp-route-in,

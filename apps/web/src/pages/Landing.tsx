@@ -7,7 +7,6 @@ import {Reveal} from "../components/brand/Reveal";
 import {rowMotion} from "../components/brand/row-motion";
 import {SceneDeck} from "../components/brand/SceneDeck";
 import {SourceField} from "../components/brand/SourceField";
-import {Words} from "../components/brand/Words";
 import {useScene} from "../components/brand/scene-context";
 import {clamp, smooth} from "../components/brand/source-field-geometry";
 import {NoActivityYet} from "../components/brand/NoActivityYet";
@@ -90,7 +89,7 @@ export function Landing() {
     const read = readOf(recent);
     // An em dash until the chain answers. A placeholder figure here would be the copy this read
     // exists to remove. The floor (fee + deposit) left the page with scene 4's four jobs (task 53).
-    // The **fee**, not the floor, for the first beat of Fig. 02. That beat says the money does not
+    // The **fee**, not the floor, for the first beat of the "why" scene. That beat says the money does not
     // come back, and only the fee half is: the floor is fee + deposit and the deposit is
     // redeemable. Printing the floor there called a redeemable deposit non-recoverable.
     const fee = cost.data === undefined ? "—" : `${formatTrust(cost.data.fee)} ${chain.symbol}`;
@@ -140,17 +139,10 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
                 and made both unreadable. Below 900px the field is above the copy instead of behind
                 it, so the column pads itself down by the field's 320px. */}
             <div className="relative flex max-w-[min(40rem,44vw)] flex-col justify-end gap-6 max-[900px]:max-w-full max-[900px]:pt-[320px]">
-                <Reveal fade>
-                    <p className="[text-wrap:balance] font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
-                        ARP · Check before your agent installs or pays
-                    </p>
-                </Reveal>
-                <h1 className="type-face text-[clamp(36px,4.4vw,60px)]">
-                    <Words text="The public pulse for skills and autonomous agents." />
-                </h1>
-                {/* The sentence under the title and the "or build against it" link were cut by
-                    the user, 2026-10-29: the call to action follows the title directly. */}
-                <Reveal index={1} afterMs={AFTER_TITLE}>
+                {/* The eyebrow and the visible title were cut by the user, 2026-11-09. The page
+                    keeps its one h1 for a screen reader, which otherwise lands on no heading. */}
+                <h1 className="sr-only">The public pulse for skills and autonomous agents.</h1>
+                <Reveal index={1}>
                     <div className="flex flex-wrap items-center gap-5">
                         {/* The onboarding, on the first screen (task 53, ADR `0114`). It was scene
                             4 for one evening; the user wanted it where a visitor lands. */}
@@ -162,23 +154,13 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
                         </Link>
                     </div>
                 </Reveal>
-                <Reveal fade index={2} afterMs={AFTER_TITLE + 160}>
+                <Reveal fade index={2}>
                     <Beat read={read} />
                 </Reveal>
             </div>
         </section>
     );
 }
-
-/**
- * How long the hero's answer waits for its title, in ms.
- *
- * The reference measures the h1's real total and subtracts 160ms so the two overlap slightly. Here
- * it is a constant, because the measurement lives inside `Words` and reaching back out for it would
- * couple the page to the component's internals for 50ms of precision. `--stagger-ceiling` is 560 and
- * `--word-rise` is 380, so the title's worst case is 940ms; this is that, less the same overlap.
- */
-const AFTER_TITLE = 780;
 
 /**
  * How long the pulse card holds one declaration before the next. Long enough to read a line, and
@@ -468,16 +450,12 @@ function SceneWhy({fee}: {fee: string}) {
                     {text: "Your agent uses something."},
                     {text: "The next one knows how it went.", dim: true},
                 ]}
-                figure="Fig. 02 · how the next agent knows"
             />
             <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
                 <ol className="flex flex-col">
                     {stepsFor(fee).map((step, index) => (
-                        <Reveal key={step.n} index={2 + index * 3}>
-                            <li className="grid grid-cols-[3rem_minmax(0,1fr)] items-baseline gap-4 border-b border-[color:var(--color-rule)] py-5">
-                                <span className="font-mono text-[length:var(--text-label)] text-[color:var(--color-steel)]">
-                                    {step.n}
-                                </span>
+                        <Reveal key={step.name} index={2 + index * 3}>
+                            <li className="border-b border-[color:var(--color-rule)] py-5">
                                 <div className="flex flex-col gap-1.5">
                                     <h3 className="type-face text-[20px]">{step.name}</h3>
                                     <p className="text-[length:var(--text-body-sm)] text-[color:var(--color-silver)]">
@@ -814,7 +792,7 @@ function SceneHead({
     figure,
 }: {
     lines: readonly {text: string; dim?: boolean}[];
-    figure: string;
+    figure?: string;
 }) {
     return (
         <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
@@ -824,11 +802,13 @@ function SceneHead({
             <h2>
                 <Lines lines={lines} />
             </h2>
-            <Reveal fade index={2}>
-                <span className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
-                    {figure}
-                </span>
-            </Reveal>
+            {figure && (
+                <Reveal fade index={2}>
+                    <span className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
+                        {figure}
+                    </span>
+                </Reveal>
+            )}
         </div>
     );
 }
@@ -858,21 +838,18 @@ function label(end: {atomId: string; label: string | null}): string {
         : primaryNameOf(parseToolLabel(end.label));
 }
 
-/** The three beats of Fig. 02. The fee is the chain's, read at call time. */
+/** The three beats of the "why" scene. The fee is the chain's, read at call time. */
 function stepsFor(fee: string) {
     return [
         {
-            n: "01",
             name: "Your agent uses a tool",
             line: `It says so publicly: a ${fee} fee that does not come back, its address on it for good.`,
         },
         {
-            n: "02",
             name: "It writes what happened",
             line: "Worked or failed, in which context, and why. It can put TRUST behind that: not a payment to anyone, it stays yours, withdraw it whenever you want.",
         },
         {
-            n: "03",
             name: "The next agent reads it",
             line: "Before it chooses. The tool's record grows, and so does your agent's. Each supporter after you pays a higher price.",
         },
