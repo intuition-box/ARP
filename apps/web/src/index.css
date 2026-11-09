@@ -1,8 +1,83 @@
 @import "tailwindcss";
 
-/* Fonts (Archivo + Geist Mono) are loaded via <link rel="stylesheet"> in
-   app/index.html — CSS @import would have to precede every other rule, which
-   conflicts with the tailwindcss expansion above. */
+/* Fonts (Archivo + Geist Mono) are served by this site, from `public/fonts/` (task 74): no
+   request leaves for Google. Both are under the SIL Open Font License 1.1, which allows bundling
+   and serving them; the licence texts ship beside the files. Latin and Latin Extended only, the
+   subsets the copy uses; Archivo is the variable file with its width axis, so 800 at 125% is the
+   same face the Google stylesheet served. */
+@font-face {
+    font-family: "Archivo";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    font-stretch: 62% 125%;
+    src: url("/fonts/archivo-latin-wdth-normal.woff2") format("woff2-variations");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url("/fonts/geist-mono-latin-400-normal.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 500;
+    src: url("/fonts/geist-mono-latin-500-normal.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 600;
+    src: url("/fonts/geist-mono-latin-600-normal.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Archivo";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    font-stretch: 62% 125%;
+    src: url("/fonts/archivo-latin-ext-wdth-normal.woff2") format("woff2-variations");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url("/fonts/geist-mono-latin-ext-400-normal.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 500;
+    src: url("/fonts/geist-mono-latin-ext-500-normal.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 600;
+    src: url("/fonts/geist-mono-latin-ext-600-normal.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
 
 /* -------------------------------------------------------------------------- */
 /* Design tokens — ADR 0057, "The Source". Graphite, one warm accent.         */
