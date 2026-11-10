@@ -4,7 +4,7 @@ import {ClsRow, Panel} from "./AtomPageParts";
 import type {SkillContentsRead} from "../../hooks/use-skill-contents";
 import {formatDay} from "../../lib/atom-page";
 import {linkClass} from "../../lib/control-class";
-import {lineUrl, type ContentsMatch, type SkillContentsEntry} from "../../services/skill-contents";
+import {HEAD_REF, lineUrl, type ContentsMatch, type SkillContentsEntry} from "../../services/skill-contents";
 
 /** Names shown in a row before the rest is counted: the panel sits in a 26rem column. */
 const SHOWN = 6;
@@ -13,6 +13,7 @@ const SHOWN = 6;
  * What a skill's files contain, in the skill page's facts column (task 96): the programs it runs, the
  * keys it reads, its scripts, code it fetches and runs, the domains it names and text a reader of the
  * rendered page would not see. Facts from the files, never a verdict, and nothing here blocks anything.
+ * `/pulse` shows the same panel over its own read, made at the repository's head (task 104).
  */
 export function SkillContains({read, repo}: {read: SkillContentsRead; repo: string | null}) {
     return (
@@ -22,9 +23,11 @@ export function SkillContains({read, repo}: {read: SkillContentsRead; repo: stri
                 read.status === "pending" ? null : (
                     <>
                         <Hint label="What Contains is read from">
-                            {read.status === "read"
-                                ? `Names found in the skill's files at commit ${read.entry.commit.slice(0, 7)}, not requirements.`
-                                : "This skill's files were not in the last reading."}
+                            {read.status === "not-read"
+                                ? "This skill's files were not in the last reading."
+                                : read.entry.commit === HEAD_REF
+                                  ? "Names found in the skill's files read at the repository's head, not requirements."
+                                  : `Names found in the skill's files at commit ${read.entry.commit.slice(0, 7)}, not requirements.`}
                         </Hint>
                         <span className="ml-auto normal-case tracking-[0.04em] text-[color:var(--color-steel)]">
                             {formatDay(read.measuredAt.slice(0, 10))}

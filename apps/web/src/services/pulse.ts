@@ -11,6 +11,8 @@ import {
 } from "@arp-protocol/core";
 import {stringToHex, type Address, type Hex} from "viem";
 
+import {entryOfContains, HEAD_REF, type SkillContentsEntry} from "./skill-contents";
+
 export type PulseChain = {
     chainId: number;
     multiVault: Address;
@@ -22,6 +24,16 @@ export type PulseChain = {
 };
 
 export type PulseView = {pulse: SkillPulse; atomId: Hex | null; usage: PulseUsage | null};
+
+/**
+ * What the pulse read of a skill's files, in the skill page's Contains shape (task 104). `null` when
+ * no file was read: the page already says so, and "not read" twice is noise.
+ */
+export function pulseContentsEntry(pulse: SkillPulse): SkillContentsEntry | null {
+    if (pulse.status !== "read" && pulse.status !== "read_file_only") return null;
+    const slash = pulse.path.lastIndexOf("/");
+    return entryOfContains(pulse.contains, slash === -1 ? "" : pulse.path.slice(0, slash), HEAD_REF);
+}
 
 /**
  * One skill's pulse: what GitHub shows of its files and what wallets wrote about it (task 63).

@@ -4,6 +4,7 @@ import {Link, useParams} from "react-router-dom";
 import type {PulseUsage, SkillPulse} from "@arp-protocol/core";
 
 import {Install} from "../components/atom/AtomPageParts";
+import {SkillContains} from "../components/atom/SkillContains";
 import {Hint} from "../components/brand/Hint";
 import {RingLoader} from "../components/brand/RingLoader";
 import {usePulse} from "../hooks/use-pulse";
@@ -40,6 +41,7 @@ export function PulsePage() {
                     </div>
                     <div className="grid gap-4">
                         <Usage usage={read.view.usage} />
+                        {read.contents === null ? null : <SkillContains read={read.contents} repo={source} />}
                         <Repository pulse={read.view.pulse} />
                         {read.view.atomId === null || read.view.usage === null || read.view.usage.declarations.length === 0 ? null : (
                             <Link

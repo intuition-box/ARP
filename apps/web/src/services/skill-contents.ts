@@ -8,7 +8,7 @@
  *
  * Facts, never a verdict: a name found in the files, not a requirement and not a judgement.
  */
-import type {FetchAndRunKind, HiddenKind, ProgramSource} from "@arp-protocol/core";
+import type {FetchAndRunKind, HiddenKind, ProgramSource, SkillContents} from "@arp-protocol/core";
 
 /** A line of a skill's file, with the kind of match. */
 export type ContentsMatch<K extends string> = {kind: K; file: string; line: number; text: string};
@@ -37,6 +37,35 @@ export type SkillContentsReading = {measuredAt: string; skills: Record<string, S
 export function contentsOf(reading: SkillContentsReading, label: string | null): SkillContentsEntry | null {
     if (label === null) return null;
     return reading.skills[label] ?? null;
+}
+
+/**
+ * The ref of a read made on the spot (`/pulse`): GitHub's file list gives the tree, not a commit, so
+ * a matched line links at the repository's head, which is what was read moments before.
+ */
+export const HEAD_REF = "HEAD";
+
+/**
+ * A read of the protocol's `readSkillContents` in the entry shape the panel shows, the conversion
+ * `scripts/build/build-skill-contents.ts` makes for the dated reading.
+ *
+ * @param directory the skill's directory in its repository, `""` at the root.
+ * @param commit the commit read, or `HEAD_REF` for a read made on the spot.
+ */
+export function entryOfContains(contains: SkillContents, directory: string, commit: string): SkillContentsEntry {
+    return {
+        commit,
+        directory,
+        programs: contains.programs,
+        packages: contains.packages,
+        settings: contains.settings,
+        scripts: contains.scripts,
+        fetchAndRun: contains.fetchAndRun,
+        domains: contains.domains,
+        hidden: contains.hidden,
+        notRead: contains.read.skipped.length,
+        cut: contains.cut,
+    };
 }
 
 /** The line on GitHub, at the commit that was read, so a reader opens exactly what was matched. */
