@@ -77,10 +77,25 @@ export function keysIn(files: readonly TextFile[], settings: readonly string[]):
 
 /** On every machine, or the interpreter running the script itself: naming them tells nobody anything. */
 const EVERYWHERE = new Set(
-    "sh bash zsh dash env cat ls echo printf mkdir rm cp mv ln grep sed awk tr cut head tail sort uniq wc find xargs test true false base64 date sleep chmod touch tee kill ps uname which open xdg-open cmd powershell pwsh".split(
+    "sh bash zsh dash env cat ls echo printf mkdir rm cp mv ln grep sed awk tr cut head tail sort uniq wc find xargs test true false base64 date sleep chmod touch tee kill ps uname which open xdg-open cmd powershell pwsh taskkill taskkill.exe where where.exe".split(
         " ",
     ),
 );
+
+/** One program under the name the other readings give it: `soffice` is LibreOffice. */
+const ALIASES: Readonly<Record<string, string>> = {
+    soffice: "LibreOffice",
+    libreoffice: "LibreOffice",
+    "google-chrome": "Chrome",
+    chromium: "Chrome",
+    "chromium-browser": "Chrome",
+    magick: "ImageMagick",
+    convert: "ImageMagick",
+    pdftoppm: "poppler",
+    pdftotext: "poppler",
+    python: "python3",
+    docker: "Docker",
+};
 
 /** A program a script starts, its name a string literal: Node, Bun, Deno, Python, Ruby. */
 const SPAWNS: readonly RegExp[] = [
@@ -167,10 +182,41 @@ const NAMED_PROGRAMS: readonly {name: string; pattern: RegExp}[] = [
 
 const NEEDED =
     /\b(?:requires?|required|requirements?|needs?|needed|prerequisites?|depends on|must (?:be )?install(?:ed)?|must have|install(?:ed)? first|has to be installed|be installed)\b/i;
+const NEEDED_GLOBAL = new RegExp(NEEDED.source, "gi");
 const NOT_NEEDED =
     /\b(?:no|not|never|without|doesn't|don't|isn't|aren't|zero)\b[^.;]{0,30}\b(?:requires?|required|needs?|needed|install)/i;
 /** Or the program is said not to be needed after the verb: "requires no ffmpeg", "needs nothing". */
 const NOT_AFTER = /\b(?:requires?|needs?)\s+(?:no|nothing|neither)\b/i;
+
+/**
+ * Where a skill says what it needs: its SKILL.md, a file named for it (`requirements.md`,
+ * `prerequisites.md`, `setup.md`, `install.md`, a README) and its scripts' comments. Measured
+ * 2026-11-10 over every file: of eight lines sampled, six were prose about something else ("needs care
+ * outside Chrome", "nodes + pods"), so the rest of the references are not read for this.
+ */
+function saysWhatItNeeds(path: string, isScript: boolean): boolean {
+    if (isScript) return true;
+    if (!MARKDOWN.test(path)) return false;
+    const base = path.slice(path.lastIndexOf("/") + 1).toLowerCase();
+    return base === "skill.md" || /^(readme|requirements?|prerequisites?|setup|install(ation)?|dependencies|getting-started)\b/.test(base);
+}
+
+/** A comment, a docstring or a string in a script: where its author writes what it needs. */
+const COMMENT_OR_STRING = /^\s*(?:#|\/\/|\*|\/\*|"""|''')|["'`][^"'`]*\b(?:requires?|needs?|install)/i;
+
+/**
+ * The program in the verb's clause, within 40 characters after it ("Needs puppeteer-core, ffmpeg") or
+ * 30 before it ("ffmpeg must be installed", "ffmpeg is required").
+ */
+function namedAfterVerb(line: string, program: RegExp): boolean {
+    for (const verb of line.matchAll(NEEDED_GLOBAL)) {
+        const at = verb.index;
+        const after = line.slice(at + verb[0].length).slice(0, 40).split(/[.;:!?](?:\s|$)/)[0] ?? "";
+        const before = line.slice(Math.max(0, at - 30), at).split(/[.;:!?](?:\s|$)/).at(-1) ?? "";
+        if (program.test(after) || program.test(before)) return true;
+    }
+    return false;
+}
 
 /**
  * The programs a skill's files show it needs, beyond what `skill-contents.ts` already read: the first
@@ -192,7 +238,7 @@ export function programsNeededIn(files: readonly TextFile[]): NeededProgram[] {
                     const name = match[1] ?? "";
                     const line = lineAt(file.text, match.index);
                     if (name === "" || EVERYWHERE.has(name) || COMMENT_LINE.test(lines[line - 1] ?? "")) continue;
-                    add({name, from: "spawned", file: file.path, line});
+                    add({name: ALIASES[name] ?? name, from: "spawned", file: file.path, line});
                 }
             }
             for (const pattern of IMPORTS) {
@@ -219,11 +265,12 @@ export function programsNeededIn(files: readonly TextFile[]): NeededProgram[] {
                 if (driven !== undefined) add({name: driven, from: "package", file: file.path, line: index + 1, via: name ?? ""});
             }
         }
-        if (MARKDOWN.test(file.path) || isScript) {
+        if (saysWhatItNeeds(file.path, isScript)) {
             for (const [index, line] of lines.entries()) {
-                if (!NEEDED.test(line) || NOT_NEEDED.test(line) || NOT_AFTER.test(line)) continue;
+                if (NOT_NEEDED.test(line) || NOT_AFTER.test(line)) continue;
+                if (isScript && !COMMENT_OR_STRING.test(line)) continue;
                 for (const {name, pattern} of NAMED_PROGRAMS) {
-                    if (pattern.test(line)) add({name, from: "named as needed", file: file.path, line: index + 1});
+                    if (namedAfterVerb(line, pattern)) add({name, from: "named as needed", file: file.path, line: index + 1});
                 }
             }
         }

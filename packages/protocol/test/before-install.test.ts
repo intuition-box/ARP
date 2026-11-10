@@ -91,6 +91,32 @@ describe("beforeInstall", () => {
         expect(answer.programs).toEqual([]);
     });
 
+    it("reads what SKILL.md or a requirements file says is needed, in the verb's clause", () => {
+        const answer = view(
+            skill("Requires ffmpeg and Node.js 18."),
+            file("references/requirements.md", "LibreOffice must be installed for PDF export.\n"),
+            file("references/notes.md", "Requires Docker for the sandbox.\n"),
+        );
+        expect(answer.programs.map((program) => [program.name, program.file, program.line])).toEqual([
+            ["LibreOffice", "references/requirements.md", 1],
+            ["ffmpeg", "SKILL.md", 6],
+            ["node", "SKILL.md", 6],
+        ]);
+    });
+
+    it("does not read a program named far from the verb, or a reference's prose", () => {
+        const answer = view(
+            skill("This needs isolation from the current workspace, made with git worktree."),
+            file("references/arabic.md", "The technique needs care outside Chrome.\n"),
+        );
+        expect(answer.programs).toEqual([]);
+    });
+
+    it("gives a program run under another name the name the others use", () => {
+        const answer = view(skill("x"), file("office.py", 'subprocess.run(["soffice", "--headless"])\nsubprocess.run(["taskkill", "/F"])\n'));
+        expect(answer.programs).toEqual([{name: "LibreOffice", from: "spawned", file: "office.py", line: 1}]);
+    });
+
     it("does not read a spawn in a comment", () => {
         expect(view(skill("x"), file("a.mjs", '// execFileSync("ffmpeg")\n')).programs).toEqual([]);
     });
