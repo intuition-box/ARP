@@ -23639,7 +23639,7 @@ function readSkillFacts(markdown, filesInDirectory, repositoryFiles = filesInDir
     files: filesInDirectory.length,
     bytes: filesInDirectory.reduce((total, file) => total + file.size, 0),
     scripts: filesInDirectory.filter((file) => SCRIPT.test(file.path)).length,
-    keys: [...new Set(markdown.match(KEY_NAME) ?? [])],
+    keys: [...new Set(markdown.match(KEY_NAME2) ?? [])],
     paidWords: [...new Set((markdown.match(PAID_WORD) ?? []).map((word) => word.toLowerCase()))],
     hosts: [...new Set(hosts)],
     runsAbsentFiles: absentFiles(markdown, repositoryFiles),
@@ -23728,7 +23728,7 @@ async function readPulse(result, source) {
   const scripts = filesItRuns(located.markdown, listing.files).slice(0, MAX_SCRIPTS_READ);
   const keysInScriptsItRuns = (await Promise.all(scripts.map(async (file) => ({
     file,
-    keys: [...new Set((await source.file(result.source, file))?.match(KEY_NAME) ?? [])]
+    keys: [...new Set((await source.file(result.source, file))?.match(KEY_NAME2) ?? [])]
   })))).filter((entry) => entry.keys.length > 0);
   return {
     ...result,
@@ -23847,7 +23847,7 @@ function githubPulseSource(options = {}) {
     quota: () => ({ ...quota })
   };
 }
-var MAX_SKILL_FILES_READ = 200, MAX_SCRIPTS_READ = 5, GITHUB_READ_TIMEOUT_MS = 1e4, INSTALLER_ORDER, RESULT, RESULT_NO_COUNT, ANSI, KEY_NAME, PAID_WORD, HOST, NOT_A_SERVICE, LOOKS_LIKE_A_FILE, SCRIPT, RUNS_FILE, PLACEHOLDER;
+var MAX_SKILL_FILES_READ = 200, MAX_SCRIPTS_READ = 5, GITHUB_READ_TIMEOUT_MS = 1e4, INSTALLER_ORDER, RESULT, RESULT_NO_COUNT, ANSI, KEY_NAME2, PAID_WORD, HOST, NOT_A_SERVICE, LOOKS_LIKE_A_FILE, SCRIPT, RUNS_FILE, PLACEHOLDER;
 var init_pulse = __esm(() => {
   init_skill_requires();
   INSTALLER_ORDER = [
@@ -23890,7 +23890,7 @@ var init_pulse = __esm(() => {
   RESULT = /^(\S+?)@(.+?) ([\d.,]+[KMB]?) installs?\s*$/;
   RESULT_NO_COUNT = /^(\S+?)@(.+?)\s*$/;
   ANSI = /\u001b\[[0-9;]*m/g;
-  KEY_NAME = /\b[A-Z][A-Z0-9_]*(?:API_KEY|APIKEY|_TOKEN|_SECRET)\b/g;
+  KEY_NAME2 = /\b[A-Z][A-Z0-9_]*(?:API_KEY|APIKEY|_TOKEN|_SECRET)\b/g;
   PAID_WORD = /\b(pricing|paid|subscription|credits?|billing|free tier|per minute)\b/gi;
   HOST = /https?:\/\/([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
   NOT_A_SERVICE = /(^|\.)(github\.com|githubusercontent\.com|example\.(com|org|net))$/;
@@ -23960,6 +23960,41 @@ var init_share_offer = __esm(() => {
   };
 });
 
+// ../../packages/protocol/dist/declare/line-need.js
+function needKindOf2(name) {
+  if (PROGRAM_NAME2.test(name))
+    return "program";
+  if (KEY_NAME3.test(name))
+    return "key";
+  return null;
+}
+function needKindOfReason2(reason) {
+  if (reason === "missing-program")
+    return "program";
+  if (reason === "missing-key")
+    return "key";
+  return null;
+}
+function needShapeProblem2(params) {
+  const { need, outcome, reason } = params;
+  if (need === "")
+    return null;
+  const shape2 = needKindOf2(need);
+  if (shape2 === null)
+    return "a need is a program name (ffmpeg) or an environment variable's name (OPENAI_API_KEY)";
+  if (outcome === "worked")
+    return reason === "" ? null : "a worked line has no reason";
+  const wanted = needKindOfReason2(reason);
+  if (wanted === null)
+    return "a need follows a missing-program or missing-key failure";
+  return shape2 === wanted ? null : `${reason} names ${wanted === "program" ? "a program" : "an environment variable"}`;
+}
+var NEEDS_LABEL2 = "needs", WITH_LABEL2 = "with", PROGRAM_NAME2, KEY_NAME3;
+var init_line_need = __esm(() => {
+  PROGRAM_NAME2 = /^[a-z0-9][a-z0-9._+-]{0,39}$/;
+  KEY_NAME3 = /^[A-Z][A-Z0-9_]{2,63}$/;
+});
+
 // ../../packages/protocol/dist/declare/usage-context.js
 function isUsageOutcome2(value) {
   return USAGE_OUTCOMES2.some((outcome) => outcome === value);
@@ -23975,6 +24010,11 @@ async function prepareUsageContext2(params) {
   }
   if (params.payment !== undefined && params.outcome === undefined) {
     return { status: "refused", rule: "payment_without_outcome", detail: "a payment is attached to an outcome" };
+  }
+  if (params.need !== undefined) {
+    const problem = params.outcome === undefined ? "a need is attached to an outcome" : needShapeProblem2({ need: params.need, outcome: params.outcome, reason: params.reason ?? "" });
+    if (problem !== null)
+      return { status: "refused", rule: "need_shape", detail: problem };
   }
   if (domain === undefined && params.outcome === undefined) {
     return { status: "refused", rule: "nothing_to_add", detail: "give a domain or an outcome" };
@@ -24065,6 +24105,14 @@ async function prepareUsageContext2(params) {
     const paymentId = await atom(params.payment, `the payment ${params.payment}`);
     paymentTripleId = await triple(outcomeTripleId, predicate, paymentId, `say this outcome was paid with ${params.payment}`);
   }
+  let needTripleId = null;
+  const needSubject = params.outcome === "worked" ? outcomeTripleId : reasonTripleId;
+  if (params.need !== undefined && needSubject !== null) {
+    const label = params.outcome === "worked" ? WITH_LABEL2 : NEEDS_LABEL2;
+    const predicate = await atom(label, `the word "${label}"`);
+    const nameId = await atom(params.need, `the name "${params.need}"`);
+    needTripleId = await triple(needSubject, predicate, nameId, `say it ${label} ${params.need}`);
+  }
   return {
     status: "planned",
     chainId: reads.chainId,
@@ -24072,6 +24120,7 @@ async function prepareUsageContext2(params) {
     outcomeTripleId,
     reasonTripleId,
     paymentTripleId,
+    needTripleId,
     calls,
     alreadyWritten,
     totalValue: calls.reduce((sum, call2) => sum + call2.value, 0n)
@@ -24092,6 +24141,7 @@ var USAGE_OUTCOMES2, HAS_OUTCOME_LABEL2 = "has outcome", USAGE_REASONS2, BECAUSE
 var init_usage_context = __esm(() => {
   init__esm();
   init_x402_payment();
+  init_line_need();
   init_multivault();
   USAGE_OUTCOMES2 = ["worked", "failed"];
   USAGE_REASONS2 = ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"];
@@ -24106,12 +24156,20 @@ function parseLocalFailures(text) {
       continue;
     try {
       const row = JSON.parse(line);
-      const { at, skill, source, domain, reason } = row;
+      const { at, skill, source, domain, reason, need } = row;
       if (typeof at !== "string" || typeof skill !== "string" || typeof reason !== "string")
         continue;
       if (!isUsageReason2(reason))
         continue;
-      rows.push({ at, skill, source: typeof source === "string" ? source : null, ...typeof domain === "string" ? { domain } : {}, reason });
+      const named = typeof need === "string" && needKindOf2(need) !== null && needKindOf2(need) === needKindOfReason2(reason);
+      rows.push({
+        at,
+        skill,
+        source: typeof source === "string" ? source : null,
+        ...typeof domain === "string" ? { domain } : {},
+        reason,
+        ...named ? { need } : {}
+      });
     } catch {
       continue;
     }
@@ -24132,6 +24190,7 @@ function yourFailures(rows, skill, source) {
   };
 }
 var init_local_failures = __esm(() => {
+  init_line_need();
   init_usage_context();
 });
 
@@ -24175,7 +24234,8 @@ function installedFromReceipts(text) {
   return found;
 }
 function sharedLineKey(line) {
-  return `${line.toolUrl}\x00${line.domain ?? ""}\x00${line.reason}`;
+  const base2 = `${line.toolUrl}\x00${line.domain ?? ""}\x00${line.reason}`;
+  return line.need === undefined ? base2 : `${base2}\x00${line.need}`;
 }
 function decideShare(params) {
   const lines = new Map;
@@ -24200,7 +24260,8 @@ function decideShare(params) {
       toolUrl: `https://github.com/${source}?skill=${encodeURIComponent(name)}`,
       outcome: "failed",
       ...failure.domain === undefined ? {} : { domain: failure.domain },
-      reason: failure.reason
+      reason: failure.reason,
+      ...failure.need === undefined ? {} : { need: failure.need }
     };
     const key = sharedLineKey(line);
     if (!params.alreadyShared.has(key))
@@ -24390,6 +24451,8 @@ async function getPulseUsage(toolAtomIds, config) {
     byDomain: {},
     byOutcome: {},
     byReason: {},
+    byNeed: {},
+    byWith: {},
     byOthers: [],
     truncated: false
   });
@@ -24477,7 +24540,7 @@ async function getPulseUsage(toolAtomIds, config) {
     if (wallets.size === 0) {
       others(edge, line, isOutcomeLine ? "outcome" : "context");
     } else if (isOutcomeLine && isOutcome(line.value)) {
-      outcomes.set(key(line.termId), { edge, domain: null, form: "sibling", outcome: line.value, wallets, reasons: new Map });
+      outcomes.set(key(line.termId), { edge, domain: null, form: "sibling", outcome: line.value, wallets, reasons: new Map, named: new Map });
     } else {
       contexts.set(key(line.termId), { edge, domain: line.value, wallets });
     }
@@ -24492,15 +24555,38 @@ async function getPulseUsage(toolAtomIds, config) {
     if (wallets.size === 0) {
       others(context.edge, line, "outcome");
     } else {
-      outcomes.set(key(line.termId), { edge: context.edge, domain: context.domain, form: "nested", outcome: line.value, wallets, reasons: new Map });
+      outcomes.set(key(line.termId), { edge: context.edge, domain: context.domain, form: "nested", outcome: line.value, wallets, reasons: new Map, named: new Map });
     }
   }
+  const reading = (predicate) => predicate !== undefined;
   const failures = [...outcomes.entries()].filter(([, found]) => found.outcome === "failed").map(([id]) => id);
-  const onOutcome = pass(await qualifiers(failures, [config.because]));
+  const worked = [...outcomes.entries()].filter(([, found]) => found.outcome === "worked").map(([id]) => id);
+  const withId = config.with;
+  const onOutcome = pass(await qualifiers(reading(withId) ? [...failures, ...worked] : failures, [config.because, ...reading(withId) ? [withId] : []]));
+  const reasonTerms = new Map;
+  const addName = (found, wallets, name) => {
+    for (const wallet of wallets) {
+      const given = found.named.get(wallet) ?? [];
+      if (!given.includes(name))
+        given.push(name);
+      found.named.set(wallet, given);
+    }
+  };
   for (const row of onOutcome) {
     const line = parts(row);
     const found = line.subjectId === null ? undefined : outcomes.get(key(line.subjectId));
-    if (found === undefined || line.value === null || !isReason(line.value))
+    if (found === undefined || line.value === null || line.predicateId === null)
+      continue;
+    if (withId !== undefined && key(line.predicateId) === key(withId)) {
+      if (found.outcome !== "worked" || needKindOf2(line.value) === null)
+        continue;
+      const wallets2 = standing(row, found.edge, found.wallets);
+      if (wallets2.size === 0)
+        others(found.edge, line, "with");
+      addName(found, wallets2, line.value);
+      continue;
+    }
+    if (found.outcome !== "failed" || !isReason(line.value))
       continue;
     const wallets = standing(row, found.edge, found.wallets);
     if (wallets.size === 0)
@@ -24510,6 +24596,26 @@ async function getPulseUsage(toolAtomIds, config) {
       if (!given.includes(line.value))
         given.push(line.value);
       found.reasons.set(wallet, given);
+    }
+    if (line.termId !== null && wallets.size > 0 && needKindOfReason2(line.value) !== null) {
+      reasonTerms.set(key(line.termId), { found, reason: line.value, wallets });
+    }
+  }
+  const needsId = config.needs;
+  if (reading(needsId)) {
+    const onReason = pass(await qualifiers([...reasonTerms.keys()], [needsId]));
+    for (const row of onReason) {
+      const line = parts(row);
+      const reason = line.subjectId === null ? undefined : reasonTerms.get(key(line.subjectId));
+      if (reason === undefined || line.value === null)
+        continue;
+      const kind = needKindOf2(line.value);
+      if (kind === null || kind !== needKindOfReason2(reason.reason))
+        continue;
+      const wallets = standing(row, reason.found.edge, reason.wallets);
+      if (wallets.size === 0)
+        others(reason.found.edge, line, "needs");
+      addName(reason.found, wallets, line.value);
     }
   }
   for (const { edge, domain, wallets } of contexts.values()) {
@@ -24523,15 +24629,19 @@ async function getPulseUsage(toolAtomIds, config) {
       if (declaration === undefined)
         continue;
       const reasons = found.reasons.get(wallet) ?? [];
+      const named = found.named.get(wallet) ?? [];
+      const field = found.outcome === "failed" ? "needs" : "with";
       if (!declaration.outcomes.includes(found.outcome))
         declaration.outcomes.push(found.outcome);
       const domains = found.form === "nested" ? [found.domain] : declaration.domains.length > 0 ? declaration.domains : [null];
       for (const domain of domains) {
         const same = declaration.lines.find((line) => line.domain === domain && line.outcome === found.outcome);
         if (same === undefined) {
-          declaration.lines.push({ domain, outcome: found.outcome, reasons, form: found.form });
+          declaration.lines.push({ domain, outcome: found.outcome, reasons, form: found.form, ...named.length === 0 ? {} : { [field]: named } });
         } else {
           same.reasons = [...new Set([...same.reasons, ...reasons])];
+          if (named.length > 0)
+            same[field] = [...new Set([...same[field] ?? [], ...named])];
         }
       }
     }
@@ -24552,6 +24662,12 @@ async function getPulseUsage(toolAtomIds, config) {
       for (const reason of new Set(declaration.lines.flatMap((line) => line.reasons))) {
         usage.byReason[reason] = (usage.byReason[reason] ?? 0) + 1;
       }
+      const byNeed = usage.byNeed ??= {};
+      for (const name of new Set(declaration.lines.flatMap((line) => line.needs ?? [])))
+        byNeed[name] = (byNeed[name] ?? 0) + 1;
+      const byWith = usage.byWith ??= {};
+      for (const name of new Set(declaration.lines.flatMap((line) => line.with ?? [])))
+        byWith[name] = (byWith[name] ?? 0) + 1;
     }
   }
   return out;
@@ -24559,6 +24675,7 @@ async function getPulseUsage(toolAtomIds, config) {
 var DEFAULT_LIMIT2 = 250, rowsOf = (data) => Array.isArray(data["triples"]) ? data["triples"].filter(isRecord) : [];
 var init_pulse_usage = __esm(() => {
   init_dist();
+  init_line_need();
   init_usage_context();
   init_terms();
   init_probe();
@@ -25915,7 +26032,7 @@ var init_list_tool = __esm(() => {
 // ../../packages/protocol/dist/sponsor/line.js
 function lineRequestTypedData(request, chainId) {
   return {
-    domain: { name: "ARP Line Request", version: "3", chainId },
+    domain: { name: "ARP Line Request", version: "4", chainId },
     types: LINE_REQUEST_TYPES,
     primaryType: "LineRequest",
     message: { ...request, expiresAt: BigInt(request.expiresAt) }
@@ -25937,6 +26054,7 @@ var init_line = __esm(() => {
       { name: "reason", type: "string" },
       { name: "payment", type: "string" },
       { name: "endpoint", type: "string" },
+      { name: "need", type: "string" },
       { name: "nonce", type: "bytes32" },
       { name: "expiresAt", type: "uint256" }
     ]
@@ -26113,6 +26231,7 @@ var init_dist2 = __esm(() => {
   init_pulse_usage();
   init_agent_pulse();
   init_usage_context();
+  init_line_need();
   init_content_serve();
   init_content_bundle();
   init_skill_review();
@@ -26479,7 +26598,7 @@ function describe(decision) {
   if (decision.lines.length > 0) {
     out.push("", "would be public on testnet 13579:");
     for (const line of decision.lines) {
-      out.push(`  ${line.toolUrl}  ${line.domain ?? "(no domain)"}  failed  ${line.reason}`);
+      out.push(`  ${line.toolUrl}  ${line.domain ?? "(no domain)"}  failed  ${line.reason}${line.need === undefined ? "" : `  needs ${line.need}`}`);
     }
   }
   if (decision.keptLocal.length > 0) {
@@ -34127,6 +34246,7 @@ async function writeLine(config, agent, input) {
       reason: input.reason ?? "",
       payment: input.payment === undefined ? "" : paymentAtomLabel(input.payment),
       endpoint: input.payment === undefined ? "" : input.toolUrl,
+      need: input.need ?? "",
       nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
       expiresAt: expiresAt()
     }, DESKTOP_CHAIN_ID, agent.account);
@@ -34400,13 +34520,26 @@ function lineFromArgs(args, env = process.env) {
   }
   if (args.reason !== undefined && args.outcome !== "failed")
     return new Error("a reason only follows --outcome failed");
+  if (args.needs !== undefined && args.outcome !== "failed")
+    return new Error("--needs follows --outcome failed; a worked line takes --with");
+  if (args.with !== undefined && args.outcome !== "worked")
+    return new Error("--with follows --outcome worked; a failure takes --needs");
+  const need = args.needs ?? args.with;
+  if (need !== undefined) {
+    const problem = needShapeProblem2({ need, outcome: args.outcome, reason: args.reason ?? "" });
+    if (problem !== null)
+      return new Error(problem);
+    if (args.paymentTx !== undefined)
+      return new Error("--needs and --with name a skill's word; a paid endpoint has no SKILL.md");
+  }
   return {
     toolUrl: args.toolUrl,
     outcome: args.outcome,
     ...args.domain === undefined ? {} : { domain: args.domain },
     ...args.reason === undefined ? {} : { reason: args.reason },
     ...args.parent === undefined || args.why === undefined ? {} : { newDomain: { parent: args.parent, why: args.why.trim() } },
-    ...args.paymentTx === undefined || args.network === undefined ? {} : { payment: { network: args.network, txHash: args.paymentTx.toLowerCase() } }
+    ...args.paymentTx === undefined || args.network === undefined ? {} : { payment: { network: args.network, txHash: args.paymentTx.toLowerCase() } },
+    ...need === undefined ? {} : { need }
   };
 }
 async function readLinePayment(input, reading) {
@@ -40479,6 +40612,8 @@ function usageLine(usage, domain) {
     by_domain: usage.byDomain,
     by_outcome: usage.byOutcome,
     ...Object.keys(usage.byReason).length === 0 ? {} : { by_reason: usage.byReason },
+    ...Object.keys(usage.byNeed ?? {}).length === 0 ? {} : { by_need: usage.byNeed },
+    ...Object.keys(usage.byWith ?? {}).length === 0 ? {} : { by_with: usage.byWith },
     latest: usage.declarations.slice(-3).map((row) => ({ agent: row.agent.label, by: row.writer, domains: row.domains, outcomes: row.outcomes, lines: row.lines })),
     ...usage.byOthers.length === 0 ? {} : { written_by_others: usage.byOthers },
     ...usage.truncated ? { truncated: true } : {}
@@ -40692,6 +40827,8 @@ async function answer(id, args, budget, cancelled) {
       inContextOf: IN_CONTEXT_OF,
       hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL2)),
       because: await reads.atomId(stringToHex(BECAUSE_LABEL2)),
+      needs: await reads.atomId(stringToHex(NEEDS_LABEL2)),
+      with: await reads.atomId(stringToHex(WITH_LABEL2)),
       payers: LINE_PAYERS
     });
   };
@@ -43688,7 +43825,9 @@ usage
                      --outcome worked|failed [--domain <category>] [--reason <reason>]
                      [--payment-tx <hash> --network eip155:8453]  an x402 payment, read on Base;
                      with it, --tool is the exact URL you paid
-  arp init           add the MCP server and the hook to every runtime found here
+                     [--needs <name>] or [--with <name>]  the program or variable name that was
+                     missing, or that you added; written only if the skill's SKILL.md names it
+  arp init         add the MCP server and the hook to every runtime found here
   arp uninstall      remove them, and only them
   arp doctor         check what is installed and that the server answers
   arp init --node    bind this node to your ERC-8004 agent: the token's owner signs once
@@ -43817,6 +43956,8 @@ async function run(argv) {
        [--parent <category> --why <text>]   adds a --domain the tree lacks, under --parent
        [--payment-tx <hash> --network eip155:8453]   the x402 payment this outcome refers to;
                                                      --tool is then the exact URL you paid
+       [--needs <name>]   with missing-program or missing-key: the program or variable name (never a value)
+       [--with <name>]    with --outcome worked: what you had to add; either is written only if the SKILL.md names it
 `);
         return EXIT2.usage;
       }
@@ -43830,7 +43971,9 @@ async function run(argv) {
         parent: flag("parent"),
         why: flag("why"),
         paymentTx: flag("payment-tx"),
-        network: flag("network")
+        network: flag("network"),
+        needs: flag("needs"),
+        with: flag("with")
       });
       if (input instanceof Error) {
         process.stderr.write(`arp line: ${input.message}

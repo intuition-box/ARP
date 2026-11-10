@@ -570,6 +570,31 @@ function domainInText2(text, words) {
   const alias = Object.keys(words.aliases).filter((a) => words.labels.includes(words.aliases[a]) && hit(a)).sort((a, b) => b.length - a.length)[0];
   return alias === undefined ? null : words.aliases[alias];
 }
+
+// ../../packages/protocol/src/declare/line-need.ts
+var PROGRAM_NAME3 = /^[a-z0-9][a-z0-9._+-]{0,39}$/;
+var KEY_NAME3 = /^[A-Z][A-Z0-9_]{2,63}$/;
+function needKindOf3(name) {
+  if (PROGRAM_NAME3.test(name))
+    return "program";
+  if (KEY_NAME3.test(name))
+    return "key";
+  return null;
+}
+var escaped = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function namedInSkill3(name, markdown) {
+  const kind = needKindOf3(name);
+  if (kind === null)
+    return false;
+  const pattern = new RegExp(`(?<![A-Za-z0-9_+.-])${escaped(name)}(?![A-Za-z0-9_+-])(?!\\.[A-Za-z0-9])`, kind === "program" ? "i" : "");
+  return pattern.test(markdown);
+}
+function publishableNeed3(name, markdown, kind) {
+  const shape = needKindOf3(name);
+  if (shape === null || kind !== undefined && shape !== kind)
+    return null;
+  return namedInSkill3(name, markdown) ? name : null;
+}
 // ../../data/catalogue/domain-aliases.json
 var domain_aliases_default = {
   _note: "Words a person or an agent uses, mapped to a node of ARP's domain tree (OASF 1.1.0 names, plus ARP's own `design`), task 84. Read locally by the MCP server, the CLI and the hook: the words never leave the machine (the user, 2026-11-09), except for a caller who chooses ARP's hosted read-only endpoint, which receives its words and keeps none (ADR 0161). Every target is checked against data/catalogue/oasf-1.1.0-skills.json by packages/protocol/test/domain-words.test.ts. ARP's old category words map to the one node that held them; the split ones (method, quality) have no alias, and a refusal suggests nodes instead.",
@@ -1461,6 +1486,35 @@ function failureReason(text) {
     return "missing-file";
   return null;
 }
+var PROGRAM_IN_ERROR = [
+  /(?:^|[\s:])([^\s:'"`]+): (?:command )?not found\b/gim,
+  /command not found: ([^\s'"`]+)/gi,
+  /\bexec(?:utable)?:? "?([^\s"]+)"?: executable file not found/gi,
+  /\bspawn ([^\s'"`]+) ENOENT\b/gi,
+  /No module named '?([A-Za-z0-9_.-]+)'?/g,
+  /Cannot find module '([^']+)'/g,
+  /(?:^|\s)'?([^\s'"`]+)'? is not installed\b/gim
+];
+var KEY_IN_ERROR = [
+  /\b([A-Z][A-Z0-9_]{2,63})\b[^=\n]{0,30}\b(?:not set|missing|required|unset|is empty)\b/g,
+  /\b(?:set|export|provide|missing|define)\s+(?:the\s+)?(?:environment variable\s+)?\$?([A-Z][A-Z0-9_]{2,63})\b/gi,
+  /\$?\b([A-Z][A-Z0-9_]*(?:API_KEY|TOKEN|SECRET|ACCESS_KEY)[A-Z0-9_]*)\b/g
+];
+function needOf(reason, text, markdown) {
+  const kind = reason === "missing-program" ? "program" : reason === "missing-key" ? "key" : null;
+  if (kind === null)
+    return null;
+  for (const pattern of kind === "program" ? PROGRAM_IN_ERROR : KEY_IN_ERROR) {
+    for (const match of text.matchAll(pattern)) {
+      const named = match[1] ?? "";
+      const name = kind === "program" ? (named.split("/").pop() ?? "").toLowerCase() : named;
+      const kept = publishableNeed3(name, markdown, kind);
+      if (kept !== null)
+        return kept;
+    }
+  }
+  return null;
+}
 var RUNNERS = new Set(["bash", "bun", "bunx", "node", "npx", "python", "python3", "sh", "uv", "uvx", "zsh"]);
 function programsOf(command) {
   const found = [];
@@ -1480,13 +1534,13 @@ function programsOf(command) {
   }
   return found;
 }
-var escaped = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+var escaped2 = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 function askedBySkill(command, markdown, directory) {
-  if (new RegExp(`${escaped(directory)}(?=[/\\s'"]|$)`).test(command))
+  if (new RegExp(`${escaped2(directory)}(?=[/\\s'"]|$)`).test(command))
     return true;
   const { cli, runs } = readRequires(markdown);
   const named = new Set([...cli, ...runs]);
-  return programsOf(command).some((program) => named.has(program) || program.includes(".") && new RegExp(`(?:^|[\\s\`'"/(])${escaped(program)}(?=[\\s\`'")]|$)`, "m").test(markdown));
+  return programsOf(command).some((program) => named.has(program) || program.includes(".") && new RegExp(`(?:^|[\\s\`'"/(])${escaped2(program)}(?=[\\s\`'")]|$)`, "m").test(markdown));
 }
 var NODES = skill_nodes_13579_default.nodes;
 var WORDS = { labels: NODES, aliases: domain_aliases_default.aliases };
@@ -1642,13 +1696,15 @@ function recordSkillFailure(call, cwd) {
       const search = foundBySearch(cwd, call.session, skill.name);
       const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync2(call.transcript, "utf8")) : "";
       const domain = search?.domain ?? contextOf(words, skill.name);
+      const need = needOf(reason, failureText(call), markdown);
       appendFailure({
         at: new Date().toISOString(),
         session: call.session,
         skill: skill.name,
         source: skill.source ?? search?.source ?? installedSource(skill.name.split(":").pop() ?? skill.name, cwd),
         ...domain === null ? {} : { domain },
-        reason
+        reason,
+        ...need === null ? {} : { need }
       });
       return;
     }
