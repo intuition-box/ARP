@@ -12,11 +12,12 @@ const entry = (over: Partial<SkillContentsEntry> = {}): SkillContentsEntry => ({
     programs: [],
     packages: [],
     settings: [],
+    keys: [],
     scripts: [],
     fetchAndRun: [],
     domains: [],
     hidden: [],
-    notRead: 0,
+    skipped: [],
     cut: [],
     ...over,
 });
@@ -29,10 +30,9 @@ describe("skill contents", () => {
         for (const value of entries) {
             expect(value.commit).toMatch(/^[0-9a-f]{40}$/);
             expect(typeof value.directory).toBe("string");
-            for (const list of [value.programs, value.packages, value.settings, value.scripts, value.fetchAndRun, value.domains, value.hidden, value.cut]) {
+            for (const list of [value.programs, value.packages, value.settings, value.keys, value.scripts, value.skipped, value.fetchAndRun, value.domains, value.hidden, value.cut]) {
                 expect(Array.isArray(list)).toBe(true);
             }
-            expect(typeof value.notRead).toBe("number");
         }
     });
 

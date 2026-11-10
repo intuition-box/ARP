@@ -18,8 +18,7 @@ import {identityRegistryFor} from "../lib/deployments";
 import {AgentClaims, AgentDeclareCard} from "../components/agent/AgentClaims";
 import {SectionTabs} from "../components/agent/SectionTabs";
 import {AgentEndpoints} from "../components/agent/AgentEndpoints";
-import {AgentContains} from "../components/agent/AgentContains";
-import {AgentTrustIndex} from "../components/agent/AgentTrustIndex";
+import {BeforeYouCall} from "../components/agent/BeforeYouCall";
 import {useAgentLines} from "../hooks/use-agent-lines";
 import {actionCardClass} from "../lib/surface-class";
 import {useAgentProfile} from "../hooks/use-agent-profile";
@@ -44,10 +43,11 @@ import {asStakeTermId, type StakeSession} from "../services/trust-stake";
  * which providers could not be reached at all, and how thin the market on each
  * claim really is.
  *
- * Laid out like the skill page (ADR `0104`): the agent's own words and the tabs on
- * the left, its identity in a card on the right, then the market, the declaration
- * card, and the relations. Identity belongs to no provider, so it sits outside the
- * tabs and does not vanish when a reader opens one.
+ * Laid out like the skill page (ADR `0104`): Before you call, the agent's own words and
+ * the tabs on the left, its identity in a card on the right, then the market, the
+ * declaration card, and the relations. Identity belongs to no provider, so it sits
+ * outside the tabs and does not vanish when a reader opens one. Before you call leads the
+ * content column as Before you install leads a skill's (task 112, ADR `0182`).
  *
  * Every read follows the chain toggle (`lib/chain-choice.ts`). It used to be mainnet whatever
  * the toggle said, which hid ARP's own testnet edges behind an empty panel.
@@ -294,11 +294,13 @@ function AgentTrustPanelBody() {
                             <span>#{view.tokenId}</span>
                         </div>
                         {/* The sigil beside the name: it is the agent's identity, and that is
-                            where an identity mark goes. The avatar only when the agent chose one. */}
+                            where an identity mark goes. The avatar only when the agent chose one. Below
+                            `sm` the name takes its own line under them: beside both, a 390 px
+                            screen left it ~120 px and broke "Agent" mid-word (task 112). */}
                         <div className="mt-[18px] flex flex-wrap items-center gap-x-8 gap-y-6">
                             <AgentSigil view={view} viewerStaked={viewerStaked} />
                             <h1
-                                className={`type-title min-w-0 flex-1 [overflow-wrap:anywhere] ${
+                                className={`type-title min-w-0 flex-1 [overflow-wrap:anywhere] max-sm:order-last max-sm:basis-full ${
                                     view.name === null ? "text-[color:var(--color-grey)]" : ""
                                 }`}
                             >
@@ -327,47 +329,37 @@ function AgentTrustPanelBody() {
                         ) : null}
                     </header>
 
-                    {/* **Description, Identity, tabs, in that DOM order** (user, 2026-11-02): stacked
-                        on a phone, the identity comes before a tab that can hold 35 rows. From `lg`
-                        the grid puts Identity in the right column across both rows, so the desktop
-                        layout is unchanged and the focus order still reads top to bottom. */}
+                    {/* **Before you call and the description, Identity, tabs, in that DOM order**
+                        (user, 2026-11-02; task 112): stacked on a phone, what a caller decides on
+                        comes first and the identity before a tab that can hold 35 rows. From `lg`
+                        the grid puts Identity in the right column across both rows. Two cards and
+                        no third: the x402 Trust Index is Before you call's Payment row, and nothing
+                        in the right column appears or vanishes with a reading (ADR `0182`). */}
                     <div className="mt-8 grid items-start gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:grid-rows-[auto_1fr]">
-                        {/* Only when there is something to say: an empty grid item still takes a
-                            row gap. */}
-                        {view.isFallbackMetadata || view.description !== null ? (
-                            <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-                                {view.isFallbackMetadata ? (
-                                    <p className="inline-flex max-w-[64ch] rounded-[var(--radius-tag)] border border-dashed border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-label)] text-[color:var(--color-silver)]">
-                                        Name and URL are the indexer&rsquo;s stand-in — no source
-                                        published a name for this agent
-                                    </p>
-                                ) : view.description !== null ? (
-                                    <p className="max-w-[62ch] text-[17px] text-[color:var(--color-silver)]">
-                                        {view.description}
-                                    </p>
-                                ) : null}
-                            </div>
-                        ) : null}
+                        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+                            <BeforeYouCall
+                                agent={{
+                                    registrationFile: view.registrationFile,
+                                    chainId: ref.chainId,
+                                    tokenId: view.tokenId,
+                                }}
+                            />
+                            {view.isFallbackMetadata ? (
+                                <p className="mt-8 inline-flex max-w-[64ch] rounded-[var(--radius-tag)] border border-dashed border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-label)] text-[color:var(--color-silver)]">
+                                    Name and URL are the indexer&rsquo;s stand-in — no source
+                                    published a name for this agent
+                                </p>
+                            ) : view.description !== null ? (
+                                <p className="mt-8 max-w-[62ch] text-[17px] text-[color:var(--color-silver)]">
+                                    {view.description}
+                                </p>
+                            ) : null}
+                        </div>
 
                         <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
                             <Panel label="Identity">
                                 <AgentIdentityPanel view={view} />
                             </Panel>
-                            {/* Somebody else's dated figure on its endpoints (task 101); renders
-                                nothing when the reading did not ask about any of them. */}
-                            <div className="mt-4 empty:hidden">
-                                <AgentTrustIndex registrationFile={view.registrationFile} />
-                            </div>
-                            {/* What its document declares and whether it answered (task 104). */}
-                            <div className="mt-4">
-                                <AgentContains
-                                    agent={{
-                                        registrationFile: view.registrationFile,
-                                        chainId: ref.chainId,
-                                        tokenId: view.tokenId,
-                                    }}
-                                />
-                            </div>
                         </div>
 
                         {/* **What a reader reads, as tabs.** Stacked, each answer meant scrolling

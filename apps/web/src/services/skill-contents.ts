@@ -8,7 +8,7 @@
  *
  * Facts, never a verdict: a name found in the files, not a requirement and not a judgement.
  */
-import type {FetchAndRunKind, HiddenKind, ProgramSource, SkillContents} from "@arp-protocol/core";
+import type {ContentsProgram, FetchAndRunKind, HiddenKind, SkillContents, SkillKey, SkippedFile} from "@arp-protocol/core";
 
 /** A line of a skill's file, with the kind of match. */
 export type ContentsMatch<K extends string> = {kind: K; file: string; line: number; text: string};
@@ -18,15 +18,17 @@ export type SkillContentsEntry = {
     commit: string;
     /** The skill's directory in its repository, `""` at the root. */
     directory: string;
-    programs: {name: string; from: ProgramSource}[];
+    programs: ContentsProgram[];
     packages: {manager: string; name: string}[];
     settings: string[];
+    /** The settings a person hands it (task 112). */
+    keys: SkillKey[];
     scripts: {path: string; namedInSkillMd: boolean}[];
     fetchAndRun: ContentsMatch<FetchAndRunKind>[];
     domains: string[];
     hidden: ContentsMatch<HiddenKind>[];
-    /** Files named and not read: binary, too large, or past the reader's limit. */
-    notRead: number;
+    /** Text files named and not read: too large, past the reader's limit, or not fetched (task 112). */
+    skipped: SkippedFile[];
     /** Lists cut at the reader's limit, by name. */
     cut: string[];
 };
@@ -59,11 +61,12 @@ export function entryOfContains(contains: SkillContents, directory: string, comm
         programs: contains.programs,
         packages: contains.packages,
         settings: contains.settings,
+        keys: contains.keys,
         scripts: contains.scripts,
         fetchAndRun: contains.fetchAndRun,
         domains: contains.domains,
         hidden: contains.hidden,
-        notRead: contains.read.skipped.length,
+        skipped: contains.read.skipped,
         cut: contains.cut,
     };
 }

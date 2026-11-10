@@ -1,4 +1,6 @@
 import {useChainChoice} from "../../lib/chain-choice";
+import {chainNameOf} from "../../lib/chain-name";
+import {gatewayUrl} from "../../services/agent-endpoints";
 import {sigilModulesOf} from "../../services/agent-sigil";
 import type {TrustPanelView} from "../../services/agent-trust";
 import {
@@ -31,6 +33,12 @@ import {Sigil} from "../brand/Sigil";
  * stack of seven was a thin ribbon. They now sit in the Identity card on the right, a
  * `minmax(20rem,26rem)` column like the skill page's (ADR `0104`), where two columns would be two
  * strips of a few characters each.
+ *
+ * **Who is this agent and who operates it** (task 112, ADR `0182`): what it can be called with and
+ * what it asks for is Before you call's, in the content column, so this card holds the identity and
+ * nothing else. Registry, chain and token id are one line, because together they are one fact: where
+ * it is registered. The registration file is a link, since everything Before you call says is read
+ * from it.
  */
 
 /**
@@ -45,11 +53,16 @@ import {Sigil} from "../brand/Sigil";
  * anything it claims can be checked at all. Those two change what a reader can do. A CAIP-19 and a
  * registry address are true, necessary, and never the first question.
  */
-function LeadField({label, children}: {label: string; children: React.ReactNode}) {
+function LeadField({label, hint, children}: {label: string; hint?: string; children: React.ReactNode}) {
     return (
         <div>
-            <dt className="font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
+            <dt className="flex items-center gap-2 font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]">
                 {label}
+                {hint === undefined ? null : (
+                    <Hint label={`What ${label} means`} align="right">
+                        {hint}
+                    </Hint>
+                )}
             </dt>
             <dd className="mt-1.5 font-mono text-[length:var(--text-body)] break-all">
                 {children}
@@ -139,13 +152,17 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
     const chain = useChainChoice();
     const explorerUrl = agentRegistryExplorerUrl(view.chainId, view.registry, view.tokenId);
     const ownerUrl = view.owner === null ? null : chainAddressExplorerUrl(view.chainId, view.owner);
+    const registered = `${chainNameOf(view.chainId)} · ${truncateMiddle(view.registry, 6, 4)} · #${view.tokenId}`;
 
     return (
         <dl>
             {/* The two facts that decide something, above the reference and at body size rather
                 than the label size everything else here uses. */}
             <div className="grid gap-y-5">
-                <LeadField label="Owner">
+                <LeadField
+                    label="Operator"
+                    hint="The wallet that holds this identity. Only it can declare for the agent."
+                >
                     {view.owner === null ? (
                         <span className="text-[color:var(--color-steel)]">not read</span>
                     ) : ownerUrl === null ? (
@@ -159,8 +176,12 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
                 <LeadField label="Registration file">
                     {view.registrationFile === null ? (
                         <span className="text-[color:var(--color-steel)]">none published</span>
-                    ) : (
+                    ) : view.registrationFile.startsWith("data:") ? (
                         registrationFileSummary(view.registrationFile)
+                    ) : (
+                        <a href={gatewayUrl(view.registrationFile)} target="_blank" rel="noreferrer">
+                            {registrationFileSummary(view.registrationFile)} ↗
+                        </a>
                     )}
                 </LeadField>
             </div>
@@ -168,17 +189,15 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
             {/* The plumbing. True, necessary, and never the first question — so it is set quieter
                 and below, instead of competing with the two above it. */}
             <div className="mt-8 grid gap-y-3">
-                <Field label="CAIP-19">{view.caip19}</Field>
-                <Field label="Registry">
+                <Field label="Registered">
                     {explorerUrl !== null ? (
                         <a href={explorerUrl} target="_blank" rel="noreferrer">
-                            {truncateMiddle(view.registry, 10, 8)} ↗
+                            {registered} ↗
                         </a>
                     ) : (
-                        truncateMiddle(view.registry, 10, 8)
+                        registered
                     )}
                 </Field>
-                <Field label="Token id">{view.tokenId}</Field>
                 {/* ADR `0103`: the atom id is not shown by default; the link opens it and the hint
                     carries it, so it stays checkable. */}
                 <Field label="Intuition">
@@ -208,6 +227,7 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
                         </a>
                     </Field>
                 ) : null}
+                <Field label="CAIP-19">{view.caip19}</Field>
             </div>
         </dl>
     );

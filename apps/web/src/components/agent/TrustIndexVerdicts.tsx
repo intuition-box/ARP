@@ -1,7 +1,6 @@
 import {TRUST_INDEX_CREDIT, TRUST_INDEX_DATASET, TRUST_INDEX_LICENCE} from "@arp-protocol/core";
 
 import {Hint} from "../brand/Hint";
-import {Panel} from "../atom/AtomPageParts";
 import {useAgentEndpoints} from "../../hooks/use-agent-endpoints";
 import {useOutsideSignals} from "../../hooks/use-outside-signals";
 import {formatDay} from "../../lib/atom-page";
@@ -10,13 +9,14 @@ import {endpointsOutsideOf, type EndpointOutsideView} from "../../services/outsi
 
 /**
  * What x402 Doctor's Trust Index said about an agent's callable endpoints on the day of its scan
- * (task 101, ADR `0170`), in the agent page's facts column. Somebody else's figure under CC BY 4.0,
- * credited on the panel as the licence asks; never ARP's, never in an order.
+ * (task 101, ADR `0170`): somebody else's figure under CC BY 4.0, credited where it is shown as the
+ * licence asks; never ARP's, never in an order.
  *
- * Absent when the reading did not ask about any of the agent's hosts: "not read" is not "not listed",
- * and a panel saying "not read" on most agent pages would be noise.
+ * Inside Before you call's Payment row since task 112: it answers "what does it ask for" and was a
+ * card of its own that appeared or not under Identity and moved what was below it. Renders nothing
+ * when the reading did not ask about any of the agent's hosts: "not read" is not "not listed".
  */
-export function AgentTrustIndex({registrationFile}: {registrationFile: string | null}) {
+export function TrustIndexVerdicts({registrationFile}: {registrationFile: string | null}) {
     const endpoints = useAgentEndpoints(registrationFile);
     const file = useOutsideSignals();
     const read = endpoints.data;
@@ -30,22 +30,14 @@ export function AgentTrustIndex({registrationFile}: {registrationFile: string | 
     const day = scan ?? readOn;
 
     return (
-        <Panel
-            label="x402 Trust Index"
-            aside={
-                <>
-                    <Hint label="What the x402 Trust Index is" align="right">
-                        x402 Doctor&apos;s daily check of listed x402 endpoints, made without paying: go,
-                        caution or no go, and the days it could be paid.
-                    </Hint>
-                    {day === null ? null : (
-                        <span className="ml-auto normal-case tracking-[0.04em] text-[color:var(--color-steel)]">
-                            {formatDay(day)}
-                        </span>
-                    )}
-                </>
-            }
-        >
+        <div className="mt-2 flex flex-col gap-1">
+            <span className="inline-flex items-center gap-2 text-[color:var(--color-steel)]">
+                {`x402 Trust Index${day === null ? "" : `, ${formatDay(day)}`}`}
+                <Hint label="What the x402 Trust Index is" align="right">
+                    x402 Doctor&apos;s daily check of listed x402 endpoints, made without paying: go,
+                    caution or no go, and the days it could be paid.
+                </Hint>
+            </span>
             <ul className="m-0 flex list-none flex-col p-0">
                 {rows.map((row) => (
                     <Row key={row.url} row={row} />
@@ -55,11 +47,11 @@ export function AgentTrustIndex({registrationFile}: {registrationFile: string | 
                 href={`https://${TRUST_INDEX_DATASET}`}
                 target="_blank"
                 rel="noreferrer"
-                className={`font-mono text-[length:var(--text-label)] ${linkClass}`}
+                className={`text-[length:var(--text-label)] text-[color:var(--color-steel)]! ${linkClass}`}
             >
                 {`${TRUST_INDEX_CREDIT} · ${TRUST_INDEX_LICENCE} ↗`}
             </a>
-        </Panel>
+        </div>
     );
 }
 
@@ -75,11 +67,10 @@ function Row({row}: {row: EndpointOutsideView}) {
         said = "not listed";
     }
     return (
-        <li className="flex flex-col gap-0.5 border-t border-[color:var(--color-rule)] py-[7px] first:border-t-0">
-            <span className="font-mono text-[12px] text-[color:var(--color-steel)] [overflow-wrap:anywhere]">
-                {row.url}
-            </span>
-            <a href={row.check} target="_blank" rel="noreferrer" className={`font-mono text-[13px] ${linkClass}`}>
+        <li className="py-0.5 [overflow-wrap:anywhere]">
+            {/* One line per endpoint: its address without the scheme, then the index's word on it. */}
+            <span className="text-[color:var(--color-steel)]">{`${row.url.replace(/^https?:\/\//, "")} `}</span>
+            <a href={row.check} target="_blank" rel="noreferrer" className={linkClass}>
                 {`${said} ↗`}
             </a>
         </li>

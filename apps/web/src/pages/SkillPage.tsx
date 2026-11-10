@@ -26,7 +26,7 @@ import {
 } from "../services/atom-standing-view";
 import {splitFirstSentence} from "../services/skill-md";
 import {intuitionPortalUrl, truncateMiddle} from "../services/trust-format";
-import {SkillContains} from "../components/atom/SkillContains";
+import {BeforeInstall} from "../components/atom/BeforeInstall";
 import {SkillOutside} from "../components/atom/SkillOutside";
 import {ToolWallets} from "../components/atom/ToolWallets";
 import {Block, ClsRow, Install, Panel, RecordRow, Signal} from "../components/atom/AtomPageParts";
@@ -123,7 +123,13 @@ export function SkillPage({
                     the right. Stacked, the right half of a wide screen stood empty beside a
                     46rem column (the user, 2026-10-29, with a screenshot). */}
                 <div className="mt-6 grid items-start gap-x-12 gap-y-7 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)]">
+                    {/* Before you install leads the content column (task 112, ADR `0182`): what a
+                        person decides on before letting an agent install it is content, not a
+                        fact about the listing, so it does not sit in the facts column. */}
                     <div className="min-w-0">
+                        <div className="mb-8 max-w-[46rem]">
+                            <BeforeInstall read={contents} repo={repo} />
+                        </div>
                         <Description label={view.label} md={md} repo={repo} />
                         {repo === null ? null : (
                             <Install command={`npx skills add ${repo} --skill ${skill}`} />
@@ -131,7 +137,6 @@ export function SkillPage({
                     </div>
                     <div className="grid gap-4 max-lg:[grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
                         <Classification view={view} source={source} />
-                        <SkillContains read={contents} repo={repo} />
                         <ExternalSignals view={view} source={source} />
                         <SkillOutside label={view.label} />
                     </div>
@@ -392,7 +397,9 @@ function ExternalSignals({view, source}: {view: AtomView; source: ClaimView | nu
                 </>
             }
         >
-            <div className="grid grid-cols-3 gap-3 max-[520px]:grid-cols-2">
+            {/* As many columns as a seven-digit figure fits: three fixed columns in the 26rem
+                column broke "1,276,987" across two lines (task 112). */}
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(8.5rem,1fr))] gap-3">
                 <Signal
                     value={installs === null ? "—" : installs.toLocaleString("en-US")}
                     what="installs"

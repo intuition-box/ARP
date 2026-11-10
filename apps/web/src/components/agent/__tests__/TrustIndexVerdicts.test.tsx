@@ -11,7 +11,7 @@ let file: OutsideSignals | undefined;
 vi.mock("../../../hooks/use-agent-endpoints", () => ({useAgentEndpoints: () => ({data: read})}));
 vi.mock("../../../hooks/use-outside-signals", () => ({useOutsideSignals: () => file}));
 
-import {AgentTrustIndex} from "../AgentTrustIndex";
+import {TrustIndexVerdicts} from "../TrustIndexVerdicts";
 
 const endpoint = (url: string): DeclaredEndpoint => ({
     declaredUnder: "services",
@@ -28,11 +28,11 @@ const document = (...urls: string[]): EndpointRead => ({
     notCheckable: [],
 });
 
-describe("AgentTrustIndex", () => {
+describe("TrustIndexVerdicts", () => {
     it("shows the index's word on each endpoint whose host it read, and credits it as its licence asks", () => {
         file = OUTSIDE;
         read = document("https://pay.example/a", "https://pay.example/mcp", "https://never.example/a");
-        render(<AgentTrustIndex registrationFile="https://agent.example/card.json" />);
+        render(<TrustIndexVerdicts registrationFile="https://agent.example/card.json" />);
         expect(screen.getByText("go · payable 8/9 days ↗")).toHaveAttribute(
             "href",
             `https://x402-doctor.fizzl.eu/api/trust?url=${encodeURIComponent("https://pay.example/a")}`,
@@ -49,14 +49,14 @@ describe("AgentTrustIndex", () => {
     it("renders nothing when none of the agent's hosts was read", () => {
         file = OUTSIDE;
         read = document("https://never.example/a");
-        const {container} = render(<AgentTrustIndex registrationFile="https://agent.example/card.json" />);
+        const {container} = render(<TrustIndexVerdicts registrationFile="https://agent.example/card.json" />);
         expect(container).toBeEmptyDOMElement();
     });
 
     it("renders nothing until both the document and the reading are in", () => {
         file = undefined;
         read = document("https://pay.example/a");
-        const {container} = render(<AgentTrustIndex registrationFile="https://agent.example/card.json" />);
+        const {container} = render(<TrustIndexVerdicts registrationFile="https://agent.example/card.json" />);
         expect(container).toBeEmptyDOMElement();
     });
 });

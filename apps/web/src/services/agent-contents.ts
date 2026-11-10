@@ -10,7 +10,7 @@ import type {SieveReading} from "./agents-reachable";
  * x402 payments, the auth schemes it names, and whether it answered in the sieve's dated reading
  * (task 96, `packages/protocol/src/agent-contents.ts`). The agent-side twin of a skill's "Contains".
  *
- * On the agent page since task 104, through `useAgentContents` and `components/agent/AgentContains.tsx`.
+ * On the agent page since task 104, through `useAgentContents`; as `components/agent/BeforeYouCall.tsx` since task 112.
  *
  * The document is read the way `agent-endpoints.ts` reads it, in the browser; the sieve's row is the
  * bundled reading `/agents` already uses, so nothing here probes an agent.
@@ -41,4 +41,29 @@ export async function readAgentContentsOf(
         url: document.url,
         contents: readAgentContents(document.document, sieveRowOf(sieve, agent.chainId, agent.tokenId)),
     };
+}
+
+/**
+ * Before you call's one line (task 112, ADR `0182`): can it be reached, what it speaks, what it asks
+ * for, and whether it answered, in that order. Facts from its document and the dated reading, whose
+ * date the section's label already carries.
+ */
+export function beforeCallSummary(contents: AgentContents): string {
+    const count = contents.endpoints.length;
+    const answers = contents.answers;
+    return [
+        count === 0 ? "no endpoint declared" : `${count} ${count === 1 ? "endpoint" : "endpoints"}`,
+        contents.protocols.length === 0
+            ? "no MCP or A2A"
+            : contents.protocols.map((protocol) => protocol.toUpperCase()).join(", "),
+        contents.x402 === "declared" ? "x402 payment asked" : "no payment declared",
+        contents.auth.length === 0 ? "no auth named" : `auth: ${contents.auth.join(", ")}`,
+        answers === null || answers.status === "not read"
+            ? "not checked"
+            : answers.status === "answered"
+              ? "answered"
+              : answers.couldNotSay
+                ? "no verdict"
+                : "no answer",
+    ].join(" · ");
 }

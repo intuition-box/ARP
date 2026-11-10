@@ -47,7 +47,7 @@ export type EndpointRead =
       };
 
 /** An `ipfs://` URI through a public gateway. The registry stores both spellings. */
-function gatewayUrl(uri: string): string {
+export function gatewayUrl(uri: string): string {
     return uri.startsWith("ipfs://") ? `https://ipfs.io/ipfs/${uri.slice("ipfs://".length)}` : uri;
 }
 
