@@ -96,3 +96,28 @@ test('a name the hook kept is sent with the line and shown before it goes (ADR 0
   });
   expect(written).toEqual([{ toolUrl: 'https://github.com/a/b?skill=clip', outcome: 'failed', reason: 'missing-program', need: 'ffmpeg' }]);
 });
+
+test("the model's worked answer goes as a worked line, with what it worked with; failed and unsure stay (task 100)", async () => {
+  writeFileSync(
+    join(env.arpHome, 'outcomes.jsonl'),
+    [
+      { at: '2026-11-10T10:00:00Z', session: 'SESSION-ID', skill: 'clip', source: null, domain: 'video', outcome: 'worked', with: 'ffmpeg' },
+      { at: '2026-11-10T10:00:00Z', session: 'SESSION-ID', skill: 'clip', source: null, outcome: 'unsure' },
+      { at: '2026-11-10T10:00:00Z', session: 'SESSION-ID', skill: 'clip', source: null, outcome: 'failed' },
+    ]
+      .map((row) => JSON.stringify(row))
+      .join('\n'),
+  );
+  expect(await sendShared(env, () => Promise.reject(new Error('must not be called')))).toEqual({ sent: 0, failed: 0, firstError: null });
+  setSharing(env, true);
+  expect(describeShare(decide(env))).toContain('https://github.com/a/b?skill=clip  video  worked  with ffmpeg');
+  const written: unknown[] = [];
+  await sendShared(env, async (line) => {
+    written.push(line);
+  });
+  expect(written).toContainEqual({ toolUrl: 'https://github.com/a/b?skill=clip', outcome: 'worked', domain: 'video', need: 'ffmpeg' });
+  // The failure from beforeEach, and the one worked line.
+  expect(written).toHaveLength(2);
+  expect(JSON.stringify(written)).not.toContain('SESSION-ID');
+  expect(await sendShared(env, async () => {})).toEqual({ sent: 0, failed: 0, firstError: null });
+});

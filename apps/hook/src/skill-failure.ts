@@ -199,7 +199,7 @@ export function recordSearch(call: ToolCall, cwd: string): void {
 }
 
 /** The latest search of this session that found this skill, or nothing. */
-function foundBySearch(cwd: string, session: string, skill: string): { domain: string | null; source: string } | null {
+export function foundBySearch(cwd: string, session: string, skill: string): { domain: string | null; source: string } | null {
   const path = searchesPath(cwd);
   if (!existsSync(path)) return null;
   const name = skill.split(':').pop() ?? skill;
@@ -223,7 +223,7 @@ const readIfThere = (path: string) => (existsSync(path) ? readFileSync(path, 'ut
  * Where this skill was installed from, when this machine says so without doubt: the skills CLI's lock
  * file, or a receipt. Without it a failure would land on every skill of that name in a search.
  */
-function installedSource(name: string, cwd: string): string | null {
+export function installedSource(name: string, cwd: string): string | null {
   const known = [
     ...installedFromSkillLock(readIfThere(join(homedir(), '.agents', '.skill-lock.json'))),
     ...installedFromReceipts(readIfThere(join(arpHome(), 'receipts.jsonl'))),
@@ -234,7 +234,7 @@ function installedSource(name: string, cwd: string): string | null {
 }
 
 /** Skills this session used, the latest first. A missing or half-written log is an empty list. */
-function skillsOfSession(log: string, session: string): { name: string; source: string | null }[] {
+export function skillsOfSession(log: string, session: string): { name: string; source: string | null }[] {
   if (!existsSync(log)) return [];
   const skills: { name: string; source: string | null }[] = [];
   for (const line of readFileSync(log, 'utf8').split('\n')) {

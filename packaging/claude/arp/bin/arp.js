@@ -24603,6 +24603,45 @@ var init_local_failures = __esm(() => {
   init_usage_context();
 });
 
+// ../../packages/protocol/dist/local-outcomes.js
+function isOutcomeAnswer(word) {
+  return OUTCOME_ANSWERS.includes(word);
+}
+function parseLocalOutcomes(text) {
+  const rows = [];
+  for (const line of text.split(`
+`)) {
+    if (line.trim() === "")
+      continue;
+    try {
+      const row = JSON.parse(line);
+      const { at, session, skill, source, domain, outcome } = row;
+      const named = row["with"];
+      if (typeof at !== "string" || typeof session !== "string" || typeof skill !== "string")
+        continue;
+      if (typeof outcome !== "string" || !isOutcomeAnswer(outcome))
+        continue;
+      rows.push({
+        at,
+        session,
+        skill,
+        source: typeof source === "string" ? source : null,
+        ...typeof domain === "string" ? { domain } : {},
+        outcome,
+        ...outcome === "worked" && typeof named === "string" && needKindOf2(named) !== null ? { with: named } : {}
+      });
+    } catch {
+      continue;
+    }
+  }
+  return rows;
+}
+var OUTCOME_ANSWERS;
+var init_local_outcomes = __esm(() => {
+  init_line_need();
+  OUTCOME_ANSWERS = ["worked", "failed", "unsure"];
+});
+
 // ../../packages/protocol/dist/share-failures.js
 function isSharingOn(settings) {
   if (settings === null)
@@ -24643,38 +24682,59 @@ function installedFromReceipts(text) {
   return found;
 }
 function sharedLineKey(line) {
-  const base2 = `${line.toolUrl}\x00${line.domain ?? ""}\x00${line.reason}`;
+  const base2 = `${line.toolUrl}\x00${line.domain ?? ""}\x00${line.outcome === "failed" ? line.reason : "worked"}`;
   return line.need === undefined ? base2 : `${base2}\x00${line.need}`;
 }
 function decideShare(params) {
   const lines = new Map;
   const keptLocal = new Map;
-  for (const failure of params.failures) {
-    const name = failure.skill.split(":").pop() ?? failure.skill;
+  const toolUrlOf = (skill, given) => {
+    const name = skill.split(":").pop() ?? skill;
     if (!params.on) {
       keptLocal.set(name, { skill: name, why: "sharing_off" });
-      continue;
+      return null;
     }
-    const sources = new Set(failure.source !== null ? [failure.source] : params.installed.filter((entry) => entry.skill === name).map((entry) => entry.source));
+    const sources = new Set(given !== null ? [given] : params.installed.filter((entry) => entry.skill === name).map((entry) => entry.source));
     if (sources.size > 1) {
       keptLocal.set(name, { skill: name, why: "several_sources" });
-      continue;
+      return null;
     }
     const [source] = [...sources];
     if (source === undefined || !GITHUB_REPO.test(source)) {
       keptLocal.set(name, { skill: name, why: "no_public_source" });
-      continue;
+      return null;
     }
-    const line = {
-      toolUrl: `https://github.com/${source}?skill=${encodeURIComponent(name)}`,
+    return `https://github.com/${source}?skill=${encodeURIComponent(name)}`;
+  };
+  const offer = (line) => {
+    const key = sharedLineKey(line);
+    if (!params.alreadyShared.has(key))
+      lines.set(key, line);
+  };
+  for (const failure of params.failures) {
+    const toolUrl = toolUrlOf(failure.skill, failure.source);
+    if (toolUrl === null)
+      continue;
+    offer({
+      toolUrl,
       outcome: "failed",
       ...failure.domain === undefined ? {} : { domain: failure.domain },
       reason: failure.reason,
       ...failure.need === undefined ? {} : { need: failure.need }
-    };
-    const key = sharedLineKey(line);
-    if (!params.alreadyShared.has(key))
-      lines.set(key, line);
+    });
+  }
+  for (const answer of params.outcomes ?? []) {
+    if (answer.outcome !== "worked")
+      continue;
+    const toolUrl = toolUrlOf(answer.skill, answer.source);
+    if (toolUrl === null)
+      continue;
+    offer({
+      toolUrl,
+      outcome: "worked",
+      ...answer.domain === undefined ? {} : { domain: answer.domain },
+      ...answer.with === undefined ? {} : { need: answer.with }
+    });
   }
   return { lines: [...lines.values()], keptLocal: [...keptLocal.values()] };
 }
@@ -26745,6 +26805,7 @@ var init_dist2 = __esm(() => {
   init_domain_words();
   init_share_offer();
   init_local_failures();
+  init_local_outcomes();
   init_share_failures();
   init_pulse_score();
   init_pulse_usage();
@@ -27080,6 +27141,7 @@ function decide(env) {
   const decision = decideShare({
     on,
     failures: parseLocalFailures(read(join4(env.arpHome, "failures.jsonl")) ?? ""),
+    outcomes: parseLocalOutcomes(read(join4(env.arpHome, "outcomes.jsonl")) ?? ""),
     installed: [
       ...installedFromSkillLock(read(join4(env.home, ".agents", ".skill-lock.json"))),
       ...installedFromReceipts(read(join4(env.arpHome, "receipts.jsonl"))),
@@ -27119,7 +27181,8 @@ function describe(decision) {
   if (decision.lines.length > 0) {
     out.push("", "would be public on testnet 13579:");
     for (const line of decision.lines) {
-      out.push(`  ${line.toolUrl}  ${line.domain ?? "(no domain)"}  failed  ${line.reason}${line.need === undefined ? "" : `  needs ${line.need}`}`);
+      const tail = line.outcome === "failed" ? `failed  ${line.reason}${line.need === undefined ? "" : `  needs ${line.need}`}` : `worked${line.need === undefined ? "" : `  with ${line.need}`}`;
+      out.push(`  ${line.toolUrl}  ${line.domain ?? "(no domain)"}  ${tail}`);
     }
   }
   if (decision.keptLocal.length > 0) {
@@ -43644,7 +43707,8 @@ var init_edits = __esm(() => {
     events: [
       { name: "PostToolUse", matcher: "*" },
       { name: "PostToolUseFailure", matcher: "*", sync: true },
-      { name: "PreToolUse", matcher: "Bash", sync: true, timeout: 15, if: "Bash(*skills*)" }
+      { name: "PreToolUse", matcher: "Bash", sync: true, timeout: 15, if: "Bash(*skills*)" },
+      { name: "Stop", sync: true, timeout: 10 }
     ],
     entry: (command, event) => ({
       type: "command",
@@ -44404,9 +44468,11 @@ var USAGE = `arp ${version2} — ARP's agent-side programs
 usage
   arp mcp [--http]   the MCP server. stdio by default, which is how an MCP client launches it
   arp hook           the runtime hook: one payload on stdin. Records what a session used in
-                     .arp/session.jsonl, and a skill's failures in ~/.arp/failures.jsonl
+                     .arp/session.jsonl, and a skill's failures in ~/.arp/failures.jsonl. On
+                     Stop, asks once per skill whether it did its job: ~/.arp/outcomes.jsonl
   arp backfill       read old Claude Code transcripts into ~/.arp/failures.jsonl. Sends nothing
-  arp share          say what would be public from ~/.arp/failures.jsonl, and what stays here.
+  arp share          say what would be public from ~/.arp/failures.jsonl and outcomes.jsonl,
+                     and what stays here.
                      arp share on, off (off by default). arp share send writes them on testnet
   arp node           the hire endpoint. Opt-in: it listens on 127.0.0.1 and is reached through
                      a tunnel you rent (cloudflared or ngrok, or ARP_NODE_PUBLIC_URL)

@@ -61,6 +61,7 @@ The runtime hook. It reads one tool-call payload on stdin, appends at most one l
 | `.arp/session.jsonl` (in the project) | What the session used |
 | `.arp/searches.jsonl` (next to it) | The searches made with `arp_pulse` |
 | `~/.arp/failures.jsonl` | A skill's failure: the skill, its source, the domain and a closed reason. Never the command or its output |
+| `~/.arp/asked.jsonl`, `~/.arp/outcomes.jsonl` | On `Stop`: the skills it asked about, and the model's answer, `worked`, `failed` or `unsure`. Never the model's message |
 
 `arp init` installs it for you. You do not run it by hand.
 
@@ -74,7 +75,7 @@ arp backfill
 
 ### arp share
 
-Say what would be public from your local failure memory, and what stays on this machine. Sharing is off until you turn it on.
+Say what would be public from your local failure memory and the model's `worked` answers, and what stays on this machine. Sharing is off until you turn it on.
 
 ```bash
 arp share          # show what would be public, and what stays here
@@ -87,7 +88,7 @@ With sharing off, `arp share send` sends nothing and says so. A failure stays lo
 
 | Reads | Writes |
 | --- | --- |
-| `~/.arp/sharing.json`, `~/.arp/failures.jsonl`, `~/.arp/shared-failures.jsonl`, `~/.agents/.skill-lock.json`, `~/.arp/receipts.jsonl`, `.arp/receipts.jsonl` | `~/.arp/sharing.json` (on, off), `~/.arp/shared-failures.jsonl` (each line once written) |
+| `~/.arp/sharing.json`, `~/.arp/failures.jsonl`, `~/.arp/outcomes.jsonl`, `~/.arp/shared-failures.jsonl`, `~/.agents/.skill-lock.json`, `~/.arp/receipts.jsonl`, `.arp/receipts.jsonl` | `~/.arp/sharing.json` (on, off), `~/.arp/shared-failures.jsonl` (each line once written) |
 
 `send` loads the agent key in `~/.arp/agent-key` (created if missing) and sends a signed request to the sponsoring service at `ARP_SPONSOR`. Without that service running, it names the service and fails. A line that failed is tried again on the next `send`.
 

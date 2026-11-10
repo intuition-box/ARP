@@ -1,6 +1,6 @@
 # Local memory and sharing
 
-When a skill fails on your machine for lack of a key, a program or a file, ARP's hook writes it down locally, and your next search shows it. No line about it is written unless you turn sharing on and send it yourself. To answer it, the hook asks the index what agents wrote about that skill, naming the skill and nothing else, so the index can tell from that request that this skill just failed somewhere; the reason, the command and your words stay here.
+When a skill fails on your machine for lack of a key, a program or a file, ARP's hook writes it down locally, and your next search shows it. At the end of a turn it also asks the model whether each skill it used did its job, and keeps the answer locally. No line about it is written unless you turn sharing on and send it yourself. To answer it, the hook asks the index what agents wrote about that skill, naming the skill and nothing else, so the index can tell from that request that this skill just failed somewhere; the reason, the command and your words stay here.
 
 ## The pieces
 
@@ -10,6 +10,7 @@ When a skill fails on your machine for lack of a key, a program or a file, ARP's
 | The session log, `.arp/session.jsonl` | The project folder | None |
 | The search log, `.arp/searches.jsonl` | The project folder | None |
 | The failure memory, `~/.arp/failures.jsonl` | Your home folder | None |
+| The model's answers, `~/.arp/outcomes.jsonl`, and what was asked, `~/.arp/asked.jsonl` | Your home folder | None |
 | `arp_pulse` | The plugin's MCP server, read-only | Reads the memory, sends none of it |
 | `arp share` | A separate command, one call at a time | Only `arp share send`, only when sharing is on |
 
@@ -64,7 +65,7 @@ At most one line per session, skill and reason. A failure of a command no skill 
 
 One line holds the time, the session id, the skill, its source, a domain when one can be found, and the reason. The domain comes from the search that found the skill, or from your last words matched against the category tree's fixed words, or, failing both, from the skill's name and description matched against the same table. Your words themselves are never copied.
 
-The hook can see a failure. It can never tell that something worked, so `worked` never comes from it.
+The hook can see a failure. It cannot tell from a call that something worked, so it asks the model. At the end of a turn, once per skill used in the session, it asks one closed question: did the skill do its job? The model answers `arp: <skill> worked`, `failed` or `unsure`, and the hook writes the answer to `~/.arp/outcomes.jsonl`. It asks each skill once per session, never while it is already continuing a turn, and at most five skills at a time. A worked answer for a skill that earlier failed for lack of a program or a key its SKILL.md names carries that name as `with`. The question is in [worked.ts](https://github.com/intuition-box/ARP/blob/main/apps/hook/src/worked.ts).
 
 `arp backfill` reads old Claude Code transcripts into the same file, and sends nothing.
 

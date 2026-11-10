@@ -1,6 +1,7 @@
 import {skillRefFromUrl} from "./content-path.js";
 import type {UsageReason} from "./declare/usage-context.js";
 import type {LocalFailure} from "./local-failures.js";
+import type {LocalOutcome} from "./local-outcomes.js";
 
 /**
  * What may leave a machine from its local failure memory (`docs/tasks/70` item 2).
@@ -8,14 +9,19 @@ import type {LocalFailure} from "./local-failures.js";
  * **Off unless the person turned it on**, and only ever a public skill, `failed`, a closed reason, the
  * domain of the search that found the skill when there was one, and the missing program's or variable's
  * name when the skill's own SKILL.md names it (ADR `0166`; the hook kept it only then, and the sponsoring
- * service checks it again). Never a session, a date or a path. `worked` is never here, because the hook cannot
- * tell it (ADR `0140`).
+ * service checks it again). Never a session, a date or a path.
+ *
+ * **`worked` since task 100** (ADR `0169`): the model's own answer to the hook's closed question at the end of a
+ * turn, from `outcomes.jsonl`. Only `worked` is shared: a `failed` answer carries no reason, which is what a
+ * failure line is read for, and `unsure` says nothing. On a worked line `need` is the name it worked `with`.
  *
  * **A skill with no known public source stays local.** A hook line usually has no source, and a skill
  * can be private: its name alone must not reach a public graph, and a name resolved by guessing
  * would write a line about somebody else's repository.
  */
-export type SharedLine = {toolUrl: string; outcome: "failed"; domain?: string; reason: UsageReason; need?: string};
+export type SharedLine =
+    | {toolUrl: string; outcome: "failed"; domain?: string; reason: UsageReason; need?: string}
+    | {toolUrl: string; outcome: "worked"; domain?: string; need?: string};
 
 /** What is known about where an installed skill came from. */
 export type InstalledSkill = {skill: string; source: string};
@@ -74,47 +80,67 @@ export function installedFromReceipts(text: string | null): InstalledSkill[] {
  * line without a need keeps the key it had before task 97, so what was already shared is not offered again.
  */
 export function sharedLineKey(line: SharedLine): string {
-    const base = `${line.toolUrl}\u0000${line.domain ?? ""}\u0000${line.reason}`;
+    // `worked` is no reason word, so a worked line's key never meets a failure's, and a failure keeps its old key.
+    const base = `${line.toolUrl}\u0000${line.domain ?? ""}\u0000${line.outcome === "failed" ? line.reason : "worked"}`;
     return line.need === undefined ? base : `${base}\u0000${line.need}`;
 }
 
 export function decideShare(params: {
     on: boolean;
     failures: readonly LocalFailure[];
+    /** The model's answers (`outcomes.jsonl`). Only `worked` ones become lines. */
+    outcomes?: readonly LocalOutcome[];
     installed: readonly InstalledSkill[];
     alreadyShared: ReadonlySet<string>;
 }): ShareDecision {
     const lines = new Map<string, SharedLine>();
     const keptLocal = new Map<string, ShareDecision["keptLocal"][number]>();
-    for (const failure of params.failures) {
-        const name = failure.skill.split(":").pop() ?? failure.skill;
+    /** The skill's public URL, or `null` once why it stays here is noted. */
+    const toolUrlOf = (skill: string, given: string | null): string | null => {
+        const name = skill.split(":").pop() ?? skill;
         if (!params.on) {
             keptLocal.set(name, {skill: name, why: "sharing_off"});
-            continue;
+            return null;
         }
         const sources = new Set(
-            failure.source !== null
-                ? [failure.source]
-                : params.installed.filter((entry) => entry.skill === name).map((entry) => entry.source),
+            given !== null ? [given] : params.installed.filter((entry) => entry.skill === name).map((entry) => entry.source),
         );
         if (sources.size > 1) {
             keptLocal.set(name, {skill: name, why: "several_sources"});
-            continue;
+            return null;
         }
         const [source] = [...sources];
         if (source === undefined || !GITHUB_REPO.test(source)) {
             keptLocal.set(name, {skill: name, why: "no_public_source"});
-            continue;
+            return null;
         }
-        const line: SharedLine = {
-            toolUrl: `https://github.com/${source}?skill=${encodeURIComponent(name)}`,
+        return `https://github.com/${source}?skill=${encodeURIComponent(name)}`;
+    };
+    const offer = (line: SharedLine) => {
+        const key = sharedLineKey(line);
+        if (!params.alreadyShared.has(key)) lines.set(key, line);
+    };
+    for (const failure of params.failures) {
+        const toolUrl = toolUrlOf(failure.skill, failure.source);
+        if (toolUrl === null) continue;
+        offer({
+            toolUrl,
             outcome: "failed",
             ...(failure.domain === undefined ? {} : {domain: failure.domain}),
             reason: failure.reason,
             ...(failure.need === undefined ? {} : {need: failure.need}),
-        };
-        const key = sharedLineKey(line);
-        if (!params.alreadyShared.has(key)) lines.set(key, line);
+        });
+    }
+    for (const answer of params.outcomes ?? []) {
+        if (answer.outcome !== "worked") continue;
+        const toolUrl = toolUrlOf(answer.skill, answer.source);
+        if (toolUrl === null) continue;
+        offer({
+            toolUrl,
+            outcome: "worked",
+            ...(answer.domain === undefined ? {} : {domain: answer.domain}),
+            ...(answer.with === undefined ? {} : {need: answer.with}),
+        });
     }
     return {lines: [...lines.values()], keptLocal: [...keptLocal.values()]};
 }

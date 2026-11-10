@@ -112,7 +112,7 @@ describe("decideShare", () => {
     it("writes one line per skill and reason, once", () => {
         const failures = [failure(), failure({at: "later"}), failure({reason: "missing-file"})];
         const first = decideShare({on: true, failures, installed, alreadyShared: none});
-        expect(first.lines.map((line) => line.reason)).toEqual(["missing-key", "missing-file"]);
+        expect(first.lines.map((line) => (line.outcome === "failed" ? line.reason : null))).toEqual(["missing-key", "missing-file"]);
         const again = decideShare({on: true, failures, installed, alreadyShared: new Set(first.lines.map(sharedLineKey))});
         expect(again.lines).toEqual([]);
     });

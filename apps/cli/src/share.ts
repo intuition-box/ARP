@@ -1,5 +1,6 @@
 /**
- * `arp share`: whether this machine's failure memory may become public lines (`docs/tasks/70` item 2).
+ * `arp share`: whether this machine's failure memory, and the model's `worked` answers (task 100), may become
+ * public lines (`docs/tasks/70` item 2).
  *
  * Off until the person runs `arp share on`. The decision and the content are in
  * `@arp-protocol/core` (`share-failures.ts`). Writing is injected, so nothing here reaches a network
@@ -14,6 +15,7 @@ import {
   installedFromSkillLock,
   isSharingOn,
   parseLocalFailures,
+  parseLocalOutcomes,
   type ShareDecision,
   type SharedLine,
   sharedLineKey,
@@ -41,6 +43,8 @@ export function decide(env: ShareEnv): ShareDecision & { on: boolean } {
   const decision = decideShare({
     on,
     failures: parseLocalFailures(read(join(env.arpHome, 'failures.jsonl')) ?? ''),
+    // The model's own answers at the end of a turn (task 100, ADR `0169`): only `worked` becomes a line.
+    outcomes: parseLocalOutcomes(read(join(env.arpHome, 'outcomes.jsonl')) ?? ''),
     installed: [
       ...installedFromSkillLock(read(join(env.home, '.agents', '.skill-lock.json'))),
       ...installedFromReceipts(read(join(env.arpHome, 'receipts.jsonl'))),
@@ -91,7 +95,11 @@ export function describe(decision: ShareDecision & { on: boolean }): string {
   if (decision.lines.length > 0) {
     out.push('', 'would be public on testnet 13579:');
     for (const line of decision.lines) {
-      out.push(`  ${line.toolUrl}  ${line.domain ?? '(no domain)'}  failed  ${line.reason}${line.need === undefined ? '' : `  needs ${line.need}`}`);
+      const tail =
+        line.outcome === 'failed'
+          ? `failed  ${line.reason}${line.need === undefined ? '' : `  needs ${line.need}`}`
+          : `worked${line.need === undefined ? '' : `  with ${line.need}`}`;
+      out.push(`  ${line.toolUrl}  ${line.domain ?? '(no domain)'}  ${tail}`);
     }
   }
   if (decision.keptLocal.length > 0) {

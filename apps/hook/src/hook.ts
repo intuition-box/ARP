@@ -11,6 +11,7 @@
  * PostToolUse         the recording    below
  * PostToolUseFailure  failure-answer.ts  a skill's failure, recorded then answered with its lines (task 99);
  *                                       any other call is handed to the recording
+ * Stop                worked.ts        once per skill used, asks the model whether it did its job (task 100)
  * ```
  *
  * A route returns its stdout, or `null` for none, and the hook exits 0 either way; or `RECORD`, and
@@ -104,6 +105,7 @@ import { eventOf, type PayloadFormat, type ToolCall, toolCallOf } from './payloa
 import { preToolUse } from './pre-install.ts';
 import { postToolUseFailure, RECORD } from './failure-answer.ts';
 import { recordSearch, recordSkillFailure } from './skill-failure.ts';
+import { stop } from './worked.ts';
 
 /**
  * An event's answer: the text for stdout, or `null` for none. `RECORD` hands the call to the recording
@@ -115,6 +117,7 @@ type Route = (payload: unknown) => Promise<string | null | typeof RECORD>;
 const ROUTES: Readonly<Record<string, Route>> = {
   PreToolUse: (payload) => preToolUse(payload),
   PostToolUseFailure: (payload) => postToolUseFailure(payload),
+  Stop: (payload) => stop(payload),
 };
 
 /** Run a route and exit 0, whatever it did, unless it hands the call on. A hook that fails must never stop the session. */

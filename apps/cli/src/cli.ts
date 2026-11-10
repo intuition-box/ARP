@@ -32,9 +32,11 @@ const USAGE = `arp ${version} — ARP's agent-side programs
 usage
   arp mcp [--http]   the MCP server. stdio by default, which is how an MCP client launches it
   arp hook           the runtime hook: one payload on stdin. Records what a session used in
-                     .arp/session.jsonl, and a skill's failures in ~/.arp/failures.jsonl
+                     .arp/session.jsonl, and a skill's failures in ~/.arp/failures.jsonl. On
+                     Stop, asks once per skill whether it did its job: ~/.arp/outcomes.jsonl
   arp backfill       read old Claude Code transcripts into ~/.arp/failures.jsonl. Sends nothing
-  arp share          say what would be public from ~/.arp/failures.jsonl, and what stays here.
+  arp share          say what would be public from ~/.arp/failures.jsonl and outcomes.jsonl,
+                     and what stays here.
                      arp share on, off (off by default). arp share send writes them on testnet
   arp node           the hire endpoint. Opt-in: it listens on 127.0.0.1 and is reached through
                      a tunnel you rent (cloudflared or ngrok, or ARP_NODE_PUBLIC_URL)

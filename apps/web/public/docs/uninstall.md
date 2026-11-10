@@ -87,6 +87,7 @@ Every ARP program keeps its state here. `ARP_HOME` moves most of it: if you set 
 | `.gitignore` | the MCP server | `*`, so the folder is never committed by accident |
 | `bin/hook.js` | `arp init` | the hook program |
 | `failures.jsonl` | the hook, and `arp backfill` | a skill's failures seen on this machine, in closed words |
+| `asked.jsonl`, `outcomes.jsonl` | the hook, on `Stop` | the skills it asked about, and the model's answer in closed words |
 | `sharing.json` | `arp share on` / `off` | whether sharing is on. Absent means off |
 | `shared-failures.jsonl` | `arp share send` | what was made public |
 | `skills-cli/` | `arp_pulse` | the search package's home and npm's cache of it |

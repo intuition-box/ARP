@@ -14,9 +14,9 @@ function appendOwn(path, text) {
 }
 
 // ../hook/src/hook.ts
-import { existsSync as existsSync2, lstatSync as lstatSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
+import { existsSync as existsSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync4, readFileSync as readFileSync4, writeFileSync as writeFileSync2 } from "node:fs";
 import { homedir as homedir3 } from "node:os";
-import { dirname as dirname3, join as join4 } from "node:path";
+import { dirname as dirname4, join as join5 } from "node:path";
 // ../../packages/graphql/dist/http.js
 var DEFAULT_TIMEOUT_MS = 1e4;
 var DEFAULT_MAX_BODY_BYTES = 8 * 1024 * 1024;
@@ -4022,10 +4022,167 @@ async function postToolUseFailure(payload) {
   return context === null ? null : failureOutput(context);
 }
 
+// ../hook/src/worked.ts
+import { existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3 } from "node:fs";
+import { dirname as dirname3, join as join4 } from "node:path";
+
+// ../../packages/protocol/src/local-outcomes.ts
+var OUTCOME_ANSWERS2 = ["worked", "failed", "unsure"];
+function isOutcomeAnswer2(word) {
+  return OUTCOME_ANSWERS2.includes(word);
+}
+var ANSWER = /^[\s>*`-]*arp:\s*([A-Za-z0-9._:@/-]+)\s+(worked|failed|unsure)[\s.`*]*$/gim;
+function answersIn2(text, asked) {
+  const found = new Map;
+  for (const match of text.matchAll(ANSWER)) {
+    const [, skill, word] = match;
+    if (skill === undefined || word === undefined)
+      continue;
+    const answer = word.toLowerCase();
+    if (!asked.includes(skill) || found.has(skill) || !isOutcomeAnswer2(answer))
+      continue;
+    found.set(skill, answer);
+  }
+  return found;
+}
+
+// ../hook/src/worked.ts
+var MAX_ASKED = 5;
+function isRecord5(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+var field = (raw, snake, camel) => raw[snake] ?? raw[camel];
+var text = (value) => typeof value === "string" && value.length > 0 ? value : null;
+function stopInputOf(raw) {
+  if (!isRecord5(raw) || field(raw, "hook_event_name", "hookEventName") !== "Stop")
+    return null;
+  const session = text(field(raw, "session_id", "sessionId"));
+  if (session === null)
+    return null;
+  return {
+    session,
+    cwd: text(raw["cwd"]) ?? process.cwd(),
+    active: field(raw, "stop_hook_active", "stopHookActive") === true,
+    last: text(field(raw, "last_assistant_message", "lastAssistantMessage")) ?? "",
+    transcript: text(field(raw, "transcript_path", "transcriptPath"))
+  };
+}
+function questionFor(skills) {
+  return "ARP asks once per skill: did each skill you used here do its job, and did the task finish with it? " + "Reply with one line per skill and nothing else: `arp: <skill> worked`, `arp: <skill> failed` or `arp: <skill> unsure`. " + `Kept on this machine unless \`arp share\` is on. Skills: ${skills.join(", ")}`;
+}
+var isArpsOwn = (name) => name === "arp" || name.endsWith(":arp");
+function rows(path) {
+  if (!existsSync2(path))
+    return [];
+  const found = [];
+  for (const line of readFileSync3(path, "utf8").split(`
+`)) {
+    if (line.trim() === "")
+      continue;
+    try {
+      const row = JSON.parse(line);
+      if (isRecord5(row))
+        found.push(row);
+    } catch {}
+  }
+  return found;
+}
+function withOf(skill, source, cwd, before) {
+  const name = skill.split(":").pop() ?? skill;
+  let need = null;
+  let latest = "";
+  for (const row of rows(join4(arpHome(), "failures.jsonl"))) {
+    const { skill: rowSkill, source: rowSource, need: rowNeed, at } = row;
+    if (typeof rowSkill !== "string" || typeof rowNeed !== "string" || typeof at !== "string")
+      continue;
+    if (rowSkill !== skill && rowSkill !== name && !rowSkill.endsWith(`:${name}`))
+      continue;
+    if (typeof rowSource === "string" && source !== null && rowSource !== source)
+      continue;
+    if (at > before || at < latest)
+      continue;
+    need = rowNeed;
+    latest = at;
+  }
+  if (need === null)
+    return null;
+  const directory = skillDirectory(name, cwd);
+  if (directory === null)
+    return null;
+  return publishableNeed3(need, readFileSync3(join4(directory, "SKILL.md"), "utf8"));
+}
+function record(input, asked, outcome, at) {
+  const search = foundBySearch(input.cwd, input.session, asked.skill);
+  const words = input.transcript !== null && existsSync2(input.transcript) ? lastUserWords(readFileSync3(input.transcript, "utf8")) : "";
+  const domain = search?.domain ?? contextOf(words, asked.skill);
+  const source = asked.source ?? search?.source ?? installedSource(asked.skill.split(":").pop() ?? asked.skill, input.cwd);
+  const named = outcome === "worked" ? withOf(asked.skill, source, input.cwd, at) : null;
+  const line = {
+    at,
+    session: input.session,
+    skill: asked.skill,
+    source,
+    ...domain === null ? {} : { domain },
+    outcome,
+    ...named === null ? {} : { with: named }
+  };
+  appendOwn(join4(arpHome(), "outcomes.jsonl"), `${JSON.stringify(line)}
+`);
+}
+async function stop(payload) {
+  const input = stopInputOf(payload);
+  if (input === null)
+    return null;
+  const ask = onStop(input);
+  return ask === null ? null : JSON.stringify(ask);
+}
+function onStop(input, now = new Date) {
+  try {
+    const home = arpHome();
+    mkdirSync3(home, { recursive: true });
+    const askedPath = join4(home, "asked.jsonl");
+    const asked = rows(askedPath).flatMap((row) => row["session"] === input.session && typeof row["skill"] === "string" ? [{
+      at: typeof row["at"] === "string" ? row["at"] : "",
+      session: input.session,
+      skill: row["skill"],
+      source: typeof row["source"] === "string" ? row["source"] : null
+    }] : []);
+    const answered = new Set(rows(join4(home, "outcomes.jsonl")).flatMap((row) => row["session"] === input.session && typeof row["skill"] === "string" ? [row["skill"]] : []));
+    const pending = asked.filter((row) => !answered.has(row.skill));
+    const at = now.toISOString();
+    for (const [skill, answer] of answersIn2(input.last, pending.map((row) => row.skill))) {
+      const row = pending.find((entry) => entry.skill === skill);
+      if (row !== undefined)
+        record(input, row, answer, at);
+    }
+    if (input.active)
+      return null;
+    const known = new Set(asked.map((row) => row.skill));
+    const log = process.env["ARP_SESSION_LOG"] ?? join4(input.cwd, ".arp", "session.jsonl");
+    const fresh = [];
+    for (const skill of skillsOfSession(log, input.session)) {
+      if (known.has(skill.name) || isArpsOwn(skill.name))
+        continue;
+      known.add(skill.name);
+      fresh.push({ at, session: input.session, skill: skill.name, source: skill.source });
+    }
+    const ask = fresh.slice(0, MAX_ASKED);
+    if (ask.length === 0)
+      return null;
+    mkdirSync3(dirname3(askedPath), { recursive: true });
+    appendOwn(askedPath, ask.map((row) => `${JSON.stringify(row)}
+`).join(""));
+    return { decision: "block", reason: questionFor(ask.map((row) => row.skill)) };
+  } catch {
+    return null;
+  }
+}
+
 // ../hook/src/hook.ts
 var ROUTES = {
   PreToolUse: (payload) => preToolUse(payload),
-  PostToolUseFailure: (payload) => postToolUseFailure(payload)
+  PostToolUseFailure: (payload) => postToolUseFailure(payload),
+  Stop: (payload) => stop(payload)
 };
 async function route(handler, payload) {
   let out = null;
@@ -4045,17 +4202,17 @@ async function route(handler, payload) {
   });
 }
 function fetchedRefs(cwd) {
-  const path = process.env["ARP_RECEIPTS"] ?? join4(cwd, ".arp", "receipts.jsonl");
-  if (!existsSync2(path))
+  const path = process.env["ARP_RECEIPTS"] ?? join5(cwd, ".arp", "receipts.jsonl");
+  if (!existsSync3(path))
     return [];
-  let text;
+  let text2;
   try {
-    text = readFileSync3(path, "utf8");
+    text2 = readFileSync4(path, "utf8");
   } catch {
     return [];
   }
-  const rows = [];
-  for (const line of text.split(`
+  const rows2 = [];
+  for (const line of text2.split(`
 `)) {
     if (line.trim().length === 0)
       continue;
@@ -4063,7 +4220,7 @@ function fetchedRefs(cwd) {
       const row = JSON.parse(line);
       if (typeof row.skill !== "string" || typeof row.atom !== "string")
         continue;
-      rows.push({
+      rows2.push({
         skill: row.skill,
         atom: row.atom,
         url: typeof row.url === "string" ? row.url : "",
@@ -4073,7 +4230,7 @@ function fetchedRefs(cwd) {
       continue;
     }
   }
-  return rows;
+  return rows2;
 }
 function responseOf(call, outcome) {
   if (!call.hasResponse)
@@ -4130,7 +4287,7 @@ try {
   process.exit(0);
 }
 if (process.argv.includes("--capture"))
-  capture(parsed, join4(homedir3(), ".arp", "captures"));
+  capture(parsed, join5(homedir3(), ".arp", "captures"));
 var event = eventOf(parsed);
 var handler = event === null ? undefined : ROUTES[event];
 if (handler !== undefined)
@@ -4151,8 +4308,8 @@ if (what === null)
 var classified = classifyCall(call);
 if (classified === null)
   process.exit(0);
-var own = join4(cwd, ".arp");
-var path = process.env["ARP_SESSION_LOG"] ?? join4(own, "session.jsonl");
+var own = join5(cwd, ".arp");
+var path = process.env["ARP_SESSION_LOG"] ?? join5(own, "session.jsonl");
 var line = {
   at: new Date().toISOString(),
   session: call.session,
@@ -4165,11 +4322,11 @@ var line = {
   response: responseOf(call, classified.outcome)
 };
 try {
-  mkdirSync3(dirname3(path), { recursive: true });
-  if (dirname3(path) === own && lstatSync2(own).isSymbolicLink())
+  mkdirSync4(dirname4(path), { recursive: true });
+  if (dirname4(path) === own && lstatSync2(own).isSymbolicLink())
     throw new Error(`${own} is a symbolic link`);
-  const ignore = join4(own, ".gitignore");
-  if (dirname3(path) === own && !existsSync2(ignore))
+  const ignore = join5(own, ".gitignore");
+  if (dirname4(path) === own && !existsSync3(ignore))
     writeFileSync2(ignore, `*
 `, { flag: "wx" });
   appendOwn(path, `${JSON.stringify(line)}

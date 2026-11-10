@@ -635,6 +635,14 @@ export {domainInText, resolveDomain, suggestNodes, type DomainResolution, type D
 export {SHARE_OFFER, shareOfferLines} from "./share-offer.js";
 export {parseLocalFailures, yourFailures, type LocalFailure, type YourFailures} from "./local-failures.js";
 export {
+    answersIn,
+    isOutcomeAnswer,
+    OUTCOME_ANSWERS,
+    parseLocalOutcomes,
+    type LocalOutcome,
+    type OutcomeAnswer,
+} from "./local-outcomes.js";
+export {
     decideShare,
     installedFromReceipts,
     installedFromSkillLock,
