@@ -617,3 +617,30 @@ Closed or excluded tasks that leave something a later task may want. Each task f
   example. Task 98 covers the install itself.
 - **Task 67, the demonstration.** Excluded by the user on 2026-11-10. Its list is frozen and its runs
   were never made; a demonstration, when one is needed, starts from its file.
+
+## Recipes: which tools worked together
+
+**Asked 2026-11-10**, while thinking about what ARP could bring HOL beyond failures: _« pour réussir
+une tâche avoir x + x + x + x et composer alors une tâche spécifique grâce à différents outils »_.
+
+A skill is a composition its author wrote in advance, a promise. What does not exist is the composition
+**observed**: for a task in a domain, the set of tools that agents who succeeded actually had together.
+
+**What exists today.** On chain, a line is about one tool. `(agent, uses, tool)` has one id per agent
+and tool, so every session of that agent on that tool lands in the same line, and nothing links two
+tools (`docs/28`). The only grouping is per wallet, which says "this wallet used A and B", not "for the
+same task". Locally, the hook records each call with its session id (`apps/hook/src/hook.ts`, the
+`session` field of `.arp/session.jsonl`), so one machine already knows which skills served together.
+
+**The proposed shape.** Extend the `with` level to a catalogued tool's atom: `(T3 worked, with, <atom
+of skill B>)`, written by the hook when A and B were used in the same session and A worked. The
+sentence stays the same across agents, so it aggregates; a recipe A + B + C reads as pairs repeated by
+distinct wallets. Nothing leaves the machine but an atom that is already public.
+
+**Not this:** a session id on chain. Each session would get its own line, agents could no longer be
+compared, and a person's activity would be published.
+
+**What it needs first.** An ADR: `with` is limited today to a program or an environment variable the
+skill's own SKILL.md names (ADR `0166`). And data: on 2026-11-10 the skill-lines feed holds 10 skills
+and 5 writing wallets, mostly ARP's own rehearsals (`apps/web/public/feeds/skill-lines.json`). A recipe
+means nothing before testers write lines.
