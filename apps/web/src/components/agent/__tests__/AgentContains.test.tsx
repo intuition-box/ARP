@@ -28,7 +28,13 @@ describe("AgentContains", () => {
                         {name: "A2A", endpoint: "https://a2a.example/{agentId}"},
                     ],
                 },
-                {rung: 4, couldNotSay: false, proofUrl: "https://mcp.example/mcp", kinds: ["mcp"], at: "2026-11-09T18:02:01.721Z"},
+                {
+                    rung: 4,
+                    couldNotSay: false,
+                    proofUrl: "https://mcp.example/mcp",
+                    kinds: ["mcp"],
+                    at: "2026-11-09T18:02:01.721Z",
+                },
             ),
         };
         open();
@@ -44,7 +50,16 @@ describe("AgentContains", () => {
         data = {
             status: "read",
             url: agent.registrationFile,
-            contents: readAgentContents({services: []}, {rung: 2, couldNotSay: true, proofUrl: null, kinds: [], at: "2026-11-09T18:02:01.721Z"}),
+            contents: readAgentContents(
+                {services: []},
+                {
+                    rung: 2,
+                    couldNotSay: true,
+                    proofUrl: null,
+                    kinds: [],
+                    at: "2026-11-09T18:02:01.721Z",
+                },
+            ),
         };
         open();
         expect(screen.getByText("none declared")).toBeInTheDocument();
@@ -55,7 +70,10 @@ describe("AgentContains", () => {
     it("keeps the link to a document it could not read, and says when there is none", () => {
         data = {status: "unreadable", href: "https://agent.example/card.json", detail: "CORS"};
         const {unmount} = open();
-        expect(screen.getByRole("link", {name: "document unreadable ↗"})).toHaveAttribute("href", "https://agent.example/card.json");
+        expect(screen.getByRole("link", {name: "document unreadable ↗"})).toHaveAttribute(
+            "href",
+            "https://agent.example/card.json",
+        );
         unmount();
         data = {status: "none"};
         open();
