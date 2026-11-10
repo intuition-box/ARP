@@ -16,7 +16,7 @@ import {
 } from "@arp-protocol/graphql";
 
 import {needKindOf, needKindOfReason} from "./declare/line-need.js";
-import {USAGE_OUTCOMES, USAGE_REASONS, type UsageOutcome, type UsageReason} from "./declare/usage-context.js";
+import {USAGE_OUTCOMES, USAGE_REASONS, type UsageOutcome, type UsageReason} from "./declare/usage-words.js";
 import {USES} from "./sources/intuition/terms.js";
 import {readIpfsJson} from "./verify/probe.js";
 

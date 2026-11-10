@@ -1,5 +1,10 @@
 import {sha256, toBytes, type Hex} from "viem";
 
+import {thingDocument, thingUriOfDigest} from "./thing-cid.js";
+
+/** Pure, in their own module so the runtime hook can build a CID without viem (ADR `0145`, task 99). */
+export {thingDocument, thingUriOfDigest};
+
 /**
  * The canonical ERC-8004 agent atom, computed locally — **no credential, no network**.
  *
@@ -69,43 +74,6 @@ export function canonicalCaipThing(caip19: string): AgentThing {
 }
 
 /**
- * The exact bytes that get pinned: the schema.org wrapper, keys in **sorted** order, no whitespace.
- *
- * `JSON.stringify` is the reference implementation — it escapes the way the pinning API does, and it
- * leaves non-ASCII unescaped. A reimplementation in a language that escapes non-ASCII (Python's
- * `json.dumps` defaults to it) produces different bytes for a non-ASCII name and therefore a
- * different atom.
- */
-export function thingDocument(thing: AgentThing): string {
-    return JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "Thing",
-        description: thing.description,
-        image: thing.image,
-        name: thing.name,
-        url: thing.url,
-    });
-}
-
-/** RFC 4648 base32, lowercase, unpadded — the multibase `b` alphabet. Fifteen lines beats a dependency. */
-function base32(bytes: Uint8Array): string {
-    const alphabet = "abcdefghijklmnopqrstuvwxyz234567";
-    let bits = 0;
-    let value = 0;
-    let out = "";
-    for (const byte of bytes) {
-        value = (value << 8) | byte;
-        bits += 8;
-        while (bits >= 5) {
-            out += alphabet[(value >>> (bits - 5)) & 31];
-            bits -= 5;
-        }
-    }
-    if (bits > 0) out += alphabet[(value << (5 - bits)) & 31];
-    return out;
-}
-
-/**
  * `ipfs://<cid>` for a Thing — CIDv1, raw codec, sha2-256, base32.
  *
  * The four-byte prefix is the CID header: `0x01` version 1, `0x55` raw codec, `0x12` sha2-256,
@@ -113,9 +81,5 @@ function base32(bytes: Uint8Array): string {
  * the document and nothing else.
  */
 export function thingUri(thing: AgentThing): string {
-    const digest = toBytes(sha256(toBytes(thingDocument(thing))) as Hex);
-    const cid = new Uint8Array(4 + digest.length);
-    cid.set([0x01, 0x55, 0x12, 0x20]);
-    cid.set(digest, 4);
-    return `ipfs://b${base32(cid)}`;
+    return thingUriOfDigest(toBytes(sha256(toBytes(thingDocument(thing))) as Hex));
 }

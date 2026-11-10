@@ -4,6 +4,7 @@ import {PAID_WITH_LABEL} from "../x402-payment.js";
 import {NEEDS_LABEL, needShapeProblem, WITH_LABEL} from "./line-need.js";
 import {encodeCreateAtom, encodeCreateTriple, encodeDeposit, type MultiVaultReads} from "./multivault.js";
 import type {PreparedCall} from "./types.js";
+import {BECAUSE_LABEL, HAS_OUTCOME_LABEL, USAGE_OUTCOMES, USAGE_REASONS, type UsageOutcome, type UsageReason} from "./usage-words.js";
 
 /**
  * What a `uses` declaration can be qualified with: where it happened and how it went (task 63, ADR
@@ -29,19 +30,8 @@ import type {PreparedCall} from "./types.js";
  * **An outcome is one agent's word, and it paid to say it.** ARP gives no verdict on a tool (ADR
  * `0049`), and whoever reads this reads who wrote it.
  */
-export const USAGE_OUTCOMES = ["worked", "failed"] as const;
-export type UsageOutcome = (typeof USAGE_OUTCOMES)[number];
-
-/** A plain string, so its id follows from the word and is the same on every chain. */
-export const HAS_OUTCOME_LABEL = "has outcome";
-
-/**
- * Why a use failed. Closed for the same reason as the outcomes (ADR `0138`). `no-delivery` is a paid call
- * that gave nothing back (ADR `0159`): it is written about an x402 endpoint, usually with its payment.
- */
-export const USAGE_REASONS = ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"] as const;
-export type UsageReason = (typeof USAGE_REASONS)[number];
-export const BECAUSE_LABEL = "because";
+// The closed words, in a module with no dependency so the runtime hook can read lines (task 99, ADR `0168`).
+export {BECAUSE_LABEL, HAS_OUTCOME_LABEL, USAGE_OUTCOMES, USAGE_REASONS, type UsageOutcome, type UsageReason} from "./usage-words.js";
 
 export type UsageContextRefusal = {
     status: "refused";
