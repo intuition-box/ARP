@@ -48,7 +48,7 @@ const pinnedFrom = (() => {
     const at = process.argv.indexOf("--commits-from");
     return at === -1 ? null : (process.argv[at + 1] ?? null);
 })();
-// A file this script wrote: each read row carries its repository's commit.
+// The cast below is safe: the file is one this script wrote, and each read row carries its commit.
 const pinned = new Map<string, string>(
     pinnedFrom === null
         ? []

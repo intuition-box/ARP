@@ -1,6 +1,6 @@
 # Task 112 — "Before you install": the contents panel answers the questions a person asks
 
-**Status:** built on `worktree-agent-af0ef7116e2ddff59`, `ui-reviewer` PASS (second round), awaiting `task-verifier`.
+**Status:** verified 2026-11-10 on `worktree-agent-af0ef7116e2ddff59`, `ui-reviewer` PASS (second round), `task-verifier` PASS, post-mortem `.claude/learning/101-before-you-install.md`.
 **ADR:** `0182`.
 **Rules:** `code.md`, `ui.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`. No atom, triple or contract.
