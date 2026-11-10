@@ -1,6 +1,6 @@
 # Task 95 — The agent page reads lines
 
-**Status:** in progress, branch `feat/95-agent-lines`, worktree `../ARP-95`. Not pushed; the user looks at it before anything else.
+**Status:** in verification, branch `feat/95-agent-lines`, worktree `../ARP-95`. Not pushed. Reshaped twice on 2026-11-10 by the user after seeing it: the lines ride the Relations loupe, and `worked` reads « task done » (ADR `0164` amendment).
 **ADR:** `0164`.
 **Rules:** `code.md`, `ui.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`.
@@ -22,11 +22,16 @@ identity and a domain, which is a line.
    what was used (`(other, uses, agent)`) and the lines it wrote about what it used (`(agent, uses, tool)`),
    with domains and outcomes, through `getPulseUsage`'s rules (ADR `0138`), so a stranger's qualifier
    never counts as the declarer's. One new query, `PULSE_SUBJECT_USES_QUERY`.
-2. **A `Lines` tab, first**, on `/agent/:chainId/:tokenId`: two lists, *used by* and *used*, each row a
-   name, a domain and an outcome. ARP's own test identities are left out, as on every page.
+2. ~~**A `Lines` tab, first**~~ — **superseded** (ADR `0164` amendment, the user: « je comprends pas
+   l'utilité »): the lines ride the Relations field. The loupe's card prints domain · outcome under the
+   figure (`ClaimField` `reserveLine`), the "uses" ring reads "used by", and a ring of what the agent used
+   is added (`direction: "out"`). One row per edge. ARP's own test identities are left out.
 3. **The contexts** the agent appears in, under its name, from those lines.
-4. **Ratings moves last.** Endpoints and Capabilities stay.
-5. Tests for the reader and for the tab.
+4. **Ratings moves last.** Endpoints and Capabilities stay. Met as written.
+5. Tests for the reader and ~~for the tab~~ for the loupe (`ClaimField.test.tsx`, superseded with 2).
+6. **`worked` reads « task done »** (added, the user): one display word (`lib/outcome-words.ts`) for the
+   loupe, the landing and the pulse page; the definition in the MCP `outcome` description, `docs/28`,
+   `docs/31`, the site's glossary and lines pages, and a `Hint` under the agent page's field.
 
 ## Kept as it is (the user, 2026-11-10)
 

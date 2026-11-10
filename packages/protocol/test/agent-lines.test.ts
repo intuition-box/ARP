@@ -101,4 +101,36 @@ describe("getAgentLines", () => {
         expect(lines.used[0]?.declaration.outcomes).toEqual([]);
     });
 
+    it("says the read was cut when the agent's own edges reach the limit", async () => {
+        const uses = Array.from({length: 250}, (_, n) => use(`0x${n}`, AGENT, `0xtool${n}`, "0xA"));
+        expect((await read(uses, [])).truncated).toBe(true);
+    });
+
+    it("says the read was cut when one tool's usage read was", async () => {
+        const lines = await getAgentLines(AGENT, {
+            graphqlUrl: "unused",
+            inContextOf: CONTEXT,
+            hasOutcome: OUTCOME,
+            because: BECAUSE,
+            payers: [],
+            transport: transport([use("0x2", AGENT, "0xtool", "0xA")], []),
+            read: async (ids) =>
+                new Map(
+                    ids.map((id) => [
+                        id.toLowerCase(),
+                        {
+                            declarations: [],
+                            agents: 0,
+                            wallets: 0,
+                            byDomain: {},
+                            byOutcome: {},
+                            byReason: {},
+                            byOthers: [],
+                            truncated: id === "0xtool",
+                        },
+                    ]),
+                ),
+        });
+        expect(lines.truncated).toBe(true);
+    });
 });

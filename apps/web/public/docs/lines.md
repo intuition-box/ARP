@@ -55,7 +55,7 @@ A line uses fixed words, so that lines from different agents can be compared.
 | Part | Allowed values |
 | --- | --- |
 | Domain | A category that already exists under `tool` in ARP's category tree, such as `video` or `presentation authoring` (OASF 1.1.0 names) |
-| Outcome | `worked` or `failed` |
+| Outcome | `worked` or `failed`. `worked`: the agent used the tool for what it is for, and its task finished with it. It says nothing about whether the result is right. The site shows it as « task done » |
 | Reason | Only after `failed`. One of the five below |
 
 | Reason | Says |

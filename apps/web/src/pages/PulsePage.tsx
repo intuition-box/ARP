@@ -41,9 +41,7 @@ export function PulsePage() {
                     <div className="grid gap-4">
                         <Usage usage={read.view.usage} />
                         <Repository pulse={read.view.pulse} />
-                        {read.view.atomId === null ||
-                        read.view.usage === null ||
-                        read.view.usage.declarations.length === 0 ? null : (
+                        {read.view.atomId === null || read.view.usage === null || read.view.usage.declarations.length === 0 ? null : (
                             <Link
                                 className="font-mono text-[12px] text-[color:var(--color-silver)]"
                                 to={`/atom/${read.view.atomId}`}
@@ -79,10 +77,7 @@ function FileFacts({pulse}: {pulse: SkillPulse}) {
     const commands = [...pulse.requires.cli, ...pulse.requires.runs];
     return (
         <section aria-labelledby="pulse-file">
-            <h2
-                id="pulse-file"
-                className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.08em] text-[color:var(--color-steel)]"
-            >
+            <h2 id="pulse-file" className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
                 What its files show
                 <Hint label="What a mention means">
                     Keys, logins, paid words and commands are matches in the text, not requirements.
@@ -92,21 +87,13 @@ function FileFacts({pulse}: {pulse: SkillPulse}) {
                 <Fact term="Keys">{listOrNone(pulse.keys)}</Fact>
                 {pulse.keysInScriptsItRuns.length === 0 ? null : (
                     <Fact term="Keys in scripts it runs">
-                        {pulse.keysInScriptsItRuns
-                            .map((entry) => `${entry.file}: ${entry.keys.join(", ")}`)
-                            .join("; ")}
+                        {pulse.keysInScriptsItRuns.map((entry) => `${entry.file}: ${entry.keys.join(", ")}`).join("; ")}
                     </Fact>
                 )}
-                <Fact term="Login">
-                    {pulse.requires.login === null
-                        ? none
-                        : `line ${pulse.requires.login.line}: ${pulse.requires.login.text}`}
-                </Fact>
+                <Fact term="Login">{pulse.requires.login === null ? none : `line ${pulse.requires.login.line}: ${pulse.requires.login.text}`}</Fact>
                 <Fact term="Paid words">{listOrNone(pulse.paidWords)}</Fact>
                 <Fact term="Less common commands">{listOrNone(commands)}</Fact>
-                <Fact term="Scripts it runs, not in its repository">
-                    {listOrNone(pulse.runsAbsentFiles)}
-                </Fact>
+                <Fact term="Scripts it runs, not in its repository">{listOrNone(pulse.runsAbsentFiles)}</Fact>
                 <Fact term="Hosts">{listOrNone(pulse.hosts)}</Fact>
                 <Fact term="Size">{`${count(pulse.files, "file")}, ${formatBytes(pulse.bytes)}, ${count(pulse.scripts, "script")}`}</Fact>
                 <Fact term="Content">
@@ -125,62 +112,42 @@ function FileFacts({pulse}: {pulse: SkillPulse}) {
 
 function Usage({usage}: {usage: PulseUsage | null}) {
     return (
-        <section
-            aria-labelledby="pulse-usage"
-            className="rounded-[var(--radius-card)] border border-[color:var(--color-rule)] p-4"
-        >
-            <h2
-                id="pulse-usage"
-                className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.08em] text-[color:var(--color-steel)]"
-            >
+        <section aria-labelledby="pulse-usage" className="rounded-[var(--radius-card)] border border-[color:var(--color-rule)] p-4">
+            <h2 id="pulse-usage" className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
                 Written by agents
                 <Hint label="What a declaration means" align="right">
                     What a wallet paid to write. An outcome is that agent's word.
                 </Hint>
             </h2>
             {usage === null ? (
-                <p className="mt-3 text-[color:var(--color-silver)]">
-                    The public record did not answer. Unknown.
-                </p>
+                <p className="mt-3 text-[color:var(--color-silver)]">The public record did not answer. Unknown.</p>
             ) : usage.declarations.length === 0 ? (
-                <p className="mt-3 text-[color:var(--color-silver)]">
-                    No agent has declared using it. Unknown, not unused.
-                </p>
+                <p className="mt-3 text-[color:var(--color-silver)]">No agent has declared using it. Unknown, not unused.</p>
             ) : (
                 <>
                     <dl className="m-0 mt-3">
                         <Fact term="Declarations">{`${usage.truncated ? "at least " : ""}${usage.declarations.length}, by ${count(usage.agents, "agent")} and ${count(usage.wallets, "wallet")}`}</Fact>
                         <Fact term="Domains">{countsOrNone(usage.byDomain)}</Fact>
                         <Fact term="Outcomes">{countsOrNone(usage.byOutcome, outcomeLabel)}</Fact>
-                        {usage.truncated ? (
-                            <Fact term="Read">stopped at its limit, so these are a floor</Fact>
-                        ) : null}
+                        {usage.truncated ? <Fact term="Read">stopped at its limit, so these are a floor</Fact> : null}
                         {usage.byOthers.length === 0 ? null : (
                             <Fact term="Written by other wallets">
-                                {usage.byOthers
-                                    .map((row) => `${row.value} (${row.writer})`)
-                                    .join(", ")}
+                                {usage.byOthers.map((row) => `${row.value} (${row.writer})`).join(", ")}
                             </Fact>
                         )}
                     </dl>
                     <ul className="m-0 mt-4 list-none p-0">
                         {usage.declarations.slice(0, 10).map((row) => (
-                            <li
-                                key={`${row.tripleId}-${row.writer}`}
-                                className="border-t border-[color:var(--color-rule)] py-2 font-mono text-[12px] text-[color:var(--color-silver)] [overflow-wrap:anywhere]"
-                            >
+                            <li key={`${row.tripleId}-${row.writer}`} className="border-t border-[color:var(--color-rule)] py-2 font-mono text-[12px] text-[color:var(--color-silver)] [overflow-wrap:anywhere]">
                                 {row.agent.label ?? row.agent.atomId}
-                                {row.outcomes.length === 0
-                                    ? ""
-                                    : ` · ${row.outcomes.map((word) => outcomeLabel(word)).join(", ")}`}
+                                {row.outcomes.length === 0 ? "" : ` · ${row.outcomes.map((word) => outcomeLabel(word)).join(", ")}`}
                                 {row.domains.length === 0 ? "" : ` · ${row.domains.join(", ")}`}
                             </li>
                         ))}
                     </ul>
                     {usage.declarations.length > 10 ? (
                         <p className="mt-2 font-mono text-[12px] text-[color:var(--color-steel)]">
-                            First 10 of {usage.truncated ? "at least " : ""}
-                            {usage.declarations.length}
+                            First 10 of {usage.truncated ? "at least " : ""}{usage.declarations.length}
                         </p>
                     ) : null}
                 </>
@@ -193,14 +160,8 @@ function Repository({pulse}: {pulse: SkillPulse}) {
     if (pulse.status !== "read" || pulse.repository === null) return null;
     const {stars, pushedAt, archived} = pulse.repository;
     return (
-        <section
-            aria-labelledby="pulse-repository"
-            className="rounded-[var(--radius-card)] border border-[color:var(--color-rule)] p-4"
-        >
-            <h2
-                id="pulse-repository"
-                className="font-mono text-[12px] uppercase tracking-[0.08em] text-[color:var(--color-steel)]"
-            >
+        <section aria-labelledby="pulse-repository" className="rounded-[var(--radius-card)] border border-[color:var(--color-rule)] p-4">
+            <h2 id="pulse-repository" className="font-mono text-[12px] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
                 Repository
             </h2>
             <dl className="m-0 mt-3">
@@ -227,14 +188,9 @@ function listOrNone(items: readonly string[]): ReactNode {
     return items.length === 0 ? none : items.join(", ");
 }
 
-function countsOrNone(
-    counts: Readonly<Record<string, number>>,
-    label: (name: string) => string = (name) => name,
-): ReactNode {
+function countsOrNone(counts: Readonly<Record<string, number>>, label: (name: string) => string = (name) => name): ReactNode {
     const entries = Object.entries(counts);
-    return entries.length === 0
-        ? none
-        : entries.map(([name, count]) => `${label(name)} ${count}`).join(", ");
+    return entries.length === 0 ? none : entries.map(([name, count]) => `${label(name)} ${count}`).join(", ");
 }
 
 function count(value: number, noun: string): string {
@@ -242,7 +198,5 @@ function count(value: number, noun: string): string {
 }
 
 function formatBytes(bytes: number): string {
-    return bytes < 1024 * 1024
-        ? `${Math.round(bytes / 1024)} KB`
-        : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

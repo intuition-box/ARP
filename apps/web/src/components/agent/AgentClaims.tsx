@@ -3,8 +3,8 @@ import {INTUITION_USES_TERM_ID} from "@arp-protocol/core";
 
 import {useAgentLines} from "../../hooks/use-agent-lines";
 import {useAtomStanding} from "../../hooks/use-atom-standing";
-import {fieldGroups} from "../../services/agent-lines";
 import {useDeclaredModules} from "../../hooks/use-declared-modules";
+import {fieldGroups} from "../../services/agent-lines";
 import {ClaimField} from "../atom/ClaimField";
 import {Empty, Group} from "../atom/ClaimList";
 import {DeclareUse} from "../usage/DeclareUse";
