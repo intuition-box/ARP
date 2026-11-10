@@ -29,6 +29,7 @@ import {
     readDomainTree,
     readThingUrl,
     skillRefFromUrl,
+    type PulseUsage,
 } from "../../packages/protocol/src/index.ts";
 import {buildSkillLinesFeed} from "../../packages/protocol/src/skill-lines-feed.ts";
 
@@ -70,7 +71,7 @@ for (const [atomId, {label, data}] of objects) {
 }
 
 const payers = [deployment.arp.deployer, deployment.arp.sponsor];
-const usage = new Map();
+const usage = new Map<string, PulseUsage>();
 // Small batches, so no read reaches the index's 250-row ceiling unseen (`getPulseUsage` flags it anyway).
 for (let index = 0; index < tools.length; index += 20) {
     const batch = await getPulseUsage(

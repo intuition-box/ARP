@@ -1,6 +1,6 @@
 # Task 102 — Be read where agents already are
 
-**Status:** in progress, 2026-11-10.
+**Status:** verified 2026-11-10, `task-verifier` PASS, commits `45400db`..HEAD on `feat/102-be-read-where-agents-are` (not pushed), post-mortem `.claude/learning/91-be-read-where-agents-are.md`. Publishing, submitting and deploying are the user's (§2).
 **ADR:** `0171`.
 **Rules:** `code.md`, `portability.md`, `claims.md`, `workflow.md`; `ui.md` for the two docs pages.
 **Required skills:** `arp-contributing`.

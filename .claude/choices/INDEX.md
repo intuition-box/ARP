@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-163 decisions. Newest last. `choices/README.md` says when to write one.
+164 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -205,3 +205,4 @@ Read these before relying on them.
 | [0164](0164-the-agent-page-leads-with-lines.md) | 2026-11-10 | Accepted (the user saw both versions, 2026-11-10; on `feat/95-agent-lines`) | The agent page leads with lines, and shows no payment yet |
 | [0165](0165-what-a-skill-contains-is-read-before-install.md) | 2026-11-10 | Accepted | What a skill contains is read from its files and shown before install, as facts |
 | [0166](0166-a-line-names-what-was-missing-and-what-made-it-work.md) | 2026-11-10 | Accepted | A line names what was missing, and what made it work, when the skill already says it |
+| [0171](0171-feeds-a-registry-reads-beside-its-listing.md) | 2026-11-10 | Accepted | Feeds a registry reads beside its listing, and listings prepared, not sent |
