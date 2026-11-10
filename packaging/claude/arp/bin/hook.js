@@ -17,6 +17,493 @@ function appendOwn(path, text) {
 import { existsSync as existsSync2, lstatSync as lstatSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
 import { homedir as homedir3 } from "node:os";
 import { dirname as dirname3, join as join4 } from "node:path";
+// ../../packages/graphql/dist/http.js
+var DEFAULT_TIMEOUT_MS = 1e4;
+var DEFAULT_MAX_BODY_BYTES = 8 * 1024 * 1024;
+
+class HttpError extends Error {
+  kind;
+  timeoutMs;
+  constructor(kind, message, timeoutMs, cause) {
+    super(message, cause === undefined ? undefined : { cause });
+    this.name = "HttpError";
+    this.kind = kind;
+    this.timeoutMs = timeoutMs;
+  }
+}
+async function readBodyText(response, options = {}) {
+  const maxBytes = options.maxBytes ?? DEFAULT_MAX_BODY_BYTES;
+  const timeoutMs = options.timeoutMs ?? 0;
+  const body = response.body;
+  if (body === null)
+    return "";
+  const reader = body.getReader();
+  const signal = options.signal;
+  let onAbort = null;
+  const aborted = signal === undefined ? null : new Promise((_, reject) => {
+    const fire = () => reject(new HttpError("timeout", `timed out after ${timeoutMs}ms reading the body`, timeoutMs));
+    onAbort = fire;
+    if (signal.aborted)
+      fire();
+    else
+      signal.addEventListener("abort", fire, { once: true });
+  });
+  aborted?.catch(() => {
+    return;
+  });
+  const decoder = new TextDecoder;
+  let total = 0;
+  let text = "";
+  try {
+    for (;; ) {
+      const chunk = await (aborted === null ? reader.read() : Promise.race([reader.read(), aborted]));
+      if (chunk.done)
+        break;
+      total += chunk.value.byteLength;
+      if (total > maxBytes) {
+        throw new HttpError("too-large", `body exceeds ${maxBytes} bytes`, timeoutMs);
+      }
+      text += decoder.decode(chunk.value, { stream: true });
+    }
+    return text + decoder.decode();
+  } catch (error) {
+    reader.cancel().catch(() => {
+      return;
+    });
+    if (error instanceof HttpError)
+      throw error;
+    throw new HttpError("network", error instanceof Error ? error.message : String(error), timeoutMs, error);
+  } finally {
+    if (signal !== undefined && onAbort !== null)
+      signal.removeEventListener("abort", onAbort);
+  }
+}
+async function fetchTextWithTimeout(fetchImpl, url, init, options) {
+  const { timeoutMs } = options;
+  const controller = new AbortController;
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    let response;
+    try {
+      response = await fetchImpl(url, { ...init, signal: controller.signal });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        throw new HttpError("timeout", `timed out after ${timeoutMs}ms: ${url}`, timeoutMs);
+      }
+      throw new HttpError("network", error instanceof Error ? error.message : String(error), timeoutMs, error);
+    }
+    const text = await readBodyText(response, {
+      signal: controller.signal,
+      timeoutMs,
+      ...options.maxBytes === undefined ? {} : { maxBytes: options.maxBytes }
+    });
+    return { response, text };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+function defaultFetch() {
+  if (typeof globalThis.fetch !== "function") {
+    throw new TypeError("no global fetch available — pass one via createErc8004Client({fetch})");
+  }
+  return (input, init) => globalThis.fetch(input, init);
+}
+// ../../packages/graphql/dist/json.js
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function readRecord(source, key) {
+  if (!isRecord(source))
+    return null;
+  const child = source[key];
+  return isRecord(child) ? child : null;
+}
+function readString(source, key) {
+  if (!isRecord(source))
+    return null;
+  const value = source[key];
+  return typeof value === "string" ? value : null;
+}
+function readArray(source, key) {
+  if (!isRecord(source))
+    return [];
+  const value = source[key];
+  return Array.isArray(value) ? value : [];
+}
+// ../../packages/graphql/dist/client.js
+class GraphqlError extends Error {
+  url;
+  httpStatus;
+  constructor(message, url, httpStatus, cause) {
+    super(message, cause === undefined ? undefined : { cause });
+    this.name = "GraphqlError";
+    this.url = url;
+    this.httpStatus = httpStatus;
+  }
+}
+function createGraphqlTransport(config) {
+  const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  return {
+    async request(query, variables, options) {
+      let response;
+      let text;
+      try {
+        ({ response, text } = await fetchTextWithTimeout(config.fetch, config.url, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json"
+          },
+          body: JSON.stringify({ query, variables })
+        }, {
+          timeoutMs: options?.timeoutMs ?? timeoutMs,
+          ...config.maxBodyBytes === undefined ? {} : { maxBytes: config.maxBodyBytes }
+        }));
+      } catch (error) {
+        const message = error instanceof HttpError ? error.message : String(error);
+        throw new GraphqlError(message, config.url, null, error);
+      }
+      if (!response.ok) {
+        throw new GraphqlError(`HTTP ${response.status} ${response.statusText}`, config.url, response.status);
+      }
+      let body = null;
+      try {
+        body = JSON.parse(text);
+      } catch {
+        body = null;
+      }
+      if (!isRecord(body)) {
+        throw new GraphqlError("response body is not a JSON object", config.url, 200);
+      }
+      const errors = readArray(body, "errors");
+      if (errors.length > 0) {
+        const messages = errors.map((entry) => readString(entry, "message") ?? "unknown error").join("; ");
+        throw new GraphqlError(messages, config.url, 200);
+      }
+      const data = body["data"];
+      if (!isRecord(data)) {
+        throw new GraphqlError("response carries no data object", config.url, 200);
+      }
+      return data;
+    }
+  };
+}
+// ../../packages/graphql/dist/queries/agent.js
+var THING = `value { thing { name description image url } }`;
+var MARKET_SIDE = `
+    total_market_cap
+    total_assets
+    vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
+      market_cap
+      total_assets
+      total_shares
+      current_share_price
+      position_count
+    }`;
+var RESOLVE_AGENT_QUERY = `
+query ResolveAgentByCaip($sameAsPredicateId: String!, $caipId: String!) {
+  triples(
+    where: {
+      predicate_id: {_eq: $sameAsPredicateId}
+      object: {value: {thing: {name: {_eq: $caipId}}}}
+    }
+    limit: 2
+  ) {
+    subject { term_id label data ${THING} }
+  }
+}`;
+var TRUST_SURFACE_QUERY = `
+query AgentTrustSurface($subjectId: String!, $predicateIds: [String!], $curveId: numeric!, $limit: Int!) {
+  triples(
+    where: {subject_id: {_eq: $subjectId}, predicate_id: {_in: $predicateIds}}
+    order_by: {term: {total_market_cap: desc}}
+    limit: $limit
+  ) {
+    term_id
+    predicate { term_id label }
+    object { term_id label data ${THING} }
+    term {${MARKET_SIDE}
+    }
+    counter_term {${MARKET_SIDE}
+    }
+  }
+}`;
+var CAPABILITIES_QUERY = `
+query AgentCapabilities($subjectId: String!, $predicateIds: [String!], $limit: Int!) {
+  triples(
+    where: {subject_id: {_eq: $subjectId}, predicate_id: {_in: $predicateIds}}
+    order_by: {term_id: asc}
+    limit: $limit
+  ) {
+    term_id
+    predicate { term_id label }
+    object { term_id label ${THING} }
+  }
+}`;
+var IDENTITY_SAMPLE_LIMIT = 4;
+var CAPABILITY_SAMPLE_LIMIT = 8;
+var COHORT_QUERY = `
+query AgentCohort($where: triples_bool_exp!, $sameAsPredicateId: String!, $capabilityPredicateIds: [String!], $orderBy: [triples_order_by!]!, $limit: Int!, $offset: Int!) {
+  total: triples_aggregate(
+    where: $where
+  ) {
+    aggregate { count }
+  }
+  triples(
+    where: $where
+    order_by: $orderBy
+    limit: $limit
+    offset: $offset
+  ) {
+    subject {
+      term_id
+      label
+      ${THING}
+      as_subject_triples_aggregate { aggregate { count } }
+      term {
+        total_market_cap
+        vaults_aggregate { aggregate { count sum { position_count } } }
+      }
+      identityCount: as_subject_triples_aggregate(
+        where: {predicate_id: {_eq: $sameAsPredicateId}}
+      ) {
+        aggregate { count }
+      }
+      identity: as_subject_triples(
+        where: {predicate_id: {_eq: $sameAsPredicateId}}
+        limit: ${IDENTITY_SAMPLE_LIMIT}
+      ) {
+        object { label ${THING} }
+      }
+      capabilities: as_subject_triples(
+        where: {predicate_id: {_in: $capabilityPredicateIds}}
+        limit: ${CAPABILITY_SAMPLE_LIMIT}
+      ) {
+        predicate_id
+        object { term_id label }
+      }
+    }
+  }
+}`;
+// ../../packages/graphql/dist/queries/atom-standing.js
+var VAULT_SIDE = `
+    total_market_cap
+    total_assets
+    vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
+      market_cap
+      total_assets
+      total_shares
+      current_share_price
+      position_count
+    }`;
+var ATOM_STANDING_QUERY = `
+query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor: [String!]!) {
+  atom: atoms(where: {term_id: {_eq: $atomId}}, limit: 1) {
+    term_id
+    label
+    data
+    type
+    value { thing { url } }
+    term { ${VAULT_SIDE} }
+  }
+  triples(
+    where: {object_id: {_eq: $atomId}}
+    order_by: {term: {total_assets: desc}}
+    limit: $limit
+  ) {
+    term_id
+    predicate { term_id label }
+    subject { term_id label type }
+    term { ${VAULT_SIDE} }
+    counter_term { ${VAULT_SIDE} }
+  }
+  claims: triples(
+    where: {subject_id: {_eq: $atomId}}
+    order_by: {term: {total_assets: desc}}
+    limit: $limit
+  ) {
+    term_id
+    predicate { term_id label }
+    object { term_id label type }
+    term {
+      ${VAULT_SIDE}
+      vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
+        positions(where: {account_id: {_in: $attestor}, shares: {_gt: "0"}}, limit: 1) { shares }
+      }
+    }
+  }
+}`;
+var LISTED_CAPABILITIES_FOR_QUERY = `query ListedCapabilitiesFor($subject: String!, $predicates: [String!]) {
+  atoms(where: {term_id: {_eq: $subject}}, limit: 1) {
+    capabilities: as_subject_triples(
+      where: {predicate_id: {_in: $predicates}}
+      limit: ${CAPABILITY_SAMPLE_LIMIT}
+    ) { object { term_id } }
+  }
+}`;
+// ../../packages/graphql/dist/queries/tool-listing.js
+function toolListingQuery(sponsored) {
+  const variables = sponsored ? "$uses: String!, $sameAs: String!, $curveId: numeric!, $limit: Int!, $sponsor: String!" : "$uses: String!, $sameAs: String!, $curveId: numeric!, $limit: Int!";
+  const sponsoredCount = sponsored ? `
+      sponsored: deposits_aggregate(where: {sender_id: {_ilike: $sponsor}, receiver_id: {_nilike: $sponsor}}) { aggregate { count } }` : "";
+  return `
+query ToolListing(${variables}) {
+  triples(
+    where: {
+      predicate_id: {_eq: $uses}
+      subject: {as_subject_triples: {predicate_id: {_eq: $sameAs}}}
+    }
+    limit: $limit
+  ) {
+    term_id
+    subject_id
+    object {
+      term_id
+      label
+      data
+      type
+      value { thing { url } }
+    }
+    term {
+      total_assets
+      vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) { position_count total_assets }
+      deposits: deposits_aggregate { aggregate { count } }${sponsoredCount}
+    }
+    counter_term {
+      total_assets
+      vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) { position_count total_assets }
+    }
+  }
+}`;
+}
+var TOOL_LISTING_QUERY = toolListingQuery(false);
+var TOOL_LISTING_SPONSORED_QUERY = toolListingQuery(true);
+// ../../packages/graphql/dist/queries/pulse-usage.js
+var PULSE_USES_QUERY = `query PulseUses($tools: [String!]!, $uses: String!, $limit: Int!) {
+    triples(where: {object_id: {_in: $tools}, predicate_id: {_eq: $uses}}, limit: $limit) {
+        term_id
+        object_id
+        creator_id
+        created_at
+        subject {
+            term_id
+            label
+        }
+        positions(where: {shares: {_gt: "0"}}) {
+            account_id
+        }
+    }
+}`;
+var PULSE_QUALIFIERS_QUERY = `query PulseQualifiers($edges: [String!]!, $predicates: [String!]!, $writers: [String!]!, $limit: Int!) {
+    triples(where: {subject_id: {_in: $edges}, predicate_id: {_in: $predicates}}, limit: $limit) {
+        term_id
+        subject_id
+        predicate_id
+        creator_id
+        created_at
+        object {
+            label
+        }
+        positions(where: {shares: {_gt: "0"}, account_id: {_in: $writers}}) {
+            account_id
+        }
+    }
+}`;
+var PULSE_ATOMS_QUERY = `query PulseAtoms($uris: [String!]!, $limit: Int!) {
+    atoms(where: {data: {_in: $uris}}, limit: $limit) {
+        term_id
+        data
+    }
+}`;
+// ../../packages/graphql/dist/queries/tool-usage.js
+var VAULT_SIDE2 = `
+    total_market_cap
+    total_assets
+    vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
+      market_cap
+      total_assets
+      total_shares
+      current_share_price
+      position_count
+    }`;
+var TOOL_USAGE_QUERY = `
+query ToolUsage($toolId: String!, $uses: String!, $curveId: numeric!) {
+  tool: atoms(where: {term_id: {_eq: $toolId}}, limit: 1) {
+    term_id
+    label
+    data
+  }
+  triples(where: {predicate_id: {_eq: $uses}, object_id: {_eq: $toolId}}, limit: 200) {
+    term_id
+    subject {
+      term_id
+      label
+      type
+    }
+    term { ${VAULT_SIDE2} }
+    counter_term { ${VAULT_SIDE2} }
+  }
+}`;
+var ATTESTED_TOOL_USAGE_QUERY = `
+query AttestedToolUsage($toolId: String!, $uses: String!, $curveId: numeric!, $attestor: String!) {
+  tool: atoms(where: {term_id: {_eq: $toolId}}, limit: 1) {
+    term_id
+    label
+    data
+  }
+  triples(where: {
+    predicate_id: {_eq: $uses},
+    object_id: {_eq: $toolId},
+    term: {positions: {account_id: {_eq: $attestor}}}
+  }, limit: 200) {
+    term_id
+    subject {
+      term_id
+      label
+      type
+    }
+    term { ${VAULT_SIDE2} }
+    counter_term { ${VAULT_SIDE2} }
+  }
+}`;
+// ../../packages/graphql/dist/queries/x402-feed.js
+var LEVEL = `term_id
+        subject_id
+        predicate_id
+        creator_id
+        created_at
+        subject {
+            term_id
+            label
+        }
+        object {
+            term_id
+            label
+            data
+            value {
+                thing {
+                    url
+                }
+            }
+        }
+        positions(where: {shares: {_gt: "0"}}) {
+            account_id
+        }`;
+var X402_PAYMENT_LEVELS_QUERY = `query X402PaymentLevels($paidWith: String!, $limit: Int!, $offset: Int!) {
+    triples(where: {predicate_id: {_eq: $paidWith}}, order_by: {term_id: asc}, limit: $limit, offset: $offset) {
+        ${LEVEL}
+    }
+}`;
+var X402_LEVELS_BY_ID_QUERY = `query X402LevelsById($ids: [String!]!, $limit: Int!) {
+    triples(where: {term_id: {_in: $ids}}, limit: $limit) {
+        ${LEVEL}
+    }
+}`;
+var X402_REASONS_QUERY = `query X402Reasons($ids: [String!]!, $because: String!, $limit: Int!) {
+    triples(where: {subject_id: {_in: $ids}, predicate_id: {_eq: $because}}, order_by: {term_id: asc}, limit: $limit) {
+        ${LEVEL}
+    }
+}`;
 // ../../packages/protocol/dist/declare/tool-thing.js
 class InvalidToolUrlError extends Error {
   input;
@@ -268,7 +755,7 @@ var TIMEOUT = /\b(timed? ?out|timeout|deadline exceeded|ETIMEDOUT)\b/i;
 var UNREACHABLE = /\b(ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|getaddrinfo|certificate|TLS|SSL|socket hang up|connection refused|fetch failed)\b/i;
 var PAYMENT = /\b(payment required|insufficient (funds|balance)|payment (failed|refused|rejected)|x402)\b/i;
 var STATUS = /\b(40[123]|429|5\d\d)\b/;
-function isRecord(value) {
+function isRecord2(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function failureText(call) {
@@ -276,7 +763,7 @@ function failureText(call) {
   const push = (value) => {
     if (typeof value === "string")
       parts.push(value);
-    else if (isRecord(value)) {
+    else if (isRecord2(value)) {
       for (const key of ["error", "message", "reason"]) {
         const text = value[key];
         if (typeof text === "string")
@@ -284,7 +771,7 @@ function failureText(call) {
       }
       if (Array.isArray(value.content)) {
         for (const item of value.content) {
-          if (isRecord(item) && typeof item.text === "string")
+          if (isRecord2(item) && typeof item.text === "string")
             parts.push(item.text);
         }
       }
@@ -296,7 +783,7 @@ function failureText(call) {
 `).slice(0, 4000);
 }
 function statusOf(call) {
-  if (!isRecord(call.response))
+  if (!isRecord2(call.response))
     return null;
   for (const key of ["status", "statusCode", "status_code"]) {
     const value = call.response[key];
@@ -306,7 +793,7 @@ function statusOf(call) {
   return null;
 }
 function flaggedError(response) {
-  return isRecord(response) && (response.isError === true || response.is_error === true);
+  return isRecord2(response) && (response.isError === true || response.is_error === true);
 }
 function classifyCall(call) {
   if (call.interrupted)
@@ -336,7 +823,7 @@ function classifyCall(call) {
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-function isRecord2(value) {
+function isRecord3(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function readJson(path) {
@@ -347,7 +834,7 @@ function readJson(path) {
   }
 }
 function entryOf(raw) {
-  if (!isRecord2(raw))
+  if (!isRecord3(raw))
     return null;
   if (typeof raw.url === "string" && raw.url.length > 0)
     return { transport: "remote", url: raw.url };
@@ -358,7 +845,7 @@ function entryOf(raw) {
   return null;
 }
 function collect(into, servers) {
-  if (!isRecord2(servers))
+  if (!isRecord3(servers))
     return;
   for (const [name, raw] of Object.entries(servers)) {
     const entry = entryOf(raw);
@@ -372,16 +859,16 @@ function readMcpServers({
 }) {
   const servers = new Map;
   const user = readJson(join(home, ".claude.json"));
-  if (isRecord2(user)) {
+  if (isRecord3(user)) {
     collect(servers, user.mcpServers);
-    if (isRecord2(user.projects)) {
+    if (isRecord3(user.projects)) {
       const project = user.projects[cwd];
-      if (isRecord2(project))
+      if (isRecord3(project))
         collect(servers, project.mcpServers);
     }
   }
   const shared = readJson(join(cwd, ".mcp.json"));
-  if (isRecord2(shared))
+  if (isRecord3(shared))
     collect(servers, shared.mcpServers);
   return servers;
 }
@@ -504,7 +991,7 @@ function capture(payload, dir, now = new Date) {
 }
 
 // ../hook/src/payload.ts
-function isRecord3(value) {
+function isRecord4(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function str(value) {
@@ -520,12 +1007,12 @@ function first(raw, keys) {
   return;
 }
 function eventOf(raw) {
-  if (!isRecord3(raw))
+  if (!isRecord4(raw))
     return null;
   return str(first(raw, ["hook_event_name", "hookEventName"]));
 }
 function toolCallOf(raw) {
-  if (!isRecord3(raw))
+  if (!isRecord4(raw))
     return null;
   const format = typeof raw.toolName === "string" && typeof raw.tool_name !== "string" ? "grok" : "claude";
   const camel = format === "grok";
@@ -541,7 +1028,7 @@ function toolCallOf(raw) {
     session: str(camel ? raw.sessionId : raw.session_id),
     id: str(camel ? raw.toolUseId : raw.tool_use_id),
     tool,
-    input: isRecord3(input) ? input : undefined,
+    input: isRecord4(input) ? input : undefined,
     hasResponse,
     response: hasResponse ? first(raw, responseKeys) : undefined,
     error: str(raw.error),
@@ -553,6 +1040,25 @@ function toolCallOf(raw) {
 }
 
 // ../../packages/protocol/src/content-path.ts
+function skillRefFromUrl3(url) {
+  let parsed;
+  try {
+    parsed = new URL(url.includes("://") ? url : `https://${url}`);
+  } catch {
+    return null;
+  }
+  if (parsed.hostname.replace(/^www\./, "") !== "github.com")
+    return null;
+  const skill = parsed.searchParams.get("skill");
+  if (skill === null || skill.length === 0)
+    return null;
+  const [owner, repo] = parsed.pathname.replace(/^\/+/, "").replace(/\/+$/, "").replace(/\.git$/, "").split("/");
+  if (owner === undefined || repo === undefined)
+    return null;
+  if (owner.length === 0 || repo.length === 0)
+    return null;
+  return { repo: `${owner}/${repo}`, skill };
+}
 function directoryOf2(path) {
   const parts = path.split("/");
   return parts.length < 2 ? "" : parts[parts.length - 2] ?? "";
@@ -1710,6 +2216,628 @@ ${FOR_THE_AGENT}`
   });
 }
 
+// ../hook/src/failure-answer.ts
+import { createHash } from "node:crypto";
+
+// ../../packages/protocol/src/declare/line-need.ts
+var NEEDS_LABEL3 = "needs";
+var WITH_LABEL3 = "with";
+var PROGRAM_NAME3 = /^[a-z0-9][a-z0-9._+-]{0,39}$/;
+var KEY_NAME4 = /^[A-Z][A-Z0-9_]{2,63}$/;
+function needKindOf3(name) {
+  if (PROGRAM_NAME3.test(name))
+    return "program";
+  if (KEY_NAME4.test(name))
+    return "key";
+  return null;
+}
+function needKindOfReason3(reason) {
+  if (reason === "missing-program")
+    return "program";
+  if (reason === "missing-key")
+    return "key";
+  return null;
+}
+var escaped = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function namedInSkill3(name, markdown) {
+  const kind = needKindOf3(name);
+  if (kind === null)
+    return false;
+  const pattern = new RegExp(`(?<![A-Za-z0-9_+.-])${escaped(name)}(?![A-Za-z0-9_+-])(?!\\.[A-Za-z0-9])`, kind === "program" ? "i" : "");
+  return pattern.test(markdown);
+}
+function publishableNeed3(name, markdown, kind) {
+  const shape = needKindOf3(name);
+  if (shape === null || kind !== undefined && shape !== kind)
+    return null;
+  return namedInSkill3(name, markdown) ? name : null;
+}
+
+// ../../packages/protocol/src/declare/thing-cid.ts
+function thingDocument2(thing) {
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Thing",
+    description: thing.description,
+    image: thing.image,
+    name: thing.name,
+    url: thing.url
+  });
+}
+function base32(bytes) {
+  const alphabet = "abcdefghijklmnopqrstuvwxyz234567";
+  let bits = 0;
+  let value = 0;
+  let out = "";
+  for (const byte of bytes) {
+    value = value << 8 | byte;
+    bits += 8;
+    while (bits >= 5) {
+      out += alphabet[value >>> bits - 5 & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0)
+    out += alphabet[value << 5 - bits & 31];
+  return out;
+}
+function thingUriOfDigest(digest) {
+  const cid = new Uint8Array(4 + digest.length);
+  cid.set([1, 85, 18, 32]);
+  cid.set(digest, 4);
+  return `ipfs://b${base32(cid)}`;
+}
+
+// ../../packages/protocol/src/declare/tool-thing.ts
+class InvalidToolUrlError2 extends Error {
+  input;
+  constructor(input, why) {
+    super(`${JSON.stringify(input)} is not a usable tool URL: ${why}`);
+    this.name = "InvalidToolUrlError";
+    this.input = input;
+  }
+}
+var TOOL_THING_DESCRIPTION2 = "A tool identified by its URL, so every declaration of its use lands on one atom.";
+function normaliseToolUrl2(input) {
+  const trimmed = input.trim();
+  if (trimmed.length === 0)
+    throw new InvalidToolUrlError2(input, "empty");
+  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  let url;
+  try {
+    url = new URL(withScheme);
+  } catch {
+    throw new InvalidToolUrlError2(input, "not parseable as a URL");
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new InvalidToolUrlError2(input, `scheme ${url.protocol} is not http or https`);
+  }
+  if (url.hostname.length === 0)
+    throw new InvalidToolUrlError2(input, "no host");
+  const host = url.hostname.replace(/\.+$/, "").replace(/^(?:www\.)+/, "");
+  const path = url.pathname.replace(/(?:\.git|\/)+$/, "");
+  const params = [...new URLSearchParams(url.search).entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
+  const query = params.length === 0 ? "" : `?${new URLSearchParams(params).toString()}`;
+  const port = url.port === "" || url.port === "80" || url.port === "443" ? "" : `:${url.port}`;
+  return `https://${host}${port}${path}${query}`;
+}
+function toolThing2(url) {
+  const normalised = normaliseToolUrl2(url);
+  return {
+    name: normalised.slice("https://".length),
+    description: TOOL_THING_DESCRIPTION2,
+    image: "",
+    url: normalised
+  };
+}
+
+// ../../packages/protocol/src/declare/usage-words.ts
+var USAGE_OUTCOMES3 = ["worked", "failed"];
+var HAS_OUTCOME_LABEL3 = "has outcome";
+var USAGE_REASONS3 = ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"];
+var BECAUSE_LABEL3 = "because";
+
+// ../../packages/protocol/src/sources/intuition/terms.ts
+var USES2 = "0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800";
+
+// ../../packages/protocol/src/pulse-usage.ts
+var DEFAULT_LIMIT = 250;
+var rowsOf = (data) => Array.isArray(data["triples"]) ? data["triples"].filter(isRecord) : [];
+async function findToolAtoms2(uris, config) {
+  const out = new Map;
+  if (uris.length === 0)
+    return out;
+  const transport = config.transport ?? createGraphqlTransport({
+    url: config.graphqlUrl,
+    fetch: config.fetch ?? defaultFetch(),
+    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  });
+  const data = await transport.request(PULSE_ATOMS_QUERY, { uris: [...uris], limit: uris.length });
+  const rows = Array.isArray(data["atoms"]) ? data["atoms"].filter(isRecord) : [];
+  for (const row of rows) {
+    const id = readString(row, "term_id");
+    const uri = readString(row, "data");
+    if (id !== null && uri !== null)
+      out.set(uri, id);
+  }
+  return out;
+}
+async function getPulseUsage2(toolAtomIds, config) {
+  const transport = config.transport ?? createGraphqlTransport({
+    url: config.graphqlUrl,
+    fetch: config.fetch ?? defaultFetch(),
+    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  });
+  const limit = Math.min(config.limit ?? DEFAULT_LIMIT, DEFAULT_LIMIT);
+  const key = (id) => id.toLowerCase();
+  const empty = () => ({
+    declarations: [],
+    agents: 0,
+    wallets: 0,
+    byDomain: {},
+    byOutcome: {},
+    byReason: {},
+    byNeed: {},
+    byWith: {},
+    byOthers: [],
+    truncated: false
+  });
+  const out = new Map(toolAtomIds.map((id) => [key(id), empty()]));
+  if (toolAtomIds.length === 0)
+    return out;
+  const edgeRows = rowsOf(await transport.request(PULSE_USES_QUERY, { tools: [...toolAtomIds], uses: USES2, limit }));
+  const edges = new Map;
+  const NESTED_CAP = 100;
+  let truncated = edgeRows.length >= limit;
+  for (const row of edgeRows) {
+    const tripleId = readString(row, "term_id");
+    const tool = readString(row, "object_id");
+    const writer = readString(row, "creator_id");
+    const subject = readRecord(row, "subject");
+    const atomId = subject === null ? null : readString(subject, "term_id");
+    if (tripleId === null || tool === null || writer === null || subject === null || atomId === null)
+      continue;
+    const edgeHolders = (Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : []).map((holder) => readString(holder, "account_id")).filter((account) => account !== null);
+    const declaration = (wallet, declaredAt) => ({
+      tripleId,
+      agent: { atomId, label: readString(subject, "label") },
+      writer: wallet,
+      holders: edgeHolders,
+      declaredAt,
+      domains: [],
+      outcomes: [],
+      lines: []
+    });
+    const declarers = new Map([[key(writer), declaration(writer, readString(row, "created_at"))]]);
+    const holders = Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : [];
+    if (holders.length >= NESTED_CAP)
+      truncated = true;
+    for (const holder of holders) {
+      const wallet = readString(holder, "account_id");
+      if (wallet !== null && !declarers.has(key(wallet)))
+        declarers.set(key(wallet), declaration(wallet, null));
+    }
+    edges.set(key(tripleId), { tool: key(tool), declarers });
+  }
+  const payers = new Set(config.payers.map(key));
+  const writers = [...new Set([...edges.values()].flatMap((edge) => [...edge.declarers.values()].map((row) => row.writer)))];
+  const qualifiers = async (subjects, predicates) => subjects.length === 0 ? [] : rowsOf(await transport.request(PULSE_QUALIFIERS_QUERY, { edges: subjects, predicates, writers, limit }));
+  const pass = (rows) => {
+    truncated = truncated || rows.length >= limit;
+    return rows;
+  };
+  const standing = (row, edge, below) => {
+    const holders = Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : [];
+    if (holders.length >= NESTED_CAP)
+      truncated = true;
+    const wallets = [readString(row, "creator_id"), ...holders.map((holder) => readString(holder, "account_id"))];
+    return new Set(wallets.filter((wallet) => wallet !== null).map(key).filter((wallet) => edge.declarers.has(wallet) && !payers.has(wallet) && (below === undefined || below.has(wallet))));
+  };
+  const parts = (row) => {
+    const object = readRecord(row, "object");
+    return {
+      termId: readString(row, "term_id"),
+      subjectId: readString(row, "subject_id"),
+      predicateId: readString(row, "predicate_id"),
+      writer: readString(row, "creator_id"),
+      value: object === null ? null : readString(object, "label")
+    };
+  };
+  const isOutcome = (value) => USAGE_OUTCOMES3.some((word) => word === value);
+  const isReason = (value) => USAGE_REASONS3.some((word) => word === value);
+  const contexts = new Map;
+  const outcomes = new Map;
+  const others = (edge, row, predicate) => out.get(edge.tool)?.byOthers.push({
+    tripleId: row.termId ?? "",
+    writer: row.writer ?? "",
+    predicate,
+    value: row.value ?? ""
+  });
+  const onEdge = pass(await qualifiers([...edges.keys()], [config.inContextOf, config.hasOutcome]));
+  for (const row of onEdge) {
+    const line = parts(row);
+    const edge = line.subjectId === null ? undefined : edges.get(key(line.subjectId));
+    if (edge === undefined || line.predicateId === null || line.writer === null || line.value === null || line.termId === null)
+      continue;
+    const isOutcomeLine = key(line.predicateId) === key(config.hasOutcome);
+    if (isOutcomeLine && !isOutcome(line.value))
+      continue;
+    const wallets = standing(row, edge);
+    if (wallets.size === 0) {
+      others(edge, line, isOutcomeLine ? "outcome" : "context");
+    } else if (isOutcomeLine && isOutcome(line.value)) {
+      outcomes.set(key(line.termId), { edge, domain: null, form: "sibling", outcome: line.value, wallets, reasons: new Map, named: new Map });
+    } else {
+      contexts.set(key(line.termId), { edge, domain: line.value, wallets });
+    }
+  }
+  const onContext = pass(await qualifiers([...contexts.keys()], [config.hasOutcome]));
+  for (const row of onContext) {
+    const line = parts(row);
+    const context = line.subjectId === null ? undefined : contexts.get(key(line.subjectId));
+    if (context === undefined || line.value === null || line.termId === null || !isOutcome(line.value))
+      continue;
+    const wallets = standing(row, context.edge, context.wallets);
+    if (wallets.size === 0) {
+      others(context.edge, line, "outcome");
+    } else {
+      outcomes.set(key(line.termId), { edge: context.edge, domain: context.domain, form: "nested", outcome: line.value, wallets, reasons: new Map, named: new Map });
+    }
+  }
+  const reading = (predicate) => predicate !== undefined;
+  const failures = [...outcomes.entries()].filter(([, found]) => found.outcome === "failed").map(([id]) => id);
+  const worked = [...outcomes.entries()].filter(([, found]) => found.outcome === "worked").map(([id]) => id);
+  const withId = config.with;
+  const onOutcome = pass(await qualifiers(reading(withId) ? [...failures, ...worked] : failures, [config.because, ...reading(withId) ? [withId] : []]));
+  const reasonTerms = new Map;
+  const addName = (found, wallets, name) => {
+    for (const wallet of wallets) {
+      const given = found.named.get(wallet) ?? [];
+      if (!given.includes(name))
+        given.push(name);
+      found.named.set(wallet, given);
+    }
+  };
+  for (const row of onOutcome) {
+    const line = parts(row);
+    const found = line.subjectId === null ? undefined : outcomes.get(key(line.subjectId));
+    if (found === undefined || line.value === null || line.predicateId === null)
+      continue;
+    if (withId !== undefined && key(line.predicateId) === key(withId)) {
+      if (found.outcome !== "worked" || needKindOf3(line.value) === null)
+        continue;
+      const wallets2 = standing(row, found.edge, found.wallets);
+      if (wallets2.size === 0)
+        others(found.edge, line, "with");
+      addName(found, wallets2, line.value);
+      continue;
+    }
+    if (found.outcome !== "failed" || !isReason(line.value))
+      continue;
+    const wallets = standing(row, found.edge, found.wallets);
+    if (wallets.size === 0)
+      others(found.edge, line, "reason");
+    for (const wallet of wallets) {
+      const given = found.reasons.get(wallet) ?? [];
+      if (!given.includes(line.value))
+        given.push(line.value);
+      found.reasons.set(wallet, given);
+    }
+    if (line.termId !== null && wallets.size > 0 && needKindOfReason3(line.value) !== null) {
+      reasonTerms.set(key(line.termId), { found, reason: line.value, wallets });
+    }
+  }
+  const needsId = config.needs;
+  if (reading(needsId)) {
+    const onReason = pass(await qualifiers([...reasonTerms.keys()], [needsId]));
+    for (const row of onReason) {
+      const line = parts(row);
+      const reason = line.subjectId === null ? undefined : reasonTerms.get(key(line.subjectId));
+      if (reason === undefined || line.value === null)
+        continue;
+      const kind = needKindOf3(line.value);
+      if (kind === null || kind !== needKindOfReason3(reason.reason))
+        continue;
+      const wallets = standing(row, reason.found.edge, reason.wallets);
+      if (wallets.size === 0)
+        others(reason.found.edge, line, "needs");
+      addName(reason.found, wallets, line.value);
+    }
+  }
+  for (const { edge, domain, wallets } of contexts.values()) {
+    for (const wallet of wallets)
+      edge.declarers.get(wallet)?.domains.push(domain);
+  }
+  const ordered = [...outcomes.values()].sort((a, b) => Number(b.form === "nested") - Number(a.form === "nested"));
+  for (const found of ordered) {
+    for (const wallet of found.wallets) {
+      const declaration = found.edge.declarers.get(wallet);
+      if (declaration === undefined)
+        continue;
+      const reasons = found.reasons.get(wallet) ?? [];
+      const named = found.named.get(wallet) ?? [];
+      const field = found.outcome === "failed" ? "needs" : "with";
+      if (!declaration.outcomes.includes(found.outcome))
+        declaration.outcomes.push(found.outcome);
+      const domains = found.form === "nested" ? [found.domain] : declaration.domains.length > 0 ? declaration.domains : [null];
+      for (const domain of domains) {
+        const same = declaration.lines.find((line) => line.domain === domain && line.outcome === found.outcome);
+        if (same === undefined) {
+          declaration.lines.push({ domain, outcome: found.outcome, reasons, form: found.form, ...named.length === 0 ? {} : { [field]: named } });
+        } else {
+          same.reasons = [...new Set([...same.reasons, ...reasons])];
+          if (named.length > 0)
+            same[field] = [...new Set([...same[field] ?? [], ...named])];
+        }
+      }
+    }
+  }
+  for (const { tool, declarers } of edges.values()) {
+    const rows = [...declarers.values()].filter((row, at) => at === 0 || row.domains.length > 0 || row.lines.length > 0);
+    out.get(tool)?.declarations.push(...rows);
+  }
+  for (const usage of out.values()) {
+    usage.truncated = truncated;
+    usage.agents = new Set(usage.declarations.map((declaration) => key(declaration.agent.atomId))).size;
+    usage.wallets = new Set(usage.declarations.map((declaration) => key(declaration.writer)).filter((wallet) => !payers.has(wallet))).size;
+    for (const declaration of usage.declarations) {
+      for (const domain of declaration.domains)
+        usage.byDomain[domain] = (usage.byDomain[domain] ?? 0) + 1;
+      for (const outcome of declaration.outcomes)
+        usage.byOutcome[outcome] = (usage.byOutcome[outcome] ?? 0) + 1;
+      for (const reason of new Set(declaration.lines.flatMap((line) => line.reasons))) {
+        usage.byReason[reason] = (usage.byReason[reason] ?? 0) + 1;
+      }
+      const byNeed = usage.byNeed ??= {};
+      for (const name of new Set(declaration.lines.flatMap((line) => line.needs ?? [])))
+        byNeed[name] = (byNeed[name] ?? 0) + 1;
+      const byWith = usage.byWith ??= {};
+      for (const name of new Set(declaration.lines.flatMap((line) => line.with ?? [])))
+        byWith[name] = (byWith[name] ?? 0) + 1;
+    }
+  }
+  return out;
+}
+
+// ../../packages/protocol/src/failure-lines.ts
+function skillUrlOf2(source, skill) {
+  if (!/^[\w.-]+\/[\w.-]+$/.test(source))
+    return null;
+  const name = skill.split(":").pop() ?? skill;
+  const url = `https://github.com/${source}?skill=${encodeURIComponent(name)}`;
+  return skillRefFromUrl3(url) === null ? null : url;
+}
+function skillAtom(url, sha256) {
+  const thing = toolThing2(url);
+  return { uri: thingUriOfDigest(sha256(thingDocument2(thing))), label: thing.name };
+}
+async function readSkillLines(atomUri, config) {
+  const words = [HAS_OUTCOME_LABEL3, BECAUSE_LABEL3, NEEDS_LABEL3, WITH_LABEL3];
+  const atoms = await findToolAtoms2([atomUri, ...words], config);
+  const tool = atoms.get(atomUri);
+  const hasOutcome = atoms.get(HAS_OUTCOME_LABEL3);
+  const because = atoms.get(BECAUSE_LABEL3);
+  if (tool === undefined || hasOutcome === undefined || because === undefined)
+    return null;
+  const needs = atoms.get(NEEDS_LABEL3);
+  const withId = atoms.get(WITH_LABEL3);
+  const usage = await getPulseUsage2([tool], {
+    ...config,
+    hasOutcome,
+    because,
+    ...needs === undefined ? {} : { needs },
+    ...withId === undefined ? {} : { with: withId }
+  });
+  return usage.get(tool.toLowerCase()) ?? null;
+}
+function counted(counts) {
+  return [...counts.entries()].sort(([a, x], [b, y]) => y.size - x.size || a.localeCompare(b)).map(([name, wallets]) => `${name} (${wallets.size})`).join(", ");
+}
+var plural2 = (n) => `${n} wallet${n === 1 ? "" : "s"}`;
+function linesSentence(usage, label, where) {
+  if (usage === null)
+    return null;
+  const parts = [];
+  for (const outcome of ["failed", "worked"]) {
+    const wallets = new Set;
+    const because = new Map;
+    const named = new Map;
+    const add = (to, name, wallet) => to.set(name, (to.get(name) ?? new Set).add(wallet));
+    for (const row of usage.declarations) {
+      const wallet = row.writer.toLowerCase();
+      for (const line of row.lines) {
+        if (line.outcome !== outcome)
+          continue;
+        wallets.add(wallet);
+        for (const reason of line.reasons)
+          add(because, reason, wallet);
+        for (const name of (outcome === "failed" ? line.needs : line.with) ?? [])
+          add(named, name, wallet);
+      }
+    }
+    if (wallets.size === 0)
+      continue;
+    const detail = [
+      ...because.size === 0 ? [] : [`because ${counted(because)}`],
+      ...named.size === 0 ? [] : [`${outcome === "failed" ? "needs" : "with"} ${counted(named)}`]
+    ];
+    parts.push([`${usage.truncated ? "at least " : ""}${plural2(wallets.size)} wrote ${outcome}`, ...detail].join(" · "));
+  }
+  if (parts.length === 0)
+    return null;
+  return `ARP, lines agents wrote on ${label} (${where}): ${parts.join("; ")}.`;
+}
+// ../../data/deployments/13579.json
+var _13579_default = {
+  chain: {
+    name: "Intuition Testnet",
+    chainId: 13579,
+    chainIdHex: "0x350b",
+    nativeCurrency: {
+      name: "Test Trust",
+      symbol: "tTRUST",
+      decimals: 18
+    },
+    rpcUrl: "https://testnet.rpc.intuition.systems/http",
+    explorerUrl: "https://testnet.explorer.intuition.systems",
+    graphqlUrl: "https://testnet.intuition.sh/v1/graphql",
+    _source: [
+      "Intuition skill: .claude/skills/intuition/SKILL.md (table at line 149, Viem chain config at line 184)",
+      "MetaMask deployments: ~/Project/metamask-smart-accounts-kit/packages/delegation-deployments/src/index.ts (CHAIN_ID.intuitionTestnet = 0x350b)"
+    ]
+  },
+  intuition: {
+    _source: ".claude/skills/intuition/SKILL.md line 152",
+    multiVault: "0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91"
+  },
+  metamaskDelegationFramework: {
+    version: "1.3.0",
+    _source: "MetaMask deployments package (~/Project/metamask-smart-accounts-kit/packages/delegation-deployments/src/contractAddresses.ts → DEPLOYMENTS_1_3_0). All addresses are deterministic CREATE2 — same value on every chain MetaMask supports. Intuition Testnet (chainId 0x350b) is explicitly mapped to DEPLOYMENTS_1_3_0 at packages/delegation-deployments/src/index.ts line 148.",
+    delegationManager: "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
+    entryPoint: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+    simpleFactory: "0x69Aa2f9fe1572F1B640E1bbc512f5c3a734fc77c",
+    implementations: {
+      hybridDeleGator: "0x48dBe696A4D990079e039489bA2053B36E8FFEC4",
+      multiSigDeleGator: "0x56a9EdB16a0105eb5a4C54f4C062e2868844f3A7",
+      eip7702StatelessDeleGator: "0x63c0c19a282a1B52b07dD5a65b58948A07DAE32B"
+    },
+    enforcers: {
+      _note: "Standard caveat enforcers. ARP composes its custom DomainScopeEnforcer + TrustStakeCapEnforcer alongside a subset of these.",
+      allowedCalldata: "0xc2b0d624c1c4319760C96503BA27C347F3260f55",
+      allowedMethods: "0x2c21fD0Cb9DC8445CB3fb0DC5E7Bb0Aca01842B5",
+      allowedTargets: "0x7F20f61b1f09b08D970938F6fa563634d65c4EeB",
+      approvalRevocation: "0xe264F1f09A19505a1ca1a86D5b01E8bFdb64324A",
+      blockNumber: "0x5d9818dF0AE3f66e9c3D0c5029DAF99d1823ca6c",
+      deployed: "0x24ff2AA430D53a8CD6788018E902E098083dcCd2",
+      erc20BalanceChange: "0xcdF6aB796408598Cea671d79506d7D48E97a5437",
+      erc20TransferAmount: "0xf100b0819427117EcF76Ed94B358B1A5b5C6D2Fc",
+      erc20PeriodTransfer: "0x474e3Ae7E169e940607cC624Da8A15Eb120139aB",
+      erc20Streaming: "0x56c97aE02f233B29fa03502Ecc0457266d9be00e",
+      erc721BalanceChange: "0x8aFdf96eDBbe7e1eD3f5Cd89C7E084841e12A09e",
+      erc721Transfer: "0x3790e6B7233f779b09DA74C72b6e94813925b9aF",
+      erc1155BalanceChange: "0x63c322732695cAFbbD488Fc6937A0A7B66fC001A",
+      exactCalldataBatch: "0x982FD5C86BBF425d7d1451f974192d4525113DfD",
+      exactCalldata: "0x99F2e9bF15ce5eC84685604836F71aB835DBBdED",
+      exactExecutionBatch: "0x1e141e455d08721Dd5BCDA1BaA6Ea5633Afd5017",
+      exactExecution: "0x146713078D39eCC1F5338309c28405ccf85Abfbb",
+      id: "0xC8B5D93463c893401094cc70e66A206fb5987997",
+      logicalOrWrapper: "0xE1302607a3251AF54c3a6e69318d6aa07F5eB46c",
+      limitedCalls: "0x04658B29F6b82ed55274221a06Fc97D318E25416",
+      nativeBalanceChange: "0xbD7B277507723490Cd50b12EaaFe87C616be6880",
+      argsEqualityCheck: "0x44B8C6ae3C304213c3e298495e12497Ed3E56E41",
+      nativeTokenPayment: "0x4803a326ddED6dDBc60e659e5ed12d85c7582811",
+      nativeTokenTransferAmount: "0xF71af580b9c3078fbc2BBF16FbB8EEd82b330320",
+      nativeTokenStreaming: "0xD10b97905a320b13a0608f7E9cC506b56747df19",
+      nativeTokenPeriodTransfer: "0x9BC0FAf4Aca5AE429F4c06aEEaC517520CB16BD9",
+      nonce: "0xDE4f2FAC4B3D87A1d9953Ca5FC09FCa7F366254f",
+      ownershipTransfer: "0x7EEf9734E7092032B5C56310Eb9BbD1f4A524681",
+      redeemer: "0xE144b0b2618071B4E56f746313528a669c7E65c5",
+      specificActionERC20TransferBatch: "0x6649b61c873F6F9686A1E1ae9ee98aC380c7bA13",
+      timestamp: "0x1046bb45C8d673d4ea75321280DB34899413c069",
+      valueLte: "0x92Bf12322527cAA612fd31a0e810472BBB106A8F",
+      multiTokenPeriod: "0xFB2f1a9BD76d3701B730E5d69C3219D42D80eBb7"
+    }
+  },
+  arp: {
+    endpointBinding: {
+      _note: "Task 39c, ADR 0094/0095. The two predicates the endpoint binding is written with: (agent identity atom) has endpoint (endpoint atom), and (pinned binding document) in context of (that triple). Both READ FROM THE GRAPH, neither minted by ARP: scripts/measure/endpoint-predicate.ts, run 2026-10-30, found `has endpoint` (Thing, 6 triples) and `in context of` (Thing, 29 triples) on testnet 13579, and none of `reachable at`, `is reachable at`, `served at`, `hosted at`. `in context of` differs from mainnet's 0x892054b0… (scripts/measure/nested-triples.ts), so never copy it across chains.",
+      measuredAt: "2026-10-30",
+      hasEndpoint: "0xa4488686eb3702e4e972a971ea008d6832a7f935b942366f1091566d1993a5f1",
+      inContextOf: "0x61a88b9c372c0d164d2caf66947b67ed0fcb4c457178a271b6b3dc39fb1f8862"
+    },
+    _note: "Written by scripts/deploy/deploy.sh --broadcast. Addresses are EOA-nonce-derived (CREATE). deploy.sh skips a contract whose address here already has code unless --force, and on a redeploy keeps the replaced address under <name>V<n>. ModuleRegistry and DomainScopeEnforcer were removed from src/ in 59ac83a; their entries are the record.",
+    deployer: "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+    deployedAt: "2026-06-01T13:30:00Z",
+    moduleRegistry: "0xc9a2f66775828017e984E8be077fA2d17e0A41F4",
+    moduleRegistryV1: "0x777C28eCb4688D647B535098d11fB87A9746334f",
+    _moduleRegistryNote: "Redeployed 2026-06-03 with schemaURI uniqueness (ADR 0013). V1 address kept for historical reference; orphan (UI reads V2).",
+    domainScopeEnforcer: "0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9",
+    trustStakeCapEnforcer: "0x19e07280F1483Aa9aCDb1a7F8C61bfd20c7879Bc",
+    identityRegistry: "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+    sponsor: "0x77939A4c276f3E549276CEB3A09CDa1fF58b7ec9",
+    sponsorV1: "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+    _sponsorNote: "The address ARP's sponsoring service sends from on 13579 (apps/sponsor, ADR 0092, 0094). Since 2026-11-09 a key of its own, for the hosted service (task 78, ADR 0149): sponsorV1 is the deployer's key, which sent for it before and also holds mainnet funds. Not a contract: an EOA whose key is a file mounted into the service's container, never read by an agent. Before 2026-11-09: The address ARP's sponsoring service sends from on 13579 (apps/sponsor, ADR 0092, 0094): its GET / answered this on 2026-11-02. /tools counts every deposit it sent in Usage: the proof-gated ones, the edge creations it paid for, and, because the address is also ARP's deployer, 3 deposits written before the service existed (scripts/measure/sponsor-deposit-provenance.ts, 2026-11-03). Not a contract: an EOA whose key is in a 0600 file the agent never reads.",
+    deployedTxs: {
+      moduleRegistry: "0x6ee4f4d76dd55c69ea434f8c3c204cb6149df1c588910b1792db1650681fbc2e",
+      moduleRegistryV1: "0x02abe9a0c598df131995bc40927a4e0be0b86e7bdbfe747cfdf37fb19b069634",
+      domainScopeEnforcer: "0x6ca2c4e680b45eaa37147c2458bd38d756e6ffabb560755657cc9caf893df272",
+      trustStakeCapEnforcer: "0x8dd54ea3eeba14645531c501c3f1b8ec95e6a95788825e00fbe239ff32263159",
+      identityRegistry: "0x60b1f6ff7dbdcbca6864794eb9c5cf1e3ba94770daac6d2e77a4df00d726900c",
+      trustStakeCapEnforcerV1: "0x80e36828202a9c7606b92146076ed123155a94cfda3a2ab53013bd27be71764f"
+    },
+    explorerLinks: {
+      moduleRegistry: "https://testnet.explorer.intuition.systems/address/0xc9a2f66775828017e984E8be077fA2d17e0A41F4",
+      moduleRegistryV1: "https://testnet.explorer.intuition.systems/address/0x777C28eCb4688D647B535098d11fB87A9746334f",
+      domainScopeEnforcer: "https://testnet.explorer.intuition.systems/address/0x516B82E29e3Ca46Ca810FC2EEf348932b198f7f9",
+      trustStakeCapEnforcer: "https://testnet.explorer.intuition.systems/address/0x19e07280F1483Aa9aCDb1a7F8C61bfd20c7879Bc",
+      identityRegistry: "https://testnet.explorer.intuition.systems/address/0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      trustStakeCapEnforcerV1: "https://testnet.explorer.intuition.systems/address/0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E"
+    },
+    modules: [
+      {
+        id: "1",
+        name: "Solidity Audit",
+        domain: "solidity-audit",
+        schemaURI: "ipfs://bafkreiembmtprqzufrdkvig74lskv6iazuatblm4hwmtxkf5a3v67mkdkm",
+        creator: "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+        tx: "0xbd97979b197e4423293180e36d69f72e8eb07d2bb11bdfb2940ec918d6f6af3c"
+      }
+    ],
+    intuitionAtoms: [
+      {
+        atomId: "0xde8890fca8dde322ca57bce0e20dfeb23be67332f9101305ebe72facdee032dc",
+        uri: "ipfs://bafkreiembmtprqzufrdkvig74lskv6iazuatblm4hwmtxkf5a3v67mkdkm",
+        tx: "0x97db7629c6c973d43c0c62325754d750ee262853bdbd87496b4b82c1ea3d0ac7"
+      }
+    ],
+    rigAgents: {
+      _note: "Task 24. ERC-8004 agents on ARP's own testnet registry, minted 2026-10-19 on chain 13579. SIGNED BY THE AGENT SESSION using the operator's PRIVATE_KEY from .env, on the user's explicit authorisation — not by a human at a keyboard. See ADR 0037. security.md scopes its automation prohibition to mainnet, so this is permitted and was previously unwritten. Agents 1 and 2 were left with an EMPTY tokenURI deliberately: no-token-uri is 23% of the real cohort (32/140, scripts/measure/cohort-endpoints.ts), so they exercise a branch the three new agents cannot. Permanent: the ids are taken and setAgentURI leaves the superseded URI in the mint transaction's calldata.",
+      registry: "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+      agents: {
+        "3": {
+          slug: "rig-confirmed",
+          exercises: "confirmed/serves-declared-protocol + tools/list recovery",
+          endpoint: "http://localhost:3002/mcp",
+          _endpointNote: "ARP's own MCP server, local by default. ARP_MCP_ENDPOINT regenerates the file and setAgentURI can update the agent — but that escape hatch is a rehearsal prop: portability.md rule 4 says any step that works because ARP can write to the registry is not a step, and on mainnet ARP owns no registry. The real fix is a public endpoint.",
+          tx: "0xce4fee69c692ddf57d4537b23479d78384a9e2d06b733b532e419055ed50a086",
+          documentSha256_16: "478ac85cd6b2357f",
+          _documentShaNote: "sha256 of the data: URI, first 16 hex. Lets repo-vs-chain drift be detected: the fixtures in scripts/seed/rig-registration-files.ts are the source of truth for three permanent mints, and an edit to FILES would otherwise diverge silently. Checked by scripts/verify/verify-rig-claims.ts against a gate report. ONLY REPRODUCIBLE WITH ARP_MCP_ENDPOINT UNSET: OWN_ENDPOINT reads the environment and the document is hashed after substitution, so anyone with it exported sees a false DRIFT."
+        },
+        "4": {
+          slug: "rig-dead",
+          exercises: "confirmed/dead",
+          endpoint: "http://192.0.2.1/mcp",
+          _endpointNote: "TEST-NET-1, RFC 5737 — reserved and never routable, so it always times out. A .invalid hostname was tried first and gave inconclusive/transport-error, because a DNS failure is indistinguishable from our own network being down.",
+          tx: "0x87bf71cf0ce55db7f82ca617b8601ee87f870e67018b1097a311ed2d61cc7378",
+          uriUpdatedTx: "0x8f5950a61fca19b6a3f69b26f6c4159e29833689ed4b1623d8610206bfe87100",
+          documentSha256_16: "6db8b769dd551e98"
+        },
+        "5": {
+          slug: "rig-unprobeable",
+          exercises: "not-checkable ×2 — templated and non-http-identifier. Never a defect.",
+          tx: "0x859aff609fa10dba635ffd12d0b60b598c7c3174238f61962edb4b5eee1a0efd",
+          documentSha256_16: "f61a9d7f6637958e"
+        }
+      },
+      gate: {
+        command: "bun run scripts/verify/verify-cohort.ts --target intuition-testnet --ids 1,2,3,4,5 --tools --out /tmp/gate.json && bun run scripts/verify/verify-rig-claims.ts /tmp/gate.json",
+        ranAt: "2026-10-19",
+        result: "5 agents: 2 with no tokenURI (40%), 3 read. 4 endpoints: 2 confirmed (serves-declared-protocol, dead), 2 not-checkable (templated, non-http-identifier), 0 inconclusive, 1 capability list recovered (arp_tool_reputation).",
+        _requires: "apps/mcp/src/server.ts listening on :3002, or agent 3 reports inconclusive. The confirmed branch is therefore reproducible only on a host running that server — a known limit of this gate until ARP has a public endpoint.",
+        _widerThanSpecced: "--ids 1,2,3,4,5 rather than 3,4,5. Including the two empty-tokenURI agents exercises a fifth branch for two extra requests.",
+        _claimsCheck: "verify-rig-claims.ts asserts each fixture's `exercises` prose against the outcome the probe observed, and the document hashes against this file. The unit suite CANNOT close that class: confirmed and inconclusive are both probeable before a request is sent, and the mutation that actually shipped lived exactly there."
+      }
+    },
+    trustStakeCapEnforcerV1: "0x7BB56819E9a413B8B4668C5cAF5C494c41dC0F8E",
+    delegationRegister: {
+      _note: "Task 37c, ADR 0092 item 7. The two predicates a published delegation is written with: (delegator CAIP-10) delegate to (delegate CAIP-10), and (pinned document) in context of (that triple). Both READ FROM THE GRAPH, neither minted by ARP: on testnet 13579 on 2026-11-03 exactly one atom carries each label, a Thing, `delegate to` in 10 triples and `in context of` in 29. `in context of` is the one endpointBinding uses. Never copy either across chains.",
+      measuredAt: "2026-11-03",
+      delegateTo: "0xb56980d42a3b03455bf41ea20fe04ae223fca0b9e688994dc661414e81e6433b",
+      inContextOf: "0x61a88b9c372c0d164d2caf66947b67ed0fcb4c457178a271b6b3dc39fb1f8862"
+    }
+  }
+};
+
 // ../hook/src/skill-failure.ts
 import { existsSync, mkdirSync as mkdirSync2, readFileSync as readFileSync2 } from "node:fs";
 import { homedir as homedir2 } from "node:os";
@@ -1732,31 +2860,6 @@ function domainInText2(text, words) {
     return label;
   const alias = Object.keys(words.aliases).filter((a) => words.labels.includes(words.aliases[a]) && hit(a)).sort((a, b) => b.length - a.length)[0];
   return alias === undefined ? null : words.aliases[alias];
-}
-
-// ../../packages/protocol/src/declare/line-need.ts
-var PROGRAM_NAME3 = /^[a-z0-9][a-z0-9._+-]{0,39}$/;
-var KEY_NAME4 = /^[A-Z][A-Z0-9_]{2,63}$/;
-function needKindOf3(name) {
-  if (PROGRAM_NAME3.test(name))
-    return "program";
-  if (KEY_NAME4.test(name))
-    return "key";
-  return null;
-}
-var escaped = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-function namedInSkill3(name, markdown) {
-  const kind = needKindOf3(name);
-  if (kind === null)
-    return false;
-  const pattern = new RegExp(`(?<![A-Za-z0-9_+.-])${escaped(name)}(?![A-Za-z0-9_+-])(?!\\.[A-Za-z0-9])`, kind === "program" ? "i" : "");
-  return pattern.test(markdown);
-}
-function publishableNeed3(name, markdown, kind) {
-  const shape = needKindOf3(name);
-  if (shape === null || kind !== undefined && shape !== kind)
-    return null;
-  return namedInSkill3(name, markdown) ? name : null;
 }
 // ../../data/catalogue/domain-aliases.json
 var domain_aliases_default = {
@@ -2840,13 +3943,13 @@ function appendFailure(line) {
 function recordSkillFailure(call, cwd) {
   const classified = classifyCall(call);
   if (classified === null || classified.outcome === "ok" || call.session === null)
-    return;
+    return null;
   const command = call.input?.["command"];
   if (typeof command !== "string")
-    return;
+    return null;
   const reason = failureReason(failureText(call));
   if (reason === null)
-    return;
+    return null;
   try {
     const log = process.env["ARP_SESSION_LOG"] ?? join3(cwd, ".arp", "session.jsonl");
     for (const skill of skillsOfSession(log, call.session)) {
@@ -2860,7 +3963,7 @@ function recordSkillFailure(call, cwd) {
       const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync2(call.transcript, "utf8")) : "";
       const domain = search?.domain ?? contextOf(words, skill.name);
       const need = needOf(reason, failureText(call), markdown);
-      appendFailure({
+      const line = {
         at: new Date().toISOString(),
         session: call.session,
         skill: skill.name,
@@ -2868,15 +3971,61 @@ function recordSkillFailure(call, cwd) {
         ...domain === null ? {} : { domain },
         reason,
         ...need === null ? {} : { need }
-      });
-      return;
+      };
+      return appendFailure(line) ? line : null;
     }
   } catch {}
+  return null;
+}
+
+// ../hook/src/failure-answer.ts
+var ANSWER_MS = 3000;
+var WHERE = "Intuition testnet 13579";
+var IN_CONTEXT_OF = _13579_default.arp.endpointBinding.inContextOf;
+var PAYERS = [_13579_default.arp.deployer, _13579_default.arp.sponsor];
+var sha256 = (text) => createHash("sha256").update(text, "utf8").digest();
+async function answerFailure(failure, env = process.env, fetcher) {
+  if (env["ARP_FAILURE_LINES"] === "off" || failure.source === null)
+    return null;
+  const url = skillUrlOf2(failure.source, failure.skill);
+  if (url === null)
+    return null;
+  const { uri, label } = skillAtom(url, sha256);
+  const graphqlUrl = env["INTUITION_GRAPHQL_URL"] ?? _13579_default.chain.graphqlUrl;
+  let timer;
+  const late = new Promise((resolve) => {
+    timer = setTimeout(() => resolve(null), ANSWER_MS);
+  });
+  const read = readSkillLines(uri, {
+    graphqlUrl,
+    inContextOf: IN_CONTEXT_OF,
+    payers: PAYERS,
+    timeoutMs: ANSWER_MS,
+    ...fetcher === undefined ? {} : { fetch: fetcher }
+  }).then((usage) => linesSentence(usage, label, WHERE)).catch(() => null);
+  try {
+    return await Promise.race([read, late]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+function failureOutput(context) {
+  return JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUseFailure", additionalContext: context } });
+}
+var RECORD = Symbol("record");
+async function postToolUseFailure(payload) {
+  const call = toolCallOf(payload);
+  if (call === null || call.tool !== "Bash")
+    return RECORD;
+  const failure = recordSkillFailure(call, call.cwd ?? process.cwd());
+  const context = failure === null ? null : await answerFailure(failure);
+  return context === null ? null : failureOutput(context);
 }
 
 // ../hook/src/hook.ts
 var ROUTES = {
-  PreToolUse: (payload) => preToolUse(payload)
+  PreToolUse: (payload) => preToolUse(payload),
+  PostToolUseFailure: (payload) => postToolUseFailure(payload)
 };
 async function route(handler, payload) {
   let out = null;
@@ -2885,11 +4034,13 @@ async function route(handler, payload) {
   } catch {
     out = null;
   }
+  if (out === RECORD)
+    return;
   if (out === null)
     process.exit(0);
   process.stdout.write(`${out}
 `, () => process.exit(0));
-  return new Promise(() => {
+  await new Promise(() => {
     return;
   });
 }
@@ -2936,7 +4087,7 @@ function responseOf(call, outcome) {
   }
   return { answered: raw !== null, bytes, failed: outcome !== "ok" };
 }
-function readString(from, key) {
+function readString2(from, key) {
   const value = from?.[key];
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
@@ -2952,15 +4103,15 @@ function serverRef(server, cwd) {
 }
 function whatOf(call, cwd, fetched) {
   if (call.tool === "Skill") {
-    const name = readString(call.input, "skill");
+    const name = readString2(call.input, "skill");
     if (name === null)
       return null;
-    const source = readString(call.input, "source");
+    const source = readString2(call.input, "source");
     return {
       kind: "skill",
       name,
       source,
-      ref: readString(call.input, "atom_id") ?? readString(call.input, "tool_atom_id") ?? readString(call.input, "url") ?? refForInvocation(name, source, fetched())
+      ref: readString2(call.input, "atom_id") ?? readString2(call.input, "tool_atom_id") ?? readString2(call.input, "url") ?? refForInvocation(name, source, fetched())
     };
   }
   const mcp = /^mcp__([^_]+(?:_[^_]+)*?)__/.exec(call.tool);

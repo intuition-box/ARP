@@ -20,7 +20,6 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/bin/hook.js\"",
-            "async": true,
             "timeout": 10
           }
         ]

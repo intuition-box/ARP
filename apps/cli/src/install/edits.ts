@@ -87,6 +87,7 @@ export type HookEvent = {
  * | event | why |
  * | --- | --- |
  * | `PostToolUse`, `PostToolUseFailure` | the recording; a failed call reaches only the second (ADR `0090`) |
+ * | the same `PostToolUseFailure` row, waited on | a skill's failure is also answered with that skill's lines; the hook bounds its read at 3 s (task 99, ADR `0168`) |
  * | `PreToolUse` on `Bash`, waited on | a skills install, read before it runs (task 98, ADR `0167`) |
  *
  * The `PreToolUse` rule is `Bash(*skills*)`, wider than an install, because the command has many
@@ -99,7 +100,7 @@ export const CLAUDE_HOOKS: HookSpec = {
   shape: 'nested',
   events: [
     { name: 'PostToolUse', matcher: '*' },
-    { name: 'PostToolUseFailure', matcher: '*' },
+    { name: 'PostToolUseFailure', matcher: '*', sync: true },
     { name: 'PreToolUse', matcher: 'Bash', sync: true, timeout: 15, if: 'Bash(*skills*)' },
   ],
   entry: (command, event) => ({

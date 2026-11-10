@@ -21955,22 +21955,7 @@ var init_tool_atom = __esm(() => {
   init_dist();
 });
 
-// ../../packages/protocol/dist/declare/agent-atom.js
-function canonicalAgentThing(chainId, tokenId, registration) {
-  const normalize = (value) => {
-    if (typeof value !== "string")
-      return null;
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : null;
-  };
-  const agentKey = `${chainId}:${tokenId}`;
-  return {
-    name: normalize(registration?.name) ?? `Agent ${agentKey}`,
-    description: normalize(registration?.description) ?? `ERC-8004 agent ${agentKey}`,
-    image: normalize(registration?.image) ?? "",
-    url: normalize(registration?.webEndpoint) ?? `https://8004scan.io/agents/${chainId}/${tokenId}`
-  };
-}
+// ../../packages/protocol/dist/declare/thing-cid.js
 function thingDocument(thing) {
   return JSON.stringify({
     "@context": "https://schema.org",
@@ -21998,12 +21983,31 @@ function base32(bytes) {
     out += alphabet[value << 5 - bits & 31];
   return out;
 }
-function thingUri(thing) {
-  const digest = toBytes2(sha2563(toBytes2(thingDocument(thing))));
+function thingUriOfDigest(digest) {
   const cid = new Uint8Array(4 + digest.length);
   cid.set([1, 85, 18, 32]);
   cid.set(digest, 4);
   return `ipfs://b${base32(cid)}`;
+}
+
+// ../../packages/protocol/dist/declare/agent-atom.js
+function canonicalAgentThing(chainId, tokenId, registration) {
+  const normalize = (value) => {
+    if (typeof value !== "string")
+      return null;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  };
+  const agentKey = `${chainId}:${tokenId}`;
+  return {
+    name: normalize(registration?.name) ?? `Agent ${agentKey}`,
+    description: normalize(registration?.description) ?? `ERC-8004 agent ${agentKey}`,
+    image: normalize(registration?.image) ?? "",
+    url: normalize(registration?.webEndpoint) ?? `https://8004scan.io/agents/${chainId}/${tokenId}`
+  };
+}
+function thingUri(thing) {
+  return thingUriOfDigest(toBytes2(sha2563(toBytes2(thingDocument(thing)))));
 }
 var init_agent_atom = __esm(() => {
   init__esm();
@@ -24394,6 +24398,13 @@ var init_line_need = __esm(() => {
   KEY_NAME3 = /^[A-Z][A-Z0-9_]{2,63}$/;
 });
 
+// ../../packages/protocol/dist/declare/usage-words.js
+var USAGE_OUTCOMES2, HAS_OUTCOME_LABEL2 = "has outcome", USAGE_REASONS2, BECAUSE_LABEL2 = "because";
+var init_usage_words = __esm(() => {
+  USAGE_OUTCOMES2 = ["worked", "failed"];
+  USAGE_REASONS2 = ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"];
+});
+
 // ../../packages/protocol/dist/declare/usage-context.js
 function isUsageOutcome2(value) {
   return USAGE_OUTCOMES2.some((outcome) => outcome === value);
@@ -24536,14 +24547,13 @@ function budgetRefusal2(totalValue, budget) {
     detail: `this costs ${totalValue} wei, more than the ${budget} wei left. Nothing was planned to send`
   };
 }
-var USAGE_OUTCOMES2, HAS_OUTCOME_LABEL2 = "has outcome", USAGE_REASONS2, BECAUSE_LABEL2 = "because";
 var init_usage_context = __esm(() => {
   init__esm();
   init_x402_payment();
   init_line_need();
   init_multivault();
-  USAGE_OUTCOMES2 = ["worked", "failed"];
-  USAGE_REASONS2 = ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"];
+  init_usage_words();
+  init_usage_words();
 });
 
 // ../../packages/protocol/dist/local-failures.js
@@ -25075,7 +25085,7 @@ var DEFAULT_LIMIT2 = 250, rowsOf = (data) => Array.isArray(data["triples"]) ? da
 var init_pulse_usage = __esm(() => {
   init_dist();
   init_line_need();
-  init_usage_context();
+  init_usage_words();
   init_terms();
   init_probe();
 });
@@ -43633,7 +43643,7 @@ var init_edits = __esm(() => {
     shape: "nested",
     events: [
       { name: "PostToolUse", matcher: "*" },
-      { name: "PostToolUseFailure", matcher: "*" },
+      { name: "PostToolUseFailure", matcher: "*", sync: true },
       { name: "PreToolUse", matcher: "Bash", sync: true, timeout: 15, if: "Bash(*skills*)" }
     ],
     entry: (command, event) => ({
@@ -43780,7 +43790,7 @@ function claudeMcpSteps(env, commands, project, remove, allowCli) {
   ];
 }
 function claudeHookStep(env, commands, project, remove) {
-  return jsonStep(claudeFiles(env, project).settings, (settings) => withHooks(settings, CLAUDE_HOOKS, remove ? null : commands.hook, commands.hookFile), remove ? `hooks: arp removed from ${eventNames(CLAUDE_HOOKS).join(", ")}` : `hooks: arp on ${CLAUDE_HOOKS.events.map((event) => `${event.name}${event.sync === true ? " (waited on, Bash skills installs only)" : ""}`).join(", ")}`, (settings) => hooksOf(settings, CLAUDE_HOOKS, commands.hookFile));
+  return jsonStep(claudeFiles(env, project).settings, (settings) => withHooks(settings, CLAUDE_HOOKS, remove ? null : commands.hook, commands.hookFile), remove ? `hooks: arp removed from ${eventNames(CLAUDE_HOOKS).join(", ")}` : `hooks: arp on ${CLAUDE_HOOKS.events.map((event) => `${event.name}${event.sync !== true ? "" : event.if === undefined ? " (waited on)" : " (waited on, Bash skills installs only)"}`).join(", ")}`, (settings) => hooksOf(settings, CLAUDE_HOOKS, commands.hookFile));
 }
 function claudeVersionCheck(env) {
   if (env.which("claude") === null)

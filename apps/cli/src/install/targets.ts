@@ -332,7 +332,7 @@ function claudeHookStep(
     remove
       ? `hooks: arp removed from ${eventNames(CLAUDE_HOOKS).join(', ')}`
       : `hooks: arp on ${CLAUDE_HOOKS.events
-          .map((event) => `${event.name}${event.sync === true ? ' (waited on, Bash skills installs only)' : ''}`)
+          .map((event) => `${event.name}${event.sync !== true ? '' : event.if === undefined ? ' (waited on)' : ' (waited on, Bash skills installs only)'}`)
           .join(', ')}`,
     (settings) => hooksOf(settings, CLAUDE_HOOKS, commands.hookFile),
   );
