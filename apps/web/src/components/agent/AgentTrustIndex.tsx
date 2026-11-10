@@ -35,8 +35,8 @@ export function AgentTrustIndex({registrationFile}: {registrationFile: string | 
             aside={
                 <>
                     <Hint label="What the x402 Trust Index is" align="right">
-                        Fizzl&apos;s daily check of listed x402 endpoints, made without paying: go,
-                        caution or no_go, and the days it could be paid.
+                        x402 Doctor&apos;s daily check of listed x402 endpoints, made without paying: go,
+                        caution or no go, and the days it could be paid.
                     </Hint>
                     {day === null ? null : (
                         <span className="ml-auto normal-case tracking-[0.04em] text-[color:var(--color-steel)]">
@@ -67,7 +67,7 @@ function Row({row}: {row: EndpointOutsideView}) {
     let said: string;
     if (row.found.kind === "endpoint") {
         const {verdict, daysPayable, daysChecked} = row.found.entry;
-        said = `${verdict === "error" ? "unreachable" : verdict} · payable ${daysPayable}/${daysChecked} days`;
+        said = `${verdict === "error" ? "unreachable" : verdict === "no_go" ? "no go" : verdict} · payable ${daysPayable}/${daysChecked} days`;
     } else if (row.found.kind === "host") {
         const {endpoints, go} = row.found.host;
         said = `not listed · its host ${go}/${endpoints} go`;
