@@ -65,7 +65,7 @@ Results come ordered by `score`, shown with its parts. Fewer than 3 wallets sayi
 | `query` | string | A few words for the need |
 | `search_output` | string | The text of `npx skills find <query>`, when the host cannot run `npx`. Replaces `query` |
 | `domain` | string | A category of the tree, such as `video`. Read from the query when left out |
-| `constraints` | object | What this person cannot or will not accept. Stays local. Fields below |
+| `constraints` | object | What this person cannot or will not accept. Used for this call only, never kept. Fields below |
 | `limit` | number | Distinct contents to return, 1 to 20. Defaults to 5 |
 
 `constraints` fields: `no_keys`, `no_login`, `no_paid`, `no_scripts` (booleans), `have_commands` (the commands this machine has), `can_provide` (any of `key`, `program`, `file`: a failure declared for lack of it does not lower a result).

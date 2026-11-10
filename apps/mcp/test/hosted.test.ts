@@ -200,6 +200,7 @@ describe("the hosted server", () => {
 
         // The control: the same calls, on a server that is not hosted, put an argument in its log.
         expect(local!.output()).toContain(ATOM.slice(2, 18));
+        expect(local!.output()).toContain(WORDS);
         // The caller still gets its own error back, argument included.
         expect(answeredHosted.join("\n")).toContain(ATOM.slice(2, 18));
         expect(answeredLocal.length).toBe(3);

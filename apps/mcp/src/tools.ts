@@ -180,7 +180,7 @@ export const TOOLS = [
         },
         constraints: {
           type: 'object',
-          description: 'What this person cannot or will not accept. Stays local.',
+          description: 'What this person cannot or will not accept. Used for this call only, never kept.',
           properties: {
             no_keys: { type: 'boolean', description: 'Set aside a file that mentions an API key or a token.' },
             no_login: { type: 'boolean', description: 'Flag a file that mentions a login or a sign-up.' },
