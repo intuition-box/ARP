@@ -76,6 +76,11 @@ export type SkillPulse = SkillSearchResult &
               repository: SkillRepository | null;
               /** When the repository's file list was read, if it came from a cache. */
               listingReadAt?: string;
+              /**
+               * Set when this came from ARP's dated reading of the catalogue rather than a read now: when it
+               * was read, and the script that read it (task 113). A file changed since is not seen.
+               */
+              datedReading?: {readAt: string; by: string};
           } & SkillFacts)
         /**
          * GitHub's limit was reached, and the file was read at a usual path without the repository's list.
@@ -129,6 +134,12 @@ export type GitHubQuota = {
 export type ListingCache = {
     get(repo: string): Promise<RepositoryListing | null>;
     set(repo: string, listing: RepositoryListing): Promise<void>;
+};
+
+/** File texts at `HEAD`, keyed by repository and path. `null` is a file GitHub did not serve. */
+export type FileCache = {
+    get(key: string): string | null | undefined;
+    set(key: string, text: string | null): void;
 };
 
 /** Beyond this a repository is a collection, and reading each file's name costs too much per ask. */
@@ -334,6 +345,25 @@ type Located =
     | {status: "ambiguous"; paths: string[]}
     | {status: "incomplete"; reason: "truncated_listing" | "too_many_skill_files"};
 
+/** How many other `SKILL.md` files one result may read to find its name, and how many at once. */
+export const MAX_NAME_READS = 12;
+const NAME_BATCH = 6;
+
+const wordsOf = (text: string): string[] => text.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 1);
+
+/**
+ * Candidates ordered by how many of the name's words their path shares, then by path. `Smart Contract Audit`
+ * sits in `ethskills-audit/` in `bankrbot/skills`, among 156 skill files (2026-11-10), and is the first read.
+ */
+function byNearness(files: readonly ListedFile[], wanted: string): ListedFile[] {
+    const words = new Set(wordsOf(wanted));
+    const shared = (file: ListedFile) => wordsOf(parentOf(file.path)).filter((word) => words.has(word)).length;
+    return files
+        .map((file) => ({file, shared: shared(file)}))
+        .sort((a, b) => b.shared - a.shared || (a.file.path < b.file.path ? -1 : a.file.path > b.file.path ? 1 : 0))
+        .map((entry) => entry.file);
+}
+
 /** Find the file whose frontmatter names the skill, trying directories that carry the name first. */
 async function locate(
     source: PulseSource,
@@ -357,14 +387,20 @@ async function locate(
         if (others.length > MAX_SKILL_FILES_READ) {
             return {status: "incomplete", reason: "too_many_skill_files"};
         }
-        for (let at = 0; at < others.length && named.length === 0; at += 20) {
-            named = await read(others.slice(at, at + 20));
+        // Read the files nearest the name first, and no more than `MAX_NAME_READS`: reading every other
+        // `SKILL.md` was 173 of one search's 215 requests (task 113, `scripts/measure/pulse-requests.ts`).
+        // A file found past the cap would have been found by an installer, so the answer is `incomplete`,
+        // never `absent`. A second copy is looked for only among the same nearest files.
+        const nearest = byNearness(others, wanted).slice(0, MAX_NAME_READS);
+        let readTo = 0;
+        while (readTo < nearest.length && named.length === 0) {
+            named = await read(nearest.slice(readTo, readTo + NAME_BATCH));
+            readTo += NAME_BATCH;
         }
-        // The batch that found one may have stopped short of a second copy in a later batch. That
-        // only costs an `alsoAt` entry or a missed `ambiguous`, so it is read through once found.
         if (named.length > 0) {
-            const last = others.findIndex((file) => file === named.at(-1)?.file);
-            named = [...named, ...(await read(others.slice(last + 1)))];
+            named = [...named, ...(await read(nearest.slice(readTo)))];
+        } else if (nearest.length < others.length) {
+            return {status: "incomplete", reason: "too_many_skill_files"};
         }
     }
     if (named.length === 0) {
@@ -416,6 +452,26 @@ async function readFileOnly(result: SkillSearchResult, source: PulseSource): Pro
  */
 export type PulseDepth = {directory: {by: Promise<void>}};
 
+/** Past these a script its instructions run is named as not fetched, never half-read (task 113). */
+export const SCRIPT_READ_CAP = {files: MAX_SCRIPTS_READ, bytesEach: 256 * 1024, bytes: 512 * 1024} as const;
+/** Directories that hold material a skill shows, not code it runs. */
+const NOT_CODE_DIRECTORY = /(^|\/)(examples?|assets?|fonts?|images?|media|samples?|fixtures?)\//i;
+
+/** The scripts to fetch, in the order named, within `SCRIPT_READ_CAP`. The rest stay listed as not fetched. */
+function withinReadCap(paths: readonly string[], listed: readonly ListedFile[]): string[] {
+    const sizeOf = new Map(listed.map((file) => [file.path, file.size]));
+    const kept: string[] = [];
+    let bytes = 0;
+    for (const path of paths) {
+        const size = sizeOf.get(path) ?? 0;
+        if (kept.length >= SCRIPT_READ_CAP.files || NOT_CODE_DIRECTORY.test(path)) continue;
+        if (size > SCRIPT_READ_CAP.bytesEach || bytes + size > SCRIPT_READ_CAP.bytes) continue;
+        kept.push(path);
+        bytes += size;
+    }
+    return kept;
+}
+
 /** Read one search result. Every way it can fail is a status, because "unknown" must stay visible. */
 export async function readPulse(result: SkillSearchResult, source: PulseSource, depth?: PulseDepth): Promise<SkillPulse> {
     // `.` and `..` would leave the repository: `new URL` normalises them away.
@@ -432,7 +488,7 @@ export async function readPulse(result: SkillSearchResult, source: PulseSource, 
     const directory = parentOf(located.file.path);
     const prefix = directory === "" ? "" : `${directory}/`;
     const inDirectory = listing.files.filter((file) => file.path.startsWith(prefix));
-    const scripts = filesItRuns(located.markdown, listing.files).slice(0, MAX_SCRIPTS_READ);
+    const scripts = withinReadCap(filesItRuns(located.markdown, listing.files), listing.files);
     const scriptTexts = await Promise.all(
         scripts.map(async (file) => ({file, text: await source.file(result.source, file)})),
     );
@@ -543,6 +599,8 @@ export function githubPulseSource(
         token?: string;
         withRepository?: boolean;
         cache?: ListingCache;
+        /** Files already read, kept by the caller between sources. `undefined` is "not kept". */
+        files?: FileCache;
         timeoutMs?: number;
         signal?: AbortSignal;
     } = {},
@@ -560,6 +618,7 @@ export function githubPulseSource(
     };
     const listings = new Map<string, Promise<RepositoryListing | PulseFailure>>();
     const repositories = new Map<string, Promise<SkillRepository | null>>();
+    const fileReads = new Map<string, Promise<string | null>>();
     const quota: GitHubQuota = {apiRequests: 0, limited: false, resetsAt: null};
     /** A 403 can also be a repository GitHub blocks, which says nothing about the limit. */
     const noteLimit = (response: Response): boolean => {
@@ -628,10 +687,20 @@ export function githubPulseSource(
     return {
         listing: (repo) => once(listings, repo, readListing),
         repository: (repo) => once(repositories, repo, readRepository),
-        file: async (repo, path) => {
-            const encoded = path.split("/").map(encodeURIComponent).join("/");
-            const response = await get(`https://raw.githubusercontent.com/${repo}/HEAD/${encoded}`, {signal: bounded()});
-            return response.ok ? response.text() : null;
+        // One read per file per source, and per process when the caller keeps `files`: two phrasings, or two
+        // results in one repository, ask for the same file (task 113).
+        file: (repo, path) => {
+            const key = `${repo}\n${path}`;
+            const kept = options.files?.get(key);
+            if (kept !== undefined) return Promise.resolve(kept);
+            return once(fileReads, key, async () => {
+                const encoded = path.split("/").map(encodeURIComponent).join("/");
+                const response = await get(`https://raw.githubusercontent.com/${repo}/HEAD/${encoded}`, {signal: bounded()});
+                const text = response.ok ? await response.text() : null;
+                // A missing file is an answer worth keeping; a failure is not.
+                if (response.ok || response.status === 404) options.files?.set(key, text);
+                return text;
+            });
         },
         quota: () => ({...quota}),
     };

@@ -1,6 +1,8 @@
 import {describe, expect, it} from "vitest";
 
 import {
+    MAX_NAME_READS,
+    SCRIPT_READ_CAP,
     githubPulseSource,
     frontmatterName,
     fuseSearches,
@@ -216,11 +218,58 @@ describe("readPulse", () => {
         expect((await readPulse(result("a/b", "ffmpeg-video-editor"), source)).status).toBe("read");
     });
 
-    it("finds a second copy that sits in a later batch, so a difference is not missed", async () => {
-        const files: Record<string, string> = {"first/SKILL.md": skillMd("wanted", "one")};
+    it("finds a second copy among the nearest files, so a difference there is not missed", async () => {
+        const files: Record<string, string> = {"x-smart-audit/SKILL.md": skillMd("smart-audit", "one")};
         for (let index = 0; index < 30; index += 1) files[`f${index}/SKILL.md`] = skillMd(`f${index}`);
-        files["last/SKILL.md"] = skillMd("wanted", "two");
-        expect(await readPulse(result("a/b", "wanted"), sourceOf(files))).toMatchObject({differsAt: ["last/SKILL.md"]});
+        files["zz-audit-copy/SKILL.md"] = skillMd("smart-audit", "two");
+        expect(await readPulse(result("a/b", "smart-audit"), sourceOf(files))).toMatchObject({
+            path: "x-smart-audit/SKILL.md",
+            differsAt: ["zz-audit-copy/SKILL.md"],
+        });
+    });
+
+    it("reads the files whose path shares the name's words first, and stops at the cap (task 113)", async () => {
+        // `bankrbot/skills`, 2026-11-10: `Smart Contract Audit` in `ethskills-audit/`, among 156 skill files.
+        const files: Record<string, string> = {};
+        for (let index = 0; index < 150; index += 1) files[`aeon-${index}/SKILL.md`] = skillMd(`aeon-${index}`);
+        files["ethskills-audit/SKILL.md"] = skillMd("Smart Contract Audit");
+        const read: string[] = [];
+        const source = sourceOf(files);
+        const counting: PulseSource = {...source, file: async (repo, path) => (read.push(path), source.file(repo, path))};
+        expect(await readPulse(result("a/b", "Smart Contract Audit"), counting)).toMatchObject({path: "ethskills-audit/SKILL.md"});
+        expect(read[0]).toBe("ethskills-audit/SKILL.md");
+        expect(read.length).toBeLessThanOrEqual(MAX_NAME_READS);
+    });
+
+    it("says incomplete, never absent, when the name is not among the files it read", async () => {
+        const files: Record<string, string> = {};
+        for (let index = 0; index < 40; index += 1) files[`f${index}/SKILL.md`] = skillMd(`f${index}`);
+        files["zzz/SKILL.md"] = skillMd("wanted");
+        let reads = 0;
+        const source = sourceOf(files);
+        const counting: PulseSource = {...source, file: async (repo, path) => ((reads += 1), source.file(repo, path))};
+        expect(await readPulse(result("a/b", "wanted"), counting)).toMatchObject({status: "incomplete", reason: "too_many_skill_files"});
+        expect(reads).toBe(MAX_NAME_READS);
+    });
+
+    it("fetches no script past the cap, nor one in an examples or assets directory, and names them", async () => {
+        const big = "x".repeat(SCRIPT_READ_CAP.bytesEach + 1);
+        const read: string[] = [];
+        const source = sourceOf({
+            "skills/wanted/SKILL.md": skillMd("wanted", "Run `python scripts/big.py`, `python examples/demo.py` and `python scripts/go.py`."),
+            "skills/wanted/scripts/big.py": big,
+            "skills/wanted/examples/demo.py": "print(1)",
+            "skills/wanted/scripts/go.py": "print(2)",
+        });
+        const counting: PulseSource = {...source, file: async (repo, path) => (read.push(path), source.file(repo, path))};
+        const pulse = await readPulse(result("a/b", "wanted"), counting);
+        expect(read).toEqual(["skills/wanted/SKILL.md", "skills/wanted/scripts/go.py"]);
+        expect(pulse.status === "read" ? pulse.contains.read.skipped : null).toEqual(
+            expect.arrayContaining([
+                {path: "examples/demo.py", why: "not fetched"},
+                {path: "scripts/big.py", why: "not fetched"},
+            ]),
+        );
     });
 
     it("finds a key in a script its instructions run, when its own file names none", async () => {
@@ -297,6 +346,46 @@ describe("groupByContent", () => {
         const groups = groupByContent([three, one, two, failed]);
         expect(groups.map((group) => group.members.length)).toEqual([2, 1]);
         expect(groups[0]?.members.map((member) => member.source)).toEqual(["a/b", "c/d"]);
+    });
+});
+
+describe("githubPulseSource reads a file once (task 113)", () => {
+    const counted = (status = 200) => {
+        const urls: string[] = [];
+        const get = (async (input: string) => {
+            urls.push(input);
+            return new Response(status === 200 ? "text" : "", {status});
+        }) as unknown as typeof globalThis.fetch; // the reader passes a string URL
+        return {urls, fetch: get};
+    };
+    const keep = () => {
+        const kept = new Map<string, string | null>();
+        return {kept, files: {get: (key: string) => kept.get(key), set: (key: string, text: string | null) => void kept.set(key, text)}};
+    };
+
+    it("asks GitHub once for one file, however many results ask for it", async () => {
+        const {urls, fetch} = counted();
+        const source = githubPulseSource({fetch});
+        expect(await Promise.all([source.file("a/b", "x/SKILL.md"), source.file("a/b", "x/SKILL.md")])).toEqual(["text", "text"]);
+        expect(urls).toHaveLength(1);
+    });
+
+    it("takes a file the caller kept, and keeps what it reads, a missing file included", async () => {
+        const {urls, fetch} = counted(404);
+        const {kept, files} = keep();
+        kept.set("a/b\nkept.md", "from before");
+        const source = githubPulseSource({fetch, files});
+        expect(await source.file("a/b", "kept.md")).toBe("from before");
+        expect(await source.file("a/b", "gone.md")).toBeNull();
+        expect(urls).toHaveLength(1);
+        expect(kept.get("a/b\ngone.md")).toBeNull();
+    });
+
+    it("does not keep a failure", async () => {
+        const {fetch} = counted(502);
+        const {kept, files} = keep();
+        expect(await githubPulseSource({fetch, files}).file("a/b", "x.md")).toBeNull();
+        expect(kept.has("a/b\nx.md")).toBe(false);
     });
 });
 

@@ -59,21 +59,29 @@ const BINDINGS_QUERY = `query EndpointBindings($subject: String!, $hasEndpoint: 
 /**
  * `object_id`, not `object { … }`: the object is a triple, and a nested position resolves `null`.
  *
- * One query per claim, oldest first: junk attached after the genuine proof cannot push it out of
- * the window, and junk on one claim cannot crowd out another claim's proof. Junk attached before it
- * can, when the claim reached the chain before its proof. `prepareEndpointBinding` writes the
- * owner's two triples in one call so that their own write never opens that gap (ADR `0095` §7).
+ * One field per claim, oldest first, each with its own `limit`: junk attached after the genuine proof
+ * cannot push it out of the window, and junk on one claim cannot crowd out another claim's proof. Junk
+ * attached before it can, when the claim reached the chain before its proof. `prepareEndpointBinding`
+ * writes the owner's two triples in one call so that their own write never opens that gap (ADR `0095` §7).
+ *
+ * The fields are aliases of one document, so every claim's proofs come in one request (task 113: one agent's
+ * seven claims were seven requests). Each alias is the query the per-claim version sent, unchanged.
  */
-const CONTEXTS_QUERY = `query EndpointProofs($triple: String!, $inContextOf: String!, $limit: Int!) {
-  triples(
-    where: {predicate_id: {_eq: $inContextOf}, object_id: {_eq: $triple}}
+export function contextsQuery(claims: number): string {
+    const variables = Array.from({length: claims}, (_, at) => `$t${at}: String!`).join(", ");
+    const fields = Array.from(
+        {length: claims},
+        (_, at) => `  c${at}: triples(
+    where: {predicate_id: {_eq: $inContextOf}, object_id: {_eq: $t${at}}}
     order_by: {created_at: asc}
     limit: $limit
   ) {
     object_id
     subject { term_id data value { json_object { data } } }
-  }
-}`;
+  }`,
+    ).join("\n");
+    return `query EndpointProofs($inContextOf: String!, $limit: Int!, ${variables}) {\n${fields}\n}`;
+}
 
 /** The agent whose endpoints are read: its atom, where the claims hang, and who it is. */
 export type DirectorySubject = HandshakeAgent & {agentAtom: string};
@@ -179,13 +187,14 @@ export async function getAgentEndpoints(
     if (claims.length === 0) return [];
 
     const maxProofs = config.maxProofsPerClaim ?? DEFAULT_MAX_PROOFS_PER_CLAIM;
+    const allContexts = await transport.request(contextsQuery(claims.length), {
+        inContextOf: config.predicates.inContextOf,
+        limit: maxProofs,
+        ...Object.fromEntries(claims.map((claim, at) => [`t${at}`, claim.tripleId])),
+    });
     return Promise.all(
-        claims.map(async (claim): Promise<ListedEndpoint> => {
-            const contexts = await transport.request(CONTEXTS_QUERY, {
-                triple: claim.tripleId,
-                inContextOf: config.predicates.inContextOf,
-                limit: maxProofs,
-            });
+        claims.map(async (claim, at): Promise<ListedEndpoint> => {
+            const contexts = {triples: allContexts[`c${at}`]};
             // The index holds what it resolved, so most proofs need no gateway. It is not trusted for
             // this: a binding stands on its two signatures and the registry's owner, whoever served it.
             const uris: {uri: string; indexed: unknown}[] = [];

@@ -4,6 +4,7 @@ import {generatePrivateKey, privateKeyToAccount} from "viem/accounts";
 import {describe, expect, it} from "vitest";
 
 import {
+    contextsQuery,
     getAgentEndpoints,
     isSameAgent,
     type DirectoryConfig,
@@ -88,11 +89,16 @@ function graph(
                 };
             }
             if (query.includes("query EndpointProofs")) {
-                const triple = String(variables["triple"]).toLowerCase();
-                return {
-                    triples: [
+                // One aliased field per claim, `c<n>` filtered on `$t<n>`, each limited on its own.
+                const answer: Record<string, unknown> = {};
+                for (const [name, value] of Object.entries(variables)) {
+                    const at = /^t(\d+)$/.exec(name)?.[1];
+                    if (at === undefined) continue;
+                    const triple = String(value).toLowerCase();
+                    answer[`c${at}`] = [
                         ...proofs
                             .filter((proof) => proof.tripleId.toLowerCase() === triple)
+                            .slice(0, Number(variables["limit"]))
                             .map((proof) => ({
                                 object_id: proof.tripleId.toUpperCase().replace("0X", "0x"),
                                 subject: {term_id: "0x02", data: proof.document},
@@ -101,8 +107,9 @@ function graph(
                         {object_id: "0xdead", subject: {term_id: "0x03", data: "ipfs://stray"}},
                         {object_id: null, subject: null},
                         7,
-                    ],
-                };
+                    ];
+                }
+                return answer;
             }
             throw new Error(`unexpected query ${query}`);
         },
@@ -135,6 +142,18 @@ async function firstBound(
     return listed.find((entry) => entry.status === "bound")?.endpoint ?? null;
 }
 
+describe("contextsQuery", () => {
+    it("gives each claim its own field, filter and limit, so junk on one cannot crowd out another", () => {
+        const query = contextsQuery(3);
+        expect(query).toContain("query EndpointProofs($inContextOf: String!, $limit: Int!, $t0: String!, $t1: String!, $t2: String!)");
+        for (const at of [0, 1, 2]) {
+            expect(query).toContain(`c${at}: triples(\n    where: {predicate_id: {_eq: $inContextOf}, object_id: {_eq: $t${at}}}`);
+        }
+        expect(query.match(/limit: \$limit/g)).toHaveLength(3);
+        expect(query.match(/order_by: \{created_at: asc\}/g)).toHaveLength(3);
+    });
+});
+
 describe("getAgentEndpoints", () => {
     it("lists each claimed endpoint with its proof, and the bound one resolves", async () => {
         const state = {owner: owner.address};
@@ -158,10 +177,8 @@ describe("getAgentEndpoints", () => {
             ["https://b.example", "unproven"],
         ]);
         expect(seen[0]).toMatchObject({subject: AGENT_ATOM, hasEndpoint: "0xe1", limit: 10});
-        expect(seen.slice(1)).toEqual([
-            {triple: "0xa1", inContextOf: "0xc1", limit: 5},
-            {triple: "0xb1", inContextOf: "0xc1", limit: 5},
-        ]);
+        // Both claims' proofs in one request, each claim its own field with its own limit (task 113).
+        expect(seen.slice(1)).toEqual([{inContextOf: "0xc1", limit: 5, t0: "0xa1", t1: "0xb1"}]);
         expect(await firstBound(SUBJECT, cfg)).toBe("https://a.example");
     });
 
@@ -240,7 +257,7 @@ describe("getAgentEndpoints", () => {
             request: async (query: string) =>
                 query.includes("EndpointBindings")
                     ? {triples: [{term_id: "0xa1", object: {data: "https://a.example"}}]}
-                    : {triples: [{object_id: "0xa1", subject: {data: "ipfs://held", value: {json_object: {data: document}}}}]},
+                    : {c0: [{object_id: "0xa1", subject: {data: "ipfs://held", value: {json_object: {data: document}}}}]},
         });
         const fetch = async () => {
             throw new Error("nothing should be fetched");
