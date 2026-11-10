@@ -23443,9 +23443,45 @@ function declaredDescription(lines) {
   }
   return block.length === 0 ? null : block.join(" ");
 }
+function shellSegments(line) {
+  const segments = [];
+  let current = "";
+  let quote = null;
+  for (let index2 = 0;index2 < line.length; index2 += 1) {
+    const char = line[index2] ?? "";
+    if (char === "\\" && quote !== "'") {
+      current += char + (line[index2 + 1] ?? "");
+      index2 += 1;
+      continue;
+    }
+    if (quote !== null) {
+      if (char === quote)
+        quote = null;
+      current += char;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      current += char;
+      continue;
+    }
+    if (char === "#" && (index2 === 0 || /\s/.test(line[index2 - 1] ?? "")))
+      break;
+    if (char === "|" || char === ";" || char === "&" && line[index2 + 1] === "&") {
+      segments.push(current);
+      current = "";
+      if (line[index2 + 1] === char)
+        index2 += 1;
+      continue;
+    }
+    current += char;
+  }
+  segments.push(current);
+  return segments;
+}
 function commandsIn(shell, explicitOnly) {
   const found = [];
-  for (const segment of shell.split(/&&|\|\||[|;]/)) {
+  for (const segment of shellSegments(shell)) {
     const line = segment.trim().replace(/^\$\s+/, "");
     if (line === "" || line.startsWith("#"))
       continue;
@@ -23479,7 +23515,7 @@ function shellLinesRun(lines) {
       run.push(line);
     continued = line.trimEnd().endsWith("\\");
     heredocEnd = /<<-?\s*['"]?([A-Za-z_]+)/.exec(line)?.[1] ?? null;
-    for (const char of line) {
+    for (const char of quote === null ? shellSegments(line).join(";") : line) {
       if (quote === null && (char === '"' || char === "'"))
         quote = char;
       else if (char === quote)
@@ -27157,6 +27193,7 @@ function decide(env) {
     outcomes: parseLocalOutcomes(read(join4(env.arpHome, "outcomes.jsonl")) ?? ""),
     installed: [
       ...installedFromSkillLock(read(join4(env.home, ".agents", ".skill-lock.json"))),
+      ...installedFromSkillLock(read(join4(env.cwd, "skills-lock.json"))),
       ...installedFromReceipts(read(join4(env.arpHome, "receipts.jsonl"))),
       ...installedFromReceipts(read(join4(env.cwd, ".arp", "receipts.jsonl")))
     ],

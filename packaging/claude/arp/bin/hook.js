@@ -609,9 +609,45 @@ var COMMON = new Set(("awk bash break bun case cat cd chmod command continue cp 
 var INSTALL = /\b(?:npm\s+(?:i|install)\s+(?:-g|--global)|pnpm\s+add\s+-g|yarn\s+global\s+add|brew\s+install|pipx\s+install|pip3?\s+install|cargo\s+install)\s+([@a-z0-9][@\w./-]*)/i;
 var PROBE = /\b(?:command\s+-v|which)\s+([a-z][\w-]*)/i;
 var COMMAND = /^[a-z][a-z0-9_-]*$/;
+function shellSegments(line) {
+  const segments = [];
+  let current = "";
+  let quote = null;
+  for (let index = 0;index < line.length; index += 1) {
+    const char = line[index] ?? "";
+    if (char === "\\" && quote !== "'") {
+      current += char + (line[index + 1] ?? "");
+      index += 1;
+      continue;
+    }
+    if (quote !== null) {
+      if (char === quote)
+        quote = null;
+      current += char;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      current += char;
+      continue;
+    }
+    if (char === "#" && (index === 0 || /\s/.test(line[index - 1] ?? "")))
+      break;
+    if (char === "|" || char === ";" || char === "&" && line[index + 1] === "&") {
+      segments.push(current);
+      current = "";
+      if (line[index + 1] === char)
+        index += 1;
+      continue;
+    }
+    current += char;
+  }
+  segments.push(current);
+  return segments;
+}
 function commandsIn(shell, explicitOnly) {
   const found = [];
-  for (const segment of shell.split(/&&|\|\||[|;]/)) {
+  for (const segment of shellSegments(shell)) {
     const line = segment.trim().replace(/^\$\s+/, "");
     if (line === "" || line.startsWith("#"))
       continue;
@@ -646,7 +682,7 @@ function shellLinesRun(lines) {
       run.push(line);
     continued = line.trimEnd().endsWith("\\");
     heredocEnd = /<<-?\s*['"]?([A-Za-z_]+)/.exec(line)?.[1] ?? null;
-    for (const char of line) {
+    for (const char of quote === null ? shellSegments(line).join(";") : line) {
       if (quote === null && (char === '"' || char === "'"))
         quote = char;
       else if (char === quote)
@@ -1122,9 +1158,45 @@ var COMMON2 = new Set(("awk bash break bun case cat cd chmod command continue cp
 var INSTALL2 = /\b(?:npm\s+(?:i|install)\s+(?:-g|--global)|pnpm\s+add\s+-g|yarn\s+global\s+add|brew\s+install|pipx\s+install|pip3?\s+install|cargo\s+install)\s+([@a-z0-9][@\w./-]*)/i;
 var PROBE2 = /\b(?:command\s+-v|which)\s+([a-z][\w-]*)/i;
 var COMMAND2 = /^[a-z][a-z0-9_-]*$/;
+function shellSegments2(line) {
+  const segments = [];
+  let current = "";
+  let quote = null;
+  for (let index = 0;index < line.length; index += 1) {
+    const char = line[index] ?? "";
+    if (char === "\\" && quote !== "'") {
+      current += char + (line[index + 1] ?? "");
+      index += 1;
+      continue;
+    }
+    if (quote !== null) {
+      if (char === quote)
+        quote = null;
+      current += char;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      current += char;
+      continue;
+    }
+    if (char === "#" && (index === 0 || /\s/.test(line[index - 1] ?? "")))
+      break;
+    if (char === "|" || char === ";" || char === "&" && line[index + 1] === "&") {
+      segments.push(current);
+      current = "";
+      if (line[index + 1] === char)
+        index += 1;
+      continue;
+    }
+    current += char;
+  }
+  segments.push(current);
+  return segments;
+}
 function commandsIn2(shell, explicitOnly) {
   const found = [];
-  for (const segment of shell.split(/&&|\|\||[|;]/)) {
+  for (const segment of shellSegments2(shell)) {
     const line = segment.trim().replace(/^\$\s+/, "");
     if (line === "" || line.startsWith("#"))
       continue;
@@ -1159,7 +1231,7 @@ function shellLinesRun2(lines) {
       run.push(line);
     continued = line.trimEnd().endsWith("\\");
     heredocEnd = /<<-?\s*['"]?([A-Za-z_]+)/.exec(line)?.[1] ?? null;
-    for (const char of line) {
+    for (const char of quote === null ? shellSegments2(line).join(";") : line) {
       if (quote === null && (char === '"' || char === "'"))
         quote = char;
       else if (char === quote)
