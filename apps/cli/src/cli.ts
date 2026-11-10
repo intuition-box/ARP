@@ -45,7 +45,7 @@ usage
                      with it, --tool is the exact URL you paid
                      [--needs <name>] or [--with <name>]  the program or variable name that was
                      missing, or that you added; written only if the skill's SKILL.md names it
-  arp init         add the MCP server and the hook to every runtime found here
+  arp init           add the MCP server and the hook to every runtime found here
   arp uninstall      remove them, and only them
   arp doctor         check what is installed and that the server answers
   arp init --node    bind this node to your ERC-8004 agent: the token's owner signs once

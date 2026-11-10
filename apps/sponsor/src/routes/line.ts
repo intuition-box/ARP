@@ -128,6 +128,10 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
   }
 
   if (request.need !== '') {
+    // A replayed request must not spend GitHub's hourly allowance: the nonce is checked again below, under the lock.
+    if (ledger.has('line', `line:${request.nonce.toLowerCase()}`)) {
+      return json({ error: 'this request was already used', rule: 'nonce' }, 409);
+    }
     const refused = await checkNeed(lines, request.tool, request.need, request.outcome === 'worked' ? null : needKindOfReason(request.reason));
     if (refused !== null) return refused;
   }

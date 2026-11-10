@@ -2589,6 +2589,16 @@ describe('POST /line', () => {
       expect(has(w, 'needs') && has(w, 'ffmpeg')).toBe(true);
     });
 
+    test('a replayed request does not read GitHub again', async () => {
+      const w = seeded();
+      let reads = 0;
+      const service = named(w, { skillMarkdown: async () => ((reads += 1), SKILL_MD) });
+      const signed = await request({ reason: 'missing-program', need: 'ffmpeg' });
+      expect((await post(service, { request: signed })).status).toBe(200);
+      expect((await post(service, { request: signed })).status).toBe(409);
+      expect(reads).toBe(1);
+    });
+
     test('writes with on a worked line', async () => {
       const w = seeded();
       const answer = await post(named(w), { request: await request({ outcome: 'worked', reason: '', need: 'ffmpeg' }) });
