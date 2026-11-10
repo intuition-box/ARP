@@ -1,6 +1,6 @@
 # 0164 — The agent page leads with lines, and shows no payment yet
 
-**Status:** Proposed (on `feat/95-agent-lines`, waiting on the user's look)
+**Status:** Accepted (the user saw both versions, 2026-11-10; on `feat/95-agent-lines`)
 **Date:** 2026-11-10
 **Triggered by:** `docs/tasks/95-the-agent-page-reads-lines.md`, the user's request of 2026-11-10
 
