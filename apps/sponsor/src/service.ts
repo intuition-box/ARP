@@ -76,6 +76,7 @@ import { redactUrls, refuseForeignRequest } from '@arp-protocol/core/node';
 import { getAddress, isAddress, type Address, type Hex } from 'viem';
 
 import type { ToolResolution } from './github.ts';
+import type { ToolAdmission } from './admit-tool.ts';
 import type { RepoSpelling } from './indexer.ts';
 import type { SponsorLedger } from './ledger.ts';
 import { createContext, json, readBody, REGISTRY } from './routes/context.ts';
@@ -173,6 +174,13 @@ export type SponsorOptions = {
    * `main.ts` asks GitHub's API.
    */
   resolveTool?: ((url: string) => Promise<ToolResolution>) | null;
+  /**
+   * Whether a URL is a tool, asked only when a listing would create something (task 94, ADR
+   * `0163`): a GitHub repository holds a form a runtime loads, any other URL answers as one.
+   * `fullName` is GitHub's own `owner/repo`. Throws when it cannot tell (an outage, a rate limit).
+   * Absent, `POST /list-tool` answers 503. `main.ts` uses `toolAdmitter`.
+   */
+  admitTool?: ((url: string, fullName?: string) => Promise<ToolAdmission>) | null;
   /** The spellings of a GitHub `owner/repo` already on the graph, matched case-insensitively. */
   repoSpellings?: ((repo: string) => Promise<RepoSpelling[]>) | null;
   /**

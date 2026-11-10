@@ -71,6 +71,7 @@ import { SponsorLedger } from './ledger.ts';
 import { listenFrom, type Listen } from './listen.ts';
 import { categoryLog, categoryTree, compoundsFrom, lineSubjectCheck, lineToolUrl, toolCheck } from './categories.ts';
 import { resolveOnGitHubCached } from './github.ts';
+import { DEFAULT_ENDPOINT_CHECKS_PER_HOUR, pinnedAsk, toolAdmitter } from './admit-tool.ts';
 import { repoSpellingsOnGraph } from './indexer.ts';
 import { intuitionJsonPinner, intuitionPinner } from './pin.ts';
 import {
@@ -154,6 +155,15 @@ function originList(raw: string | undefined): string[] {
     return value;
   });
 }
+
+// Task 94, ADR `0163`: whether a URL is a tool before it is listed. A private address is refused
+// unless `ARP_ALLOW_PRIVATE_PROBE=1`, the setting `apps/mcp` reads for the same choice: the task 91
+// demo lists a seller on loopback. Never set it where the service is hosted.
+const ALLOW_PRIVATE_TOOL_CHECK = process.env.ARP_ALLOW_PRIVATE_PROBE === '1';
+const ENDPOINT_CHECKS_PER_HOUR = count(
+  'SPONSOR_ENDPOINT_CHECKS_PER_HOUR',
+  DEFAULT_ENDPOINT_CHECKS_PER_HOUR,
+);
 
 const threshold = process.env.SPONSOR_WITHDRAWAL_THRESHOLD_BPS;
 const limits: SponsorLimits = {
@@ -358,6 +368,10 @@ const service = createSponsor({
     ...originList(process.env.SPONSOR_ALLOWED_ORIGINS),
   ],
   resolveTool: (url) => resolveOnGitHubCached(url),
+  admitTool: toolAdmitter({
+    ask: pinnedAsk({ allowPrivate: ALLOW_PRIVATE_TOOL_CHECK }),
+    endpointChecksPerHour: ENDPOINT_CHECKS_PER_HOUR,
+  }),
   repoSpellings: (repo) => repoSpellingsOnGraph(deployments.chain.graphqlUrl, repo),
   // ADR `0135`, `0144`: the predicate a line's domain is written with.
   lines: {
@@ -439,6 +453,9 @@ export async function main(): Promise<void> {
   );
   process.stderr.write(
     `  listing    ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : `${limits.listingsPerAddressPerDay}/address/day, ${limits.anonymousListingsPerDay} unsigned/day, ${limits.listingsPerDay}/day in all`}\n`,
+  );
+  process.stderr.write(
+    `  tool check ${ENDPOINT_CHECKS_PER_HOUR} endpoint checks/hour${ALLOW_PRIVATE_TOOL_CHECK ? ', PRIVATE ADDRESSES ALLOWED (ARP_ALLOW_PRIVATE_PROBE=1)' : ''}\n`,
   );
   process.stderr.write(
     `  categories ${limits.categoriesPerDay} new/day (${limits.categoriesPerAgentPerDay} per agent), ${limits.categoryTagsPerDay} tags/day, log ${CATEGORY_LOG}\n`,

@@ -49,8 +49,41 @@ prints it. To host it, with its own key, see `apps/web/DEPLOY.md`, "The sponsor"
 | `SPONSOR_DEPOSITS_PER_AGENT_PER_DAY` | a per-agent cap on deposits, off unless set |
 | `SPONSOR_NEW_AGENTS_PER_DAY` | a daily cap on new agents, off unless set     |
 | `SPONSOR_ALLOWED_ORIGINS`   | extra origins allowed to call it from a browser |
+| `SPONSOR_ENDPOINT_CHECKS_PER_HOUR` | how many non-GitHub URLs `/list-tool` asks in an hour, default 60 |
+| `GITHUB_TOKEN`              | GitHub's higher rate limit for listing checks |
+| `ARP_ALLOW_PRIVATE_PROBE=1` | `/list-tool` may ask a private address. Local demos only (the task 91 seller listens on loopback); never where the service is hosted |
 
-It calls Intuition's MultiVault and nothing else.
+It sends transactions to Intuition's MultiVault and nothing else. It also reads: the chain and its
+index, GitHub, the pinning service, an x402 payment on its own network, and for `/list-tool` the URL
+being listed (below).
+
+## What `/list-tool` lists
+
+Only a tool (task 94, ADR `0163`). Something already on the graph is answered `created: false`
+without a check; anything new is checked first:
+
+| URL | listed when |
+| --- | --- |
+| a GitHub skill, `?skill=<name>` | a `SKILL.md` sits in a directory of that name (ADR `0123`) |
+| a GitHub repository | it holds a `SKILL.md`, a `.claude-plugin/plugin.json` or `marketplace.json`, a root `gemini-extension.json`, a `server.json` under the MCP registry's schema, or a root `package.json`, `pyproject.toml` or `go.mod` depending on an MCP SDK |
+| any other URL | it answers MCP `initialize` (or a `401` naming its protected-resource metadata, or MCP's SSE `endpoint` event), serves an A2A agent card (`name` and `skills`), or answers `402` with x402 payment requirements |
+
+A refusal is `422` with a stable `rule` and an `error` that says why, and spends nothing:
+
+| `rule` | means |
+| --- | --- |
+| `not-a-tool` | reached, and it holds or answers none of the above |
+| `unreachable` | no answer: a timeout, a refused connection, a name that does not resolve |
+| `private-address` | it names or resolves to a private, loopback or link-local address |
+
+When it cannot tell (GitHub rate-limited, or more than `SPONSOR_ENDPOINT_CHECKS_PER_HOUR` checks
+of other URLs in the last hour, default 60), it answers `503` with `retry`.
+
+Asking a URL somebody else named is the one time this process connects where a caller points it.
+Each request resolves the name once, refuses it if any address is private, and connects to the
+addresses it checked, so a name cannot be switched to a private one in between. No redirect is
+followed, each request has 5 seconds and keeps 64 KB, at most three requests per URL, and only the
+verdict is answered, never what the host sent.
 
 ```bash
 bun test     # from apps/sponsor

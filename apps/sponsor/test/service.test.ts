@@ -1592,6 +1592,7 @@ describe('POST /list-tool', () => {
   const TOOL = 'https://example.com/mcp';
   const SKILL = 'https://github.com/a/b?skill=c';
   const pinned: string[] = [];
+  const admitted: string[] = [];
   const listing = (w: World, over: Partial<Parameters<typeof createSponsor>[0]> = {}) =>
     sponsor(w, {
       pinThing: async (thing) => {
@@ -1599,6 +1600,10 @@ describe('POST /list-tool', () => {
         return thingUri(thing);
       },
       resolveTool: async () => ({ ok: true }),
+      admitTool: async (url) => {
+        admitted.push(url);
+        return { ok: true, form: 'mcp-endpoint' };
+      },
       listToolOrigins: ['http://localhost:5173'],
       ...over,
     });
@@ -1616,6 +1621,93 @@ describe('POST /list-tool', () => {
 
   afterEach(() => {
     pinned.length = 0;
+    admitted.length = 0;
+  });
+
+  test('says what the URL was listed as', async () => {
+    const res = await call(listing(world()), '/list-tool', { url: TOOL });
+    expect(res.status).toBe(200);
+    expect(res.body.form).toBe('mcp-endpoint');
+    expect(admitted).toEqual([TOOL]);
+  });
+
+  test('refuses what is not a tool, with its rule, before pinning or sending', async () => {
+    for (const rule of ['not-a-tool', 'unreachable', 'private-address'] as const) {
+      const w = world();
+      const res = await call(
+        listing(w, { admitTool: async () => ({ ok: false, rule, reason: `because ${rule}` }) }),
+        '/list-tool',
+        { url: TOOL },
+      );
+      expect(res.status).toBe(422);
+      expect(res.body.rule).toBe(rule);
+      expect(res.body.error).toBe(`because ${rule}`);
+      expect(pinned).toHaveLength(0);
+      expect(w.sent).toHaveLength(0);
+    }
+  });
+
+  test('a refusal does not count against the limits', async () => {
+    const w = world();
+    const ledger = new SponsorLedger(null);
+    const refusing = listing(w, {
+      ledger,
+      admitTool: async () => ({ ok: false, rule: 'not-a-tool', reason: 'no' }),
+    });
+    for (const n of ['1', '2', '3']) {
+      expect((await call(refusing, '/list-tool', { url: `${TOOL}${n}` })).status).toBe(422);
+    }
+    expect(ledger.records).toHaveLength(0);
+    // The anonymous cap in these tests is 2: nothing above was counted.
+    const accepting = listing(w, { ledger });
+    expect((await call(accepting, '/list-tool', { url: `${TOOL}8` })).status).toBe(200);
+    expect((await call(accepting, '/list-tool', { url: `${TOOL}9` })).status).toBe(200);
+  });
+
+  test('answers 503 with retry when it cannot tell whether the URL is a tool', async () => {
+    const w = world();
+    const res = await call(
+      listing(w, {
+        admitTool: async () => {
+          throw new Error('GitHub answered HTTP 403');
+        },
+      }),
+      '/list-tool',
+      { url: TOOL },
+    );
+    expect(res.status).toBe(503);
+    expect(res.body.retry).toBe(true);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('does not ask whether a URL already listed is a tool: the gate is on listing', async () => {
+    const w = world();
+    const plan = await planToolListing({ url: TOOL, reads: fakeReads(w) });
+    w.terms.add(plan.atomId.toLowerCase());
+    const res = await call(
+      listing(w, { admitTool: async () => ({ ok: false, rule: 'not-a-tool', reason: 'no' }) }),
+      '/list-tool',
+      { url: TOOL },
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.created).toBe(false);
+    expect(res.body.form).toBeUndefined();
+  });
+
+  test("asks with the URL as it would be listed, and GitHub's own spelling", async () => {
+    const asked: [string, string | undefined][] = [];
+    await call(
+      listing(world(), {
+        resolveTool: async () => ({ ok: true, fullName: 'Acme/Tool' }),
+        admitTool: async (url, fullName) => {
+          asked.push([url, fullName]);
+          return { ok: true, form: 'mcp-registry' };
+        },
+      }),
+      '/list-tool',
+      { url: 'https://github.com/acme/tool/tree/main' },
+    );
+    expect(asked).toEqual([['https://github.com/Acme/Tool', 'Acme/Tool']]);
   });
 
   test('lists a tool URL unsigned: pins its Thing, creates its atom on the MultiVault', async () => {

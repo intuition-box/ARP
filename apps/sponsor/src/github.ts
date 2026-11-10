@@ -6,9 +6,9 @@
  *  spelling of its name, then its tree for a skill. Unauthenticated unless `GITHUB_TOKEN` is set, so
  *  GitHub's 60 an hour per IP is the bound without one.
  *
- *  **Any other URL is accepted unchecked.** Fetching an arbitrary URL from the process that holds
- *  the treasury key would let a caller point it at the local network. The daily caps bound what an
- *  invented URL costs.
+ *  It answers whether a URL exists and how GitHub spells it, nothing more. Whether it is a tool is
+ *  `admit-tool.ts`'s question, asked only when a listing would create something (task 94, ADR
+ *  `0163`); any other URL passes here and is asked there.
  */
 import { resolveContentPath, skillRefFromUrl, type RepositoryFile } from '@arp-protocol/core';
 

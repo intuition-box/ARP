@@ -47,7 +47,9 @@ export function info(ctx: SponsorContext): Record<string, unknown> {
     identity: (options.pinThing ?? null) === null ? 'disabled' : 'enabled',
     proposeCategory: (options.categories ?? null) === null ? 'disabled' : 'enabled',
     listTool:
-      (options.pinThing ?? null) === null || (options.resolveTool ?? null) === null
+      (options.pinThing ?? null) === null ||
+      (options.resolveTool ?? null) === null ||
+      (options.admitTool ?? null) === null
         ? 'disabled'
         : 'enabled',
     note: 'Testnet 13579 only. Every deposit is made with the agent as receiver; the shares are the agent’s.',

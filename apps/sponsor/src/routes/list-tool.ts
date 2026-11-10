@@ -11,6 +11,7 @@ import {
   toolAtomUri,
   verifyListToolRequest,
   type SignedListToolRequest,
+  type ToolForm,
 } from '@arp-protocol/core';
 import type { Address, Hex } from 'viem';
 import { chainUnreadable, json, type Body, type SponsorContext } from './context.ts';
@@ -30,13 +31,19 @@ export const MAX_TOOL_URL_LENGTH = 2_048;
  *
  * The URL is listed under its canonical spelling (`canonicalToolUrl`), with GitHub's own case for a
  * repository, so two spellings of one tool cannot mint two permanent atoms.
+ *
+ * Only a tool is listed (task 94, ADR `0163`): a repository that holds something a runtime loads, an
+ * endpoint that answers as MCP, A2A or x402. A refusal is 422 with `rule` `not-a-tool`,
+ * `unreachable` or `private-address`, and spends nothing. An atom already on the graph is answered
+ * `created: false` without that check.
  */
 export async function listTool(ctx: SponsorContext, body: Body): Promise<Response> {
   const { options, chainId, reads, limits, ledger, now, exclusive, assertMultiVault } = ctx;
   const { sendToMultiVault, unconfirmed } = ctx;
   const pinThing = options.pinThing ?? null;
   const resolveTool = options.resolveTool ?? null;
-  if (pinThing === null || resolveTool === null) {
+  const admitTool = options.admitTool ?? null;
+  if (pinThing === null || resolveTool === null || admitTool === null) {
     return json({ error: 'tool listing is not configured on this service', rule: 'config' }, 503);
   }
   if (
@@ -119,12 +126,15 @@ export async function listTool(ctx: SponsorContext, body: Body): Promise<Respons
   } catch (error) {
     return chainUnreadable(String(error instanceof Error ? error.message : error));
   }
+  // Set once the URL is admitted, so the answer says what it was listed as.
+  let form: ToolForm | null = null;
   const answer = (listed: typeof first, transactions: Hex[], created: boolean) =>
     json({
       url: listed.url,
       atomId: listed.atomId,
       created,
       transactions,
+      ...(form === null ? {} : { form }),
       ...(listed.repository === null
         ? {}
         : {
@@ -147,6 +157,26 @@ export async function listTool(ctx: SponsorContext, body: Body): Promise<Respons
     });
   const early = limitOf(first.totalValue);
   if (!early.ok) return json({ error: early.reason, rule: 'limit' }, 429);
+
+  // Only what would be created is checked (task 94, ADR `0163`): an atom already on the graph,
+  // seeded or listed before, answers above without being asked again.
+  let admitted;
+  try {
+    admitted = await admitTool(first.url, repoFullName ?? found.fullName);
+  } catch (error) {
+    const response = json(
+      {
+        error: `the URL could not be checked: ${String(error instanceof Error ? error.message : error)}`,
+        rule: 'resolves',
+        retry: true,
+      },
+      503,
+    );
+    response.headers.set('retry-after', '60');
+    return response;
+  }
+  if (!admitted.ok) return json({ error: admitted.reason, rule: admitted.rule }, 422);
+  form = admitted.form;
   for (const thing of first.toPin) {
     const uri = await pinThing(thing).catch(() => null);
     if (uri !== thingUri(thing)) {

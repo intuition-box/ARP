@@ -131,6 +131,10 @@ by the image.
 | `SPONSOR_MINT_GAS_WEI` | no | turns on `/mint-gas` for agents that start with nothing |
 | `SPONSOR_CONTENT_SIGNERS` | no | the content servers whose receipts unlock a deposit |
 | `GITHUB_TOKEN` | no | raises GitHub's limit of 60 requests an hour, for listing checks. A secret |
+| `SPONSOR_ENDPOINT_CHECKS_PER_HOUR` | no | how many non-GitHub URLs `/list-tool` asks whether they are a tool, in an hour; default 60 (ADR `0163`) |
+
+Never set `ARP_ALLOW_PRIVATE_PROBE` here: it lets `/list-tool` connect to private addresses, which
+on a server means the server's own network.
 
 The per-address and per-day caps (`SPONSOR_LINES_PER_DAY` and the rest) keep their defaults;
 `apps/sponsor/src/main.ts` lists them. `GET /` answers the address, the limits and what is on.
