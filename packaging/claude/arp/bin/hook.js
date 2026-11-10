@@ -1284,6 +1284,223 @@ function readRequires2(markdown) {
   return { cli, runs, login: null, description };
 }
 
+// ../../packages/protocol/src/skill-needs.ts
+var MARKDOWN = /\.(md|mdx|markdown)$/i;
+var SCRIPT = /\.(sh|bash|zsh|py|js|mjs|cjs|ts|rb|pl|ps1|php|lua)$/i;
+var COMMENT_LINE = /^\s*(?:#|\/\/|\*|--|;|rem\s)/i;
+function isTestFile2(path) {
+  return /(^|\/)(tests?|__tests__|spec|fixtures?)\/|\.(test|spec)\.[a-z]+$|(^|\/)test_[^/]+\.py$|_test\.(py|go|rb)$/i.test(path);
+}
+function isSecretName2(name) {
+  return /(^|_)(API_?KEY|KEY|TOKEN|SECRET|PASSWORD|PASSWD|PASS|CREDENTIALS|CREDS)$/.test(name);
+}
+var SET_IN_SKILL_MD = /(?:^|\s|`)(?:export\s+|set\s+|\$env:)?([A-Z][A-Z0-9_]{2,})=/g;
+function lineAt(text, index) {
+  let line = 1;
+  for (let at = text.indexOf(`
+`);at !== -1 && at < index; at = text.indexOf(`
+`, at + 1))
+    line += 1;
+  return line;
+}
+function keysIn2(files, settings) {
+  const skillMd = files.find((file) => file.path === "SKILL.md");
+  const toSet = new Set;
+  if (skillMd !== undefined)
+    for (const match of skillMd.text.matchAll(SET_IN_SKILL_MD))
+      toSet.add(match[1] ?? "");
+  const wanted = new Set(settings.filter((name) => isSecretName2(name) || toSet.has(name)));
+  const ordered = [
+    ...skillMd === undefined ? [] : [skillMd],
+    ...files.filter((file) => file.path !== "SKILL.md" && !isTestFile2(file.path))
+  ];
+  const found = new Map;
+  for (const file of ordered) {
+    for (const [index, line] of file.text.split(`
+`).entries()) {
+      for (const match of line.matchAll(/\b[A-Z][A-Z0-9_]{2,}\b/g)) {
+        const name = match[0];
+        if (!wanted.has(name) || found.has(name))
+          continue;
+        found.set(name, { name, why: isSecretName2(name) ? "secret" : "set in SKILL.md", file: file.path, line: index + 1 });
+      }
+    }
+  }
+  return [...found.values()].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+}
+var EVERYWHERE = new Set("sh bash zsh dash env cat ls echo printf mkdir rm cp mv ln grep sed awk tr cut head tail sort uniq wc find xargs test true false base64 date sleep chmod touch tee kill ps uname which open xdg-open cmd powershell pwsh taskkill taskkill.exe where where.exe".split(" "));
+var ALIASES = {
+  soffice: "LibreOffice",
+  libreoffice: "LibreOffice",
+  "google-chrome": "Chrome",
+  chromium: "Chrome",
+  "chromium-browser": "Chrome",
+  magick: "ImageMagick",
+  convert: "ImageMagick",
+  pdftoppm: "poppler",
+  pdftotext: "poppler",
+  python: "python3",
+  docker: "Docker"
+};
+var SPAWNS = [
+  /\b(?:execFileSync|execFile|spawnSync|spawn|execaSync|execa)\(\s*["'`]([a-z][\w.+-]*)["'`]/g,
+  /\b(?:execSync|exec)\(\s*["'`]([a-z][\w.+-]*)[\s"'`]/g,
+  /\bBun\.spawn(?:Sync)?\(\s*\[\s*["'`]([a-z][\w.+-]*)["'`]/g,
+  /\bnew\s+Deno\.Command\(\s*["'`]([a-z][\w.+-]*)["'`]/g,
+  /\bsubprocess\.(?:run|call|check_call|check_output|Popen)\(\s*\[\s*["']([a-z][\w.+-]*)["']/g,
+  /\bsubprocess\.(?:run|call|check_call|check_output|Popen)\(\s*["']([a-z][\w.+-]*)[\s"']/g,
+  /\bos\.(?:system|popen)\(\s*["']([a-z][\w.+-]*)[\s"']/g
+];
+var DRIVES = {
+  puppeteer: "Chrome",
+  "puppeteer-core": "Chrome",
+  "chrome-launcher": "Chrome",
+  "chrome-remote-interface": "Chrome",
+  pyppeteer: "Chrome",
+  playwright: "a Playwright browser",
+  "playwright-core": "a Playwright browser",
+  "@playwright/test": "a Playwright browser",
+  "selenium-webdriver": "a browser and its driver",
+  selenium: "a browser and its driver",
+  "fluent-ffmpeg": "ffmpeg",
+  "ffmpeg-python": "ffmpeg",
+  ffmpeg: "ffmpeg",
+  pydub: "ffmpeg",
+  moviepy: "ffmpeg",
+  "openai-whisper": "ffmpeg",
+  whisper: "ffmpeg",
+  pytesseract: "tesseract",
+  "node-tesseract-ocr": "tesseract",
+  pdf2image: "poppler",
+  "pdf-poppler": "poppler",
+  wand: "ImageMagick",
+  gm: "ImageMagick",
+  pypandoc: "pandoc",
+  "node-pandoc": "pandoc",
+  docker: "Docker",
+  dockerode: "Docker"
+};
+var IMPORTS = [
+  /\bfrom\s+["']([@\w./-]+)["']/g,
+  /\bimport\s*\(\s*["']([@\w./-]+)["']\s*\)/g,
+  /\bimport\s+["']([@\w./-]+)["']/g,
+  /\brequire\(\s*["']([@\w./-]+)["']\s*\)/g,
+  /^\s*(?:from\s+([\w.]+)\s+import|import\s+([\w.]+))/gm
+];
+function packageRoot(specifier) {
+  if (specifier.startsWith("@"))
+    return specifier.split("/").slice(0, 2).join("/");
+  return specifier.split("/")[0]?.split(".")[0] ?? specifier;
+}
+var NAMED_PROGRAMS = [
+  { name: "ffmpeg", pattern: /\bffmpeg\b/i },
+  { name: "ffprobe", pattern: /\bffprobe\b/i },
+  { name: "Chrome", pattern: /\b(?:Google Chrome|Chrome|Chromium|chrome-headless-shell|google-chrome|chromium-browser)\b/ },
+  { name: "Docker", pattern: /\b[Dd]ocker\b/ },
+  { name: "git", pattern: /\bgit\b(?!\s*(?:hub|lab))/ },
+  { name: "jq", pattern: /\bjq\b/ },
+  { name: "pandoc", pattern: /\bpandoc\b/i },
+  { name: "ImageMagick", pattern: /\b(?:ImageMagick|imagemagick|magick)\b/ },
+  { name: "yt-dlp", pattern: /\byt-dlp\b/ },
+  { name: "tesseract", pattern: /\btesseract\b/i },
+  { name: "poppler", pattern: /\b(?:poppler|pdftoppm|pdftotext)\b/i },
+  { name: "LibreOffice", pattern: /\b(?:LibreOffice|libreoffice|soffice)\b/ },
+  { name: "sox", pattern: /\bsox\b/ },
+  { name: "exiftool", pattern: /\bexiftool\b/i },
+  { name: "ollama", pattern: /\b[Oo]llama\b/ },
+  { name: "gh", pattern: /\bgh\s+(?:CLI|cli)\b|\bGitHub CLI\b/ },
+  { name: "python3", pattern: /\b[Pp]ython\s?3?\b(?![-.\w])/ },
+  { name: "node", pattern: /\b(?:Node\.js|node)\b(?![-.\w])/ },
+  { name: "Java", pattern: /\b(?:Java|JDK|JRE)\b/ }
+];
+var NEEDED = /\b(?:requires?|required|requirements?|needs?|needed|prerequisites?|depends on|must (?:be )?install(?:ed)?|must have|install(?:ed)? first|has to be installed|be installed)\b/i;
+var NEEDED_GLOBAL = new RegExp(NEEDED.source, "gi");
+var NOT_NEEDED = /\b(?:no|not|never|without|doesn't|don't|isn't|aren't|zero)\b[^.;]{0,30}\b(?:requires?|required|needs?|needed|install)/i;
+var NOT_AFTER = /\b(?:requires?|needs?)\s+(?:no|nothing|neither)\b/i;
+function saysWhatItNeeds(path, isScript) {
+  if (isScript)
+    return true;
+  if (!MARKDOWN.test(path))
+    return false;
+  const base = path.slice(path.lastIndexOf("/") + 1).toLowerCase();
+  return base === "skill.md" || /^(readme|requirements?|prerequisites?|setup|install(ation)?|dependencies|getting-started)\b/.test(base);
+}
+var COMMENT_OR_STRING = /^\s*(?:#|\/\/|\*|\/\*|"""|''')|["'`][^"'`]*\b(?:requires?|needs?|install)/i;
+function namedAfterVerb(line, program) {
+  for (const verb of line.matchAll(NEEDED_GLOBAL)) {
+    const at = verb.index;
+    const after = line.slice(at + verb[0].length).slice(0, 40).split(/[.;:!?](?:\s|$)/)[0] ?? "";
+    const before = line.slice(Math.max(0, at - 30), at).split(/[.;:!?](?:\s|$)/).at(-1) ?? "";
+    if (program.test(after) || program.test(before))
+      return true;
+  }
+  return false;
+}
+function programsNeededIn2(files) {
+  const out = new Map;
+  const add = (program) => {
+    if (!out.has(program.name))
+      out.set(program.name, program);
+  };
+  for (const file of files) {
+    if (isTestFile2(file.path))
+      continue;
+    const lines = file.text.split(`
+`);
+    const isScript = SCRIPT.test(file.path) || lines[0]?.startsWith("#!") === true;
+    if (isScript && !/\.(sh|bash|zsh)$/i.test(file.path)) {
+      for (const pattern of SPAWNS) {
+        for (const match of file.text.matchAll(pattern)) {
+          const name = match[1] ?? "";
+          const line = lineAt(file.text, match.index);
+          if (name === "" || EVERYWHERE.has(name) || COMMENT_LINE.test(lines[line - 1] ?? ""))
+            continue;
+          add({ name: ALIASES[name] ?? name, from: "spawned", file: file.path, line });
+        }
+      }
+      for (const pattern of IMPORTS) {
+        for (const match of file.text.matchAll(pattern)) {
+          const root = packageRoot(match[1] ?? match[2] ?? "");
+          const driven = DRIVES[root];
+          const line = lineAt(file.text, match.index);
+          if (driven === undefined || COMMENT_LINE.test(lines[line - 1] ?? ""))
+            continue;
+          add({ name: driven, from: "package", file: file.path, line, via: root });
+        }
+      }
+    }
+    if (/(^|\/)package\.json$/.test(file.path)) {
+      for (const [index, line] of lines.entries()) {
+        const name = /^\s*"(@?[\w./-]+)"\s*:\s*"/.exec(line)?.[1];
+        const driven = name === undefined ? undefined : DRIVES[name];
+        if (driven !== undefined)
+          add({ name: driven, from: "package", file: file.path, line: index + 1, via: name ?? "" });
+      }
+    }
+    if (/(^|\/)requirements[\w.-]*\.txt$/i.test(file.path)) {
+      for (const [index, line] of lines.entries()) {
+        const name = /^\s*([A-Za-z0-9][\w.-]*)/.exec(line.replace(/#.*/, ""))?.[1]?.toLowerCase();
+        const driven = name === undefined ? undefined : DRIVES[name];
+        if (driven !== undefined)
+          add({ name: driven, from: "package", file: file.path, line: index + 1, via: name ?? "" });
+      }
+    }
+    if (saysWhatItNeeds(file.path, isScript)) {
+      for (const [index, line] of lines.entries()) {
+        if (NOT_NEEDED.test(line) || NOT_AFTER.test(line))
+          continue;
+        if (isScript && !COMMENT_OR_STRING.test(line))
+          continue;
+        for (const { name, pattern } of NAMED_PROGRAMS) {
+          if (namedAfterVerb(line, pattern))
+            add({ name, from: "named as needed", file: file.path, line: index + 1 });
+        }
+      }
+    }
+  }
+  return [...out.values()];
+}
+
 // ../../packages/protocol/src/skill-contents.ts
 var CONTENTS_LIMITS2 = {
   files: 200,
@@ -1291,8 +1508,8 @@ var CONTENTS_LIMITS2 = {
   items: 40,
   lineChars: 160
 };
-var SCRIPT = /\.(sh|bash|zsh|py|js|mjs|cjs|ts|rb|pl|ps1|php|lua)$/i;
-var MARKDOWN = /\.(md|mdx|markdown)$/i;
+var SCRIPT2 = /\.(sh|bash|zsh|py|js|mjs|cjs|ts|rb|pl|ps1|php|lua)$/i;
+var MARKDOWN2 = /\.(md|mdx|markdown)$/i;
 var FENCE = /^\s*(?:```|~~~)/;
 function cap(text) {
   const flat = text.replace(/\s+/g, " ").trim();
@@ -1312,10 +1529,10 @@ function interpreterOf(firstLine) {
 }
 var SCRIPT_PROBE = /(?:^|[;&|(!{]|\bif|\bthen|\$\()\s*(?:!\s*)?(?:command\s+-v|which|type\s+-p|hash)\s+([a-z][\w.+-]*)/g;
 var SYSTEM_INSTALL = /\b(?:brew|apt-get|apt|dnf|yum|apk|pacman|choco|winget|scoop|port)\s+(?:install|add|-S)\s+(?:-\S+\s+)*([a-z][\w.+-]*)/g;
-var COMMENT_LINE = /^\s*(?:#|\/\/|\*|--|;|rem\s)/i;
+var COMMENT_LINE2 = /^\s*(?:#|\/\/|\*|--|;|rem\s)/i;
 var PYTHON_PROBE = /\bshutil\.which\(\s*["']([a-z][\w.+-]*)["']/g;
 function programsInScriptLine(line, shell) {
-  if (COMMENT_LINE.test(line))
+  if (COMMENT_LINE2.test(line))
     return [];
   const matches = shell ? [...line.matchAll(SCRIPT_PROBE), ...line.matchAll(SYSTEM_INSTALL)] : [...line.matchAll(PYTHON_PROBE)];
   return matches.map((match) => match[1] ?? "").filter((name) => name !== "");
@@ -1379,7 +1596,7 @@ function settingsIn(path, text, code) {
     for (const match of text.matchAll(pattern))
       found.add((match[1] ?? "").toUpperCase());
   }
-  if (MARKDOWN.test(path)) {
+  if (MARKDOWN2.test(path)) {
     for (const match of text.matchAll(EXPORT_IN_PROSE))
       found.add(match[1] ?? "");
     for (const match of text.matchAll(KEY_NAMED))
@@ -1395,7 +1612,7 @@ function codeOf(path, text, isScript) {
 `);
   if (isScript)
     return lines;
-  if (!MARKDOWN.test(path))
+  if (!MARKDOWN2.test(path))
     return [];
   const out = [];
   let fenced = false;
@@ -1568,7 +1785,7 @@ function readSkillContents2(input) {
     if (files.length >= CONTENTS_LIMITS2.files)
       skipped.push({ path: file.path, why: "over the file limit" });
     else if (file.text === null)
-      skipped.push({ path: file.path, why: file.notFetched === true ? "not fetched" : "binary" });
+      skipped.push({ path: file.path, why: file.tooLarge === true ? "too large" : file.notFetched === true ? "not fetched" : "binary" });
     else if (file.text.length > CONTENTS_LIMITS2.fileChars)
       skipped.push({ path: file.path, why: "too large" });
     else
@@ -1579,7 +1796,7 @@ function readSkillContents2(input) {
   const programs = new Map;
   const add = (name, from) => {
     if (!programs.has(name))
-      programs.set(name, from);
+      programs.set(name, { name, from });
   };
   const requires = readRequires2(skillMd);
   for (const name of requires.cli)
@@ -1591,11 +1808,11 @@ function readSkillContents2(input) {
   const domains = new Set;
   const fetchAndRun = [];
   const hidden = [];
-  const scripts = skipped.filter((file) => file.why === "not fetched" && SCRIPT.test(file.path)).map((file) => ({ path: file.path, namedInSkillMd: namesFile(skillMd, file.path) }));
+  const scripts = skipped.filter((file) => file.why === "not fetched" && SCRIPT2.test(file.path)).map((file) => ({ path: file.path, namedInSkillMd: namesFile(skillMd, file.path) }));
   for (const file of files) {
     const lines = file.text.split(`
 `);
-    const isScript = SCRIPT.test(file.path) || lines[0]?.startsWith("#!") === true;
+    const isScript = SCRIPT2.test(file.path) || lines[0]?.startsWith("#!") === true;
     const code = codeOf(file.path, file.text, isScript);
     const shell = isShell(file.path, file.text);
     for (const line of code) {
@@ -1628,18 +1845,22 @@ function readSkillContents2(input) {
       if (run !== undefined)
         fetchAndRun.push({ kind: run.kind, file: file.path, line: index + 1, text: cap(line) });
     }
-    if (MARKDOWN.test(file.path))
+    if (MARKDOWN2.test(file.path))
       hidden.push(...hiddenInMarkdown(file.path, file.text));
   }
   const packageNames = new Set([...packages.values()].map((pkg) => pkg.name));
-  for (const [name, from] of programs)
-    if (from !== "declared" && packageNames.has(name))
+  for (const [name, program] of programs)
+    if (program.from !== "declared" && packageNames.has(name))
       programs.delete(name);
+  for (const needed of programsNeededIn2(files))
+    if (!programs.has(needed.name))
+      programs.set(needed.name, needed);
   const cut = [];
   return {
-    programs: bounded("programs", [...programs.entries()].map(([name, from]) => ({ name, from })).sort((a, b) => compare(a.name, b.name)), cut),
+    programs: bounded("programs", [...programs.values()].sort((a, b) => compare(a.name, b.name)), cut),
     packages: bounded("packages", [...packages.values()].sort((a, b) => compare(`${a.manager} ${a.name}`, `${b.manager} ${b.name}`)), cut),
     settings: bounded("settings", [...settings].sort(compare), cut),
+    keys: bounded("keys", keysIn2(files, [...settings]), cut),
     scripts: bounded("scripts", scripts.sort((a, b) => compare(a.path, b.path)), cut),
     fetchAndRun: bounded("fetchAndRun", fetchAndRun, cut),
     domains: bounded("domains", [...domains].sort(compare), cut),
@@ -1652,24 +1873,12 @@ function readSkillContents2(input) {
     cut
   };
 }
-function contentsLines2(contents, perList = 6) {
-  const list = (items, cut) => items.length === 0 ? "none found" : `${items.slice(0, perList).join(", ")}${items.length > perList || cut ? `, and ${Math.max(0, items.length - perList)}${cut ? "+" : ""} more` : ""}`;
-  const at = (rows, name) => list(rows.map((row) => `${row.kind} at ${row.file}:${row.line} "${row.text}"`), contents.cut.includes(name));
-  return [
-    `Programs: ${list(contents.programs.map((p) => `${p.name} (${p.from})`), contents.cut.includes("programs"))}`,
-    ...contents.packages.length === 0 ? [] : [`Packages: ${list(contents.packages.map((p) => `${p.manager} ${p.name}`), contents.cut.includes("packages"))}`],
-    `Keys and settings it reads: ${list(contents.settings, contents.cut.includes("settings"))}`,
-    `Scripts: ${list(contents.scripts.map((s) => s.namedInSkillMd ? `${s.path} (named in SKILL.md)` : s.path), contents.cut.includes("scripts"))}`,
-    `Fetches and runs code: ${at(contents.fetchAndRun, "fetchAndRun")}`,
-    `Domains named: ${list(contents.domains, contents.cut.includes("domains"))}`,
-    `Hidden or encoded text: ${at(contents.hidden, "hidden")}`,
-    ...contents.read.skipped.length === 0 ? [] : [`Not read: ${list(contents.read.skipped.map((s) => `${s.path} (${s.why})`), false)}`]
-  ];
-}
 
 // ../../packages/protocol/src/pulse.ts
 var MAX_SKILL_FILES_READ2 = 200;
 var MAX_SCRIPTS_READ = 5;
+var MAX_DIRECTORY_FILES_READ = 80;
+var NOT_TEXT = /\.(png|jpe?g|gif|webp|ico|bmp|tiff?|avif|svgz|pdf|zip|gz|tgz|bz2|xz|7z|rar|jar|woff2?|ttf|otf|eot|mp[34]|m4a|wav|ogg|flac|aac|mov|webm|avi|mkv|pptx|docx|xlsx|psd|ai|sketch|fig|db|sqlite|bin|exe|dll|so|dylib|wasm|pyc|class|hdr|exr|glb|ktx2?)$/i;
 var GITHUB_READ_TIMEOUT_MS = 1e4;
 var INSTALLER_ORDER = [
   "",
@@ -1741,7 +1950,7 @@ var PAID_WORD = /\b(pricing|paid|subscription|credits?|billing|free tier|per min
 var HOST = /https?:\/\/([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
 var NOT_A_SERVICE = /(^|\.)(github\.com|githubusercontent\.com|example\.(com|org|net))$/;
 var LOOKS_LIKE_A_FILE = /\.(jpe?g|png|gif|webp|mp[34]|wav|mov|webm|pdf|md|json|txt)$/;
-var SCRIPT2 = /\.(sh|bash|py|js|mjs|cjs|ts|rb|pl)$/i;
+var SCRIPT3 = /\.(sh|bash|py|js|mjs|cjs|ts|rb|pl)$/i;
 var RUNS_FILE = /\b(?:node|bun|deno|tsx|python3?|bash|sh)\s+((?:~|\.{1,2})?\/?[\w.@-]+(?:\/[\w.@-]+)*\.(?:mjs|cjs|js|ts|py|sh))\b/g;
 var PLACEHOLDER = /(^|\/)(path|your|my|foo|example|script|file|input|output)(\/|\.|$)/i;
 function filesItRuns(markdown, repositoryFiles) {
@@ -1771,7 +1980,7 @@ function readSkillFacts2(markdown, filesInDirectory, repositoryFiles = filesInDi
   return {
     files: filesInDirectory.length,
     bytes: filesInDirectory.reduce((total, file) => total + file.size, 0),
-    scripts: filesInDirectory.filter((file) => SCRIPT2.test(file.path)).length,
+    scripts: filesInDirectory.filter((file) => SCRIPT3.test(file.path)).length,
     keys: [...new Set(markdown.match(KEY_NAME3) ?? [])],
     paidWords: [...new Set((markdown.match(PAID_WORD) ?? []).map((word) => word.toLowerCase()))],
     hosts: [...new Set(hosts)],
@@ -1841,7 +2050,7 @@ async function readFileOnly(result, source) {
   }
   return null;
 }
-async function readPulse2(result, source) {
+async function readPulse2(result, source, depth) {
   if (!/^(?!\.{1,2}\/)[\w.-]+\/(?!\.{1,2}$)[\w.-]+$/.test(result.source))
     return { ...result, status: "not_github" };
   const listing = await source.listing(result.source);
@@ -1864,10 +2073,15 @@ async function readPulse2(result, source) {
   const keysInScriptsItRuns = scriptTexts.map(({ file, text }) => ({ file, keys: [...new Set(text?.match(KEY_NAME3) ?? [])] })).filter((entry) => entry.keys.length > 0);
   const relative = (path) => path.startsWith(prefix) ? path.slice(prefix.length) : path;
   const fetched = new Set(scriptTexts.filter((entry) => entry.text !== null).map((entry) => entry.file));
+  const others = depth === undefined ? [] : await readDirectory(source, result.source, inDirectory, new Set([located.file.path, ...fetched]), depth.directory.by);
+  for (const file of others)
+    if (file.text !== null)
+      fetched.add(file.path);
   const contains = readSkillContents2([
     { path: "SKILL.md", text: located.markdown },
     ...scriptTexts.flatMap(({ file, text }) => text === null ? [] : [{ path: relative(file), text }]),
-    ...inDirectory.filter((file) => SCRIPT2.test(file.path) && !fetched.has(file.path)).map((file) => ({ path: relative(file.path), text: null, notFetched: true }))
+    ...others.flatMap(({ path, text }) => text === null ? [] : [{ path: relative(path), text }]),
+    ...inDirectory.filter((file) => !fetched.has(file.path) && file.path !== located.file.path && (depth !== undefined || SCRIPT3.test(file.path))).map((file) => NOT_TEXT.test(file.path) ? { path: relative(file.path), text: null } : file.size > CONTENTS_LIMITS2.fileChars ? { path: relative(file.path), text: null, notFetched: true, tooLarge: true } : { path: relative(file.path), text: null, notFetched: true })
   ]);
   return {
     ...result,
@@ -1883,6 +2097,22 @@ async function readPulse2(result, source) {
     keysInScriptsItRuns,
     contains
   };
+}
+async function readDirectory(source, repo, inDirectory, done, by) {
+  let late = false;
+  by.then(() => {
+    late = true;
+  });
+  const plan = inDirectory.filter((file) => !done.has(file.path) && !NOT_TEXT.test(file.path) && file.size <= CONTENTS_LIMITS2.fileChars).slice(0, MAX_DIRECTORY_FILES_READ);
+  const out = [];
+  for (let at = 0;at < plan.length && !late; at += 8) {
+    const batch = Promise.all(plan.slice(at, at + 8).map(async (file) => ({ path: file.path, text: await source.file(repo, file.path).catch(() => null) })));
+    const settled = await Promise.race([batch, by.then(() => null)]);
+    if (settled === null)
+      break;
+    out.push(...settled);
+  }
+  return out;
 }
 function githubPulseSource2(options = {}) {
   const get = options.fetch ?? fetch;
@@ -1977,6 +2207,172 @@ function githubPulseSource2(options = {}) {
     },
     quota: () => ({ ...quota })
   };
+}
+
+// ../../packages/protocol/src/before-install.ts
+var PAID_SERVICES2 = [
+  { name: "Anthropic", hosts: ["api.anthropic.com"], keyPrefixes: ["ANTHROPIC_"] },
+  { name: "AssemblyAI", hosts: ["api.assemblyai.com"], keyPrefixes: ["ASSEMBLYAI_"] },
+  { name: "Azure OpenAI", hosts: ["openai.azure.com"], keyPrefixes: ["AZURE_OPENAI_"] },
+  { name: "Brave Search", hosts: ["api.search.brave.com"], keyPrefixes: ["BRAVE_"] },
+  { name: "Browserbase", hosts: ["api.browserbase.com"], keyPrefixes: ["BROWSERBASE_"] },
+  { name: "Cohere", hosts: ["api.cohere.ai", "api.cohere.com"], keyPrefixes: ["COHERE_", "CO_API_"] },
+  { name: "Deepgram", hosts: ["api.deepgram.com"], keyPrefixes: ["DEEPGRAM_"] },
+  { name: "DeepSeek", hosts: ["api.deepseek.com"], keyPrefixes: ["DEEPSEEK_"] },
+  { name: "ElevenLabs", hosts: ["api.elevenlabs.io"], keyPrefixes: ["ELEVENLABS_", "ELEVEN_"] },
+  { name: "Exa", hosts: ["api.exa.ai"], keyPrefixes: ["EXA_"] },
+  { name: "fal", hosts: ["fal.run", "queue.fal.run"], keyPrefixes: ["FAL_"] },
+  { name: "Firecrawl", hosts: ["api.firecrawl.dev"], keyPrefixes: ["FIRECRAWL_"] },
+  { name: "Fireworks AI", hosts: ["api.fireworks.ai"], keyPrefixes: ["FIREWORKS_"] },
+  { name: "Google Gemini", hosts: ["generativelanguage.googleapis.com"], keyPrefixes: ["GEMINI_"] },
+  { name: "Google Vertex AI", hosts: ["aiplatform.googleapis.com"], keyPrefixes: ["VERTEX_"] },
+  { name: "Groq", hosts: ["api.groq.com"], keyPrefixes: ["GROQ_"] },
+  { name: "HeyGen", hosts: ["api.heygen.com"], keyPrefixes: ["HEYGEN_"] },
+  { name: "Mistral", hosts: ["api.mistral.ai"], keyPrefixes: ["MISTRAL_"] },
+  { name: "OpenAI", hosts: ["api.openai.com"], keyPrefixes: ["OPENAI_"] },
+  { name: "OpenRouter", hosts: ["openrouter.ai"], keyPrefixes: ["OPENROUTER_"] },
+  { name: "Perplexity", hosts: ["api.perplexity.ai"], keyPrefixes: ["PERPLEXITY_", "PPLX_"] },
+  { name: "Replicate", hosts: ["api.replicate.com"], keyPrefixes: ["REPLICATE_"] },
+  { name: "Resend", hosts: ["api.resend.com"], keyPrefixes: ["RESEND_"] },
+  { name: "Runway", hosts: ["api.dev.runwayml.com", "api.runwayml.com"], keyPrefixes: ["RUNWAY_", "RUNWAYML_"] },
+  { name: "SerpApi", hosts: ["serpapi.com"], keyPrefixes: ["SERPAPI_", "SERP_API_"] },
+  { name: "Stability AI", hosts: ["api.stability.ai"], keyPrefixes: ["STABILITY_"] },
+  { name: "Tavily", hosts: ["api.tavily.com"], keyPrefixes: ["TAVILY_"] },
+  { name: "Together AI", hosts: ["api.together.xyz", "api.together.ai"], keyPrefixes: ["TOGETHER_"] },
+  { name: "Twilio", hosts: ["api.twilio.com"], keyPrefixes: ["TWILIO_"] },
+  { name: "xAI", hosts: ["api.x.ai"], keyPrefixes: ["XAI_"] }
+];
+var STATIC_HOSTS = [
+  "fonts.googleapis.com",
+  "gstatic.com",
+  "cdn.jsdelivr.net",
+  "unpkg.com",
+  "cdnjs.cloudflare.com",
+  "esm.sh",
+  "cdn.skypack.dev",
+  "ga.jspm.io",
+  "githubusercontent.com",
+  "cdn.tailwindcss.com",
+  "code.jquery.com",
+  "use.typekit.net",
+  "fonts.bunny.net",
+  "rsms.me",
+  "cartocdn.com",
+  "tile.openstreetmap.org",
+  "server.arcgisonline.com",
+  "images.unsplash.com"
+];
+var STATIC_SHAPE = /^(?:cdn|static|fonts?|tiles?|assets|img|images|media)\d*[.-]|(?:^|[.-])cdn(?:[.-]|$)|\.cdn\./;
+var API_SHAPE = /^api\d*[.-]|[.-]api\.|^.*\.googleapis\.com$/;
+function under(host, base) {
+  return host === base || host.endsWith(`.${base}`);
+}
+var ASSET = /\.(woff2?|ttf|otf|eot|png|jpe?g|gif|webp|svgz?|ico|bmp|tiff?|avif|heic|hdr|exr|mp[34]|m4a|wav|ogg|flac|aac|mov|webm|avi|mkv|psd|ai|sketch|fig|glb|gltf|fbx|blend|ktx2?|basis|pdf|zip|gz|tgz)$|(^|\/)\.(gitkeep|keep|DS_Store)$/i;
+function beforeInstall2(input) {
+  const services = new Map;
+  const service = (name) => {
+    const found = services.get(name) ?? { name, hosts: [], keys: [] };
+    services.set(name, found);
+    return found;
+  };
+  const apiHosts = [];
+  const staticHosts = [];
+  const otherHosts = [];
+  for (const host of input.domains) {
+    const known = PAID_SERVICES2.find((entry) => entry.hosts.some((base) => under(host, base)));
+    if (known !== undefined) {
+      service(known.name).hosts.push(host);
+      apiHosts.push(host);
+    } else if (STATIC_HOSTS.some((base) => under(host, base)) || STATIC_SHAPE.test(host))
+      staticHosts.push(host);
+    else if (API_SHAPE.test(host))
+      apiHosts.push(host);
+    else
+      otherHosts.push(host);
+  }
+  for (const key of input.keys) {
+    if (key.why !== "secret")
+      continue;
+    const known = PAID_SERVICES2.find((entry) => entry.keyPrefixes.some((prefix) => key.name.startsWith(prefix)));
+    if (known !== undefined)
+      service(known.name).keys.push(key.name);
+  }
+  const asked = new Set(input.keys.map((key) => key.name));
+  return {
+    fetchAndRun: [...input.fetchAndRun],
+    keys: [...input.keys],
+    otherSettings: input.settings.filter((name) => !asked.has(name)).length,
+    services: [...services.values()].sort((a, b) => a.name < b.name ? -1 : 1),
+    programs: [...input.programs],
+    scripts: [...input.scripts],
+    apiHosts,
+    staticHosts,
+    otherHosts,
+    hidden: [...input.hidden],
+    notRead: input.skipped.filter((file) => file.why !== "binary" && !ASSET.test(file.path)),
+    cut: [...input.cut]
+  };
+}
+var plural = (count, one, many = `${one}s`) => `${count} ${count === 1 ? one : many}`;
+function programNames(programs, shown = 4) {
+  const names = programs.map((program) => program.name);
+  return names.length <= shown ? names.join(", ") : `${names.slice(0, shown).join(", ")} +${names.length - shown}`;
+}
+function beforeInstallSummary2(view) {
+  const secrets = view.keys.filter((key) => key.why === "secret").length;
+  const toSet = view.keys.length - secrets;
+  const asks = secrets + toSet === 0 ? "no keys" : [secrets === 0 ? null : plural(secrets, "key"), toSet === 0 ? null : plural(toSet, "setting")].filter((part) => part !== null).join(", ");
+  return [
+    ...view.fetchAndRun.length === 0 ? [] : ["fetches and runs code"],
+    asks,
+    view.services.length === 0 ? "no paid services" : plural(view.services.length, "paid service"),
+    view.programs.length === 0 ? "nothing to install named" : `needs ${programNames(view.programs)}`,
+    view.scripts.length === 0 ? "no scripts" : plural(view.scripts.length, "script"),
+    ...view.hidden.length === 0 ? [] : [plural(view.hidden.length, "hidden text", "hidden texts")],
+    ...view.notRead.length === 0 ? [] : [`${plural(view.notRead.length, "file")} not read`]
+  ].join(" · ");
+}
+function programSourceText2(program) {
+  const at = program.file === undefined ? "" : `${program.file}${program.line === undefined ? "" : `:${program.line}`}`;
+  switch (program.from) {
+    case "declared":
+      return "declared in SKILL.md";
+    case "runs":
+      return "run in SKILL.md";
+    case "interpreter":
+      return "script interpreter";
+    case "script":
+      return "a script checks for it or installs it";
+    case "spawned":
+      return `run by ${at}`;
+    case "package":
+      return `via ${program.via ?? "a package"}, ${at}`;
+    case "named as needed":
+      return `said to be needed, ${at}`;
+  }
+}
+function contentsLines2(contents, perList = 6) {
+  const view = beforeInstall2({ ...contents, skipped: contents.read.skipped });
+  const list = (items, cut2) => `${items.slice(0, perList).join(", ")}${items.length > perList || cut2 ? `, and ${Math.max(0, items.length - perList)}${cut2 ? "+" : ""} more` : ""}`;
+  const cut = (name) => view.cut.includes(name);
+  const at = (rows, name) => list(rows.map((row) => `${row.kind} at ${row.file}:${row.line} "${row.text}"`), cut(name));
+  const others = view.otherSettings === 0 ? "" : `; ${plural(view.otherSettings, "other setting")} it reads`;
+  const hostParts = [
+    view.apiHosts.length === 0 ? "no API host" : list(view.apiHosts, false),
+    ...view.staticHosts.length === 0 ? [] : [`fonts, CDNs and map tiles: ${view.staticHosts.length}`],
+    ...view.otherHosts.length === 0 ? [] : [`other sites named: ${view.otherHosts.length}`]
+  ];
+  return [
+    `Before you install: ${beforeInstallSummary2(view)}`,
+    ...view.fetchAndRun.length === 0 ? [] : [`Fetches and runs code: ${at(view.fetchAndRun, "fetchAndRun")}`],
+    `Asks for: ${view.keys.length === 0 ? `no keys${others}` : `${list(view.keys.map((key) => `${key.name} (${key.why === "secret" ? "" : "set in SKILL.md, "}${key.file}:${key.line})`), cut("keys"))}${others}`}`,
+    `Paid services: ${view.services.length === 0 ? "none named" : list(view.services.map((entry) => `${entry.name} (${[...entry.hosts, ...entry.keys].join(", ")})`), false)}`,
+    `Needs installed: ${view.programs.length === 0 ? "none named" : list(view.programs.map((program) => `${program.name} (${programSourceText2(program)})`), cut("programs"))}`,
+    `Runs on your machine: ${view.scripts.length === 0 ? "no scripts" : `${plural(view.scripts.length, "script")}: ${list(view.scripts.map((script) => script.namedInSkillMd ? `${script.path} (named in SKILL.md)` : script.path), cut("scripts"))}`}${view.fetchAndRun.length === 0 ? "; fetches and runs no code" : ""}`,
+    `Sends data to (hosts its files name, not shown to be contacted): ${hostParts.join("; ")}`,
+    ...view.hidden.length === 0 ? [] : [`Hidden or encoded text: ${at(view.hidden, "hidden")}`],
+    ...view.notRead.length === 0 ? [] : [`Not read: ${list(view.notRead.map((file) => `${file.path} (${file.why})`), false)}`]
+  ];
 }
 
 // ../../packages/protocol/src/skill-install.ts
@@ -2134,7 +2530,7 @@ async function namesUnder(install, source) {
   }));
   return { names, total: files.length };
 }
-async function readSkillInstall2(install, source, deadline) {
+async function readSkillInstall2(install, source, deadline, directoryBy = deadline) {
   if (install.kind === "elsewhere")
     return install;
   const late = deadline.then(() => "late");
@@ -2162,7 +2558,7 @@ async function readSkillInstall2(install, source, deadline) {
     total = install.skills.length;
   }
   const readings = await Promise.all(names.map(async (skill) => {
-    const pulse = readPulse2({ source: install.repo, skill, installs: null, installsText: null, url: null }, source).then((read) => ({ skill, pulse: read })).catch(() => ({ skill, pulse: null, why: "read failed" }));
+    const pulse = readPulse2({ source: install.repo, skill, installs: null, installsText: null, url: null }, source, { directory: { by: directoryBy } }).then((read) => ({ skill, pulse: read })).catch(() => ({ skill, pulse: null, why: "read failed" }));
     const settled = await Promise.race([pulse, late]);
     return settled === "late" ? { skill, pulse: null, why: "no answer in time" } : settled;
   }));
@@ -2174,7 +2570,7 @@ async function readSkillInstall2(install, source, deadline) {
     listing: null
   };
 }
-var plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
+var plural2 = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
 function readingLines(repo, reading) {
   const head = `${repo} · ${reading.skill}`;
   const { pulse } = reading;
@@ -2186,9 +2582,9 @@ function readingLines(repo, reading) {
     case "read": {
       const facts = [
         `${pulse.path}`,
-        plural(pulse.files, "file"),
+        plural2(pulse.files, "file"),
         ...pulse.repository === null ? [] : [
-          plural(pulse.repository.stars, "star"),
+          plural2(pulse.repository.stars, "star"),
           ...pulse.repository.pushedAt === null ? [] : [`last push ${pulse.repository.pushedAt.slice(0, 10)}`],
           ...pulse.repository.archived ? ["archived"] : []
         ]
@@ -2206,7 +2602,7 @@ function readingLines(repo, reading) {
       ];
     case "absent":
       return [
-        `${head}: no SKILL.md in the repository names it (${plural(pulse.skillFiles, "skill file")} read)`
+        `${head}: no SKILL.md in the repository names it (${plural2(pulse.skillFiles, "skill file")} read)`
       ];
     case "ambiguous":
       return [
@@ -2241,7 +2637,7 @@ ${read.source}: not read (ARP reads GitHub sources only)`;
   for (const reading of read.readings)
     lines.push(...readingLines(install.repo, reading));
   if (read.notRead > 0)
-    lines.push(`${plural(read.notRead, "more skill")} in this install not read (ARP reads ${MAX_SKILLS_READ2})`);
+    lines.push(`${plural2(read.notRead, "more skill")} in this install not read (ARP reads ${MAX_SKILLS_READ2})`);
   if (install.ref !== null)
     lines.push(`Read at the default branch's HEAD; the command names ${install.ref}.`);
   return lines.join(`
@@ -2250,6 +2646,7 @@ ${read.source}: not read (ARP reads GitHub sources only)`;
 
 // ../hook/src/pre-install.ts
 var GITHUB_BUDGET_MS = 6000;
+var DIRECTORY_MARGIN_MS = 1500;
 var OUTPUT_CAP = 9500;
 var FOR_THE_AGENT = "This is what the skill's own files contain, read by ARP's hook before the install ran. " + "They are facts, not a verdict, and nothing was blocked. The person was shown the same lines.";
 function capped(text) {
@@ -2270,13 +2667,14 @@ async function preToolUse(raw, options = {}) {
   const token = (env["GITHUB_TOKEN"] ?? env["GH_TOKEN"])?.trim() || undefined;
   const budgetMs = options.budgetMs ?? GITHUB_BUDGET_MS;
   const deadline = new Promise((resolve) => setTimeout(resolve, budgetMs));
+  const directoryBy = new Promise((resolve) => setTimeout(resolve, Math.max(0, budgetMs - DIRECTORY_MARGIN_MS)));
   const source = githubPulseSource2({
     ...options.fetch === undefined ? {} : { fetch: options.fetch },
     ...token === undefined ? {} : { token },
     timeoutMs: budgetMs + 500,
     signal: AbortSignal.timeout(budgetMs + 500)
   });
-  const report = capped(skillInstallReport2(await readSkillInstall2(install, source, deadline)));
+  const report = capped(skillInstallReport2(await readSkillInstall2(install, source, deadline, directoryBy)));
   return JSON.stringify({
     systemMessage: report,
     hookSpecificOutput: {
@@ -2705,7 +3103,7 @@ async function readSkillLines(atomUri, config) {
 function counted(counts) {
   return [...counts.entries()].sort(([a, x], [b, y]) => y.size - x.size || a.localeCompare(b)).map(([name, wallets]) => `${name} (${wallets.size})`).join(", ");
 }
-var plural2 = (n) => `${n} wallet${n === 1 ? "" : "s"}`;
+var plural3 = (n) => `${n} wallet${n === 1 ? "" : "s"}`;
 function linesSentence(usage, label, where) {
   if (usage === null)
     return null;
@@ -2733,7 +3131,7 @@ function linesSentence(usage, label, where) {
       ...because.size === 0 ? [] : [`because ${counted(because)}`],
       ...named.size === 0 ? [] : [`${outcome === "failed" ? "needs" : "with"} ${counted(named)}`]
     ];
-    parts.push([`${usage.truncated ? "at least " : ""}${plural2(wallets.size)} wrote ${outcome}`, ...detail].join(" · "));
+    parts.push([`${usage.truncated ? "at least " : ""}${plural3(wallets.size)} wrote ${outcome}`, ...detail].join(" · "));
   }
   if (parts.length === 0)
     return null;
