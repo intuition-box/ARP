@@ -1,6 +1,6 @@
-# Task 112 — The HOL adapter: a usage score HOL can read, and "will it work here"
+# Task 115 — The HOL adapter: a usage score HOL can read, and "will it work here"
 
-**Status:** A and B done 2026-11-10, verified (`.claude/learning/100-the-hol-adapter.md`, commits `90415cd`, `aa4a0b2`, `9170844`) (below, "What was built"); C, D, E after the user's return. Run by this session (the user: « un plan pour HOL c'est toi »).
+**Status:** A and B done 2026-11-10, verified (`.claude/learning/104-the-hol-adapter.md`, commits `0d89014`, `9928180`, `98b5c83`) (below, "What was built"); C, D, E after the user's return. Run by this session (the user: « un plan pour HOL c'est toi »).
 **ADR:** one for deliverable C (a new level on a line), not before. A and B need none if they stay inside
 the shapes below.
 **Rules:** `code.md`, `workflow.md`, `claims.md`, `portability.md`. `feedback_hook_cli_gates`: touching the

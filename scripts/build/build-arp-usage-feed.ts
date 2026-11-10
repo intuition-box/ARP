@@ -1,4 +1,4 @@
-/** Build the `arp-usage` feed (task 112) from the skill lines feed. Holds no key, reads no network.
+/** Build the `arp-usage` feed (task 115) from the skill lines feed. Holds no key, reads no network.
  *
  *      bun run scripts/build/build-arp-usage-feed.ts [--in apps/web/public/feeds/skill-lines.json]
  *                                                     [--out apps/web/public/feeds/arp-usage.json]

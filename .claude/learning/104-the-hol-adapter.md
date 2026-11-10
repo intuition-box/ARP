@@ -1,8 +1,8 @@
-# 100 — The HOL adapter, deliverables A and B
+# 104 — The HOL adapter, deliverables A and B
 
-**Task:** `docs/tasks/112-the-hol-adapter.md` (A and B only; C, D, E wait for the user's return)
+**Task:** `docs/tasks/115-the-hol-adapter.md` (A and B only; C, D, E wait for the user's return)
 **Completed:** 2026-11-10
-**Commit:** `90415cd` (A), `aa4a0b2` (B), `9170844` (verifier fixes)
+**Commit:** `0d89014` (A), `9928180` (B), `98b5c83` (verifier fixes)
 **Verifier verdict:** PASS (second pass; first failed on two one-line items)
 
 ## What shipped

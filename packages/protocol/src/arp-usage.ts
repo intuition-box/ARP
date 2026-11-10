@@ -1,5 +1,5 @@
 /**
- * The `arp-usage` adapter's output (task 112): one record per skill, in the shape of the adapter sheet
+ * The `arp-usage` adapter's output (task 115): one record per skill, in the shape of the adapter sheet
  * written for HOL's HCS-28 skill trust profile (`outreach/drafts/hol-arp-usage-adapter-2026-11-10.md` in
  * `Wieedze/ARP-business-dev`). Pure: it reads a skill lines feed (`skill-lines-feed.ts`) and touches no
  * network.

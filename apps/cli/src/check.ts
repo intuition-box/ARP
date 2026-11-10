@@ -1,5 +1,5 @@
 /**
- * `arp check <skill>` (task 112, task 86's deliverable 1 for a skill): will it work here.
+ * `arp check <skill>` (task 115, task 86's deliverable 1 for a skill): will it work here.
  *
  * Read-only: no wallet, no key, nothing written anywhere. Three parts, each a fact and none a verdict:
  *
