@@ -3,7 +3,8 @@ import {normaliseCategoryLabel} from "./declare/label.js";
 /**
  * From a person's or an agent's words to a node of the domain tree (task 84, ADR `0155`). Pure: the
  * tree's labels and the alias table come in as arguments, and the words never leave the caller's
- * machine (the user, 2026-11-09).
+ * machine (the user, 2026-11-09). The one exception is a caller who chooses ARP's hosted read-only
+ * endpoint: it runs this on ARP's machine, with the words that caller sent, and keeps none (ADR `0161`).
  *
  * Why it exists: since the tree is OASF's (ADR `0150`) its nodes have names nobody types
  * ("presentation authoring"). Without this, an agent declaring a use "in slides" is refused, and may then

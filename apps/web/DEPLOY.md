@@ -1,8 +1,10 @@
-# Deploying the site and the sponsor on Coolify
+# Deploying the site, the sponsor and the MCP endpoint on Coolify
 
-One Coolify project, two applications: the web app, a static build served by nginx from
-`apps/web/Dockerfile` (task 74), and ARP's sponsoring service from `apps/sponsor/Dockerfile` (task
-78, ADR `0149`). The sponsor has its own section, [The sponsor](#the-sponsor).
+One Coolify project, three applications: the web app, a static build served by nginx from
+`apps/web/Dockerfile` (task 74), ARP's sponsoring service from `apps/sponsor/Dockerfile` (task
+78, ADR `0149`), and the hosted read-only MCP endpoint from `apps/mcp/Dockerfile` (task 92, ADR
+`0161`). The last two have their own sections, [The sponsor](#the-sponsor) and
+[The MCP endpoint](#the-mcp-endpoint).
 
 ## Before it goes online
 
@@ -158,7 +160,60 @@ The plugin, `arp line` and `arp share send` reach the sponsor at `ARP_SPONSOR`, 
 `http://127.0.0.1:3200`. Until a release changes that default, a tester sets
 `ARP_SPONSOR=https://<SPONSOR_PUBLIC_HOST>`.
 
+## The MCP endpoint
+
+ARP's MCP server, read-only, for a marketplace or an agent that points at a URL instead of installing
+anything (task 92, ADR `0161`). It serves `arp_pulse`, `arp_tool_reputation` and `arp_agent_endpoints`
+on **testnet 13579**, holds **no key** and signs nothing. The installed plugin and CLI never use it: only
+a caller who chooses the URL sends words to it.
+
+It receives the caller's words, so it keeps none: no request, no body and no tool argument is logged or
+written, and a failed call's log line names the tool and the error's class only. Keep it that way in
+Coolify too: the proxy's access log, when on, holds request lines (a path, never a body).
+
+### Coolify settings
+
+| Setting | Value |
+| --- | --- |
+| Source | the Git repository, branch `main` |
+| Build pack | **Dockerfile** |
+| Base directory | `/` |
+| Dockerfile location | `/apps/mcp/Dockerfile` |
+| Ports exposes | `3002` |
+| Domain | `https://<ARP_PUBLIC_HOST>` |
+| Health check | path `/`, port `3002` (the image has its own `HEALTHCHECK`) |
+| Persistent storage | none. It keeps a day of GitHub file listings and the search package's cache in the container, and loses both on redeploy |
+
+### Variables
+
+Set at run time. The image already sets `ARP_HOSTED=1`, `ARP_TOOLS=read`, `ARP_TARGET=testnet`,
+`ARP_HOST=0.0.0.0`, `PORT=3002` and `ARP_HOME=/home/node/.arp`; leave them. In hosted mode the server
+refuses to start with any other tool set or chain, or with `ARP_RECEIPT_KEY`, `ARP_AGENT_PRIVATE_KEY`
+or `ARP_ALLOW_PRIVATE_PROBE` set.
+
+| Variable | Required | What it does |
+| --- | --- | --- |
+| `ARP_PUBLIC_HOST` | **yes** | the endpoint's host name, `mcp.example.org`: no scheme, no port. It answers that `Host`, the origin `https://<that name>` and its loopback names, nothing else |
+| `GITHUB_TOKEN` | no | raises GitHub's limit of 60 requests an hour, which `arp_pulse` spends reading each result's files. Give it no scopes. A secret: tick "Is secret?" |
+
+A caller connects to `https://<ARP_PUBLIC_HOST>/mcp` over HTTP. Check it once deployed:
+
+```bash
+curl -s https://<ARP_PUBLIC_HOST>/ | head -c 300
+curl -s https://<ARP_PUBLIC_HOST>/mcp -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | head -c 300
+```
+
+Locally, from the repository root:
+
+```bash
+docker build -f apps/mcp/Dockerfile -t arp-mcp .
+docker run --rm -p 3002:3002 -e ARP_PUBLIC_HOST=mcp.example.org arp-mcp
+curl -s http://127.0.0.1:3002/ -H 'Host: mcp.example.org' | head -c 300
+```
+
 ## What the site does not run
 
 The content server and the activity feed run on one machine and are not hosted. Nothing on the site
-needs them: steps that would are hidden while their variable is unset. The sponsor is above.
+needs them: steps that would are hidden while their variable is unset. The sponsor and the MCP
+endpoint are above.

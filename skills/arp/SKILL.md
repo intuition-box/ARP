@@ -68,6 +68,11 @@ one:
 path of your requests — unplug its servers and every read, every declaration and every stake above
 still completes.
 
+ARP also runs the connector's reads (`arp_pulse`, `arp_tool_reputation`, `arp_agent_endpoints`) as a
+hosted endpoint, on testnet, for a client that can only take a URL. It is opt-in: the plugin and the
+CLI never use it. Pointing at it sends your search words to ARP's server, which keeps none of them;
+running the connector yourself sends them nowhere but the search it runs.
+
 ## Addresses
 
 |            | Intuition mainnet 1155                       | Intuition testnet 13579                      |

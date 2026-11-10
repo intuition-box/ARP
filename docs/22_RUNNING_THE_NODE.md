@@ -32,6 +32,12 @@ is code on your machine, the graph it reads is Intuition's, and the files it fet
 GitHub. That property is the whole of ADR `0045` and it is the reason this is installed rather than
 hosted.
 
+_Amended 2026-11-10 (ADR `0161`):_ ARP also runs this server, read-only, as a hosted endpoint, at the
+URL its deployment configures, for a caller who would rather point at a URL than install anything.
+Nothing installed uses it. A caller who chooses it sends its tool arguments, the words of a search
+among them, to ARP's server, which logs and keeps none of them, holds no key and reads testnet 13579
+only (`ARP_HOSTED`, below). Everything else in this document is about the server on your machine.
+
 ```
 bun run apps/mcp/src/server.ts --stdio    # for an MCP client to launch
 ARP_TARGET=testnet bun run apps/mcp/src/server.ts
@@ -159,7 +165,8 @@ skills.sh              one `GET /api/search?q=skill` when a search on `arp_pulse
                        (task 82). `ARP_SKILLS_INDEX_URL=off` stops it
 the signed addresses   `arp_agent_endpoints` asks `/` of an agent's three newest signed addresses, and
                        `arp_pulse` the newest of up to ten agents on every search with words:
-                       somebody else's servers, through the same guard as any probe. Your words stay here
+                       somebody else's servers, through the same guard as any probe. Your words stay here,
+                       unless you chose ARP's hosted endpoint instead of this server (ADR 0161)
 ```
 
 **`arp_pulse` runs somebody else's package, and you should decide about that.** Called with a `query`,
@@ -340,6 +347,11 @@ ARP_SPONSOR            desktop/sponsored, arp line, arp share send: the sponsori
 ARP_ACTIVITY_DIR       session-log.ts --serve only: the directory it tails. Default .arp
 ARP_ACTIVITY_PORT      session-log.ts --serve only: its port. Default 3003, on 127.0.0.1
 ARP_ACTIVITY_ORIGINS   session-log.ts --serve only: comma-separated origins added to the CORS list
+ARP_HOSTED             1: ARP's hosted endpoint (apps/mcp/Dockerfile, ADR 0161). Refuses to start unless
+                       ARP_TOOLS=read, ARP_TARGET=testnet and ARP_PUBLIC_HOST are set, with no
+                       ARP_RECEIPT_KEY, ARP_AGENT_PRIVATE_KEY or ARP_ALLOW_PRIVATE_PROBE, and over HTTP
+                       only. Makes no receipt key, and logs a failed call's tool and error class only
+ARP_PUBLIC_HOST        with ARP_HOSTED=1 only: the public name it answers, as Host and as https origin
 ```
 
 `GITHUB_TOKEN` is the only one that is a credential, it is read server-side only, and it is sent to

@@ -1,6 +1,6 @@
 # 0155 — A word names a node through a local alias table; the words never leave the machine
 
-**Status:** Accepted
+**Status:** Accepted. Amended by ADR `0161` (2026-11-10): ARP's hosted read-only MCP endpoint receives the words of a caller who chooses it, and keeps none; point 3 holds for everything a person installs.
 **Date:** 2026-11-09
 **Triggered by:** the user, 2026-11-09, task 84
 
