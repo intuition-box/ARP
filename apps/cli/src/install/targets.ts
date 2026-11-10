@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import {
   CLAUDE_HOOKS,
   codexBlockOf,
+  eventNames,
   formatJson,
   hasHooks,
   hooksOf,
@@ -329,8 +330,10 @@ function claudeHookStep(
     (settings) =>
       withHooks(settings, CLAUDE_HOOKS, remove ? null : commands.hook, commands.hookFile),
     remove
-      ? 'hooks: arp removed from PostToolUse and PostToolUseFailure'
-      : 'hooks: arp on PostToolUse and PostToolUseFailure, async',
+      ? `hooks: arp removed from ${eventNames(CLAUDE_HOOKS).join(', ')}`
+      : `hooks: arp on ${CLAUDE_HOOKS.events
+          .map((event) => `${event.name}${event.sync === true ? ' (waited on, Bash skills installs only)' : ''}`)
+          .join(', ')}`,
     (settings) => hooksOf(settings, CLAUDE_HOOKS, commands.hookFile),
   );
 }
@@ -376,7 +379,7 @@ function claudeChecks(env: InstallEnv, commands: Commands, project: boolean): [s
       viaCli || SERVER_NAME in servers,
     ],
     [
-      `hook on PostToolUse and PostToolUseFailure (${files.settings})`,
+      `hook on ${eventNames(CLAUDE_HOOKS).join(', ')} (${files.settings})`,
       !(settings instanceof Error) && hasHooks(settings, CLAUDE_HOOKS, commands.hookFile),
     ],
     ...claudeVersionCheck(env),
@@ -471,8 +474,8 @@ function hookStep(path: string, spec: HookSpec, commands: Commands, remove: bool
     path,
     (settings) => withHooks(settings, spec, remove ? null : commands.hook, commands.hookFile),
     remove
-      ? `hooks: arp removed (${spec.events.map((e) => e.name).join(', ')})`
-      : `hooks: arp on ${spec.events.map((e) => e.name).join(', ')}${commands.capture ? ', capturing' : ''}`,
+      ? `hooks: arp removed (${eventNames(spec).join(', ')})`
+      : `hooks: arp on ${eventNames(spec).join(', ')}${commands.capture ? ', capturing' : ''}`,
     (settings) => hooksOf(settings, spec, commands.hookFile),
   );
 }

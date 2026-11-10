@@ -114,7 +114,7 @@ export function askedBySkill(command: string, markdown: string, directory: strin
 }
 
 /**
- * The nodes of the tree as written (task 79), and the alias table: the hook reads no network, so both
+ * The nodes of the tree as written (task 79), and the alias table: the failure record reads no network, so both
  * ship with it (task 84, ADR `0155`). A domain is one of these nodes, never anything else.
  */
 const NODES: readonly string[] = skillNodes.nodes;

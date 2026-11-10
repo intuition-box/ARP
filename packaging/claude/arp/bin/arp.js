@@ -41719,7 +41719,7 @@ var init_domain_words3 = () => {};
 var skill_nodes_13579_default;
 var init_skill_nodes_13579 = __esm(() => {
   skill_nodes_13579_default = {
-    _note: "For the hook, which reads no network (task 84): the nodes of ARP's testnet tree as written by task 79 (data/catalogue/oasf-tree-13579.json), and the node each skill name is filed at, when the name is filed at one node only. Built by scripts/build/build-skill-nodes.ts from data/catalogue/oasf-skill-tags-proposal-13579.json, rows not reviewed out.",
+    _note: "For the hook's failure record, which reads no network (task 84): the nodes of ARP's testnet tree as written by task 79 (data/catalogue/oasf-tree-13579.json), and the node each skill name is filed at, when the name is filed at one node only. Built by scripts/build/build-skill-nodes.ts from data/catalogue/oasf-skill-tags-proposal-13579.json, rows not reviewed out.",
     chainId: 13579,
     oasfVersion: "1.1.0",
     nodes: [
@@ -43340,6 +43340,9 @@ function withMcpServer(config, name, entry) {
     delete next.mcpServers;
   return next;
 }
+function eventNames(spec) {
+  return [...new Set(spec.events.map((event) => event.name))];
+}
 function isOurs(hook, marker) {
   return isRecord3(hook) && typeof hook.command === "string" && hook.command.includes(marker);
 }
@@ -43369,16 +43372,18 @@ function ours(list, spec, marker) {
 }
 function withHooks(settings, spec, command, marker) {
   const hooks = isRecord3(settings.hooks) ? { ...settings.hooks } : {};
-  for (const event of spec.events) {
-    const kept = strip(hooks[event.name], spec, marker);
+  for (const name of eventNames(spec)) {
+    const kept = strip(hooks[name], spec, marker);
     if (command !== null) {
-      const entry = spec.entry(command);
-      kept.push(spec.shape === "flat" ? entry : { ...event.matcher === undefined ? {} : { matcher: event.matcher }, hooks: [entry] });
+      for (const event of spec.events.filter((row) => row.name === name)) {
+        const entry = spec.entry(command, event);
+        kept.push(spec.shape === "flat" ? entry : { ...event.matcher === undefined ? {} : { matcher: event.matcher }, hooks: [entry] });
+      }
     }
     if (kept.length > 0)
-      hooks[event.name] = kept;
+      hooks[name] = kept;
     else
-      delete hooks[event.name];
+      delete hooks[name];
   }
   const next = { ...settings, hooks };
   if (Object.keys(hooks).length === 0) {
@@ -43394,16 +43399,19 @@ function hooksOf(settings, spec, marker) {
   if (!isRecord3(settings.hooks))
     return {};
   const out = {};
-  for (const event of spec.events) {
-    const found2 = ours(settings.hooks[event.name], spec, marker);
+  for (const name of eventNames(spec)) {
+    const found2 = ours(settings.hooks[name], spec, marker);
     if (found2.length > 0)
-      out[event.name] = found2;
+      out[name] = found2;
   }
   return out;
 }
 function hasHooks(settings, spec, marker) {
   const found2 = hooksOf(settings, spec, marker);
-  return spec.events.every((event) => (event.name in found2));
+  return eventNames(spec).every((name) => {
+    const list = found2[name];
+    return Array.isArray(list) && list.length >= spec.events.filter((row) => row.name === name).length;
+  });
 }
 function tomlString(value) {
   return JSON.stringify(value);
@@ -43468,9 +43476,16 @@ var init_edits = __esm(() => {
     shape: "nested",
     events: [
       { name: "PostToolUse", matcher: "*" },
-      { name: "PostToolUseFailure", matcher: "*" }
+      { name: "PostToolUseFailure", matcher: "*" },
+      { name: "PreToolUse", matcher: "Bash", sync: true, timeout: 15, if: "Bash(*skills*)" }
     ],
-    entry: (command) => ({ type: "command", command, async: true, timeout: 10 })
+    entry: (command, event) => ({
+      type: "command",
+      command,
+      ...event.if === undefined ? {} : { if: event.if },
+      ...event.sync === true ? {} : { async: true },
+      timeout: event.timeout ?? 10
+    })
   };
 });
 
@@ -43608,7 +43623,7 @@ function claudeMcpSteps(env, commands, project, remove, allowCli) {
   ];
 }
 function claudeHookStep(env, commands, project, remove) {
-  return jsonStep(claudeFiles(env, project).settings, (settings) => withHooks(settings, CLAUDE_HOOKS, remove ? null : commands.hook, commands.hookFile), remove ? "hooks: arp removed from PostToolUse and PostToolUseFailure" : "hooks: arp on PostToolUse and PostToolUseFailure, async", (settings) => hooksOf(settings, CLAUDE_HOOKS, commands.hookFile));
+  return jsonStep(claudeFiles(env, project).settings, (settings) => withHooks(settings, CLAUDE_HOOKS, remove ? null : commands.hook, commands.hookFile), remove ? `hooks: arp removed from ${eventNames(CLAUDE_HOOKS).join(", ")}` : `hooks: arp on ${CLAUDE_HOOKS.events.map((event) => `${event.name}${event.sync === true ? " (waited on, Bash skills installs only)" : ""}`).join(", ")}`, (settings) => hooksOf(settings, CLAUDE_HOOKS, commands.hookFile));
 }
 function claudeVersionCheck(env) {
   if (env.which("claude") === null)
@@ -43640,7 +43655,7 @@ function claudeChecks(env, commands, project) {
       viaCli || SERVER_NAME in servers
     ],
     [
-      `hook on PostToolUse and PostToolUseFailure (${files.settings})`,
+      `hook on ${eventNames(CLAUDE_HOOKS).join(", ")} (${files.settings})`,
       !(settings instanceof Error) && hasHooks(settings, CLAUDE_HOOKS, commands.hookFile)
     ],
     ...claudeVersionCheck(env)
@@ -43651,7 +43666,7 @@ function noHook(path, spec, commands) {
   return removal.kind === "file" && removal.before !== removal.after ? removal : NO_HOOK;
 }
 function hookStep(path, spec, commands, remove) {
-  return jsonStep(path, (settings) => withHooks(settings, spec, remove ? null : commands.hook, commands.hookFile), remove ? `hooks: arp removed (${spec.events.map((e) => e.name).join(", ")})` : `hooks: arp on ${spec.events.map((e) => e.name).join(", ")}${commands.capture ? ", capturing" : ""}`, (settings) => hooksOf(settings, spec, commands.hookFile));
+  return jsonStep(path, (settings) => withHooks(settings, spec, remove ? null : commands.hook, commands.hookFile), remove ? `hooks: arp removed (${eventNames(spec).join(", ")})` : `hooks: arp on ${eventNames(spec).join(", ")}${commands.capture ? ", capturing" : ""}`, (settings) => hooksOf(settings, spec, commands.hookFile));
 }
 function jsonMcpRuntime(options) {
   const { id, name, dir, file, typed, binary, hook } = options;

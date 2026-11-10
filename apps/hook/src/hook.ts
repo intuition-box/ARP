@@ -1,4 +1,22 @@
-/** Record what a session actually invoked, as the runtime sees it.
+/** Record what a session actually invoked, as the runtime sees it, and answer the events that ask.
+ *
+ * ## Routing by event
+ *
+ * One file serves every event it is wired on. The payload's `hook_event_name` picks the route
+ * (`ROUTES`, below); an event with no route, or a payload that names none, falls through to the
+ * recording, which is all this hook did until task 98:
+ *
+ * ```
+ * PreToolUse          pre-install.ts   a skills install, read before it runs (task 98)
+ * PostToolUse         the recording    below
+ * PostToolUseFailure  the recording    below
+ * ```
+ *
+ * A route returns its stdout, or `null` for none, and the hook exits 0 either way. Adding an event
+ * is one line in `ROUTES` and one entry in `CLAUDE_HOOKS` (`apps/cli/src/install/edits.ts`), which
+ * says how the runtime calls it: in the background or waited on, its timeout, its `if` filter.
+ *
+ * ## The recording
  *
  * Wire it on `PostToolUse` **and** `PostToolUseFailure`, so it fires on every tool call whether or
  * not the agent meant it to. A failed call reaches only the second: `PostToolUse` runs "after a
@@ -77,8 +95,31 @@ import { type FetchedRef, normaliseToolUrl, refForInvocation } from '@arp-protoc
 import { type Classified, classifyCall } from './classify.ts';
 import { readMcpServers, serverUrlOf } from './mcp-config.ts';
 import { capture } from './capture.ts';
-import { type PayloadFormat, type ToolCall, toolCallOf } from './payload.ts';
+import { eventOf, type PayloadFormat, type ToolCall, toolCallOf } from './payload.ts';
+import { preToolUse } from './pre-install.ts';
 import { recordSearch, recordSkillFailure } from './skill-failure.ts';
+
+/** An event's answer: the text for stdout, or `null` for none. Never throws past `route`. */
+type Route = (payload: unknown) => Promise<string | null>;
+
+/** One line per event that answers. An event not named here is recorded, below. */
+const ROUTES: Readonly<Record<string, Route>> = {
+  PreToolUse: (payload) => preToolUse(payload),
+};
+
+/** Run a route and exit 0, whatever it did. A hook that fails must never stop the session. */
+async function route(handler: Route, payload: unknown): Promise<never> {
+  let out: string | null = null;
+  try {
+    out = await handler(payload);
+  } catch {
+    out = null;
+  }
+  if (out === null) process.exit(0);
+  // Exit once the text is flushed: a pipe written and then cut by `exit` can lose its tail.
+  process.stdout.write(`${out}\n`, () => process.exit(0));
+  return new Promise<never>(() => undefined);
+}
 
 type Invocation = {
   at: string;
@@ -259,6 +300,10 @@ try {
 
 // `arp hook --capture` (task 33i): keep this payload, redacted, before anything can exit.
 if (process.argv.includes('--capture')) capture(parsed, join(homedir(), '.arp', 'captures'));
+
+const event = eventOf(parsed);
+const handler = event === null ? undefined : ROUTES[event];
+if (handler !== undefined) await route(handler, parsed);
 
 const call = toolCallOf(parsed);
 if (call === null) process.exit(0);

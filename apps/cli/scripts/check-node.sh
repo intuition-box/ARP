@@ -80,6 +80,12 @@ pass "from a project with planted node, npx, arp and skills: the search ran, and
 (cd "$planted" && echo '{"tool_name":"mcp__x__y","tool_use_id":"t2","tool_response":"ok"}' | clean node "$plugin/bin/hook.js")
 grep -q '"call":"t2"' "$planted/.arp/session.jsonl" || fail "the plugin's hook wrote no line in the project"
 pass "the plugin's hook writes in the project, its working directory"
+# PreToolUse (task 98): a source ARP does not read needs no network, so the answer is checkable here.
+pre="$(cd "$planted" && echo '{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"npx -y skills add https://gitlab.com/o/r"}}' | clean node "$plugin/bin/hook.js")"
+grep -q '"hookEventName":"PreToolUse"' <<<"$pre" || fail "the plugin's hook did not answer a skills install: $pre"
+grep -q 'permissionDecision' <<<"$pre" && fail "the plugin's hook made a permission decision"
+[[ -z "$(cd "$planted" && echo '{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"ls skills"}}' | clean node "$plugin/bin/hook.js")" ]] || fail "the plugin's hook answered a command that installs nothing"
+pass "the plugin's hook answers a skills install before it runs, and nothing else"
 echo '{"type":"commonjs"}' > "$work/package.json"
 clean node "$plugin/bin/arp.js" --version >/dev/null 2>&1 || fail "bin/arp.js refused under a commonjs package.json"
 rm "$work/package.json"

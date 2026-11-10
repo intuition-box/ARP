@@ -32,7 +32,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 
-import { CLAUDE_HOOKS } from '../src/install/edits.ts';
+import { CLAUDE_HOOKS, eventNames } from '../src/install/edits.ts';
 import { npxLaunch, SERVER_ENV } from '../src/install/targets.ts';
 
 const CLI = resolve(import.meta.dir, '..');
@@ -204,9 +204,11 @@ function files(source: Source, cli: string): Files {
     `${claude}/hooks/hooks.json`,
     json({
       hooks: Object.fromEntries(
-        CLAUDE_HOOKS.events.map((event) => [
-          event.name,
-          [{ matcher: event.matcher, hooks: [CLAUDE_HOOKS.entry(command)] }],
+        eventNames(CLAUDE_HOOKS).map((name) => [
+          name,
+          CLAUDE_HOOKS.events
+            .filter((event) => event.name === name)
+            .map((event) => ({ matcher: event.matcher, hooks: [CLAUDE_HOOKS.entry(command, event)] })),
         ]),
       ),
     }),

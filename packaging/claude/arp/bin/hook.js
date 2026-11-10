@@ -519,6 +519,11 @@ function first(raw, keys) {
       return raw[key];
   return;
 }
+function eventOf(raw) {
+  if (!isRecord3(raw))
+    return null;
+  return str(first(raw, ["hook_event_name", "hookEventName"]));
+}
 function toolCallOf(raw) {
   if (!isRecord3(raw))
     return null;
@@ -547,6 +552,1164 @@ function toolCallOf(raw) {
   };
 }
 
+// ../../packages/protocol/src/content-path.ts
+function directoryOf2(path) {
+  const parts = path.split("/");
+  return parts.length < 2 ? "" : parts[parts.length - 2] ?? "";
+}
+function skillFilesIn2(listing) {
+  return listing.filter((file) => (file.path.split("/").pop() ?? "").toLowerCase() === "skill.md");
+}
+
+// ../../packages/protocol/src/skill-requires.ts
+var LOGIN2 = /\b(auth login|log ?in|sign ?up|api[ _-]?key|access token)\b/i;
+function frontmatter2(markdown) {
+  const lines = markdown.split(`
+`);
+  if (lines[0]?.trim() !== "---")
+    return { lines: [], bodyStart: 0 };
+  const end = lines.findIndex((line, index) => index > 0 && line.trim() === "---");
+  return end === -1 ? { lines: [], bodyStart: 0 } : { lines: lines.slice(1, end), bodyStart: end + 1 };
+}
+function unquote2(value) {
+  return value.trim().replace(/^["']|["']$/g, "");
+}
+function declaredBins2(lines) {
+  const at = lines.findIndex((line) => /^\s*bins\s*:/.test(line));
+  if (at === -1)
+    return [];
+  const inline = lines[at]?.split(":").slice(1).join(":").trim() ?? "";
+  if (inline.startsWith("[")) {
+    return inline.replace(/^\[|\]$/g, "").split(",").map(unquote2).filter((name) => name.length > 0);
+  }
+  const out = [];
+  for (const line of lines.slice(at + 1)) {
+    const item = /^\s*-\s*(.+)$/.exec(line);
+    if (item === null)
+      break;
+    out.push(unquote2(item[1] ?? ""));
+  }
+  return out.filter((name) => name.length > 0);
+}
+function bashTools2(lines) {
+  const line = lines.find((candidate) => /^\s*allowed-tools\s*:/.test(candidate));
+  if (line === undefined)
+    return [];
+  return [...line.matchAll(/Bash\(\s*([A-Za-z0-9._-]+)/g)].map((match) => match[1] ?? "").filter((name) => name.length > 0);
+}
+function declaredDescription2(lines) {
+  const at = lines.findIndex((line) => /^description\s*:/.test(line));
+  if (at === -1)
+    return null;
+  const inline = lines[at]?.split(":").slice(1).join(":").trim() ?? "";
+  if (inline !== "" && !/^[>|][-+]?$/.test(inline))
+    return unquote2(inline) || null;
+  const block = [];
+  for (const line of lines.slice(at + 1)) {
+    if (!/^\s+\S/.test(line))
+      break;
+    block.push(line.trim());
+  }
+  return block.length === 0 ? null : block.join(" ");
+}
+var COMMON2 = new Set(("awk bash break bun case cat cd chmod command continue cp curl cut date diff do done echo else end env " + "esac exit export false fi find for function git grep head if kill ln local ls mkdir mv node npm npx open pip pip3 pnpm printf pwd " + "python python3 read return rm sed set sh shift sleep sort source sudo tail tar tee test then time " + "touch tr true uniq unset unzip wait wc wget which while xargs yarn zip").split(" "));
+var INSTALL2 = /\b(?:npm\s+(?:i|install)\s+(?:-g|--global)|pnpm\s+add\s+-g|yarn\s+global\s+add|brew\s+install|pipx\s+install|pip3?\s+install|cargo\s+install)\s+([@a-z0-9][@\w./-]*)/i;
+var PROBE2 = /\b(?:command\s+-v|which)\s+([a-z][\w-]*)/i;
+var COMMAND2 = /^[a-z][a-z0-9_-]*$/;
+function commandsIn2(shell, explicitOnly) {
+  const found = [];
+  for (const segment of shell.split(/&&|\|\||[|;]/)) {
+    const line = segment.trim().replace(/^\$\s+/, "");
+    if (line === "" || line.startsWith("#"))
+      continue;
+    const named = INSTALL2.exec(line)?.[1] ?? PROBE2.exec(line)?.[1];
+    if (named !== undefined) {
+      found.push(named);
+      continue;
+    }
+    if (explicitOnly)
+      continue;
+    const words = line.split(/\s+/).filter((word) => !/^[A-Za-z_][A-Za-z0-9_]*=/.test(word));
+    const first2 = words[0] === "sudo" ? words[1] : words[0];
+    if (first2 === undefined || !COMMAND2.test(first2))
+      continue;
+    found.push(first2);
+  }
+  return found;
+}
+var SHELL_FENCE2 = /^(sh|bash|shell|zsh|console|terminal)$/i;
+function shellLinesRun2(lines) {
+  const run = [];
+  let heredocEnd = null;
+  let quote = null;
+  let continued = false;
+  for (const line of lines) {
+    if (heredocEnd !== null) {
+      if (line.trim() === heredocEnd)
+        heredocEnd = null;
+      continue;
+    }
+    if (quote === null && !continued)
+      run.push(line);
+    continued = line.trimEnd().endsWith("\\");
+    heredocEnd = /<<-?\s*['"]?([A-Za-z_]+)/.exec(line)?.[1] ?? null;
+    for (const char of line) {
+      if (quote === null && (char === '"' || char === "'"))
+        quote = char;
+      else if (char === quote)
+        quote = null;
+    }
+  }
+  return run;
+}
+function commandsRun2(body, declared) {
+  const found = [];
+  let fence = null;
+  let fenced = [];
+  for (const line of body) {
+    const marker = /^\s*(?:```|~~~)\s*([\w-]*)/.exec(line);
+    if (marker !== null) {
+      if (fence === "shell") {
+        for (const run of shellLinesRun2(fenced))
+          found.push(...commandsIn2(run, false));
+      }
+      fenced = [];
+      fence = fence !== null ? null : SHELL_FENCE2.test(marker[1] ?? "") ? "shell" : "other";
+      continue;
+    }
+    if (fence !== null) {
+      fenced.push(line);
+      continue;
+    }
+    for (const inline of line.matchAll(/`([^`]+)`/g))
+      found.push(...commandsIn2(inline[1] ?? "", true));
+  }
+  return [...new Set(found)].filter((name) => !COMMON2.has(name) && !declared.includes(name));
+}
+function requiresLine2(lines) {
+  const name = lines.map((line) => /^\s*requires\s*:\s*(\S+)\s*$/.exec(line)?.[1]).find(Boolean);
+  return name === undefined ? [] : [unquote2(name)];
+}
+function readRequires2(markdown) {
+  const { lines, bodyStart } = frontmatter2(markdown);
+  const cli = [...new Set([...declaredBins2(lines), ...bashTools2(lines), ...requiresLine2(lines)])];
+  const description = declaredDescription2(lines);
+  const body = markdown.split(`
+`);
+  const runs = commandsRun2(body.slice(bodyStart), cli);
+  for (let index = bodyStart;index < body.length; index += 1) {
+    const text = body[index] ?? "";
+    if (LOGIN2.test(text)) {
+      return { cli, runs, login: { line: index + 1, text: text.trim().slice(0, 160) }, description };
+    }
+  }
+  return { cli, runs, login: null, description };
+}
+
+// ../../packages/protocol/src/skill-contents.ts
+var CONTENTS_LIMITS2 = {
+  files: 200,
+  fileChars: 512 * 1024,
+  items: 40,
+  lineChars: 160
+};
+var SCRIPT = /\.(sh|bash|zsh|py|js|mjs|cjs|ts|rb|pl|ps1|php|lua)$/i;
+var MARKDOWN = /\.(md|mdx|markdown)$/i;
+var FENCE = /^\s*(?:```|~~~)/;
+function cap(text) {
+  const flat = text.replace(/\s+/g, " ").trim();
+  return flat.length > CONTENTS_LIMITS2.lineChars ? `${flat.slice(0, CONTENTS_LIMITS2.lineChars - 1)}…` : flat;
+}
+function compare(a, b) {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+var BASE_SHELLS = new Set(["sh", "bash", "zsh", "dash"]);
+function interpreterOf(firstLine) {
+  const match = /^#!\s*(\S+)(?:\s+(?:-\S+\s+)*(\S+))?/.exec(firstLine);
+  if (match === null)
+    return null;
+  const binary = match[1]?.split("/").pop() ?? "";
+  const name = binary === "env" ? match[2] ?? "" : binary;
+  return /^[a-z][\w.-]*$/i.test(name) && !BASE_SHELLS.has(name) ? name : null;
+}
+var SCRIPT_PROBE = /(?:^|[;&|(!{]|\bif|\bthen|\$\()\s*(?:!\s*)?(?:command\s+-v|which|type\s+-p|hash)\s+([a-z][\w.+-]*)/g;
+var SYSTEM_INSTALL = /\b(?:brew|apt-get|apt|dnf|yum|apk|pacman|choco|winget|scoop|port)\s+(?:install|add|-S)\s+(?:-\S+\s+)*([a-z][\w.+-]*)/g;
+var COMMENT_LINE = /^\s*(?:#|\/\/|\*|--|;|rem\s)/i;
+var PYTHON_PROBE = /\bshutil\.which\(\s*["']([a-z][\w.+-]*)["']/g;
+function programsInScriptLine(line, shell) {
+  if (COMMENT_LINE.test(line))
+    return [];
+  const matches = shell ? [...line.matchAll(SCRIPT_PROBE), ...line.matchAll(SYSTEM_INSTALL)] : [...line.matchAll(PYTHON_PROBE)];
+  return matches.map((match) => match[1] ?? "").filter((name) => name !== "");
+}
+var PACKAGE_INSTALL = /\b(pip3?|pipx|uv\s+pip|uv\s+add|poetry\s+add|npm|pnpm|yarn|bun|gem|cargo)\s+(?:install|add|i)\b([^\n|;&#`)]*)/gi;
+function packagesIn(line) {
+  const out = [];
+  for (const match of line.matchAll(PACKAGE_INSTALL)) {
+    const manager = (match[1] ?? "").replace(/\s+/g, " ").toLowerCase();
+    for (const raw of (match[2] ?? "").trim().split(/\s+/)) {
+      const word = raw.replace(/^["']|["']$/g, "");
+      if (word === "" || word.startsWith("-") || word.startsWith(".") || /[:\\<>{}$]/.test(word))
+        continue;
+      if (/\.(txt|toml|json|cfg|lock|whl|tgz|tar\.gz|zip)$/i.test(word))
+        continue;
+      const name = word.replace(/[=<>!~[].*$/, "");
+      if (/^(@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*(@[\w.^~-]+)?$/i.test(name))
+        out.push({ manager, name });
+    }
+  }
+  return out;
+}
+function requirementsIn(text) {
+  return text.split(`
+`).map((line) => line.replace(/#.*/, "").trim()).filter((line) => line !== "" && !line.startsWith("-") && !/^(https?|git\+)/.test(line)).map((line) => /^[A-Za-z0-9][\w.-]*/.exec(line)?.[0] ?? "").filter((name) => name !== "");
+}
+var SHELL_VARIABLES = new Set(("HOME PATH PWD OLDPWD USER LOGNAME SHELL TERM LANG LC_ALL TMPDIR TMP TEMP HOSTNAME IFS PS1 PS2 " + "RANDOM SECONDS LINENO BASH_SOURCE BASH_VERSION FUNCNAME PIPESTATUS OPTARG OPTIND EUID UID PPID " + "REPLY EDITOR VISUAL PAGER DISPLAY XDG_CONFIG_HOME XDG_DATA_HOME XDG_CACHE_HOME CI NODE_ENV DEBUG").split(" "));
+var READS_IN_CODE = [
+  /\bprocess\.env\.([A-Z][A-Z0-9_]+)/g,
+  /\bprocess\.env\[\s*["']([A-Z][A-Z0-9_]+)["']\s*\]/g,
+  /\bBun\.env\.([A-Z][A-Z0-9_]+)/g,
+  /\bDeno\.env\.get\(\s*["']([A-Z][A-Z0-9_]+)["']/g,
+  /\bimport\.meta\.env\.([A-Z][A-Z0-9_]+)/g,
+  /\bos\.environ\[\s*["']([A-Z][A-Z0-9_]+)["']\s*\]/g,
+  /\b(?:os\.environ\.get|os\.getenv|getenv|environ\.get)\(\s*["']([A-Z][A-Z0-9_]+)["']/g,
+  /\bENV(?:\.fetch\(|\[)\s*["']([A-Z][A-Z0-9_]+)["']/g,
+  /\$env:([A-Za-z][A-Za-z0-9_]+)/g
+];
+var SHELL_READ = /\$\{?([A-Z][A-Z0-9_]{2,})\b/g;
+var SHELL_ASSIGN = /^\s*(?:export\s+|local\s+|readonly\s+|declare\s+(?:-\w+\s+)?)?([A-Z][A-Z0-9_]*)=/;
+var SHELL_LOOP = /\b(?:for|read(?:\s+-\w+)*)\s+([A-Z][A-Z0-9_]*)\b/g;
+var EXPORT_IN_PROSE = /\bexport\s+([A-Z][A-Z0-9_]{2,})=/g;
+var KEY_NAMED = /\b([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_(?:API_KEY|APIKEY|KEY|TOKEN|SECRET|PASSWORD))\b/g;
+function shellReads(lines) {
+  const assigned = new Set;
+  for (const line of lines) {
+    const name = SHELL_ASSIGN.exec(line)?.[1];
+    if (name !== undefined)
+      assigned.add(name);
+    for (const loop of line.matchAll(SHELL_LOOP))
+      assigned.add(loop[1] ?? "");
+  }
+  return lines.flatMap((line) => [...line.matchAll(SHELL_READ)].map((match) => match[1] ?? "")).filter((name) => !assigned.has(name));
+}
+function isShell(path, text) {
+  return /\.(sh|bash|zsh)$/i.test(path) || /^#!\s*\S*\/(?:env\s+)?(?:ba|z|da)?sh\b/.test(text);
+}
+function settingsIn(path, text, code) {
+  const found = new Set;
+  for (const pattern of READS_IN_CODE) {
+    for (const match of text.matchAll(pattern))
+      found.add((match[1] ?? "").toUpperCase());
+  }
+  if (MARKDOWN.test(path)) {
+    for (const match of text.matchAll(EXPORT_IN_PROSE))
+      found.add(match[1] ?? "");
+    for (const match of text.matchAll(KEY_NAMED))
+      found.add(match[1] ?? "");
+  } else if (isShell(path, text)) {
+    for (const name of shellReads(code))
+      found.add(name);
+  }
+  return [...found].filter((name) => name.length > 0 && !SHELL_VARIABLES.has(name));
+}
+function codeOf(path, text, isScript) {
+  const lines = text.split(`
+`);
+  if (isScript)
+    return lines;
+  if (!MARKDOWN.test(path))
+    return [];
+  const out = [];
+  let fenced = false;
+  for (const line of lines) {
+    if (FENCE.test(line)) {
+      fenced = !fenced;
+      continue;
+    }
+    if (fenced)
+      out.push(line);
+    else
+      for (const inline of line.matchAll(/`([^`]+)`/g))
+        out.push(inline[1] ?? "");
+  }
+  return out;
+}
+var FETCH_AND_RUN = [
+  {
+    kind: "pipe to a shell",
+    pattern: /\b(?:curl|wget|iwr|irm|Invoke-WebRequest|Invoke-RestMethod)\b[^|\n]*\|\s*(?:sudo\s+(?:-\S+\s+)*)?(?:sh|bash|zsh|dash|python3?|node|perl|ruby|iex|Invoke-Expression)\b/i
+  },
+  {
+    kind: "runs a downloaded script",
+    pattern: /\b(?:sh|bash|zsh|source)\s+<\(\s*(?:curl|wget)\b|\b(?:sh|bash|zsh)\s+-c\s+["']?\$\(\s*(?:curl|wget)\b|\b(?:iex|Invoke-Expression)\b[^\n]*\b(?:irm|iwr|Invoke-WebRequest|Invoke-RestMethod|DownloadString)\b|\bdeno\s+run\b[^\n]*\bhttps?:\/\//i
+  },
+  {
+    kind: "installs from a URL",
+    pattern: /\b(?:pip3?|pipx|uv\s+pip|npm|pnpm|yarn|bun|gem)\s+(?:install|add|i)\b[^\n|;&]*\s(?:https?:\/\/|git\+|github:)/i
+  },
+  {
+    kind: "runs a package fetched at run time",
+    pattern: /\bnpx\s+(?:-y|--yes)\b|\b(?:pnpm|yarn)\s+dlx\s+\S|\buvx\s+[a-z]|\bpipx\s+run\s+[a-z]/i
+  }
+];
+var URL_HOST = /\bhttps?:\/\/([a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+)/gi;
+var PLACEHOLDER_HOST = /(^|\.)(example\.(com|org|net)|localhost|local|test|invalid|example|internal)$|^(127\.\d+\.\d+\.\d+|0\.0\.0\.0)$|^(www\.)?(your|my)-?(domain|site|server|host|app|api|company|website)\./;
+var FILE_LIKE_HOST = /\.(jpe?g|png|gif|webp|svg|mp[34]|wav|mov|webm|pdf|md|json|txt|html?|js|ts|py|sh)$/;
+function domainsIn(text) {
+  const out = [];
+  for (const match of text.matchAll(URL_HOST)) {
+    const host = (match[1] ?? "").toLowerCase();
+    if (!/\.[a-z]{2,}$/.test(host) && !/^\d+\.\d+\.\d+\.\d+$/.test(host))
+      continue;
+    if (PLACEHOLDER_HOST.test(host) || FILE_LIKE_HOST.test(host))
+      continue;
+    out.push(host);
+  }
+  return out;
+}
+var INVISIBLE = /[​-‍⁠-⁤﻿᠎‪-‮⁦-⁩]|\uDB40[\uDC00-\uDDEF]/g;
+var PICTOGRAPH = /\p{Extended_Pictographic}/u;
+function codePoint(point) {
+  return `U+${point.toString(16).toUpperCase().padStart(4, "0")}`;
+}
+function invisibleIn(line, lineIndex) {
+  const counts = new Map;
+  const spelled = [];
+  for (const match of line.matchAll(INVISIBLE)) {
+    const char = match[0];
+    const at = match.index;
+    if (lineIndex === 0 && at === 0 && char === "\uFEFF")
+      continue;
+    if (char === "‍") {
+      const before = [...line.slice(0, at)].at(-1) ?? "";
+      const after = [...line.slice(at + 1)][0] ?? "";
+      if (PICTOGRAPH.test(before) && PICTOGRAPH.test(after))
+        continue;
+    }
+    const point = char.codePointAt(0) ?? 0;
+    if (point >= 917536 && point <= 917630)
+      spelled.push(String.fromCharCode(point - 917504));
+    const name = point >= 917504 && point <= 917631 ? "Unicode tag" : codePoint(point);
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  if (counts.size === 0)
+    return null;
+  const listed = [...counts.entries()].map(([name, n]) => `${n} × ${name}`).join(", ");
+  return spelled.length === 0 ? listed : `${listed}, spelling "${cap(spelled.join(""))}"`;
+}
+var BASE64_RUN = /[A-Za-z0-9+/]{100,}={0,2}/g;
+var DATA_URI = /data:([\w.+-]+\/[\w.+-]+)?(?:;[\w=-]+)*;base64,([A-Za-z0-9+/]{100,}={0,2})/g;
+var URL_TEXT = /\bhttps?:\/\/\S+/g;
+function encodedIn(line) {
+  const out = [];
+  const withoutUris = line.replace(DATA_URI, (_whole, type, body) => {
+    out.push(`data URI${type === undefined ? "" : ` ${type}`}, ${body.length} characters of base64`);
+    return " ";
+  });
+  for (const match of withoutUris.replace(URL_TEXT, " ").matchAll(BASE64_RUN)) {
+    const run = match[0];
+    if (/[A-Z]/.test(run) && /[a-z]/.test(run) && /[0-9]/.test(run))
+      out.push(`${run.length} characters of base64`);
+  }
+  return out;
+}
+var IGNORE_INSTRUCTIONS = /\b(?:ignore|disregard|forget|override)\b[^.\n]{0,40}?\b(?:previous|prior|above|earlier|preceding|all|any|other|system|your)\b[^.\n]{0,25}?\b(?:instructions?|prompts?|rules|guidelines|directions)\b/i;
+var KEEP_FROM_PERSON = /\b(?:do not|don't|never)\s+(?:tell|inform|notify|alert|(?:mention|reveal)(?:\s+(?:this|it))?\s+to)\s+(?:the\s+)?(?:user|human|person|operator)\b|\bwithout\s+(?:telling|informing|notifying|alerting)\s+(?:the\s+)?(?:user|human|person|operator)\b/i;
+function unquoted(line) {
+  return line.replace(/"[^"]*"|\u201C[^\u201D]*\u201D|\u300C[^\u300D]*\u300D|`[^`]*`/g, " ");
+}
+var COMMENT_WORDS = 4;
+function hiddenInMarkdown(path, text) {
+  const out = [];
+  const push = (kind, line, value) => out.push({ kind, file: path, line, text: value });
+  let fenced = false;
+  let comment = null;
+  for (const [index, line] of text.split(`
+`).entries()) {
+    const invisible = invisibleIn(line, index);
+    if (invisible !== null)
+      push("hidden characters", index + 1, invisible);
+    for (const encoded of encodedIn(line))
+      push("encoded block", index + 1, encoded);
+    const visible = line.replace(INVISIBLE, "");
+    if (IGNORE_INSTRUCTIONS.test(unquoted(visible)))
+      push("says to ignore instructions", index + 1, cap(visible));
+    if (KEEP_FROM_PERSON.test(unquoted(visible)))
+      push("says not to tell the person", index + 1, cap(visible));
+    if (comment === null && FENCE.test(line)) {
+      fenced = !fenced;
+      continue;
+    }
+    if (fenced)
+      continue;
+    let rest = visible;
+    while (rest.length > 0) {
+      if (comment === null) {
+        const open = rest.indexOf("<!--");
+        if (open === -1)
+          break;
+        comment = { start: index + 1, text: [] };
+        rest = rest.slice(open + 4);
+      }
+      const close = rest.indexOf("-->");
+      if (close === -1) {
+        comment.text.push(rest);
+        break;
+      }
+      comment.text.push(rest.slice(0, close));
+      const inner = comment.text.join(" ").replace(/\s+/g, " ").trim();
+      if (inner.split(" ").filter((word) => /[\p{L}\p{N}]/u.test(word)).length >= COMMENT_WORDS) {
+        push("HTML comment", comment.start, cap(inner));
+      }
+      comment = null;
+      rest = rest.slice(close + 3);
+    }
+  }
+  if (comment !== null)
+    push("HTML comment", comment.start, cap(`(never closed) ${comment.text.join(" ")}`));
+  return out;
+}
+function bounded(name, items, cut) {
+  if (items.length <= CONTENTS_LIMITS2.items)
+    return [...items];
+  cut.push(name);
+  return items.slice(0, CONTENTS_LIMITS2.items);
+}
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function namesFile(markdown, path) {
+  const base = path.slice(path.lastIndexOf("/") + 1);
+  return markdown.includes(path) || new RegExp(`(^|[\\s/\`'"(])${escapeRegExp(base)}($|[\\s\`'")]|[.,:;](\\s|$))`, "m").test(markdown);
+}
+function readSkillContents2(input) {
+  const sorted = [...input].sort((a, b) => compare(a.path, b.path));
+  const skipped = [];
+  const files = [];
+  for (const file of sorted) {
+    if (files.length >= CONTENTS_LIMITS2.files)
+      skipped.push({ path: file.path, why: "over the file limit" });
+    else if (file.text === null)
+      skipped.push({ path: file.path, why: file.notFetched === true ? "not fetched" : "binary" });
+    else if (file.text.length > CONTENTS_LIMITS2.fileChars)
+      skipped.push({ path: file.path, why: "too large" });
+    else
+      files.push({ path: file.path, text: file.text.replace(/\r\n?/g, `
+`) });
+  }
+  const skillMd = files.find((file) => file.path === "SKILL.md")?.text ?? "";
+  const programs = new Map;
+  const add = (name, from) => {
+    if (!programs.has(name))
+      programs.set(name, from);
+  };
+  const requires = readRequires2(skillMd);
+  for (const name of requires.cli)
+    add(name, "declared");
+  for (const name of requires.runs)
+    add(name, "runs");
+  const packages = new Map;
+  const settings = new Set;
+  const domains = new Set;
+  const fetchAndRun = [];
+  const hidden = [];
+  const scripts = skipped.filter((file) => file.why === "not fetched" && SCRIPT.test(file.path)).map((file) => ({ path: file.path, namedInSkillMd: namesFile(skillMd, file.path) }));
+  for (const file of files) {
+    const lines = file.text.split(`
+`);
+    const isScript = SCRIPT.test(file.path) || lines[0]?.startsWith("#!") === true;
+    const code = codeOf(file.path, file.text, isScript);
+    const shell = isShell(file.path, file.text);
+    for (const line of code) {
+      const installed = packagesIn(line);
+      for (const pkg of installed)
+        packages.set(`${pkg.manager} ${pkg.name}`, pkg);
+      if (!isScript)
+        continue;
+      for (const name of programsInScriptLine(line, shell)) {
+        if (!installed.some((pkg) => pkg.name === name))
+          add(name, "script");
+      }
+    }
+    if (isScript) {
+      scripts.push({ path: file.path, namedInSkillMd: namesFile(skillMd, file.path) });
+      const interpreter = interpreterOf(lines[0] ?? "");
+      if (interpreter !== null)
+        add(interpreter, "interpreter");
+    }
+    if (/(^|\/)requirements[\w.-]*\.txt$/i.test(file.path)) {
+      for (const name of requirementsIn(file.text))
+        packages.set(`pip ${name}`, { manager: "pip", name });
+    }
+    for (const setting of settingsIn(file.path, file.text, code))
+      settings.add(setting);
+    for (const host of domainsIn(file.text))
+      domains.add(host);
+    for (const [index, line] of lines.entries()) {
+      const run = FETCH_AND_RUN.find(({ pattern }) => pattern.test(line));
+      if (run !== undefined)
+        fetchAndRun.push({ kind: run.kind, file: file.path, line: index + 1, text: cap(line) });
+    }
+    if (MARKDOWN.test(file.path))
+      hidden.push(...hiddenInMarkdown(file.path, file.text));
+  }
+  const packageNames = new Set([...packages.values()].map((pkg) => pkg.name));
+  for (const [name, from] of programs)
+    if (from !== "declared" && packageNames.has(name))
+      programs.delete(name);
+  const cut = [];
+  return {
+    programs: bounded("programs", [...programs.entries()].map(([name, from]) => ({ name, from })).sort((a, b) => compare(a.name, b.name)), cut),
+    packages: bounded("packages", [...packages.values()].sort((a, b) => compare(`${a.manager} ${a.name}`, `${b.manager} ${b.name}`)), cut),
+    settings: bounded("settings", [...settings].sort(compare), cut),
+    scripts: bounded("scripts", scripts.sort((a, b) => compare(a.path, b.path)), cut),
+    fetchAndRun: bounded("fetchAndRun", fetchAndRun, cut),
+    domains: bounded("domains", [...domains].sort(compare), cut),
+    hidden: bounded("hidden", hidden, cut),
+    read: {
+      files: files.length,
+      bytes: files.reduce((sum, file) => sum + new TextEncoder().encode(file.text).byteLength, 0),
+      skipped
+    },
+    cut
+  };
+}
+function contentsLines2(contents, perList = 6) {
+  const list = (items, cut) => items.length === 0 ? "none found" : `${items.slice(0, perList).join(", ")}${items.length > perList || cut ? `, and ${Math.max(0, items.length - perList)}${cut ? "+" : ""} more` : ""}`;
+  const at = (rows, name) => list(rows.map((row) => `${row.kind} at ${row.file}:${row.line} "${row.text}"`), contents.cut.includes(name));
+  return [
+    `Programs: ${list(contents.programs.map((p) => `${p.name} (${p.from})`), contents.cut.includes("programs"))}`,
+    ...contents.packages.length === 0 ? [] : [`Packages: ${list(contents.packages.map((p) => `${p.manager} ${p.name}`), contents.cut.includes("packages"))}`],
+    `Keys and settings it reads: ${list(contents.settings, contents.cut.includes("settings"))}`,
+    `Scripts: ${list(contents.scripts.map((s) => s.namedInSkillMd ? `${s.path} (named in SKILL.md)` : s.path), contents.cut.includes("scripts"))}`,
+    `Fetches and runs code: ${at(contents.fetchAndRun, "fetchAndRun")}`,
+    `Domains named: ${list(contents.domains, contents.cut.includes("domains"))}`,
+    `Hidden or encoded text: ${at(contents.hidden, "hidden")}`,
+    ...contents.read.skipped.length === 0 ? [] : [`Not read: ${list(contents.read.skipped.map((s) => `${s.path} (${s.why})`), false)}`]
+  ];
+}
+
+// ../../packages/protocol/src/pulse.ts
+var MAX_SKILL_FILES_READ2 = 200;
+var MAX_SCRIPTS_READ = 5;
+var GITHUB_READ_TIMEOUT_MS = 1e4;
+var INSTALLER_ORDER = [
+  "",
+  "skills/",
+  "skills/.curated/",
+  "skills/.experimental/",
+  "skills/.system/",
+  ".agents/skills/",
+  ".claude/skills/",
+  ".cline/skills/",
+  ".codebuddy/skills/",
+  ".codex/skills/",
+  ".commandcode/skills/",
+  ".continue/skills/",
+  ".factory/skills/",
+  ".github/skills/",
+  ".goose/skills/",
+  ".grok/skills/",
+  ".iflow/skills/",
+  ".junie/skills/",
+  ".kilo/skills/",
+  ".kilocode/skills/",
+  ".kimchi/skills/",
+  ".kiro/skills/",
+  ".minimax/skills/",
+  ".mux/skills/",
+  ".neovate/skills/",
+  ".opencode/skills/",
+  ".openhands/skills/",
+  ".pi/skills/",
+  ".posit/assistant/skills/",
+  ".qoder/skills/",
+  ".roo/skills/",
+  ".trae/skills/",
+  ".windsurf/skills/",
+  ".zcode/skills/",
+  ".zencoder/skills/"
+];
+function installerRank(path) {
+  let best = null;
+  INSTALLER_ORDER.forEach((prefix, rank) => {
+    if (best !== null || !path.startsWith(prefix))
+      return;
+    const depth = path.slice(prefix.length).split("/").length;
+    if (prefix === "" ? depth <= 2 : depth <= 4)
+      best = rank;
+  });
+  return best;
+}
+function normaliseName(name) {
+  return name.trim().toLowerCase().replace(/[\s_]+/g, "-");
+}
+function frontmatterName2(markdown) {
+  const lines = markdown.split(`
+`);
+  if (lines[0]?.trim() !== "---")
+    return null;
+  for (const line of lines.slice(1)) {
+    if (line.trim() === "---")
+      return null;
+    const match = /^name\s*:\s*(.+?)\s*$/.exec(line);
+    if (match !== null)
+      return (match[1] ?? "").replace(/^["']|["']$/g, "");
+  }
+  return null;
+}
+var KEY_NAME3 = /\b[A-Z][A-Z0-9_]*(?:API_KEY|APIKEY|_TOKEN|_SECRET)\b/g;
+var PAID_WORD = /\b(pricing|paid|subscription|credits?|billing|free tier|per minute)\b/gi;
+var HOST = /https?:\/\/([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+var NOT_A_SERVICE = /(^|\.)(github\.com|githubusercontent\.com|example\.(com|org|net))$/;
+var LOOKS_LIKE_A_FILE = /\.(jpe?g|png|gif|webp|mp[34]|wav|mov|webm|pdf|md|json|txt)$/;
+var SCRIPT2 = /\.(sh|bash|py|js|mjs|cjs|ts|rb|pl)$/i;
+var RUNS_FILE = /\b(?:node|bun|deno|tsx|python3?|bash|sh)\s+((?:~|\.{1,2})?\/?[\w.@-]+(?:\/[\w.@-]+)*\.(?:mjs|cjs|js|ts|py|sh))\b/g;
+var PLACEHOLDER = /(^|\/)(path|your|my|foo|example|script|file|input|output)(\/|\.|$)/i;
+function filesItRuns(markdown, repositoryFiles) {
+  const named = [...markdown.matchAll(RUNS_FILE)].map((match) => match[1] ?? "");
+  const found = new Set;
+  for (const name of named) {
+    if (name.startsWith("/") || name.startsWith("~") || PLACEHOLDER.test(name))
+      continue;
+    const tail = name.replace(/^(\.{1,2}\/)+/, "");
+    const hit = repositoryFiles.find((file) => file.path === tail || file.path.endsWith(`/${tail}`));
+    if (hit !== undefined)
+      found.add(hit.path);
+  }
+  return [...found];
+}
+function absentFiles(markdown, repositoryFiles) {
+  const named = [...markdown.matchAll(RUNS_FILE)].map((match) => match[1] ?? "");
+  return [...new Set(named)].filter((name) => {
+    if (name.startsWith("/") || name.startsWith("~") || PLACEHOLDER.test(name))
+      return false;
+    const tail = name.replace(/^(\.{1,2}\/)+/, "");
+    return !repositoryFiles.some((file) => file.path === tail || file.path.endsWith(`/${tail}`));
+  });
+}
+function readSkillFacts2(markdown, filesInDirectory, repositoryFiles = filesInDirectory) {
+  const hosts = [...markdown.matchAll(HOST)].map((match) => (match[1] ?? "").toLowerCase()).filter((host) => !NOT_A_SERVICE.test(host) && !LOOKS_LIKE_A_FILE.test(host));
+  return {
+    files: filesInDirectory.length,
+    bytes: filesInDirectory.reduce((total, file) => total + file.size, 0),
+    scripts: filesInDirectory.filter((file) => SCRIPT2.test(file.path)).length,
+    keys: [...new Set(markdown.match(KEY_NAME3) ?? [])],
+    paidWords: [...new Set((markdown.match(PAID_WORD) ?? []).map((word) => word.toLowerCase()))],
+    hosts: [...new Set(hosts)],
+    runsAbsentFiles: absentFiles(markdown, repositoryFiles),
+    keysInScriptsItRuns: [],
+    requires: readRequires2(markdown),
+    contains: readSkillContents2([{ path: "SKILL.md", text: markdown }])
+  };
+}
+function parentOf(path) {
+  const at = path.lastIndexOf("/");
+  return at === -1 ? "" : path.slice(0, at);
+}
+async function locate(source, repo, skill, listing) {
+  const wanted = normaliseName(skill);
+  const candidates = listing.files.filter((file) => skillFilesIn2([file]).length === 1);
+  const guessed = candidates.filter((file) => normaliseName(directoryOf2(file.path)) === wanted);
+  const others = candidates.filter((file) => !guessed.includes(file));
+  const read = async (files) => (await Promise.all(files.map(async (file) => ({ file, markdown: await source.file(repo, file.path) })))).filter((entry) => entry.markdown !== null && normaliseName(frontmatterName2(entry.markdown) ?? "") === wanted);
+  let named = await read(guessed);
+  if (named.length === 0) {
+    if (others.length > MAX_SKILL_FILES_READ2) {
+      return { status: "incomplete", reason: "too_many_skill_files" };
+    }
+    for (let at = 0;at < others.length && named.length === 0; at += 20) {
+      named = await read(others.slice(at, at + 20));
+    }
+    if (named.length > 0) {
+      const last = others.findIndex((file) => file === named.at(-1)?.file);
+      named = [...named, ...await read(others.slice(last + 1))];
+    }
+  }
+  if (named.length === 0) {
+    if (listing.truncated)
+      return { status: "incomplete", reason: "truncated_listing" };
+    return { status: "absent", skillFiles: candidates.length };
+  }
+  const ranked = named.map((entry) => ({ ...entry, rank: installerRank(entry.file.path) })).sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity));
+  const [first2, ...rest] = ranked;
+  if (first2 === undefined)
+    return { status: "absent", skillFiles: candidates.length };
+  const differs = rest.filter((entry) => entry.file.sha !== first2.file.sha);
+  if (first2.rank === null && differs.length > 0) {
+    return { status: "ambiguous", paths: ranked.map((entry) => entry.file.path) };
+  }
+  return {
+    status: "found",
+    file: first2.file,
+    markdown: first2.markdown,
+    alsoAt: rest.filter((entry) => entry.file.sha === first2.file.sha).map((entry) => entry.file.path),
+    differsAt: differs.map((entry) => entry.file.path)
+  };
+}
+function usualPaths(skill) {
+  return [`skills/${skill}/SKILL.md`, `${skill}/SKILL.md`, `.claude/skills/${skill}/SKILL.md`, "SKILL.md"];
+}
+async function readFileOnly(result, source) {
+  if (!/^[\w.-]+$/.test(result.skill) || /^\.+$/.test(result.skill))
+    return null;
+  const wanted = normaliseName(result.skill);
+  for (const path of usualPaths(result.skill)) {
+    const markdown = await source.file(result.source, path);
+    if (markdown === null || normaliseName(frontmatterName2(markdown) ?? "") !== wanted)
+      continue;
+    const { keys, paidWords, hosts, requires, contains } = readSkillFacts2(markdown, []);
+    return { ...result, status: "read_file_only", path, keys, paidWords, hosts, requires, contains };
+  }
+  return null;
+}
+async function readPulse2(result, source) {
+  if (!/^(?!\.{1,2}\/)[\w.-]+\/(?!\.{1,2}$)[\w.-]+$/.test(result.source))
+    return { ...result, status: "not_github" };
+  const listing = await source.listing(result.source);
+  if (listing === "rate_limited")
+    return await readFileOnly(result, source) ?? { ...result, status: "rate_limited" };
+  if (listing === "unreachable")
+    return { ...result, status: "repository_unreachable" };
+  const located = await locate(source, result.source, result.skill, listing);
+  if (located.status === "absent")
+    return { ...result, status: "absent", skillFiles: located.skillFiles };
+  if (located.status === "ambiguous")
+    return { ...result, status: "ambiguous", paths: located.paths };
+  if (located.status === "incomplete")
+    return { ...result, status: "incomplete", reason: located.reason };
+  const directory = parentOf(located.file.path);
+  const prefix = directory === "" ? "" : `${directory}/`;
+  const inDirectory = listing.files.filter((file) => file.path.startsWith(prefix));
+  const scripts = filesItRuns(located.markdown, listing.files).slice(0, MAX_SCRIPTS_READ);
+  const scriptTexts = await Promise.all(scripts.map(async (file) => ({ file, text: await source.file(result.source, file) })));
+  const keysInScriptsItRuns = scriptTexts.map(({ file, text }) => ({ file, keys: [...new Set(text?.match(KEY_NAME3) ?? [])] })).filter((entry) => entry.keys.length > 0);
+  const relative = (path) => path.startsWith(prefix) ? path.slice(prefix.length) : path;
+  const fetched = new Set(scriptTexts.filter((entry) => entry.text !== null).map((entry) => entry.file));
+  const contains = readSkillContents2([
+    { path: "SKILL.md", text: located.markdown },
+    ...scriptTexts.flatMap(({ file, text }) => text === null ? [] : [{ path: relative(file), text }]),
+    ...inDirectory.filter((file) => SCRIPT2.test(file.path) && !fetched.has(file.path)).map((file) => ({ path: relative(file.path), text: null, notFetched: true }))
+  ]);
+  return {
+    ...result,
+    status: "read",
+    path: located.file.path,
+    alsoAt: located.alsoAt,
+    differsAt: located.differsAt,
+    contentId: directory === "" ? listing.rootTreeId : listing.trees.get(directory) ?? located.file.sha,
+    skillMdSha: located.file.sha,
+    repository: await source.repository(result.source),
+    ...listing.readAt === undefined ? {} : { listingReadAt: listing.readAt },
+    ...readSkillFacts2(located.markdown, inDirectory, listing.files),
+    keysInScriptsItRuns,
+    contains
+  };
+}
+function githubPulseSource2(options = {}) {
+  const get = options.fetch ?? fetch;
+  const timeoutMs = options.timeoutMs ?? GITHUB_READ_TIMEOUT_MS;
+  const bounded2 = () => {
+    const limit = AbortSignal.timeout(timeoutMs);
+    return options.signal === undefined ? limit : AbortSignal.any([limit, options.signal]);
+  };
+  const headers = {
+    accept: "application/vnd.github+json",
+    "user-agent": "arp-pulse",
+    ...options.token === undefined ? {} : { authorization: `Bearer ${options.token}` }
+  };
+  const listings = new Map;
+  const repositories = new Map;
+  const quota = { apiRequests: 0, limited: false, resetsAt: null };
+  const noteLimit = (response) => {
+    const hit = response.status === 429 || response.status === 403 && (response.headers.get("x-ratelimit-remaining") === "0" || response.headers.has("retry-after"));
+    if (!hit)
+      return false;
+    quota.limited = true;
+    const reset = Number(response.headers.get("x-ratelimit-reset"));
+    if (Number.isFinite(reset) && reset > 0)
+      quota.resetsAt = new Date(reset * 1000).toISOString();
+    return true;
+  };
+  const readListing = async (repo) => {
+    const cached = await options.cache?.get(repo).catch(() => null);
+    if (cached !== null && cached !== undefined)
+      return cached;
+    if (quota.limited)
+      return "rate_limited";
+    quota.apiRequests += 1;
+    const response = await get(`https://api.github.com/repos/${repo}/git/trees/HEAD?recursive=1`, { headers, signal: bounded2() });
+    if (noteLimit(response))
+      return "rate_limited";
+    if (!response.ok)
+      return "unreachable";
+    const body = await response.json();
+    const files = [];
+    const trees = new Map;
+    for (const entry of body.tree ?? []) {
+      if (typeof entry.path !== "string" || typeof entry.sha !== "string")
+        continue;
+      if (entry.type === "tree")
+        trees.set(entry.path, entry.sha);
+      if (entry.type === "blob") {
+        files.push({ path: entry.path, sha: entry.sha, size: typeof entry.size === "number" ? entry.size : 0 });
+      }
+    }
+    const listing = {
+      rootTreeId: typeof body.sha === "string" ? body.sha : "",
+      files,
+      trees,
+      truncated: body.truncated === true
+    };
+    await options.cache?.set(repo, listing).catch(() => {
+      return;
+    });
+    return listing;
+  };
+  const readRepository = async (repo) => {
+    if (options.withRepository === false || quota.limited)
+      return null;
+    quota.apiRequests += 1;
+    const response = await get(`https://api.github.com/repos/${repo}`, { headers, signal: bounded2() });
+    noteLimit(response);
+    if (!response.ok)
+      return null;
+    const body = await response.json();
+    return {
+      stars: typeof body.stargazers_count === "number" ? body.stargazers_count : 0,
+      pushedAt: typeof body.pushed_at === "string" ? body.pushed_at : null,
+      archived: body.archived === true
+    };
+  };
+  const once = (cache, repo, read) => {
+    const hit = cache.get(repo);
+    if (hit !== undefined)
+      return hit;
+    const started = read(repo);
+    cache.set(repo, started);
+    return started;
+  };
+  return {
+    listing: (repo) => once(listings, repo, readListing),
+    repository: (repo) => once(repositories, repo, readRepository),
+    file: async (repo, path) => {
+      const encoded = path.split("/").map(encodeURIComponent).join("/");
+      const response = await get(`https://raw.githubusercontent.com/${repo}/HEAD/${encoded}`, { signal: bounded2() });
+      return response.ok ? response.text() : null;
+    },
+    quota: () => ({ ...quota })
+  };
+}
+
+// ../../packages/protocol/src/skill-install.ts
+var MAX_SKILLS_READ2 = 3;
+var ADD = new Set(["add", "a", "install", "i"]);
+var RUNNERS = new Set(["npx", "pnpx", "bunx"]);
+var DLX = { pnpm: ["dlx"], yarn: ["dlx"], npm: ["exec", "x"] };
+var SKILLS = /^skills(@[\w.^~<>=*-]+)?$/;
+var ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
+function shellWords(command) {
+  const commands = [[]];
+  let word = null;
+  let quote = null;
+  const end = () => {
+    if (word !== null)
+      commands[commands.length - 1]?.push(word);
+    word = null;
+  };
+  for (let at = 0;at < command.length; at += 1) {
+    const char = command[at] ?? "";
+    if (quote !== null) {
+      if (char === quote)
+        quote = null;
+      else if (char === "\\" && quote === '"' && at + 1 < command.length)
+        word = (word ?? "") + command[at += 1];
+      else
+        word = (word ?? "") + char;
+    } else if (char === "'" || char === '"') {
+      quote = char;
+      word ??= "";
+    } else if (char === "\\" && at + 1 < command.length) {
+      word = (word ?? "") + command[at += 1];
+    } else if (/\s/.test(char) && char !== `
+`) {
+      end();
+    } else if (char === `
+` || char === ";" || char === "&" || char === "|") {
+      end();
+      commands.push([]);
+    } else {
+      word = (word ?? "") + char;
+    }
+  }
+  end();
+  return commands.filter((words) => words.length > 0);
+}
+function addArguments(words) {
+  let at = 0;
+  while (at < words.length && ENV_ASSIGNMENT.test(words[at] ?? ""))
+    at += 1;
+  const first2 = words[at];
+  if (first2 !== undefined && RUNNERS.has(first2))
+    at += 1;
+  else if (first2 !== undefined && DLX[first2]?.includes(words[at + 1] ?? "") === true)
+    at += 2;
+  while (at < words.length && (words[at] ?? "").startsWith("-"))
+    at += 1;
+  if (!SKILLS.test(words[at] ?? ""))
+    return null;
+  const subcommand = words[at + 1];
+  return subcommand !== undefined && ADD.has(subcommand) ? words.slice(at + 2) : null;
+}
+function parseAdd(args) {
+  const skills = [];
+  let source = null;
+  let all = false;
+  let list = false;
+  for (let at = 0;at < args.length; at += 1) {
+    const arg = args[at] ?? "";
+    if (arg === "--all")
+      all = true;
+    else if (arg === "-l" || arg === "--list")
+      list = true;
+    else if (arg === "-s" || arg === "--skill" || arg === "-a" || arg === "--agent" || arg === "--subagent") {
+      while (at + 1 < args.length && !(args[at + 1] ?? "").startsWith("-")) {
+        at += 1;
+        if (arg === "-s" || arg === "--skill")
+          skills.push(args[at] ?? "");
+      }
+    } else if (arg === "--metadata")
+      at += 1;
+    else if (!arg.startsWith("-") && source === null)
+      source = arg;
+  }
+  return { source, skills, all, list };
+}
+var NAME = /^[\w.-]+$/;
+function github(repo, ref, subpath, named, all) {
+  const [owner, name] = repo.split("/");
+  const clean = `${owner}/${(name ?? "").replace(/\.git$/, "")}`;
+  const path = subpath?.replace(/^\/+|\/+$/g, "") ?? "";
+  return {
+    kind: "github",
+    repo: clean,
+    ref,
+    subpath: path === "" || path.split("/").includes("..") ? null : path,
+    skills: all || named.length === 0 || named.includes("*") ? "all" : [...new Set(named)]
+  };
+}
+function sourceOf(input, named, all) {
+  const elsewhere = { kind: "elsewhere", source: input };
+  if (/^(\.{1,2}(\/|$)|\/|~)/.test(input) || /^[A-Za-z]:[\\/]/.test(input))
+    return elsewhere;
+  const hash = input.indexOf("#");
+  let rest = hash === -1 ? input : input.slice(0, hash);
+  const fragment = hash === -1 ? "" : input.slice(hash + 1);
+  const fragmentAt = fragment.indexOf("@");
+  let ref = (fragmentAt === -1 ? fragment : fragment.slice(0, fragmentAt)) || null;
+  const fragmentSkill = fragmentAt === -1 ? null : fragment.slice(fragmentAt + 1) || null;
+  const withSkill = (names) => fragmentSkill === null ? names : [fragmentSkill];
+  const prefixed = /^github:(.+)$/.exec(rest);
+  if (prefixed?.[1] !== undefined)
+    rest = prefixed[1];
+  const tree = /^https?:\/\/(?:www\.)?github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)(?:\/(.+))?$/.exec(rest);
+  if (tree !== null) {
+    ref = tree[3] ?? ref;
+    return github(`${tree[1]}/${tree[2]}`, ref, tree[4] ?? null, withSkill(named), all);
+  }
+  const url = /^https?:\/\/(?:www\.)?github\.com\/([^/]+)\/([^/]+?)\/?$/.exec(rest);
+  if (url !== null)
+    return github(`${url[1]}/${url[2]}`, ref, null, withSkill(named), all);
+  if (rest.includes(":"))
+    return elsewhere;
+  const at = /^([^/]+)\/([^/@]+)@(.+)$/.exec(rest);
+  if (at !== null)
+    return github(`${at[1]}/${at[2]}`, ref, null, [fragmentSkill ?? at[3] ?? ""], false);
+  const shorthand = /^([^/]+)\/([^/]+?)(?:\/(.+?))?\/?$/.exec(rest);
+  if (shorthand !== null && NAME.test(shorthand[1] ?? "") && NAME.test(shorthand[2] ?? "")) {
+    return github(`${shorthand[1]}/${shorthand[2]}`, ref, shorthand[3] ?? null, withSkill(named), all);
+  }
+  return elsewhere;
+}
+function skillInstallOf2(command) {
+  for (const words of shellWords(command)) {
+    const args = addArguments(words);
+    if (args === null)
+      continue;
+    const add = parseAdd(args);
+    if (add.list || add.source === null)
+      continue;
+    return sourceOf(add.source, add.skills, add.all);
+  }
+  return null;
+}
+async function namesUnder(install, source) {
+  const listing = await source.listing(install.repo);
+  if (listing === "rate_limited" || listing === "unreachable")
+    return listing;
+  const prefix = install.subpath === null ? "" : `${install.subpath}/`;
+  const files = skillFilesIn2(listing.files).filter((file) => file.path.startsWith(prefix)).sort((a, b) => a.path.split("/").length - b.path.split("/").length || a.path.localeCompare(b.path));
+  const names = await Promise.all(files.slice(0, MAX_SKILLS_READ2).map(async (file) => {
+    const markdown = await source.file(install.repo, file.path);
+    const parts = file.path.split("/");
+    return (markdown === null ? null : frontmatterName2(markdown)) ?? parts.at(-2) ?? install.repo.split("/")[1] ?? "";
+  }));
+  return { names, total: files.length };
+}
+async function readSkillInstall2(install, source, deadline) {
+  if (install.kind === "elsewhere")
+    return install;
+  const late = deadline.then(() => "late");
+  let names;
+  let total;
+  if (install.skills === "all") {
+    const found = await Promise.race([
+      namesUnder(install, source).catch(() => "unreachable"),
+      late
+    ]);
+    if (found === "late")
+      return {
+        kind: "github",
+        install,
+        readings: [],
+        notRead: 0,
+        listing: "no answer in time"
+      };
+    if (found === "rate_limited" || found === "unreachable") {
+      return { kind: "github", install, readings: [], notRead: 0, listing: found };
+    }
+    ({ names, total } = found);
+  } else {
+    names = install.skills.slice(0, MAX_SKILLS_READ2);
+    total = install.skills.length;
+  }
+  const readings = await Promise.all(names.map(async (skill) => {
+    const pulse = readPulse2({ source: install.repo, skill, installs: null, installsText: null, url: null }, source).then((read) => ({ skill, pulse: read })).catch(() => ({ skill, pulse: null, why: "read failed" }));
+    const settled = await Promise.race([pulse, late]);
+    return settled === "late" ? { skill, pulse: null, why: "no answer in time" } : settled;
+  }));
+  return {
+    kind: "github",
+    install,
+    readings,
+    notRead: Math.max(0, total - names.length),
+    listing: null
+  };
+}
+var plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
+function readingLines(repo, reading) {
+  const head = `${repo} · ${reading.skill}`;
+  const { pulse } = reading;
+  if (pulse === null)
+    return [
+      `${head}: not read (${reading.why === "no answer in time" ? "GitHub did not answer in time" : "the read failed"})`
+    ];
+  switch (pulse.status) {
+    case "read": {
+      const facts = [
+        `${pulse.path}`,
+        plural(pulse.files, "file"),
+        ...pulse.repository === null ? [] : [
+          plural(pulse.repository.stars, "star"),
+          ...pulse.repository.pushedAt === null ? [] : [`last push ${pulse.repository.pushedAt.slice(0, 10)}`],
+          ...pulse.repository.archived ? ["archived"] : []
+        ]
+      ];
+      return [
+        `${head} (${facts.join(", ")})`,
+        ...contentsLines2(pulse.contains).map((line) => `  ${line}`),
+        ...pulse.differsAt.length === 0 ? [] : [`  Other files carry this name and differ: ${pulse.differsAt.join(", ")}`]
+      ];
+    }
+    case "read_file_only":
+      return [
+        `${head} (${pulse.path}; GitHub's hourly limit was reached, so SKILL.md alone was read, not its scripts)`,
+        ...contentsLines2(pulse.contains).map((line) => `  ${line}`)
+      ];
+    case "absent":
+      return [
+        `${head}: no SKILL.md in the repository names it (${plural(pulse.skillFiles, "skill file")} read)`
+      ];
+    case "ambiguous":
+      return [
+        `${head}: several files carry this name and differ, and which one installs is not knowable here: ${pulse.paths.join(", ")}`
+      ];
+    case "incomplete":
+      return [
+        `${head}: not read (${pulse.reason === "truncated_listing" ? "GitHub cut the repository's file list" : "too many skill files to search"})`
+      ];
+    case "rate_limited":
+      return [`${head}: not read (GitHub's hourly limit; GITHUB_TOKEN raises it)`];
+    case "repository_unreachable":
+      return [`${head}: not read (the repository did not answer)`];
+    case "not_github":
+      return [`${head}: not read (not a GitHub repository)`];
+  }
+}
+function skillInstallReport2(read) {
+  const title = "ARP read this skill before the install (what its own files contain; facts, not a verdict):";
+  if (read.kind === "elsewhere") {
+    return `${title}
+${read.source}: not read (ARP reads GitHub sources only)`;
+  }
+  const { install } = read;
+  const lines = [title];
+  if (read.listing !== null) {
+    const why = read.listing === "rate_limited" ? "GitHub's hourly limit; GITHUB_TOKEN raises it" : read.listing === "no answer in time" ? "GitHub did not answer in time" : "the repository did not answer";
+    lines.push(`${install.repo}${install.subpath === null ? "" : `/${install.subpath}`}: not read (${why})`);
+  } else if (read.readings.length === 0) {
+    lines.push(`${install.repo}${install.subpath === null ? "" : `/${install.subpath}`}: no SKILL.md found`);
+  }
+  for (const reading of read.readings)
+    lines.push(...readingLines(install.repo, reading));
+  if (read.notRead > 0)
+    lines.push(`${plural(read.notRead, "more skill")} in this install not read (ARP reads ${MAX_SKILLS_READ2})`);
+  if (install.ref !== null)
+    lines.push(`Read at the default branch's HEAD; the command names ${install.ref}.`);
+  return lines.join(`
+`);
+}
+
+// ../hook/src/pre-install.ts
+var GITHUB_BUDGET_MS = 6000;
+var OUTPUT_CAP = 9500;
+var FOR_THE_AGENT = "This is what the skill's own files contain, read by ARP's hook before the install ran. " + "They are facts, not a verdict, and nothing was blocked. The person was shown the same lines.";
+function capped(text) {
+  return text.length <= OUTPUT_CAP ? text : `${text.slice(0, OUTPUT_CAP)}
+… (cut)`;
+}
+async function preToolUse(raw, options = {}) {
+  const call = toolCallOf(raw);
+  if (call === null || call.tool !== "Bash")
+    return null;
+  const command = call.input?.["command"];
+  if (typeof command !== "string")
+    return null;
+  const install = skillInstallOf2(command);
+  if (install === null)
+    return null;
+  const env = options.env ?? process.env;
+  const token = (env["GITHUB_TOKEN"] ?? env["GH_TOKEN"])?.trim() || undefined;
+  const budgetMs = options.budgetMs ?? GITHUB_BUDGET_MS;
+  const deadline = new Promise((resolve) => setTimeout(resolve, budgetMs));
+  const source = githubPulseSource2({
+    ...options.fetch === undefined ? {} : { fetch: options.fetch },
+    ...token === undefined ? {} : { token },
+    timeoutMs: budgetMs + 500,
+    signal: AbortSignal.timeout(budgetMs + 500)
+  });
+  const report = capped(skillInstallReport2(await readSkillInstall2(install, source, deadline)));
+  return JSON.stringify({
+    systemMessage: report,
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      additionalContext: `${report}
+
+${FOR_THE_AGENT}`
+    }
+  });
+}
+
 // ../hook/src/skill-failure.ts
 import { existsSync, mkdirSync as mkdirSync2, readFileSync as readFileSync2 } from "node:fs";
 import { homedir as homedir2 } from "node:os";
@@ -573,11 +1736,11 @@ function domainInText2(text, words) {
 
 // ../../packages/protocol/src/declare/line-need.ts
 var PROGRAM_NAME3 = /^[a-z0-9][a-z0-9._+-]{0,39}$/;
-var KEY_NAME3 = /^[A-Z][A-Z0-9_]{2,63}$/;
+var KEY_NAME4 = /^[A-Z][A-Z0-9_]{2,63}$/;
 function needKindOf3(name) {
   if (PROGRAM_NAME3.test(name))
     return "program";
-  if (KEY_NAME3.test(name))
+  if (KEY_NAME4.test(name))
     return "key";
   return null;
 }
@@ -710,7 +1873,7 @@ var domain_aliases_default = {
 };
 // ../../data/catalogue/skill-nodes-13579.json
 var skill_nodes_13579_default = {
-  _note: "For the hook, which reads no network (task 84): the nodes of ARP's testnet tree as written by task 79 (data/catalogue/oasf-tree-13579.json), and the node each skill name is filed at, when the name is filed at one node only. Built by scripts/build/build-skill-nodes.ts from data/catalogue/oasf-skill-tags-proposal-13579.json, rows not reviewed out.",
+  _note: "For the hook's failure record, which reads no network (task 84): the nodes of ARP's testnet tree as written by task 79 (data/catalogue/oasf-tree-13579.json), and the node each skill name is filed at, when the name is filed at one node only. Built by scripts/build/build-skill-nodes.ts from data/catalogue/oasf-skill-tags-proposal-13579.json, rows not reviewed out.",
   chainId: 13579,
   oasfVersion: "1.1.0",
   nodes: [
@@ -1515,7 +2678,7 @@ function needOf(reason, text, markdown) {
   }
   return null;
 }
-var RUNNERS = new Set(["bash", "bun", "bunx", "node", "npx", "python", "python3", "sh", "uv", "uvx", "zsh"]);
+var RUNNERS2 = new Set(["bash", "bun", "bunx", "node", "npx", "python", "python3", "sh", "uv", "uvx", "zsh"]);
 function programsOf(command) {
   const found = [];
   for (const part of command.split(/&&|\|\||[;|\n]/)) {
@@ -1524,7 +2687,7 @@ function programsOf(command) {
     if (first2 === undefined || first2 === "")
       continue;
     const program = first2.split("/").pop() ?? first2;
-    if (!RUNNERS.has(program)) {
+    if (!RUNNERS2.has(program)) {
       found.push(program);
       continue;
     }
@@ -1712,6 +2875,24 @@ function recordSkillFailure(call, cwd) {
 }
 
 // ../hook/src/hook.ts
+var ROUTES = {
+  PreToolUse: (payload) => preToolUse(payload)
+};
+async function route(handler, payload) {
+  let out = null;
+  try {
+    out = await handler(payload);
+  } catch {
+    out = null;
+  }
+  if (out === null)
+    process.exit(0);
+  process.stdout.write(`${out}
+`, () => process.exit(0));
+  return new Promise(() => {
+    return;
+  });
+}
 function fetchedRefs(cwd) {
   const path = process.env["ARP_RECEIPTS"] ?? join4(cwd, ".arp", "receipts.jsonl");
   if (!existsSync2(path))
@@ -1799,6 +2980,10 @@ try {
 }
 if (process.argv.includes("--capture"))
   capture(parsed, join4(homedir3(), ".arp", "captures"));
+var event = eventOf(parsed);
+var handler = event === null ? undefined : ROUTES[event];
+if (handler !== undefined)
+  await route(handler, parsed);
 var call = toolCallOf(parsed);
 if (call === null)
   process.exit(0);

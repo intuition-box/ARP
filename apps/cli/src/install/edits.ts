@@ -49,20 +49,72 @@ export function withMcpServer(config: Json, name: string, entry: Json | null): J
  */
 export type HookSpec = {
   shape: 'nested' | 'flat';
-  events: readonly { name: string; matcher?: string }[];
+  /**
+   * One registration each. An event may appear more than once, with different matchers or `if`
+   * rules; `withHooks` writes them all under that event's name.
+   */
+  events: readonly HookEvent[];
   /** The entry for one command, in this runtime's field names and timeout unit. */
-  entry: (command: string) => Json;
+  entry: (command: string, event: HookEvent) => Json;
 };
 
-/** Claude Code: a failed call reaches only `PostToolUseFailure` (ADR `0090`). */
+/**
+ * One registration. `matcher` picks the tools by name; the rest is Claude Code's per-handler
+ * fields (code.claude.com/docs/en/hooks, read 2026-11-10), which other runtimes' `entry` ignore.
+ */
+export type HookEvent = {
+  name: string;
+  matcher?: string;
+  /**
+   * `true` makes the runtime wait for the hook, which is the only way its stdout is read before
+   * the call it answers runs. Without it the entry is `async` and costs the session nothing.
+   */
+  sync?: boolean;
+  /** Seconds. Ten when unset. A waited-on entry holds the session this long at worst. */
+  timeout?: number;
+  /**
+   * One permission rule, such as `Bash(git *)`, that the call must match for the hook to run at
+   * all; there is no list form, so two rules are two entries. Tool events only, and best-effort:
+   * the docs say a call they cannot parse runs the hook regardless.
+   */
+  if?: string;
+};
+
+/**
+ * Claude Code, one entry per row. Tasks that add an event add one row here and one route in
+ * `apps/hook/src/hook.ts` (`ROUTES`).
+ *
+ * | event | why |
+ * | --- | --- |
+ * | `PostToolUse`, `PostToolUseFailure` | the recording; a failed call reaches only the second (ADR `0090`) |
+ * | `PreToolUse` on `Bash`, waited on | a skills install, read before it runs (task 98, ADR `0167`) |
+ *
+ * The `PreToolUse` rule is `Bash(*skills*)`, wider than an install, because the command has many
+ * spellings (`npx -y skills@1.7.4 add`, `bunx skills i`, `pnpm dlx skills add`) and one rule per
+ * entry is all the docs allow; the hook itself says nothing for any other command. Only those
+ * commands wait for Node to start; every other `Bash` call does not run the hook at all. Fifteen
+ * seconds is the hook's six of GitHub plus Node's start, with room.
+ */
 export const CLAUDE_HOOKS: HookSpec = {
   shape: 'nested',
   events: [
     { name: 'PostToolUse', matcher: '*' },
     { name: 'PostToolUseFailure', matcher: '*' },
+    { name: 'PreToolUse', matcher: 'Bash', sync: true, timeout: 15, if: 'Bash(*skills*)' },
   ],
-  entry: (command) => ({ type: 'command', command, async: true, timeout: 10 }),
+  entry: (command, event) => ({
+    type: 'command',
+    command,
+    ...(event.if === undefined ? {} : { if: event.if }),
+    ...(event.sync === true ? {} : { async: true }),
+    timeout: event.timeout ?? 10,
+  }),
 };
+
+/** The distinct event names of a spec, in their first order. */
+export function eventNames(spec: HookSpec): string[] {
+  return [...new Set(spec.events.map((event) => event.name))];
+}
 
 function isOurs(hook: unknown, marker: string): boolean {
   return isRecord(hook) && typeof hook.command === 'string' && hook.command.includes(marker);
@@ -106,18 +158,22 @@ export function withHooks(
   marker: string,
 ): Json {
   const hooks: Json = isRecord(settings.hooks) ? { ...settings.hooks } : {};
-  for (const event of spec.events) {
-    const kept = strip(hooks[event.name], spec, marker);
+  // Stripped once per name, then every registration of that name added, so two rows of one event
+  // do not erase each other.
+  for (const name of eventNames(spec)) {
+    const kept = strip(hooks[name], spec, marker);
     if (command !== null) {
-      const entry = spec.entry(command);
-      kept.push(
-        spec.shape === 'flat'
-          ? entry
-          : { ...(event.matcher === undefined ? {} : { matcher: event.matcher }), hooks: [entry] },
-      );
+      for (const event of spec.events.filter((row) => row.name === name)) {
+        const entry = spec.entry(command, event);
+        kept.push(
+          spec.shape === 'flat'
+            ? entry
+            : { ...(event.matcher === undefined ? {} : { matcher: event.matcher }), hooks: [entry] },
+        );
+      }
     }
-    if (kept.length > 0) hooks[event.name] = kept;
-    else delete hooks[event.name];
+    if (kept.length > 0) hooks[name] = kept;
+    else delete hooks[name];
   }
   const next: Json = { ...settings, hooks };
   if (Object.keys(hooks).length === 0) {
@@ -134,16 +190,20 @@ export function withHooks(
 export function hooksOf(settings: Json, spec: HookSpec, marker: string): Json {
   if (!isRecord(settings.hooks)) return {};
   const out: Json = {};
-  for (const event of spec.events) {
-    const found = ours(settings.hooks[event.name], spec, marker);
-    if (found.length > 0) out[event.name] = found;
+  for (const name of eventNames(spec)) {
+    const found = ours(settings.hooks[name], spec, marker);
+    if (found.length > 0) out[name] = found;
   }
   return out;
 }
 
+/** Every registration of the spec is there: each event holds as many of ours as the spec has rows. */
 export function hasHooks(settings: Json, spec: HookSpec, marker: string): boolean {
   const found = hooksOf(settings, spec, marker);
-  return spec.events.every((event) => event.name in found);
+  return eventNames(spec).every((name) => {
+    const list = found[name];
+    return Array.isArray(list) && list.length >= spec.events.filter((row) => row.name === name).length;
+  });
 }
 
 const TOML_BEGIN = '# >>> arp — managed by `arp init`, removed by `arp uninstall` >>>';

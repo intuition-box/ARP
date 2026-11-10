@@ -35,7 +35,7 @@ const skills = Object.fromEntries(
   [...names].filter(([, labels]) => labels.size === 1).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([name, labels]) => [name, [...labels][0]]),
 );
 const doc = {
-  _note: "For the hook, which reads no network (task 84): the nodes of ARP's testnet tree as written by task 79 (data/catalogue/oasf-tree-13579.json), and the node each skill name is filed at, when the name is filed at one node only. Built by scripts/build/build-skill-nodes.ts from data/catalogue/oasf-skill-tags-proposal-13579.json, rows not reviewed out.",
+  _note: "For the hook's failure record, which reads no network (task 84): the nodes of ARP's testnet tree as written by task 79 (data/catalogue/oasf-tree-13579.json), and the node each skill name is filed at, when the name is filed at one node only. Built by scripts/build/build-skill-nodes.ts from data/catalogue/oasf-skill-tags-proposal-13579.json, rows not reviewed out.",
   chainId: 13579,
   oasfVersion: '1.1.0',
   nodes: [...nodes].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),

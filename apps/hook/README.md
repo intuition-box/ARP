@@ -11,7 +11,15 @@ declaration is built from later.
 It runs after every tool call (`PostToolUse` and `PostToolUseFailure`) and appends one line to
 `.arp/session.jsonl` for each skill or MCP call.
 
-**It makes no network call.** It writes locally and nothing else.
+The recording makes no network call. It writes locally and nothing else.
+
+**Before a skills install it reads GitHub.** On `PreToolUse`, when the agent is about to run
+`npx skills add` (or `bunx`, `pnpm dlx`, `yarn dlx`, `npm exec`, any version of `skills`), it reads
+up to three of the skills that install would take, within six seconds, and shows you and the agent
+what their files contain: programs, keys, scripts, fetch-and-run lines, domains, hidden text. Facts,
+never a verdict, and it blocks nothing (`src/pre-install.ts`, ADR `0167`). What reaches GitHub is
+the repository and skill names already in the command. `GITHUB_TOKEN` or `GH_TOKEN` raises GitHub's
+limit of 60 requests an hour when set. A source that is not on GitHub is named and not read.
 
 ## Install
 
@@ -20,7 +28,7 @@ arp init         # copies the hook to ~/.arp/bin and registers it, backing up yo
 arp uninstall    # removes it
 ```
 
-By hand: `cd apps/hook && bun run build`, then point both events in `.claude/settings.json` at
+By hand: `cd apps/hook && bun run build`, then point its three events in `.claude/settings.json` at
 `apps/hook/dist/arp-hook.js`. The exact snippet is in
 [Running the node](../../docs/22_RUNNING_THE_NODE.md#the-hook--appshook).
 

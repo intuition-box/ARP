@@ -59,6 +59,15 @@ function first(raw: Record<string, unknown>, keys: readonly string[]): unknown {
   return undefined;
 }
 
+/**
+ * The event a payload names, in either format, or `null`. Read before `toolCallOf`, because an
+ * event such as `Stop` carries no tool and `toolCallOf` refuses it.
+ */
+export function eventOf(raw: unknown): string | null {
+  if (!isRecord(raw)) return null;
+  return str(first(raw, ['hook_event_name', 'hookEventName']));
+}
+
 export function toolCallOf(raw: unknown): ToolCall | null {
   if (!isRecord(raw)) return null;
   const format: PayloadFormat =

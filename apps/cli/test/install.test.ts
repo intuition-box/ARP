@@ -14,7 +14,14 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { doctor, EXIT, init, parseFlags, uninstall, type Flags } from '../src/install/commands.ts';
-import { CLAUDE_HOOKS, withCodexServer, withHooks, withMcpServer } from '../src/install/edits.ts';
+import {
+  CLAUDE_HOOKS,
+  hasHooks,
+  withCodexServer,
+  withHooks,
+  withMcpServer,
+  type HookSpec,
+} from '../src/install/edits.ts';
 import type { InstallEnv, RunResult } from '../src/install/env.ts';
 import { npxLaunch } from '../src/install/targets.ts';
 
@@ -104,6 +111,25 @@ describe('edits', () => {
     expect(withMcpServer(servers, 'arp', null)).toEqual({ mcpServers: { github: { url: 'x' } } });
   });
 
+  test('two rows of one event are both written, both removed, and counted by hasHooks', () => {
+    const spec: HookSpec = {
+      ...CLAUDE_HOOKS,
+      events: [
+        { name: 'PostToolUseFailure', matcher: '*' },
+        { name: 'PostToolUseFailure', matcher: 'Bash', sync: true, timeout: 5, if: 'Bash(x *)' },
+      ],
+    };
+    const marker = '/.arp/bin/hook.js';
+    const once = withHooks({}, spec, '"node" "/h/.arp/bin/hook.js"', marker);
+    expect(withHooks(once, spec, '"node" "/h/.arp/bin/hook.js"', marker)).toEqual(once);
+    const rows = at(once, 'hooks', 'PostToolUseFailure');
+    expect(rows).toHaveLength(2);
+    expect(at(rows, 1, 'hooks', 0)).toEqual({ type: 'command', command: '"node" "/h/.arp/bin/hook.js"', if: 'Bash(x *)', timeout: 5 });
+    expect(hasHooks(once, spec, marker)).toBe(true);
+    expect(hasHooks(withHooks({}, CLAUDE_HOOKS, 'n /h/.arp/bin/hook.js', marker), spec, marker)).toBe(false);
+    expect(withHooks(once, spec, null, marker)).toEqual({});
+  });
+
   test('codex: our block between markers, a foreign [mcp_servers.arp] is refused', () => {
     const theirs = 'model = "o4"\n';
     const entry = { command: 'node', args: ['cli.js', 'mcp'], env: { ARP_TARGET: 'testnet' } };
@@ -156,6 +182,12 @@ describe('init', () => {
     const hooks = at(json(join(home, '.claude', 'settings.json')), 'hooks');
     expect(at(hooks, 'PostToolUse', 0, 'hooks', 0)).toMatchObject({ async: true });
     expect(at(hooks, 'PostToolUseFailure')).toHaveLength(1);
+    // The install check is waited on, so it can answer before the command runs, and filtered.
+    expect(at(hooks, 'PreToolUse', 0)).toMatchObject({
+      matcher: 'Bash',
+      hooks: [{ type: 'command', if: 'Bash(*skills*)', timeout: 15 }],
+    });
+    expect(at(hooks, 'PreToolUse', 0, 'hooks', 0, 'async')).toBeUndefined();
     expect(readFileSync(join(home, '.arp', 'bin', 'hook.js'), 'utf8')).toBe('// the hook\n');
   });
 
