@@ -1,6 +1,7 @@
 # Task 104 — the site's open gaps
 
-**Status:** built 2026-11-10 on `feat/104-the-site-gaps`; review and verification below.
+**Status:** verified 2026-11-10 on `feat/104-the-site-gaps` (last code commit `1e24a53`), `ui-reviewer`
+PASS, post-mortem `.claude/learning/93-the-site-gaps.md`.
 **ADR:** none — every choice follows task 96's hand-over and task 94's rules.
 **Rules:** `code.md`, `ui.md`, `claims.md`, `workflow.md`.
 **Required skills:** `arp-contributing`. No atom, triple or contract.

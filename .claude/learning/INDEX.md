@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-99 entries, one per completed task. Written by `task-verifier` on a pass.
+100 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -104,4 +104,5 @@
 | [90](90-outside-signals.md) | `docs/tasks/101-outside-signals.md` | PASS | Outside signals as dated, sourced facts |
 | [91](91-be-read-where-agents-are.md) | `docs/tasks/102-be-read-where-agents-are.md` | PASS (first pass) | Be read where agents already are |
 | [92](92-the-sweep.md) | `docs/tasks/103-the-sweep.md` | PASS (second pass; the first returned a six-item punch list) | The sweep: close or exclude every open task |
+| [93](93-the-site-gaps.md) | `docs/tasks/104-the-site-gaps.md` | PASS (first pass) | The site's open gaps |
 | [96](96-small-leftovers.md) | `docs/tasks/107-small-leftovers.md` | PASS (first pass) | Small leftovers: the atom size limit, the plugin's icon, stale defect rows |
