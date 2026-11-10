@@ -1,6 +1,6 @@
 # Task 101 — don't start empty: outside signals as dated, sourced facts
 
-**Status:** built 2026-11-10, awaiting verification.
+**Status:** verified 2026-11-10, post-mortem `.claude/learning/90-outside-signals.md`, ADR `0170`.
 **ADR:** `0170`.
 **Rules:** `code.md`, `ui.md`, `security.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`. No atom or triple, nothing on chain, so no `intuition-integrator`.
@@ -24,7 +24,7 @@ order (ADR `0143`). `FUTURE.md` "x402: check before paying", point 2, is the x40
    | --- | --- | --- |
    | `scripts/measure/repo-liveness.ts`, extended to every repository `skill-paths.json` names | `data/measurements/repo-liveness-2026-11-10.json` | `api.github.com/repos/{repo}`, one request each |
    | `scripts/measure/repo-failure-issues.ts` (new) | `data/measurements/repo-failure-issues-2026-11-10.json` | GitHub search, `repo:{repo} is:issue in:title error OR fail OR failed OR broken OR crash`, paced for 10 a minute without a token. Counts, numbers, states and days only; no title or body is kept |
-   | `scripts/measure/x402-trust-index.ts` (new) | `data/measurements/x402-trust-index-2026-11-10.json` | `huggingface.co/datasets/x402Fizzl/x402-trust-index` at a pinned commit, CC BY 4.0, only the rows for the endpoints of ARP's directory (the sieve's walk) and `remote-endpoints.json`, by URL and by host |
+   | `scripts/measure/x402-trust-index.ts` (new) | `data/measurements/x402-trust-index-2026-11-10.json` | `huggingface.co/datasets/x402Fizzl/x402-trust-index` at the commit read first and recorded, CC BY 4.0, only the rows for the endpoints of ARP's directory (the sieve's walk) and `remote-endpoints.json`, by URL and by host |
    | `scripts/build/build-outside-signals.ts` (new) | `data/catalogue/outside-signals.json` (25,692 bytes) | the three, newest by default |
 
 3. **Where an agent looks.** `apps/mcp/src/outside.ts`: `arp_pulse` adds `outside` to every skill result

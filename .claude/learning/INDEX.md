@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-94 entries, one per completed task. Written by `task-verifier` on a pass.
+95 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -99,4 +99,5 @@
 | [85](85-what-a-skill-contains.md) | `docs/tasks/96-what-a-skill-contains.md` | PASS (second pass; first failed on two ADR claims) | What a skill contains, shown before install and on the site |
 | [86](86-a-line-names-what-was-missing.md) | `docs/tasks/97-a-line-names-what-was-missing.md` | PASS (first pass) | A line names what was missing, and what made it work |
 | [87](87-a-check-before-a-skill-is-installed.md) | `docs/tasks/98-a-check-before-a-skill-is-installed.md` | PASS | a check before a skill is installed |
+| [90](90-outside-signals.md) | `docs/tasks/101-outside-signals.md` | PASS | Outside signals as dated, sourced facts |
 | [91](91-be-read-where-agents-are.md) | `docs/tasks/102-be-read-where-agents-are.md` | PASS (first pass) | Be read where agents already are |
