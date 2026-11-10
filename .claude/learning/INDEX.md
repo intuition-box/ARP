@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-91 entries, one per completed task. Written by `task-verifier` on a pass.
+92 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -96,4 +96,5 @@
 | [82](82-x402-feed-exact-endpoint.md) | `docs/tasks/93-x402-feed-exact-endpoint.md` | PASS | The x402 feed names the endpoint exactly as it was paid |
 | [83](83-list-tool-only-tools.md) | `docs/tasks/94-list-tool-lists-only-tools.md` | PASS (second pass; the first failed on two items, below) | `/list-tool` lists only what is a tool |
 | [84](84-the-agent-page-reads-lines.md) | `docs/tasks/95-the-agent-page-reads-lines.md` | PASS (second run; the first failed on the task file, a missing ui re-review and untested loupe behaviour) | The agent page reads lines |
+| [85](85-what-a-skill-contains.md) | `docs/tasks/96-what-a-skill-contains.md` | PASS (second pass; first failed on two ADR claims) | What a skill contains, shown before install and on the site |
 | [86](86-a-line-names-what-was-missing.md) | `docs/tasks/97-a-line-names-what-was-missing.md` | PASS (first pass) | A line names what was missing, and what made it work |

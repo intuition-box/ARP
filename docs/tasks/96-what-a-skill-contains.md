@@ -1,6 +1,6 @@
 # Task 96 — show what a skill contains, before install and on the site
 
-**Status:** in progress.
+**Status:** verified 2026-11-10, post-mortem `.claude/learning/85-what-a-skill-contains.md`, ADR `0165`.
 **ADR:** `0165`.
 **Rules:** `code.md`, `ui.md`, `security.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`. No atom or triple, so no `intuition-integrator`.

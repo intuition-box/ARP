@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-162 decisions. Newest last. `choices/README.md` says when to write one.
+163 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -203,4 +203,5 @@ Read these before relying on them.
 | [0162](0162-the-x402-feed-names-the-endpoint-exactly-as-it-was-paid.md) | 2026-11-10 | Accepted | The x402 feed names the endpoint exactly as it was paid, and the tool atom stays canonical |
 | [0163](0163-list-tool-lists-only-what-is-a-tool.md) | 2026-11-10 | Accepted | `/list-tool` lists only what is a tool, and asks a stranger's URL from a pinned connection |
 | [0164](0164-the-agent-page-leads-with-lines.md) | 2026-11-10 | Accepted (the user saw both versions, 2026-11-10; on `feat/95-agent-lines`) | The agent page leads with lines, and shows no payment yet |
+| [0165](0165-what-a-skill-contains-is-read-before-install.md) | 2026-11-10 | Accepted | What a skill contains is read from its files and shown before install, as facts |
 | [0166](0166-a-line-names-what-was-missing-and-what-made-it-work.md) | 2026-11-10 | Accepted | A line names what was missing, and what made it work, when the skill already says it |
