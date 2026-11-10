@@ -61,7 +61,7 @@ The runtime hook. It reads one tool-call payload on stdin, appends at most one l
 | `.arp/session.jsonl` (in the project) | What the session used |
 | `.arp/searches.jsonl` (next to it) | The searches made with `arp_pulse` |
 | `~/.arp/failures.jsonl` | A skill's failure: the skill, its source, the domain and a closed reason. Never the command or its output |
-| `~/.arp/asked.jsonl`, `~/.arp/outcomes.jsonl` | On `Stop`: the skills it asked about, and the model's answer, `worked`, `failed` or `unsure`. Never the model's message |
+| `~/.arp/asked.jsonl`, `~/.arp/outcomes.jsonl` | The skills it asked about when they loaded, and on `Stop` the model's closing line, `worked`, `failed` or `unsure`. Never the model's message |
 
 `arp init` installs it for you. You do not run it by hand.
 

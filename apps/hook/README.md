@@ -30,10 +30,10 @@ atom, a hash of its public address, which tells the index that skill failed but 
 the command, its output or your words. Once per session, skill and reason, within three seconds,
 silent when it fails. `ARP_FAILURE_LINES=off` stops it (ADR `0168`).
 
-**At the end of a turn it asks the model.** On `Stop`, once per skill used in the session, it asks
-whether the skill did its job, and writes the closed answer (`worked`, `failed`, `unsure`) to
-`~/.arp/outcomes.jsonl`. No network; it continues a turn at most once, never while a Stop hook is
-already continuing it (ADR `0169`).
+**It asks the model during the task.** When a skill loads, once per skill in the session, it asks
+the model to end its final reply with one line, `arp: <skill> worked`, `failed` or `unsure`. On
+`Stop` it reads that line and writes the answer to `~/.arp/outcomes.jsonl`. No network, and no extra
+turn: `Stop` prints nothing. A reply without the line records nothing (ADR `0169`, ADR `0179`).
 
 ## Install
 
@@ -42,7 +42,7 @@ arp init         # copies the hook to ~/.arp/bin and registers it, backing up yo
 arp uninstall    # removes it
 ```
 
-By hand: `cd apps/hook && bun run build`, then point its four events in `.claude/settings.json` (`Stop` without `async`) at
+By hand: `cd apps/hook && bun run build`, then point its four events in `.claude/settings.json` (`Stop` and the `Skill` row of `PostToolUse` without `async`) at
 `apps/hook/dist/arp-hook.js`. The exact snippet is in
 [Running the node](../../docs/22_RUNNING_THE_NODE.md#the-hook--appshook).
 
@@ -56,7 +56,7 @@ file. A URL is stripped of its query, credentials and anything that looks like a
 time it runs, it writes a `.gitignore` in `.arp/` so the log is never committed by accident.
 
 A payload it cannot read exits cleanly and writes nothing, so the hook never blocks a tool call. On
-`Stop` it continues a turn at most once, never while a Stop hook is already continuing it.
+`Stop` it never continues the turn.
 
 ```bash
 bun test     # from apps/hook

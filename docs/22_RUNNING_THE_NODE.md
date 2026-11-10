@@ -109,8 +109,8 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
                        the command or its output. Stays on this machine unless you run `arp share on`.
                        A source still empty is looked up again by `arp share`, from the same files,
                        with the project it runs in as the project
-~/.arp/asked.jsonl     on Stop, the skills the hook asked about: the session, the skill, its source, the date
-~/.arp/outcomes.jsonl  the model's answer to that question, `worked`, `failed` or `unsure`, with a domain
+~/.arp/asked.jsonl     when a skill loads, the skills the hook asked about: the session, the skill, its source, the date
+~/.arp/outcomes.jsonl  on Stop, the model's closing line for each, `worked`, `failed` or `unsure`, with a domain
                        found as for a failure, and on a worked answer the `with` name an earlier failure
                        named, only when the skill's SKILL.md names it. Never the model's message
 ~/.arp/sharing.json    whether failures and worked answers may become public lines. Absent means off
@@ -661,8 +661,10 @@ uninstall` takes it out again. It leaves an MCP server named `arp` that it did n
 // your runtime's .claude/settings.json — the path is absolute, because the hook runs in your
 // project and not in this one
 {"hooks": {
-  "PostToolUse": [{"matcher": "*", "hooks": [
+  "PostToolUse": [{"matcher": "^(?!Skill$)", "hooks": [
     {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "async": true}
+  ]}, {"matcher": "Skill", "hooks": [
+    {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "timeout": 5}
   ]}],
   "PostToolUseFailure": [{"matcher": "*", "hooks": [
     {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "timeout": 10}
@@ -681,9 +683,11 @@ Both `PostToolUse` events, because a failed call reaches only `PostToolUseFailur
 waited on, not `async`, because only a waited-on hook can answer before the command runs; its `if`
 rule keeps every other `Bash` call from starting it at all. `PostToolUseFailure` is waited on
 too, since task 99, so the hook can answer a skill's failure (below); any other failed call it
-records and leaves at once. `Stop` is waited on as well, because there the hook answers: once per
-skill used in the session it asks the model whether the skill did its job, and reads the closed
-answer on the next `Stop` (ADR `0169`). Grok Build reads this same
+records and leaves at once. `PostToolUse` has two rows: every tool but `Skill` in the background,
+and `Skill` waited on, because there the hook answers: once per skill in the session it asks the
+model to end its final reply with one closed line, whether the skill did its job (an async answer
+would reach the model a turn late). `Stop` reads that line and prints nothing, so it never continues
+the turn; it is waited on so `claude -p` does not cancel it at exit (ADR `0169`, ADR `0179`). Grok Build reads this same
 file and sends camelCase keys, which the hook also reads (`apps/hook/src/payload.ts`).
 
 It fires on every tool call and appends one line to `.arp/session.jsonl` (or `ARP_SESSION_LOG`)

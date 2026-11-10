@@ -1,6 +1,6 @@
 # 0169 — The model says whether a skill worked, at the end of a turn, once per skill
 
-**Status:** Accepted
+**Status:** Accepted. **Amended by ADR `0179`** (2026-11-10): asked when the skill loads, read at `Stop`, never continuing the turn; points 1, 2, the loop guard and the token cost below are superseded there.
 **Date:** 2026-11-10
 **Triggered by:** `docs/tasks/100-the-model-says-it-worked.md`, the user's decision 2026-11-10: the model decides
 "worked", at the end of the task, not a rule. Supersedes ADR `0140`'s "writes `worked` never"; amends the neutral

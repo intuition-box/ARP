@@ -3,6 +3,14 @@
 `@arp-protocol/cli`. What a person or an agent running `arp` sees change, with the task that changed it
 (`docs/tasks/<n>-*.md` in the repository). Everything writes on Intuition testnet 13579 only.
 
+## Unreleased
+
+- The hook no longer continues a turn on `Stop` to ask whether a skill worked. When a skill loads, it
+  asks the model, once per skill per session, to end its final reply with `arp: <skill> worked`,
+  `failed` or `unsure`, and `Stop` records that line and prints nothing. Under `claude -p` the
+  session's result is the real answer again (task 109). `arp init` registers `PostToolUse` twice:
+  every tool but `Skill` in the background, `Skill` waited on (5 s).
+
 ## 0.0.3 — unreleased
 
 The first release since 0.0.1 (published 2026-11-06 07:59 UTC). 0.0.2 was prepared on 2026-11-09 and

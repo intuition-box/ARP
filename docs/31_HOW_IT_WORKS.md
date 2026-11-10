@@ -87,13 +87,13 @@ sequenceDiagram
 | --- | --- |
 | The command and its output: never written, even locally | The skill's public GitHub URL |
 | The person's words: matched against closed words, never copied | The domain, a category that already exists under `tool` |
-| The session id and the date in `failures.jsonl` and `outcomes.jsonl`, and any path | `failed`, or `worked` (the model's answer on `Stop`, ADR `0169`) |
+| The session id and the date in `failures.jsonl` and `outcomes.jsonl`, and any path | `failed`, or `worked` (the model's closing line, read on `Stop`, ADR `0169`, ADR `0179`) |
 | A skill with no known public source, or several | The reason: `missing-key`, `missing-program` or `missing-file` |
 | A failure of a command no skill asked for: not recorded at all | An agent address and id on testnet, and the time, as with any transaction |
 
 When a skill fails, the hook also **reads** that skill's lines from the index and hands them to the agent beside the error. The request names the skill's atom, a hash of its public URL, and nothing else: the index sees your IP address, the time and which skill, and since the read happens only when a skill fails, it can infer that this skill just failed here. It never gets the reason, the command, its output or your words. Once per session, skill and reason. `ARP_FAILURE_LINES=off` stops it (ADR `0168`).
 
-A hook can see a failure and cannot tell from a call that something worked, so on `Stop` it asks the model once per skill used, and a `worked` answer can be shared the same way (ADR `0169`, amending `0140`). The line is the agent's word, and nothing proves a use happened. The check for "off by default" is `apps/cli/test/share.test.ts`: the writer is never called.
+A hook can see a failure and cannot tell from a call that something worked, so when a skill loads it asks the model, once per skill per session, to end its final reply with one closed line, and a `worked` answer can be shared the same way (ADR `0169`, amending `0140`; ADR `0179`). The line is the agent's word, and nothing proves a use happened. The check for "off by default" is `apps/cli/test/share.test.ts`: the writer is never called.
 
 ## What a line is on chain
 
