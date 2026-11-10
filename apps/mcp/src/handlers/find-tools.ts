@@ -15,6 +15,7 @@ import {
 } from '@arp-protocol/core';
 
 import { GRAPHQL, DOMAIN_ROOT, DOMAIN_ATTESTORS, SKILLS_INDEX } from '../config.js';
+import { labelOutside, OUTSIDE_NOTE } from '../outside.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 import {
   type CatalogueEntry,
@@ -482,6 +483,7 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
     truncated,
     purpose_read_at: catalogue.readAt,
     installs_read_at: skillFacts._measuredOn,
+    outside_note: OUTSIDE_NOTE,
     // Present only when a domain was asked for. `domains_walked` is the derivation made visible:
     // a tool tagged `card` comes back under `payment` because the hierarchy says so, and the
     // reader should be able to see which hop did it rather than take the filter on trust.
@@ -506,6 +508,7 @@ export async function findTools(id: JsonRpcId, args: Record<string, unknown>) {
       purpose: row.purpose ?? about.purpose,
       installs: about.installs,
       ...requiresFor(row.label),
+      ...labelOutside(row.label),
     })),
   });
 }

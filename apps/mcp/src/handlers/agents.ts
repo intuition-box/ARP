@@ -34,6 +34,7 @@ import { createPublicClient, getAddress, http, parseAbi, stringToHex } from 'vie
 import { chainId, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, RPC, directory, domainWalk, reads, record } from '../config.js';
 import sieveReading from '../../../../data/catalogue/agent-sieve-13579.json';
 import { hostGuard, type HostGuard } from '../host-guard.js';
+import { endpointOutside, OUTSIDE_NOTE } from '../outside.js';
 import { readRegistrationDocument, type RegistrationDocument } from '../registration-document.js';
 import { type JsonRpcId, fail, text, isAddress } from '../rpc.js';
 
@@ -502,16 +503,21 @@ async function declaredEndpoints(id: JsonRpcId, args: Record<string, unknown>) {
   // Split, never merged: showing them as one list implies the second group failed a check it was
   // never given.
   const { probeable, notCheckable } = partitionByCheckability(readDeclaredEndpoints(document));
-  return text(id, {
-    caip19: toCaip19(agent),
-    registration_file: file,
-    callable: probeable.map((endpoint) => ({
+  const callable = probeable.map((endpoint) => {
+    const url = endpoint.classification.status === 'probeable' ? endpoint.classification.url : null;
+    return {
       name: endpoint.name,
       protocol: endpoint.protocol,
       version: endpoint.version,
-      url: endpoint.classification.status === 'probeable' ? endpoint.classification.url : null,
+      url,
       capabilities: endpoint.capabilities,
-    })),
+      ...endpointOutside(url),
+    };
+  });
+  return text(id, {
+    caip19: toCaip19(agent),
+    registration_file: file,
+    callable,
     not_callable: notCheckable.map((endpoint) => ({
       name: endpoint.name,
       declared:
@@ -519,6 +525,7 @@ async function declaredEndpoints(id: JsonRpcId, args: Record<string, unknown>) {
       why: endpoint.classification.status === 'probeable' ? null : endpoint.classification.code,
     })),
     note: "The agent's own word about itself. `arp_probe_endpoint` asks whether one answers.",
+    ...(callable.some((endpoint) => 'outside' in endpoint) ? { outside_note: OUTSIDE_NOTE } : {}),
   });
 }
 
