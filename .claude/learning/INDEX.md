@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-87 entries, one per completed task. Written by `task-verifier` on a pass.
+88 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -93,3 +93,4 @@
 | [79](79-x402-failure-feed.md) | `docs/tasks/89-x402-failure-feed.md` | PASS | The x402 failure feed |
 | [80](80-x402-end-to-end.md) | `docs/tasks/91-x402-end-to-end.md` | PASS | The x402 failure loop, end to end on Base Sepolia |
 | [81](81-a-hosted-read-only-mcp-endpoint.md) | `docs/tasks/92-a-hosted-read-only-mcp-endpoint.md` | PASS (round 2; round 1 failed on one unqualified copy of the words claim) | A hosted read-only MCP endpoint |
+| [82](82-x402-feed-exact-endpoint.md) | `docs/tasks/93-x402-feed-exact-endpoint.md` | PASS | The x402 feed names the endpoint exactly as it was paid |

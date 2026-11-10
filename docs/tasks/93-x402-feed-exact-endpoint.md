@@ -1,6 +1,6 @@
 # Task 93 — The x402 feed names the endpoint exactly as it was paid
 
-**Status:** in progress.
+**Status:** verified 2026-11-10, `task-verifier` PASS (round 1), commits `e99215a`..`dbb4d6b`, post-mortem `.claude/learning/82-x402-feed-exact-endpoint.md`; `intuition-integrator` FAIL on `e99215a`, PASS on `c83cd55`. Not pushed.
 **ADR:** `0162`.
 **Rules:** `code.md`, `security.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`, `intuition`. **Reviewer:** `intuition-integrator`.

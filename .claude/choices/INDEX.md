@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-158 decisions. Newest last. `choices/README.md` says when to write one.
+159 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -199,3 +199,4 @@ Read these before relying on them.
 | [0159](0159-an-x402-line-names-its-payment-and-a-feed-checks-it.md) | 2026-11-09 | Accepted | An x402 line names its payment in one more level, and a feed keeps it only when the payment checks |
 | [0160](0160-a-paying-network-is-added-by-configuration-and-the-demo-pays-on-base-sepolia.md) | 2026-11-09 | Accepted | A paying network is added by configuration, and the demo agent pays on Base Sepolia |
 | [0161](0161-a-hosted-read-only-mcp-endpoint.md) | 2026-11-10 | Accepted | A hosted read-only MCP endpoint, opt-in, that keeps no word it receives |
+| [0162](0162-the-x402-feed-names-the-endpoint-exactly-as-it-was-paid.md) | 2026-11-10 | Accepted | The x402 feed names the endpoint exactly as it was paid, and the tool atom stays canonical |
