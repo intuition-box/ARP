@@ -50,15 +50,16 @@ export function QuestionRow({term, children}: {term: string; children: React.Rea
 }
 
 /**
- * The rows every answer has, each holding "…", while the reading loads: the section keeps the height
- * it will have, so what is under it does not jump when the answers arrive.
+ * The rows every answer has, each holding one word, while the reading loads ("…") or when there is no
+ * reading ("not read"): the section keeps one height from the first paint, so what is under it does
+ * not move when the answers arrive or do not.
  */
-export function PendingRows({terms}: {terms: readonly string[]}) {
+export function PendingRows({terms, text = "…"}: {terms: readonly string[]; text?: string}) {
     return (
         <>
             {terms.map((term) => (
                 <QuestionRow key={term} term={term}>
-                    <span className={steel}>…</span>
+                    <span className={steel}>{text}</span>
                 </QuestionRow>
             ))}
         </>

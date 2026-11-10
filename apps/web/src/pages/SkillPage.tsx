@@ -127,7 +127,7 @@ export function SkillPage({
                         person decides on before letting an agent install it is content, not a
                         fact about the listing, so it does not sit in the facts column. */}
                     <div className="min-w-0">
-                        <div className="mb-8 max-w-[46rem]">
+                        <div className="mb-8">
                             <BeforeInstall read={contents} repo={repo} />
                         </div>
                         <Description label={view.label} md={md} repo={repo} />

@@ -16,8 +16,10 @@ import {beforeCallSummary, type AgentKey} from "../../services/agent-contents";
  * them) and auth. From its registration document and the sieve's dated reading
  * (`packages/protocol/src/agent-contents.ts`). Facts, never a verdict.
  *
- * Every row is always there, so nothing below moves when a reading arrives or covers nothing. The
- * endpoint-by-endpoint detail is the Endpoints tab's; this names the hosts and stops.
+ * Every row is always there, from the first paint, holding "…" while the document loads and "—" when
+ * there is none or it cannot be read; the x402 Trust Index is one line in the Payment row whatever it
+ * says. So the description and the tabs below do not move. The endpoint-by-endpoint detail is the
+ * Endpoints tab's; this names the hosts and stops.
  */
 export function BeforeYouCall({agent}: {agent: AgentKey}) {
     const query = useAgentContents(agent);
@@ -62,11 +64,11 @@ export function BeforeYouCall({agent}: {agent: AgentKey}) {
                 )
             }
         >
-            {read === undefined && !query.isError ? (
-                <PendingRows terms={ALWAYS} />
-            ) : read?.status === "read" ? (
+            {read?.status === "read" ? (
                 <Rows contents={read.contents} registrationFile={agent.registrationFile} />
-            ) : undefined}
+            ) : (
+                <PendingRows terms={ALWAYS} text={read === undefined && !query.isError ? "…" : "—"} />
+            )}
         </BeforeSection>
     );
 }

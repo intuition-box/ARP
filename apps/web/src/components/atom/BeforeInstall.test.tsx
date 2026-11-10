@@ -106,6 +106,7 @@ describe("BeforeInstall", () => {
 
     it("says not read for a skill the reading did not cover", () => {
         renderWithProviders(<BeforeInstall read={{status: "not-read", measuredAt: AT}} repo="a/b" />);
-        expect(screen.getByText("not read")).toBeInTheDocument();
+        expect(screen.getAllByText("not read")).toHaveLength(6);
+        expect(row("Asks for")).toHaveTextContent("not read");
     });
 });

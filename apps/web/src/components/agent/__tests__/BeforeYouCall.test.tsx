@@ -62,11 +62,12 @@ describe("BeforeYouCall", () => {
         expect(row("Payment")).toHaveTextContent("none declared");
     });
 
-    it("says there is no document rather than showing empty rows", () => {
+    it("says there is no document, and keeps every row", () => {
         data = {status: "none"};
         open();
         expect(screen.getByText("no registration document")).toBeInTheDocument();
-        expect(screen.queryByText("Endpoints")).toBeNull();
+        // The rows stay, so the description below does not move up when the answer is "none".
+        expect(row("Endpoints")).toHaveTextContent("—");
     });
 
     it("keeps the summary line while the document loads", () => {

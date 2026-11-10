@@ -50,9 +50,9 @@ export function BeforeInstall({read, repo}: {read: SkillContentsRead; repo: stri
                 )
             }
         >
-            {read.status === "pending" ? (
-                <PendingRows terms={ALWAYS} />
-            ) : view === null || read.status !== "read" ? undefined : (
+            {view === null || read.status !== "read" ? (
+                <PendingRows terms={ALWAYS} text={read.status === "pending" ? "…" : "not read"} />
+            ) : (
                 <Rows view={view} entry={read.entry} repo={repo} />
             )}
         </BeforeSection>

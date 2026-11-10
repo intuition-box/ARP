@@ -33,6 +33,8 @@ describe("TrustIndexVerdicts", () => {
         file = OUTSIDE;
         read = document("https://pay.example/a", "https://pay.example/mcp", "https://never.example/a");
         render(<TrustIndexVerdicts registrationFile="https://agent.example/card.json" />);
+        // One line, which opens on the verdicts: the row's height does not depend on them.
+        expect(screen.getByText(/: 2 endpoints read$/)).toBeInTheDocument();
         expect(screen.getByText("go · payable 8/9 days ↗")).toHaveAttribute(
             "href",
             `https://x402-doctor.fizzl.eu/api/trust?url=${encodeURIComponent("https://pay.example/a")}`,
@@ -46,17 +48,18 @@ describe("TrustIndexVerdicts", () => {
         );
     });
 
-    it("renders nothing when none of the agent's hosts was read", () => {
+    it("holds one line saying the reading did not ask about it, never a verdict", () => {
         file = OUTSIDE;
         read = document("https://never.example/a");
-        const {container} = render(<TrustIndexVerdicts registrationFile="https://agent.example/card.json" />);
-        expect(container).toBeEmptyDOMElement();
+        render(<TrustIndexVerdicts registrationFile="https://agent.example/card.json" />);
+        expect(screen.getByText("x402 Trust Index: not in its reading")).toBeInTheDocument();
+        expect(screen.queryByText(/not listed/)).toBeNull();
     });
 
-    it("renders nothing until both the document and the reading are in", () => {
+    it("holds the same one line while the document or the reading loads", () => {
         file = undefined;
         read = document("https://pay.example/a");
-        const {container} = render(<TrustIndexVerdicts registrationFile="https://agent.example/card.json" />);
-        expect(container).toBeEmptyDOMElement();
+        render(<TrustIndexVerdicts registrationFile="https://agent.example/card.json" />);
+        expect(screen.getByText("x402 Trust Index …")).toBeInTheDocument();
     });
 });
