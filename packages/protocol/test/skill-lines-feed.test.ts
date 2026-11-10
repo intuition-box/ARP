@@ -126,7 +126,7 @@ describe("buildAgentSieveFeed", () => {
         const feed = build([sieveRow("10", 1, {proofUrl: null, kinds: []}), sieveRow("2", 4), sieveRow("3", 4)]);
         expect(feed.agents.map((agent) => agent.agent.split(":").at(-1))).toEqual(["2", "3", "10"]);
         expect(feed.agents[0]?.agent).toBe("eip155:8453:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432:2");
-        expect(feed.by_rung).toEqual({0: 0, 1: 1, 2: 0, 3: 0, 4: 2, 5: 0});
+        expect(feed.by_chain).toEqual({"eip155:8453": {0: 0, 1: 1, 2: 0, 3: 0, 4: 2, 5: 0}});
     });
 
     it("keeps no text beside the URL: a malformed row is skipped, a non-URL proof and an unknown kind dropped", () => {

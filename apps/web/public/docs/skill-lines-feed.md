@@ -63,7 +63,7 @@ No text a person typed. Every field is an address, an id, a word from a closed l
 
 ## How to check a line
 
-Every line is on Intuition testnet 13579. The `uses` edge for a skill, by its `atom_id`:
+Every line is on Intuition testnet 13579. The edges whose object is the skill, by its `atom_id` (the `uses` edges among them start each line):
 
 ```
 curl -s https://testnet.intuition.sh/v1/graphql -H 'content-type: application/json' \

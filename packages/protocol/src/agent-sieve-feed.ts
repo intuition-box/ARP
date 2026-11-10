@@ -49,7 +49,8 @@ export type AgentSieveFeed = {
     source: string;
     note: string;
     rungs: Record<Rung, string>;
-    by_rung: Record<Rung, number>;
+    /** Records per rung, one chain each (`eip155:<chain>`): counts from two chains are never added. */
+    by_chain: Record<string, Record<Rung, number>>;
     agents: AgentSieveRecord[];
     skipped: {count: number};
 };
@@ -84,8 +85,12 @@ export function buildAgentSieveFeed(input: {
         });
     }
     agents.sort((a, b) => b.rung - a.rung || a.order[0] - b.order[0] || a.order[1].localeCompare(b.order[1], "en", {numeric: true}));
-    const byRung = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0} satisfies Record<Rung, number>;
-    for (const agent of agents) byRung[agent.rung] += 1;
+    const byChain: Record<string, Record<Rung, number>> = {};
+    for (const agent of agents) {
+        const chain = `eip155:${agent.order[0]}`;
+        const counts = (byChain[chain] ??= {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0});
+        counts[agent.rung] += 1;
+    }
     return {
         schema: AGENT_SIEVE_SCHEMA,
         generated_at: input.generatedAt,
@@ -94,7 +99,7 @@ export function buildAgentSieveFeed(input: {
         source: input.source,
         note: AGENT_SIEVE_NOTE,
         rungs: {...RUNG_NAMES},
-        by_rung: byRung,
+        by_chain: byChain,
         agents: agents.map(({order: _order, ...record}) => record),
         skipped: {count: skipped},
     };

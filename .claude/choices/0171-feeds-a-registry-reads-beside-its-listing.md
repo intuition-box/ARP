@@ -52,8 +52,8 @@ nothing may be published, submitted or sent by an agent: the user does it.
   a reader could not tell "no line" from "lines filtered". Marking keeps both facts.
 - **Copy domain and agent labels as read** — a label is anybody's to write, so the file would carry
   whatever someone typed on chain. Nulling outside a known set is the only way to promise no free text.
-- **Keep the sieve feed's `chain_id`, `registry`, `token_id` beside the key** — 80 KB against 55 KB for
-  the same facts; the CAIP-style key holds all three.
+- **Keep the sieve feed's `chain_id`, `registry`, `token_id` beside the key** — about 80 KB against
+  55 KB for the same facts; the CAIP-style key holds all three.
 - **A placeholder host in `server.json`'s `remotes`** — a file that validates and points at no server
   can be published by mistake. The entry waits for the real name.
 
@@ -70,8 +70,8 @@ nothing may be published, submitted or sent by an agent: the user does it.
 - No per-agent outcome feed: lines about an agent are read through `arp_agent_endpoints` only.
 
 **Neutral (worth knowing):**
-- `by_rung` in the sieve feed counts records across four chains; the per-chain table is in
-  `/docs/the-sieve`.
+- The sieve feed counts rungs per chain (`by_chain`), never across chains (`claims.md` check 2); a
+  first draft added the four chains together, and `ui-reviewer` caught it.
 - Publishing to the MCP Registry needs `mcpName` in `apps/cli/package.json` and that version on npm;
   both are the user's.
 

@@ -6,7 +6,7 @@ The rung of [the 8004 sieve](/docs/the-sieve) each ERC-8004 agent in ARP's direc
 
 `/feeds/agent-sieve.json` on this site. It is a dated snapshot of one walk: `checked_from` and `checked_to` say when the agents were read, and `source` names the committed measurement. It is rebuilt by `scripts/build/build-agent-sieve-feed.ts` from `data/catalogue/agent-sieve-13579.json`. Any origin can read it.
 
-The walk of 2026-11-09 holds 283 agents: 244 on Base 8453, 31 on testnet 13579 (ARP's own test identities), 5 on BNB 56 and 3 on X Layer 196. Per chain, see [the sieve](/docs/the-sieve); the feed's `by_rung` adds them together, so read it as a count of records, not of one chain.
+The walk of 2026-11-09 holds 283 agents: 244 on Base 8453, 31 on testnet 13579 (ARP's own test identities), 5 on BNB 56 and 3 on X Layer 196. The file counts them per chain in `by_chain`, never added together; the same figures are in [the sieve](/docs/the-sieve). The 31 on 13579 are 30 shells and one described.
 
 ## What a record holds
 
@@ -27,7 +27,7 @@ The walk of 2026-11-09 holds 283 agents: 244 on Base 8453, 31 on testnet 13579 (
 - `proof_url` is the endpoint that proves the rung, when one does.
 - `kinds` are the protocols that answered: `mcp`, `a2a`.
 
-Beside the records: `rungs`, `by_rung`, `note` and `skipped`. The schema is `arp.agent-sieve/1`.
+Beside the records: `rungs`, `by_chain` (records per rung, one chain each), `note` and `skipped`. The schema is `arp.agent-sieve/1`.
 
 ## What it leaves out
 

@@ -29,7 +29,7 @@ that does so is the user's.
 | feed | URL path | schema, doc | built by | size, 2026-11-10 |
 | --- | --- | --- | --- | --- |
 | skill lines | `/feeds/skill-lines.json` | `arp.skill-lines/1`, `apps/web/public/docs/skill-lines-feed.md` | `scripts/build/build-skill-lines-feed.ts` (reads 13579, no key) | 8,332 bytes: 10 skills, 10 lines, 5 with an outcome, all `arp_test`; 36 skipped (33 edges a payer created, 3 domains outside the tree) |
-| agent sieve | `/feeds/agent-sieve.json` | `arp.agent-sieve/1`, `apps/web/public/docs/agent-sieve-feed.md` | `scripts/build/build-agent-sieve-feed.ts` (no network) | 54,774 bytes: 283 agents of the walk of 2026-11-09, `by_rung` 0:63 1:128 2:52 3:0 4:40 5:0 across four chains |
+| agent sieve | `/feeds/agent-sieve.json` | `arp.agent-sieve/1`, `apps/web/public/docs/agent-sieve-feed.md` | `scripts/build/build-agent-sieve-feed.ts` (no network) | 55,070 bytes: 283 agents of the walk of 2026-11-09, counted per chain in `by_chain` (Base 8453: 33 / 121 / 50 / 0 / 40 / 0 from rung 0 to 5) |
 
 Shapers, pure and tested: `packages/protocol/src/skill-lines-feed.ts`, `packages/protocol/src/agent-sieve-feed.ts`,
 `packages/protocol/test/skill-lines-feed.test.ts`. `apps/web/nginx.conf`'s `location /feeds/` already

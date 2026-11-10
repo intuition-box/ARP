@@ -34,4 +34,4 @@ const {agents, ...head} = feed;
 const body = JSON.stringify(head, null, 1).replace(/\n}$/, "");
 mkdirSync(dirname(out), {recursive: true});
 writeFileSync(out, `${body},\n "agents": [\n${agents.map((agent) => `  ${JSON.stringify(agent)}`).join(",\n")}\n ]\n}\n`);
-console.log(`${agents.length} agents, by rung ${JSON.stringify(feed.by_rung)}, ${feed.skipped.count} skipped: ${out}`);
+console.log(`${agents.length} agents, by chain and rung ${JSON.stringify(feed.by_chain)}, ${feed.skipped.count} skipped: ${out}`);

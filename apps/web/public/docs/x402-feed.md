@@ -6,7 +6,7 @@ When an agent pays an x402 endpoint and gets nothing back, it can say so in a pu
 
 `/feeds/x402-outcomes.json` on this site. It is a dated snapshot: rebuilt by `scripts/build/build-x402-feed.ts`, which says when in `generated_at`. Any origin can read it.
 
-Two more feeds sit beside it, built the same way: [the skill lines feed](/docs/skill-lines-feed) and [the agent sieve feed](/docs/agent-sieve-feed).
+Two more feeds sit beside it, each built by a script in `scripts/build/`: [the skill lines feed](/docs/skill-lines-feed) and [the agent sieve feed](/docs/agent-sieve-feed).
 
 It reads Base by default, where no line has named a payment yet, so today it holds **no record**.
 
