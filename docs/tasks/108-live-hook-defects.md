@@ -1,6 +1,6 @@
 # Task 108 — Two defects the live test found in the hook
 
-**Status:** in progress, 2026-11-10, on `fix/108-live-hook-defects` (worktree `../ARP-108`).
+**Status:** verified 2026-11-10, `task-verifier` PASS (round 2) at `7c24c32`, post-mortem `.claude/learning/97-live-hook-defects.md`; on `fix/108-live-hook-defects` (worktree `../ARP-108`).
 **ADR:** none: both fixes are the obvious answer to a wrong output (`workflow.md`, "Things not worth an ADR").
 **Rules:** `code.md`, `claims.md`, `workflow.md`. The hook's gates: `apps/cli` test and `check:node`.
 

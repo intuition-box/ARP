@@ -310,7 +310,7 @@ test('needOf reads the program in the error Claude Code really gets from zsh, ne
 });
 
 test('installedSource reads the lock a project install writes beside the project (task 108)', () => {
-  // `npx skills add owner/repo --skill x` without `-g` writes ./skills-lock.json, version 1 (skills 1.7.4).
+  // `npx skills add owner/repo --skill x` without `-g` writes ./skills-lock.json, version 1 (skills 1.7.x).
   writeFileSync(
     join(dir, 'skills-lock.json'),
     JSON.stringify({ version: 1, skills: { 'gadget-108': { source: 'acme/gadgets', sourceType: 'github', skillPath: 'skills/gadget-108/SKILL.md' } } }),
