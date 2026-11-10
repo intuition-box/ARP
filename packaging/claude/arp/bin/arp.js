@@ -34094,7 +34094,8 @@ async function writeLine(config, agent, input) {
   const listing2 = await signListToolRequest({ address: agent.address, url: input.toolUrl, nonce: keccak256(stringToBytes(`list-${input.toolUrl}-${Date.now()}`)), expiresAt: expiresAt() }, DESKTOP_CHAIN_ID, agent.account);
   const listed = await post2(config, "/list-tool", { url: input.toolUrl, request: listing2 });
   if (listed.status !== 200 || typeof listed.body["atomId"] !== "string") {
-    throw new Error(`the tool could not be listed (${listed.status}): ${String(listed.body["error"] ?? "")}`);
+    const rule = typeof listed.body["rule"] === "string" ? `, ${listed.body["rule"]}` : "";
+    throw new Error(`the sponsor would not list ${input.toolUrl} (${listed.status}${rule}): ${String(listed.body["error"] ?? "")}`);
   }
   const tool = listed.body["atomId"];
   if (input.newDomain !== undefined && input.domain !== undefined) {

@@ -347,7 +347,9 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, input: L
   );
   const listed = await post(config, '/list-tool', { url: input.toolUrl, request: listing });
   if (listed.status !== 200 || typeof listed.body['atomId'] !== 'string') {
-    throw new Error(`the tool could not be listed (${listed.status}): ${String(listed.body['error'] ?? '')}`);
+    // `rule` is stable (`not-a-tool`, `unreachable`, `private-address`, `limit`…; task 94, ADR `0163`); `error` says why.
+    const rule = typeof listed.body['rule'] === 'string' ? `, ${listed.body['rule']}` : '';
+    throw new Error(`the sponsor would not list ${input.toolUrl} (${listed.status}${rule}): ${String(listed.body['error'] ?? '')}`);
   }
   const tool = listed.body['atomId'] as Hex; // a string, checked on the line above
 

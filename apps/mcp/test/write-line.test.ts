@@ -34,6 +34,7 @@ afterEach(() => {
 function setup(
     line: (body: {request: SignedLineRequest}, calls: number) => {status: number; body: unknown},
     category: {status: number; body: unknown} = {status: 200, body: {label: "slides", newCategory: true, created: true}},
+    listTool: {status: number; body: unknown} = {status: 200, body: {url: "https://github.com/canonical/repo?skill=s", atomId: ATOM}},
 ) {
     const categories: SignedCategoryRequest[] = [];
     const stateDir = mkdtempSync(join(tmpdir(), "arp-line-"));
@@ -47,7 +48,7 @@ function setup(
         asked.push(path);
         const body = init?.body === undefined ? {} : (JSON.parse(String(init.body)) as Record<string, unknown>); // this test's own requests
         if (path === "/") return Response.json({multiVault: MULTI_VAULT, sponsor: SPONSOR});
-        if (path === "/list-tool") return Response.json({url: "https://github.com/canonical/repo?skill=s", atomId: ATOM});
+        if (path === "/list-tool") return Response.json(listTool.body, {status: listTool.status});
         if (path === "/gas") return Response.json({next: {to: MULTI_VAULT, data: "0x", value: "0"}});
         if (path === "/propose-category") {
             categories.push((body as {request: SignedCategoryRequest}).request);
@@ -116,6 +117,13 @@ describe("writeLine", () => {
     it("does not wait on a refusal that will not change", async () => {
         const {config, agent} = setup(() => ({status: 422, body: {error: "a sponsored line is about a skill or repository on GitHub", rule: "tool"}}));
         await expect(writeLine(config, agent, INPUT)).rejects.toThrow("about a skill or repository on GitHub");
+    });
+
+    it("says why the sponsor would not list the tool, with the refusal's rule, and writes no line", async () => {
+        const reason = "https://example.com/page does not answer as an MCP server, an A2A agent card or an x402 payment request (GET 200, initialize 405, agent card 404)";
+        const {config, agent, asked} = setup(() => ok, undefined, {status: 422, body: {error: reason, rule: "not-a-tool"}});
+        await expect(writeLine(config, agent, INPUT)).rejects.toThrow(`the sponsor would not list ${INPUT.toolUrl} (422, not-a-tool): ${reason}`);
+        expect(asked).not.toContain("/line");
     });
 
     it("says what the sponsor refused", async () => {
