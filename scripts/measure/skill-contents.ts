@@ -1,6 +1,7 @@
 /** What each skill the site shows contains, read from its own files (task 96, ADR `0165`).
  *
  *      GITHUB_TOKEN=… bun run scripts/measure/skill-contents.ts
+ *      bun run scripts/measure/skill-contents.ts --commits-from data/measurements/skill-contents-<stamp>.json
  *      bun run scripts/build/build-skill-contents.ts data/measurements/skill-contents-<stamp>.json
  *
  *  For every skill in `apps/web/src/data/skill-paths.json` (the paths the skill page reads its
@@ -10,6 +11,10 @@
  *  under `data/measurements/` (ADR `0064`) and prints the counts. Read-only: no credential is needed
  *  beyond the optional token, which raises GitHub's limit of 60 requests an hour; nothing is signed.
  *
+ *  `--commits-from` reads each repository at the commit an earlier run read, instead of its HEAD: one
+ *  API request a repository instead of two, and a reading of the same files as that run, so two
+ *  readers can be compared on them (task 112).
+ *
  *  A browser cannot do this itself: it needs the directory's file list, which is GitHub's API, and
  *  its quota is 60 an hour per visitor (`apps/web/src/hooks/use-skill-facts.ts`). So the site bundles
  *  this reading, with its date.
@@ -18,7 +23,7 @@
  *  512 KB is named and not fetched. A file whose extension says it is an image, a font, an archive
  *  or a media file is named as binary and not fetched either.
  */
-import {writeFileSync} from "node:fs";
+import {readFileSync, writeFileSync} from "node:fs";
 
 import pathsFile from "../../apps/web/src/data/skill-paths.json";
 import {CONTENTS_LIMITS, readSkillContents, type ContentsFile, type SkillContents} from "../../packages/protocol/src/skill-contents.ts";
@@ -39,16 +44,33 @@ const located: Located[] = Object.entries((pathsFile as {paths: Record<string, s
 });
 const repos = [...new Set(located.map((row) => row.repo))].sort();
 
+const pinnedFrom = (() => {
+    const at = process.argv.indexOf("--commits-from");
+    return at === -1 ? null : (process.argv[at + 1] ?? null);
+})();
+// A file this script wrote: each read row carries its repository's commit.
+const pinned = new Map<string, string>(
+    pinnedFrom === null
+        ? []
+        : (JSON.parse(readFileSync(pinnedFrom, "utf8")) as {rows: {label: string; commit?: string}[]}).rows.flatMap((row) => {
+              const repo = /^github\.com\/([^/?]+\/[^/?]+)\?/.exec(row.label)?.[1];
+              return repo === undefined || row.commit === undefined ? [] : [[repo, row.commit] as const];
+          }),
+);
+
 const commits = new Map<string, {commit: string; files: TreeEntry[]; truncated: boolean}>();
 const unreadRepos: string[] = [];
 for (const repo of repos) {
-    const head = await fetch(`https://api.github.com/repos/${repo}/commits/HEAD`, {headers, signal: AbortSignal.timeout(25_000)});
-    if (!head.ok) {
-        unreadRepos.push(`${repo} (HTTP ${head.status} on the commit)`);
-        if (head.status === 403 || head.status === 429) break;
-        continue;
+    let commit: unknown = pinned.get(repo);
+    if (commit === undefined) {
+        const head = await fetch(`https://api.github.com/repos/${repo}/commits/HEAD`, {headers, signal: AbortSignal.timeout(25_000)});
+        if (!head.ok) {
+            unreadRepos.push(`${repo} (HTTP ${head.status} on the commit)`);
+            if (head.status === 403 || head.status === 429) break;
+            continue;
+        }
+        commit = ((await head.json()) as {sha?: unknown}).sha; // checked below
     }
-    const commit = ((await head.json()) as {sha?: unknown}).sha; // checked below
     if (typeof commit !== "string") {
         unreadRepos.push(`${repo} (no commit sha)`);
         continue;
@@ -56,6 +78,7 @@ for (const repo of repos) {
     const tree = await fetch(`https://api.github.com/repos/${repo}/git/trees/${commit}?recursive=1`, {headers, signal: AbortSignal.timeout(25_000)});
     if (!tree.ok) {
         unreadRepos.push(`${repo} (HTTP ${tree.status} on the tree)`);
+        if (tree.status === 403 || tree.status === 429) break;
         continue;
     }
     const body = (await tree.json()) as {tree?: TreeEntry[]; truncated?: boolean}; // GitHub's tree shape
@@ -147,7 +170,8 @@ writeFileSync(
     `${JSON.stringify(
         {
             measuredAt,
-            source: "api.github.com/repos/{repo}/commits/HEAD, …/git/trees/{commit}?recursive=1, raw.githubusercontent.com/{repo}/{commit}/{path}; paths from apps/web/src/data/skill-paths.json",
+            ...(pinnedFrom === null ? {} : {commitsFrom: pinnedFrom}),
+            source: "api.github.com/repos/{repo}/commits/HEAD (or the commit --commits-from names), …/git/trees/{commit}?recursive=1, raw.githubusercontent.com/{repo}/{commit}/{path}; paths from apps/web/src/data/skill-paths.json",
             question: "What each skill's files contain: programs (with how each was found), packages, settings and the keys among them, scripts, code fetched and run, domains, hidden or encoded text. Facts from the files, never a verdict.",
             authenticated: token !== undefined && token.length > 0,
             unreadRepos,
