@@ -121,3 +121,20 @@ test("the model's worked answer goes as a worked line, with what it worked with;
   expect(JSON.stringify(written)).not.toContain('SESSION-ID');
   expect(await sendShared(env, async () => {})).toEqual({ sent: 0, failed: 0, firstError: null });
 });
+
+test("a project install's skills-lock.json fills a missing source, as the hook reads it (task 110)", () => {
+  setSharing(env, true);
+  writeFileSync(
+    join(env.cwd, 'skills-lock.json'),
+    JSON.stringify({ version: 1, skills: { 'my-private-skill': { source: 'o/project', sourceType: 'github' } } }),
+  );
+  expect(decide(env).lines.map((line) => line.toolUrl)).toContain('https://github.com/o/project?skill=my-private-skill');
+});
+
+test('a project lock and the global lock naming two sources keep the line here (task 110)', () => {
+  setSharing(env, true);
+  writeFileSync(join(env.cwd, 'skills-lock.json'), JSON.stringify({ skills: { clip: { source: 'c/d', sourceType: 'github' } } }));
+  const decision = decide(env);
+  expect(decision.lines.map((line) => line.toolUrl)).not.toContain('https://github.com/a/b?skill=clip');
+  expect(decision.keptLocal).toContainEqual({ skill: 'clip', why: 'several_sources' });
+});

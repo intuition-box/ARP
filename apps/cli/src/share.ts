@@ -47,6 +47,9 @@ export function decide(env: ShareEnv): ShareDecision & { on: boolean } {
     outcomes: parseLocalOutcomes(read(join(env.arpHome, 'outcomes.jsonl')) ?? ''),
     installed: [
       ...installedFromSkillLock(read(join(env.home, '.agents', '.skill-lock.json'))),
+      // A project install's lock, as the hook reads it (task 108). A failure keeps no cwd, so this is
+      // the project `arp share` runs in; two locks naming two sources keep the line here (task 110).
+      ...installedFromSkillLock(read(join(env.cwd, 'skills-lock.json'))),
       ...installedFromReceipts(read(join(env.arpHome, 'receipts.jsonl'))),
       ...installedFromReceipts(read(join(env.cwd, '.arp', 'receipts.jsonl'))),
     ],
