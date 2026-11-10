@@ -1,6 +1,6 @@
 # Task 92 — A hosted read-only MCP endpoint
 
-**Status:** built 2026-11-10, awaiting `task-verifier`.
+**Status:** verified 2026-11-10, `task-verifier` PASS (round 2), commits `e94ac2e`..`bdaa1cc`, post-mortem `.claude/learning/81-a-hosted-read-only-mcp-endpoint.md`. On `feat/92-hosted-mcp-endpoint`, not pushed; deploying is the user's.
 **ADR:** `0161` (amends `0155`).
 **Rules:** `code.md`, `security.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`.

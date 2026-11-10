@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-11-09 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-157 decisions. Newest last. `choices/README.md` says when to write one.
+158 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -35,6 +35,7 @@ Read these before relying on them.
 - **0145** (Accepted. Amended 2026-11-06 for the Claude Code plugin, at the end: it no longer goes through `npx`.) — The published CLI carries viem and has no dependency
 - **0148** (Accepted (design; nothing built)) — The hire loop reuses x402, ERC-8183 and ERC-8004, and checks the payment at read time
 - **0154** (Proposed) — Public read pages are dated static snapshots, not a live endpoint
+- **0155** (Accepted. Amended by ADR `0161` (2026-11-10): ARP's hosted read-only MCP endpoint receives the words of a caller who chooses it, and keeps none; point 3 holds for everything a person installs.) — A word names a node through a local alias table; the words never leave the machine
 
 ## All
 
@@ -192,8 +193,9 @@ Read these before relying on them.
 | [0152](0152-the-landing-is-one-camera-through-a-galaxy.md) | 2026-11-09 | Accepted | The landing is one camera through a galaxy, and the claim field is on it |
 | [0153](0153-search-reads-skills-sh-and-agents-open-on-reachable.md) | 2026-11-09 | Accepted | The search reads skills.sh's index, and the agent list opens on the reachable |
 | [0154](0154-public-read-pages-are-dated-static-snapshots.md) | 2026-11-09 | Proposed | Public read pages are dated static snapshots, not a live endpoint |
-| [0155](0155-words-to-the-tree-stay-local.md) | 2026-11-09 | Accepted | A word names a node through a local alias table; the words never leave the machine |
+| [0155](0155-words-to-the-tree-stay-local.md) | 2026-11-09 | Accepted. Amended by ADR `0161` (2026-11-10): ARP's hosted read-only MCP endpoint receives the words of a caller who chooses it, and keeps none; point 3 holds for everything a person installs. | A word names a node through a local alias table; the words never leave the machine |
 | [0156](0156-the-8004-sieve-orders-the-directory.md) | 2026-11-09 | Accepted | The 8004 sieve orders the agent directory, and only callable endpoints count |
 | [0157](0157-installs-offer-sharing-off-by-default.md) | 2026-11-09 | Accepted | Every install offers sharing once, off unless the person agrees |
 | [0159](0159-an-x402-line-names-its-payment-and-a-feed-checks-it.md) | 2026-11-09 | Accepted | An x402 line names its payment in one more level, and a feed keeps it only when the payment checks |
 | [0160](0160-a-paying-network-is-added-by-configuration-and-the-demo-pays-on-base-sepolia.md) | 2026-11-09 | Accepted | A paying network is added by configuration, and the demo agent pays on Base Sepolia |
+| [0161](0161-a-hosted-read-only-mcp-endpoint.md) | 2026-11-10 | Accepted | A hosted read-only MCP endpoint, opt-in, that keeps no word it receives |
