@@ -104,7 +104,6 @@
 
     --color-grey: #6b7075; /* dim display text only — 3.8:1 */
     --color-numeral: #2a2d30; /* big ghost numerals — a rank, a rung. Not text, so not AA */
-    --color-watermark: #17181a; /* the footer wordmark, one step off the ground */
     --color-steel: #8a9096; /* labels, secondary text — 5.9:1 */
     --color-silver: #a9aeb2; /* body secondary — 8.5:1 */
     --color-fg: #e6e8e6; /* paper, primary text — 15.5:1 */
@@ -149,9 +148,6 @@
     --text-body: 15px;
     --text-body-sm: 13px;
     --text-label: 11px;
-
-    /* The footer wordmark. Bleeds off the bottom at `.watermark`'s negative margin. */
-    --text-giant: clamp(150px, 30vw, 420px);
 
     /* Score sizes — the trust panel's one hero, and its whole argument.
        A score's type size is set by how much evidence it rests on, so a 64.36

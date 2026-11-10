@@ -8,7 +8,6 @@ import {ActivityLog} from "./brand/ActivityLog";
 import {ChainToggle} from "./brand/ChainToggle";
 import {NavCoin, NavTrailProvider} from "./brand/NavCoin";
 import {SideGalaxy} from "./brand/SideGalaxy";
-import {Watermark} from "./brand/Watermark";
 import {useOnboarding} from "./onboarding/onboarding-context";
 import {SiteFooterLinks} from "./site/SiteFooter";
 import {WalletConnect} from "./WalletConnect";
@@ -16,8 +15,9 @@ import {WalletConnect} from "./WalletConnect";
 /**
  * Layout shell. The header is the coin (`NavCoin`, ADR `0151`): the Source mark in a circle at the
  * bar's left, the tabs centred, Get started, the chain and the wallet at the end, and the path line
- * a deep page sets under it. It replaced ADR `0057` §3's centred mark. The footer ends on the
- * wordmark at `--text-giant`, cropped by the page edge.
+ * a deep page sets under it. It replaced ADR `0057` §3's centred mark. The footer is one line of
+ * links on a solid ground across the whole width; the giant wordmark that ended it was removed by
+ * the user on 2026-11-10.
  *
  * Max content width is **1320px**, which is the reference's `.wrap`, not the 1080 this shell used.
  * The listing pages are eight-column tables and 1080 squeezed them; the user's complaint that the
@@ -78,8 +78,9 @@ export function Layout({children}: {children: ReactNode}) {
 
                 <main className="flex-1 mx-auto w-full max-w-[1320px] px-6 py-10">{children}</main>
 
-                {/* `overflow-hidden` is what makes the wordmark's crop a crop rather than a scrollbar. */}
-                <footer className="mt-24 overflow-hidden border-t border-[color:var(--color-rule)] px-6 pt-7">
+                {/* Solid ground, edge to edge, so the side galaxy never shows through it (the
+                    user, 2026-11-10). */}
+                <footer className="mt-24 border-t border-[color:var(--color-rule)] bg-[color:var(--color-ground)] px-6 py-7">
                     <div className="mx-auto w-full max-w-[1320px] flex flex-wrap items-center justify-between gap-3 text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
                         <span>
                             Agent Reputation Protocol —{" "}
@@ -91,12 +92,6 @@ export function Layout({children}: {children: ReactNode}) {
                             (ADR `0051`, `0055`) and the three pages that used it are deleted, so
                             the link advertised a surface the product no longer has. */}
                         <SiteFooterLinks />
-                    </div>
-                    {/* Full bleed, so "across the whole width" means the viewport and not the
-                        1320px shell (user, 2026-10-27). The footer carries `px-6`, cancelled
-                        here by the negative inset — the mark touches both edges. */}
-                    <div className="-mx-6 mt-6">
-                        <Watermark />
                     </div>
                 </footer>
                 <ActivityLog />
