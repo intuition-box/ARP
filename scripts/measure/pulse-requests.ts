@@ -61,7 +61,7 @@ globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: RequestIni
     const response = await original(input, init);
     last = Date.now() - started;
     return response;
-}) as typeof fetch;
+}) as typeof fetch; // `as`: the wrapper takes fetch's two arguments and returns its promise; `preconnect` is not used here
 
 const {pulse} = await import("../../apps/mcp/src/handlers/pulse.ts");
 const response = await pulse(1, {queries: phrases});

@@ -40,7 +40,7 @@ This task changes when and how much the reader is fed.
 
 ## What the 19 RPC calls were
 
-Read from `data/measurements/pulse-requests-2026-11-10T1438.json` (`byRpc`), one phrase, testnet:
+Read from `data/measurements/pulse-requests-2026-11-10T143830.json` (`byRpc`), one phrase, testnet:
 
 | count | call | from |
 | --- | --- | --- |
@@ -52,7 +52,7 @@ Read from `data/measurements/pulse-requests-2026-11-10T1438.json` (`byRpc`), one
 ## Results
 
 `bun run scripts/measure/pulse-requests.ts [phrases…]`, testnet 13579, cold file-list cache, the search
-package cached, n = 1 per row. Time includes the search package (about 1.6–1.8 s before the first request).
+package cached, n = 1 per row. Time includes the search package (`firstRequestMs` 1,647 to 1,850 across the five runs).
 GitHub's quota is per address and shared with every other session on it: a run that meets the limit
 reads `read_file_only` and counts fewer requests, so a row is valid only when its output has no
 `github_limit_reached` (none of these does).

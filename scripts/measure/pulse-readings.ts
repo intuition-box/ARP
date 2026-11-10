@@ -18,6 +18,7 @@ import {githubPulseSource, readPulse, type SkillPulse} from "../../packages/prot
 const token = process.env["GITHUB_TOKEN"]?.trim();
 const source = githubPulseSource(token === undefined || token === "" ? {withRepository: false} : {token});
 
+// `as`: a file this repo builds (scripts/build/build-skill-paths.ts), whose `paths` is label to path.
 const skills = Object.keys((pathsFile as {paths: Record<string, string>}).paths).flatMap((label) => {
     const match = /^github\.com\/([^/?]+\/[^/?]+)\?skill=(.+)$/.exec(label);
     return match === null ? [] : [{label, repo: match[1] ?? "", skill: decodeURIComponent(match[2] ?? "")}];

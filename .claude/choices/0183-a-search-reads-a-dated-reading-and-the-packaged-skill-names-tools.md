@@ -8,7 +8,7 @@
 ## Context
 
 One `arp_pulse` call with one phrase made 252 requests in 23.5 s (the coordinator's run, 2026-11-10,
-cold cache), and 215 in this task's own baseline (`data/measurements/pulse-requests-2026-11-10T1438.json`,
+cold cache), and 215 in this task's own baseline (`data/measurements/pulse-requests-2026-11-10T143830.json`,
 173 of them `SKILL.md` files from raw.githubusercontent.com). Four phrasings made about a thousand. The
 cause was `locate` in `packages/protocol/src/pulse.ts`: when a skill's directory does not carry its name,
 it read every other `SKILL.md` in the repository, up to 200, and once found read the rest again.
@@ -73,8 +73,8 @@ also had the server's tools ran `curl` GraphQL in the user's terminal.
   `alsoAt`).
 - A script its instructions run, under `examples/` or `assets/`, or over the cap, is no longer read; its
   keys do not reach `keys_in_scripts_it_runs`.
-- The CLI bundle grows by the reading (468,504 bytes of JSON; `packaging/claude/arp/bin/arp.js` is
-  2,741,035 bytes after).
+- The CLI bundle grows by the reading: 468,504 bytes of JSON (`wc -c data/catalogue/pulse-readings.json`),
+  carried in `packaging/claude/arp/bin/arp.js` (`wc -c` gives its size at any commit).
 - The reading was taken before the name search's "files sharing a word together" refinement; for the
   catalogue it changes nothing: in all 518 read rows the directory carries the skill's name, so the name
   search never ran (checked over `data/measurements/pulse-readings-2026-11-10T1445.json`).
