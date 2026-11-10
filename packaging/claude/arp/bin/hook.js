@@ -1994,6 +1994,14 @@ function parentOf(path) {
   const at = path.lastIndexOf("/");
   return at === -1 ? "" : path.slice(0, at);
 }
+var MAX_NAME_READS2 = 12;
+var NAME_BATCH = 6;
+var wordsOf = (text) => text.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 1);
+function byNearness(files, wanted) {
+  const words = new Set(wordsOf(wanted));
+  const shared = (file) => wordsOf(parentOf(file.path)).filter((word) => words.has(word)).length;
+  return files.map((file) => ({ file, shared: shared(file) })).sort((a, b) => b.shared - a.shared || (a.file.path < b.file.path ? -1 : a.file.path > b.file.path ? 1 : 0));
+}
 async function locate(source, repo, skill, listing) {
   const wanted = normaliseName(skill);
   const candidates = listing.files.filter((file) => skillFilesIn2([file]).length === 1);
@@ -2005,12 +2013,18 @@ async function locate(source, repo, skill, listing) {
     if (others.length > MAX_SKILL_FILES_READ2) {
       return { status: "incomplete", reason: "too_many_skill_files" };
     }
-    for (let at = 0;at < others.length && named.length === 0; at += 20) {
-      named = await read(others.slice(at, at + 20));
+    const nearest = byNearness(others, wanted).slice(0, MAX_NAME_READS2);
+    const sharing = nearest.filter((entry) => entry.shared > 0).length;
+    let readTo = 0;
+    while (readTo < nearest.length && named.length === 0) {
+      const size = readTo < sharing ? sharing - readTo : NAME_BATCH;
+      named = await read(nearest.slice(readTo, readTo + size).map((entry) => entry.file));
+      readTo += size;
     }
     if (named.length > 0) {
-      const last = others.findIndex((file) => file === named.at(-1)?.file);
-      named = [...named, ...await read(others.slice(last + 1))];
+      named = [...named, ...await read(nearest.slice(readTo, sharing).map((entry) => entry.file))];
+    } else if (nearest.length < others.length) {
+      return { status: "incomplete", reason: "too_many_skill_files" };
     }
   }
   if (named.length === 0) {
@@ -2050,6 +2064,23 @@ async function readFileOnly(result, source) {
   }
   return null;
 }
+var SCRIPT_READ_CAP2 = { files: MAX_SCRIPTS_READ, bytesEach: 256 * 1024, bytes: 512 * 1024 };
+var NOT_CODE_DIRECTORY = /(^|\/)(examples?|assets?|fonts?|images?|media|samples?|fixtures?)\//i;
+function withinReadCap(paths, listed) {
+  const sizeOf = new Map(listed.map((file) => [file.path, file.size]));
+  const kept = [];
+  let bytes = 0;
+  for (const path of paths) {
+    const size = sizeOf.get(path) ?? 0;
+    if (kept.length >= SCRIPT_READ_CAP2.files || NOT_CODE_DIRECTORY.test(path))
+      continue;
+    if (size > SCRIPT_READ_CAP2.bytesEach || bytes + size > SCRIPT_READ_CAP2.bytes)
+      continue;
+    kept.push(path);
+    bytes += size;
+  }
+  return kept;
+}
 async function readPulse2(result, source, depth) {
   if (!/^(?!\.{1,2}\/)[\w.-]+\/(?!\.{1,2}$)[\w.-]+$/.test(result.source))
     return { ...result, status: "not_github" };
@@ -2068,7 +2099,7 @@ async function readPulse2(result, source, depth) {
   const directory = parentOf(located.file.path);
   const prefix = directory === "" ? "" : `${directory}/`;
   const inDirectory = listing.files.filter((file) => file.path.startsWith(prefix));
-  const scripts = filesItRuns(located.markdown, listing.files).slice(0, MAX_SCRIPTS_READ);
+  const scripts = withinReadCap(filesItRuns(located.markdown, listing.files), listing.files);
   const scriptTexts = await Promise.all(scripts.map(async (file) => ({ file, text: await source.file(result.source, file) })));
   const keysInScriptsItRuns = scriptTexts.map(({ file, text }) => ({ file, keys: [...new Set(text?.match(KEY_NAME3) ?? [])] })).filter((entry) => entry.keys.length > 0);
   const relative = (path) => path.startsWith(prefix) ? path.slice(prefix.length) : path;
@@ -2128,6 +2159,7 @@ function githubPulseSource2(options = {}) {
   };
   const listings = new Map;
   const repositories = new Map;
+  const fileReads = new Map;
   const quota = { apiRequests: 0, limited: false, resetsAt: null };
   const noteLimit = (response) => {
     const hit = response.status === 429 || response.status === 403 && (response.headers.get("x-ratelimit-remaining") === "0" || response.headers.has("retry-after"));
@@ -2200,10 +2232,20 @@ function githubPulseSource2(options = {}) {
   return {
     listing: (repo) => once(listings, repo, readListing),
     repository: (repo) => once(repositories, repo, readRepository),
-    file: async (repo, path) => {
-      const encoded = path.split("/").map(encodeURIComponent).join("/");
-      const response = await get(`https://raw.githubusercontent.com/${repo}/HEAD/${encoded}`, { signal: bounded2() });
-      return response.ok ? response.text() : null;
+    file: (repo, path) => {
+      const key = `${repo}
+${path}`;
+      const kept = options.files?.get(key);
+      if (kept !== undefined)
+        return Promise.resolve(kept);
+      return once(fileReads, key, async () => {
+        const encoded = path.split("/").map(encodeURIComponent).join("/");
+        const response = await get(`https://raw.githubusercontent.com/${repo}/HEAD/${encoded}`, { signal: bounded2() });
+        const text = response.ok ? await response.text() : null;
+        if (response.ok || response.status === 404)
+          options.files?.set(key, text);
+        return text;
+      });
     },
     quota: () => ({ ...quota })
   };

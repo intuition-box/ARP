@@ -89,3 +89,11 @@ reads for `openai/skills` `slides` and one `SKILL.md` per other result.
 `apps/cli/assets/plugin-skill.md`: no GraphQL block, no endpoint URL, the three tools named, and "Never
 query ARP's sources yourself". `apps/cli/test/cli.test.ts` checks both files; `packages.ts` refuses the
 source if a query creeps in. `arp init` writes no skill, so nothing else ships one.
+
+## After the rebase on task 112 (`10e204a7`)
+
+The dated reading was taken again against task 112's reader, with a token this time
+(`data/measurements/pulse-readings-2026-11-10T1711.json`: 518 read, 3 incomplete, 60 API requests), so
+catalogued skills now carry their repository's figures too. One phrase, cold, after the rebase
+(`data/measurements/pulse-requests-2026-11-10T171309.json`): 22 requests, the same split by host as
+`…T154122`. Against `…T154122`, only the `contains` lines differ, which is task 112's wording.
