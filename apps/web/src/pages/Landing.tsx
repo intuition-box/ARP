@@ -34,8 +34,9 @@ import {relativeDay, truncateMiddle} from "../services/trust-format";
  * chain the reader chose, with ARP's own test identities left out (`services/test-identities.ts`).
  * When the chain **answers with nothing** — on testnet every real line is one of those tests —
  * scenes 0 to 2 show the reference's sample (`services/landing-sample.ts`), unlabelled since
- * 2026-11-10 (the user removed every « Sample » mark). Real data replaces it panel by panel; no
- * panel mixes the two. A failed read says it failed; a sample never stands in for one (`rules/claims.md` §1).
+ * 2026-11-10 (the user removed every « Sample » mark, ADR `0152` §6 amended). Real data replaces
+ * it panel by panel; no panel mixes the two. A failed read says it failed; a sample never stands
+ * in for one (`rules/claims.md` §1).
  */
 
 /** How many recent lines the pulse asks for, and how many it shows. */
@@ -99,7 +100,7 @@ export function Landing() {
  */
 function DemoVideo() {
     return (
-        <section aria-labelledby="demo" className="mx-auto mt-24 w-full max-w-[64rem] px-4 sm:px-6">
+        <section aria-labelledby="demo" className="mx-auto mt-24 w-full max-w-[64rem]">
             <h2
                 id="demo"
                 className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.1em] text-[color:var(--color-steel)]"
@@ -201,17 +202,15 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
             {/* The pulse panel, top left, desktop only (the design's open question 2, decided). */}
             <Panel label={`Lines · ${chain.label.toLowerCase()}`} className="arp-gx-beat" index={2}>
                 {sample ? (
-                    <>
-                        <ul className="arp-gx-beatrows">
-                            {SAMPLE_LINES.map((row) => (
-                                <li key={row.agent}>
-                                    <b>{row.agent}</b>
-                                    <span>{row.tool}</span>
-                                    <em>{row.context}</em>
-                                </li>
-                            ))}
-                        </ul>
-                    </>
+                    <ul className="arp-gx-beatrows">
+                        {SAMPLE_LINES.map((row) => (
+                            <li key={row.agent}>
+                                <b>{row.agent}</b>
+                                <span>{row.tool}</span>
+                                <em>{row.context}</em>
+                            </li>
+                        ))}
+                    </ul>
                 ) : rows.length === 0 ? (
                     <NotYet read={read} empty={<NoActivityYet />} />
                 ) : (

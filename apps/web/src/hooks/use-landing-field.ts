@@ -19,8 +19,8 @@ import {hiddenAtomIds} from "../services/test-identities";
 export type LandingFieldRead =
     | {status: "pending"}
     | {status: "failed"}
-    /** `sample`: the chain answered with nothing, and the field is `landing-sample.ts`'s. */
-    | {status: "ok"; field: LandingField; sample: boolean};
+    /** When the chain answered with nothing, the field is `landing-sample.ts`'s, unmarked (ADR `0152`). */
+    | {status: "ok"; field: LandingField};
 
 const READS: LandingFieldReads = {
     listTools,
@@ -83,5 +83,5 @@ export function useLandingField(): LandingFieldRead {
     );
     if (read.isPending) return {status: "pending"};
     if (field === null) return {status: "failed"};
-    return {status: "ok", ...fieldOrSample(field)};
+    return {status: "ok", field: fieldOrSample(field)};
 }

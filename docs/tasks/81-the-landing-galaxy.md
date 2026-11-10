@@ -18,7 +18,7 @@ Read both before writing code; open the reference at 1280 and 390 px and play ev
 6. **Amended the same day:** while the chain answers with nothing (on testnet every real line is
    one of ARP's hidden test identities), scenes 0 to 2 show the reference's sample, with its agents renamed `agent A` to `agent E` (its
    ids are real Base agents, `scripts/measure/reference-sample-ids.ts`), and every
-   panel showing it says « Sample ». Real data replaces it as soon as it exists; no panel mixes the
+   panel showing it says « Sample » (unmarked since 2026-11-10, ADR `0152` §6 amendment). Real data replaces it as soon as it exists; no panel mixes the
    two; a failed read still says it failed. The samples live in `services/landing-sample.ts`. This
    overrides deliverable 4's "real data only" and the first "Do not do" item for the landing's
    sample (ADR `0152` §6).
@@ -71,7 +71,7 @@ page, en les invitant à joindre le réseau. » Built on `fix/81-scene1-build` (
 - **No accumulation in scene 1**: the other claims join in scene 2 (which still starts from the
   four-element field), and « N agents writing into them » is gone.
 - **Scene 5 carries the network**: one star per agent that declared the tool lights up after
-  another and stays lit (« Lit stars: sample. » while the field is the sample). The copy keeps
+  another and stays lit (« Lit stars: sample. » while the field is the sample; removed 2026-11-10, ADR `0152` §6 amendment). The copy keeps
   the design's heading and dim line and adds « Every line your agent writes, the next agent
   reads. » The primary button is « Join the network » and opens the onboarding; « Open the agent
   index » is the second button, « Read the skill » a quiet link. On a phone the comparison keeps

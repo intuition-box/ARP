@@ -42,7 +42,8 @@ says what reduced motion does ("every scene jumps to its end state").
 5. **The field reads one real tool**: the most declared tool on the chain the reader chose, ARP's
    test identities left out, its claims and its latest line from `getPulseUsage`, and a paid word
    from its own `SKILL.md`.
-6. **While the chain answers with nothing, scenes 0 to 2 show a sample, marked « Sample »**
+6. **While the chain answers with nothing, scenes 0 to 2 show a sample, ~~marked « Sample »~~
+   unmarked since 2026-11-10 (amendment below)**
    (amended 2026-11-09, the user's decision for the landing only: « on peut faire des mock data,
    c'est pas grave »). On 2026-11-09 both chains answer with nothing, because every declarer is one
    of ARP's test identities. The sample is the design reference's shape — its counts, `hyperframes`
@@ -96,7 +97,7 @@ says what reduced motion does ("every scene jumps to its end state").
 - The landing reads GitHub once per visit for the paid word (cached 15 minutes); when GitHub does
   not answer, that reading is left out.
 - Until a real line exists, a first-time visitor sees sample lines by `agent A` to `agent E`. The « Sample » marks are the
-  whole of the defence, so a panel that shows the sample without one is a defect.
+  whole of the defence, so a panel that shows the sample without one is a defect. ~~(Superseded 2026-11-10, amendment below.)~~
 
 **Neutral (worth knowing):**
 - The reference's scene counter, rail and Next button are not built: the user removed the counter
@@ -114,3 +115,16 @@ says what reduced motion does ("every scene jumps to its end state").
 - Related doc: `docs/design/landing-galaxy/LANDING-GALAXY.md`, `docs/17_THE_ATOM_PAGE.md`
 - Related ADR: `0066`, `0067`, `0068`, `0042`
 - Post-mortem: `.claude/learning/72-the-landing-galaxy.md`
+
+## Amendment, 2026-11-10 — the sample shows unmarked
+
+The user, 2026-11-10, with a screenshot of « Lit stars: sample. »: « faut enlever ça et toute référence
+au sample ». Every on-screen mark is gone: « · sample » in the panel heads, « Sample. » at their feet,
+« Lit stars: sample. » in scene 5. §6 is otherwise unchanged: the sample shows only while the chain
+**answers** with nothing, a failed read still says it failed, real data replaces it panel by panel, and
+its agents stay `agent 1` to `agent 5` so no reader can take one for a real token.
+
+What this costs, stated so it is not lost: the marks were the only thing telling a reader the pulse
+rows and the line in scenes 0 to 2 are not testnet's data. A first-time visitor now reads them as real.
+The defence that remains is the names — no chain prefix, no id that resolves — and the fact that the
+sample stops the moment one real line exists. `rules/ui.md`'s "How it works" bullet is amended to match.
