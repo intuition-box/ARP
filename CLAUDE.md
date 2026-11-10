@@ -183,7 +183,7 @@ ARP/
 │   │                                  `sponsored` from `arp init --sponsored`) holds a local agent
 │   │                                  key that signs `register()` and one approval (ADR 0110)
 │   ├── node/                          the agent node — listens, checks a payment, signs a receipt
-│   ├── hook/                          the runtime hook — records locally; reads GitHub before a skills install (ADR 0167) and the index on a skill failure (ADR 0168)
+│   ├── hook/                          the runtime hook — records locally; reads GitHub before a skills install (ADR 0167) and the index on a skill failure (ADR 0168); on Stop it asks the model whether each skill worked (ADR 0169)
 │   ├── cli/                           `@arp-protocol/cli` — the MCP server, the hook and the node in
 │   │                                  one binary; `bun run packages` writes `packaging/`
 │   ├── sponsor/                       the sponsoring service, testnet 13579 only — holds ARP's
