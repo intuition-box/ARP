@@ -33205,6 +33205,59 @@ function text(id, value) {
 }
 var isTermId = (value) => typeof value === "string" && /^0x[0-9a-fA-F]{64}$/.test(value), isAddress3 = (value) => typeof value === "string" && /^0x[0-9a-fA-F]{40}$/.test(value);
 
+// ../mcp/src/hosted.ts
+function isHosted(env = process.env) {
+  return env[HOSTED_FLAG] === "1";
+}
+function publicHost(env = process.env) {
+  const name = (env["ARP_PUBLIC_HOST"] ?? "").trim().toLowerCase();
+  return name === "" ? null : name;
+}
+function hostedRefusal(env = process.env) {
+  const name = publicHost(env);
+  const flag = env[HOSTED_FLAG];
+  if (flag !== undefined && flag !== "" && flag !== "1") {
+    return `${HOSTED_FLAG} must be 1 or unset, not ${flag}`;
+  }
+  if (!isHosted(env)) {
+    return name === null ? null : `ARP_PUBLIC_HOST needs ${HOSTED_FLAG}=1: only the hosted read-only server answers a public name`;
+  }
+  if (env["ARP_TOOLS"] !== "read") {
+    return `${HOSTED_FLAG}=1 serves ARP_TOOLS=read only, not ${env["ARP_TOOLS"] ?? "every tool"}`;
+  }
+  if (env["ARP_TARGET"] !== "testnet") {
+    return `${HOSTED_FLAG}=1 reads testnet 13579 only: set ARP_TARGET=testnet`;
+  }
+  if (env["ARP_TRANSPORT"] === "stdio") {
+    return `${HOSTED_FLAG}=1 serves HTTP; stdio is for a client on the same machine`;
+  }
+  for (const variable of REFUSED_WHEN_HOSTED) {
+    if ((env[variable] ?? "") !== "")
+      return `${HOSTED_FLAG}=1 refuses ${variable}: a hosted server holds no key and probes no private address`;
+  }
+  if (name === null) {
+    return `${HOSTED_FLAG}=1 needs ARP_PUBLIC_HOST, the name the proxy forwards`;
+  }
+  if (!HOST_NAME.test(name)) {
+    return `ARP_PUBLIC_HOST must be a bare host name such as mcp.example.org, not ${env["ARP_PUBLIC_HOST"]}`;
+  }
+  return null;
+}
+function loggable(error, message, env = process.env) {
+  if (!isHosted(env))
+    return message;
+  return error instanceof Error ? error.name : "error";
+}
+var HOSTED_FLAG = "ARP_HOSTED", HOST_NAME, REFUSED_WHEN_HOSTED;
+var init_hosted = __esm(() => {
+  HOST_NAME = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]$/;
+  REFUSED_WHEN_HOSTED = [
+    "ARP_RECEIPT_KEY",
+    "ARP_AGENT_PRIVATE_KEY",
+    "ARP_ALLOW_PRIVATE_PROBE"
+  ];
+});
+
 // ../mcp/src/config.ts
 import { resolve as resolve2 } from "node:path";
 function inProject(path, projectDir = process.env["ARP_PROJECT_DIR"]) {
@@ -33258,14 +33311,23 @@ function domainWalk() {
     attestor: DOMAIN_ATTESTORS
   };
 }
-var PORT, RECEIPT_SIGNER, DESKTOP, SKILLS_DIR, READ_ONLY, CONTENT_URL, SPONSOR_URL, SESSION_LOG, RECEIPTS_LOG, TARGETS, targetName, chainId, recorded, record, sessionCatalogue, accepted = null, GRAPHQL_URL, RPC_URL, MULTI_VAULT_RAW, GRAPHQL, SKILLS_INDEX, RPC, MULTI_VAULT, reads, toolAtoms, DOMAIN_ROOT = "tool", REACHABLE_ATOM = "0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805", DOMAIN_ATTESTORS, directory, IN_CONTEXT_OF, LINE_PAYERS;
+var refusedHosting, HOSTED, PORT, RECEIPT_SIGNER, DESKTOP, SKILLS_DIR, READ_ONLY, CONTENT_URL, SPONSOR_URL, SESSION_LOG, RECEIPTS_LOG, TARGETS, targetName, chainId, recorded, record, sessionCatalogue, accepted = null, GRAPHQL_URL, RPC_URL, MULTI_VAULT_RAW, GRAPHQL, SKILLS_INDEX, RPC, MULTI_VAULT, reads, toolAtoms, DOMAIN_ROOT = "tool", REACHABLE_ATOM = "0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805", DOMAIN_ATTESTORS, directory, IN_CONTEXT_OF, LINE_PAYERS;
 var init_config = __esm(() => {
   init_dist2();
   init__esm();
   init_content();
   init_data2();
+  init_hosted();
+  refusedHosting = hostedRefusal(process.env);
+  if (refusedHosting !== null) {
+    console.error(refusedHosting);
+    process.exit(1);
+  }
+  HOSTED = isHosted(process.env);
   PORT = Number(process.env.PORT ?? 3002);
   RECEIPT_SIGNER = (() => {
+    if (HOSTED)
+      return null;
     try {
       return receiptSigner();
     } catch (error) {
@@ -33328,7 +33390,7 @@ var init_config = __esm(() => {
 var domain_aliases_default;
 var init_domain_aliases = __esm(() => {
   domain_aliases_default = {
-    _note: "Words a person or an agent uses, mapped to a node of ARP's domain tree (OASF 1.1.0 names, plus ARP's own `design`), task 84. Read locally by the MCP server, the CLI and the hook: the words never leave the machine (the user, 2026-11-09). Every target is checked against data/catalogue/oasf-1.1.0-skills.json by packages/protocol/test/domain-words.test.ts. ARP's old category words map to the one node that held them; the split ones (method, quality) have no alias, and a refusal suggests nodes instead.",
+    _note: "Words a person or an agent uses, mapped to a node of ARP's domain tree (OASF 1.1.0 names, plus ARP's own `design`), task 84. Read locally by the MCP server, the CLI and the hook: the words never leave the machine (the user, 2026-11-09), except for a caller who chooses ARP's hosted read-only endpoint, which receives its words and keeps none (ADR 0161). Every target is checked against data/catalogue/oasf-1.1.0-skills.json by packages/protocol/test/domain-words.test.ts. ARP's old category words map to the one node that held them; the split ones (method, quality) have no alias, and a refusal suggests nodes instead.",
     oasfVersion: "1.1.0",
     aliases: {
       ads: "advertising",
@@ -40618,7 +40680,7 @@ async function answer(id, args, budget, cancelled) {
     await within(readRecord2(), left() - budget.agentsMs - budget.filesMs, stop);
   } catch (error) {
     usageRead = false;
-    console.error(`arp_pulse: usage not read: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`arp_pulse: usage not read: ${loggable(error, error instanceof Error ? error.message : String(error))}`);
   }
   const { domain, atomByUri, usage } = draft;
   const near2 = new Set(draft.near);
@@ -40733,6 +40795,7 @@ var init_pulse2 = __esm(() => {
   init_node2();
   init__esm();
   init_domain_words2();
+  init_hosted();
   init_pulse_cache();
   init_pulse_window();
   init_search_run();
@@ -40798,7 +40861,7 @@ async function callTool(id, params) {
     }
   } catch (error) {
     const message = redactUrls(String(error)).slice(0, 300);
-    process.stderr.write(`${String(name)} failed: ${message}
+    process.stderr.write(`${String(name)} failed: ${loggable(error, message)}
 `);
     return fail(id, -32603, `${String(name)} failed: ${message}`);
   }
@@ -40813,6 +40876,11 @@ function httpPolicy(env = process.env) {
       hosts.push(entry.trim());
   }
   const origins = hosts.map((host) => `http://${host}`);
+  const name = publicHost(env);
+  if (name !== null) {
+    hosts.push(name);
+    origins.push(`https://${name}`);
+  }
   return { hosts, origins };
 }
 async function httpFetch(request) {
@@ -40853,6 +40921,10 @@ async function main(argv = process.argv, stdin = process.stdin) {
   const stdio = argv.includes("--stdio") || process.env.ARP_TRANSPORT === "stdio";
   const log = (line) => process.stderr.write(`${line}
 `);
+  if (HOSTED && stdio) {
+    log("ARP_HOSTED=1 serves HTTP; stdio is for a client on the same machine.");
+    process.exit(1);
+  }
   log(`ARP MCP server — ${stdio ? "stdio" : `http://localhost:${PORT}`}`);
   log(`  chain:      ${chainId} (${record.chain?.name ?? "unknown"}) via ARP_TARGET=${targetName}`);
   log(`  graph:      ${GRAPHQL}`);
@@ -40870,10 +40942,14 @@ async function main(argv = process.argv, stdin = process.stdin) {
   log(`  listening:  ${handler.hostname}:${PORT}${handler.hostname === "127.0.0.1" ? " (loopback only — ARP_HOST=0.0.0.0 to open it)" : " — OPEN TO THE NETWORK"}`);
   log(`  tools:      ${SERVED_TOOLS.map((t) => t.name).join(", ")}${READ_ONLY ? " (ARP_TOOLS=read)" : ""}`);
   log(`  content:    GET /content/:atomId`);
-  log(`  receipts:   ${RECEIPT_SIGNER === null ? "none — ARP_NO_RECEIPTS=1" : `signed by ${RECEIPT_SIGNER.address}`}`);
+  if (HOSTED) {
+    log(`  hosted:     answers ${publicHost() ?? "?"}; read-only, no key, no tool argument logged (ADR 0161)`);
+  }
+  log(`  receipts:   ${RECEIPT_SIGNER === null ? `none — ${HOSTED ? "hosted, no key" : "ARP_NO_RECEIPTS=1"}` : `signed by ${RECEIPT_SIGNER.address}`}`);
   log(`
 sends nothing — the planners return calls for your own key, signed by you.`);
-  log(`The receipt key signs receipts and cannot move value (ADR 0080).`);
+  if (RECEIPT_SIGNER !== null)
+    log(`The receipt key signs receipts and cannot move value (ADR 0080).`);
 }
 var PROTOCOL_VERSION = "2025-06-18", SERVER_INSTRUCTIONS, SERVED_TOOLS, SERVED_NAMES, READ_INSTRUCTIONS, DESKTOP_INSTRUCTIONS, handler, WILDCARD;
 var init_server = __esm(async () => {
@@ -40885,6 +40961,7 @@ var init_server = __esm(async () => {
   init_content();
   init_client_session();
   init_config();
+  init_hosted();
   init_reputation();
   init_declare2();
   init_category3();
@@ -41006,7 +41083,7 @@ var init_server = __esm(async () => {
             protocolVersion: PROTOCOL_VERSION,
             capabilities: { tools: {} },
             serverInfo: { name: "ARP", version: "0.2.0" },
-            instructions: DESKTOP ? DESKTOP_INSTRUCTIONS : READ_ONLY ? [READ_INSTRUCTIONS, shareAskInstructions(arpHome())].filter((part) => part !== null).join(`
+            instructions: DESKTOP ? DESKTOP_INSTRUCTIONS : HOSTED ? READ_INSTRUCTIONS : READ_ONLY ? [READ_INSTRUCTIONS, shareAskInstructions(arpHome())].filter((part) => part !== null).join(`
 
 `) : SERVER_INSTRUCTIONS
           });
