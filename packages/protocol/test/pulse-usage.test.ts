@@ -367,3 +367,76 @@ describe("findToolAtoms", () => {
         expect((await findToolAtoms([], {graphqlUrl: "unused", transport})).size).toBe(0);
     });
 });
+
+describe("what a line says was missing, or added (ADR 0166)", () => {
+    const NEEDS = "0xf0";
+    const WITH = "0xf1";
+    const readNamed = (uses: unknown[], qualifiers: unknown[], words: {needs?: string; with?: string} = {needs: NEEDS, with: WITH}) =>
+        getPulseUsage([TOOL], {
+            graphqlUrl: "unused",
+            inContextOf: CONTEXT,
+            hasOutcome: OUTCOME,
+            because: BECAUSE,
+            ...words,
+            payers: [],
+            transport: transport(uses, qualifiers),
+        });
+    const failedFor = (edge: string, reason: string, by = writer) => [
+        qualifier(edge, CONTEXT, "video", by),
+        qualifier(`${edge}-video`, OUTCOME, "failed", by),
+        qualifier(`${edge}-video-failed`, BECAUSE, reason, by),
+    ];
+
+    it("reads needs on a missing-program failure, and with on a worked line", async () => {
+        const usage = (
+            await readNamed(
+                [use("0x1", "a"), use("0x2", "b", "0xOther")],
+                [
+                    ...failedFor("0x1", "missing-program"),
+                    qualifier("0x1-video-failed-missing-program", NEEDS, "ffmpeg"),
+                    qualifier("0x2", CONTEXT, "video", "0xOther"),
+                    qualifier("0x2-video", OUTCOME, "worked", "0xOther"),
+                    qualifier("0x2-video-worked", WITH, "ffmpeg", "0xOther"),
+                ],
+            )
+        ).get(TOOL);
+        expect(usage?.declarations[0]?.lines).toEqual([{domain: "video", outcome: "failed", reasons: ["missing-program"], form: "nested", needs: ["ffmpeg"]}]);
+        expect(usage?.declarations[1]?.lines).toEqual([{domain: "video", outcome: "worked", reasons: [], form: "nested", with: ["ffmpeg"]}]);
+        expect(usage?.byNeed).toEqual({ffmpeg: 1});
+        expect(usage?.byWith).toEqual({ffmpeg: 1});
+    });
+
+    it("ignores a name of the wrong shape for its reason, a needs on another reason, and free text", async () => {
+        const usage = (
+            await readNamed(
+                [use("0x1", "a"), use("0x2", "b"), use("0x3", "c")],
+                [
+                    ...failedFor("0x1", "missing-program"),
+                    qualifier("0x1-video-failed-missing-program", NEEDS, "OPENAI_API_KEY"),
+                    ...failedFor("0x2", "missing-file"),
+                    qualifier("0x2-video-failed-missing-file", NEEDS, "ffmpeg"),
+                    ...failedFor("0x3", "missing-key"),
+                    qualifier("0x3-video-failed-missing-key", NEEDS, "/home/me/.env"),
+                ],
+            )
+        ).get(TOOL);
+        expect(usage?.byNeed).toEqual({});
+        expect(usage?.declarations.flatMap((row) => row.lines).some((line) => line.needs !== undefined)).toBe(false);
+    });
+
+    it("keeps somebody else's needs apart", async () => {
+        const usage = (
+            await readNamed([use("0x1", "a")], [...failedFor("0x1", "missing-key"), qualifier("0x1-video-failed-missing-key", NEEDS, "OPENAI_API_KEY", "0xGriefer")])
+        ).get(TOOL);
+        expect(usage?.byNeed).toEqual({});
+        expect(usage?.byOthers).toMatchObject([{writer: "0xGriefer", predicate: "needs", value: "OPENAI_API_KEY"}]);
+    });
+
+    it("reads neither level when the caller gives neither word", async () => {
+        const usage = (
+            await readNamed([use("0x1", "a")], [...failedFor("0x1", "missing-program"), qualifier("0x1-video-failed-missing-program", NEEDS, "ffmpeg")], {})
+        ).get(TOOL);
+        expect(usage?.declarations[0]?.lines[0]?.needs).toBeUndefined();
+        expect(usage?.byReason).toEqual({"missing-program": 1});
+    });
+});

@@ -144,3 +144,15 @@ export {
     type UsageOutcome,
     type UsageReason,
 } from "./usage-context.js";
+export {
+    KEY_NAME,
+    namedInSkill,
+    needKindOf,
+    needKindOfReason,
+    NEEDS_LABEL,
+    needShapeProblem,
+    PROGRAM_NAME,
+    publishableNeed,
+    WITH_LABEL,
+    type NeedKind,
+} from "./line-need.js";

@@ -149,6 +149,38 @@ describe("prepareUsageContext", () => {
         });
     });
 
+    it("puts what was missing on the reason, as one more triple (ADR 0166)", async () => {
+        const result = await plan([EDGE], {outcome: "failed", reason: "missing-program", need: "ffmpeg"});
+        if (result.status !== "planned" || result.reasonTripleId === null || result.needTripleId === null) throw new Error("expected a plan");
+        const last = result.calls.filter((call) => call.kind === "create-triple").at(-1);
+        const args = decodeFunctionData({abi: multiVaultDeclareAbi, data: last?.data ?? "0x"}).args;
+        expect((args?.[0] as Hex[])[0]).toBe(result.reasonTripleId);
+        expect((args?.[1] as Hex[])[0]).toBe(atomIdFor("needs"));
+        expect((args?.[2] as Hex[])[0]).toBe(atomIdFor("ffmpeg"));
+    });
+
+    it("puts what was added on a worked outcome, with `with`", async () => {
+        const result = await plan([EDGE], {outcome: "worked", need: "ffmpeg"});
+        if (result.status !== "planned" || result.outcomeTripleId === null || result.needTripleId === null) throw new Error("expected a plan");
+        const last = result.calls.filter((call) => call.kind === "create-triple").at(-1);
+        const args = decodeFunctionData({abi: multiVaultDeclareAbi, data: last?.data ?? "0x"}).args;
+        expect((args?.[0] as Hex[])[0]).toBe(result.outcomeTripleId);
+        expect((args?.[1] as Hex[])[0]).toBe(atomIdFor("with"));
+    });
+
+    it("refuses a need of the wrong shape or on the wrong reason, so free text never reaches the chain", async () => {
+        for (const extra of [
+            {outcome: "failed", reason: "missing-program", need: "/Users/me/bin/ffmpeg"},
+            {outcome: "failed", reason: "missing-key", need: "ffmpeg"},
+            {outcome: "failed", reason: "missing-file", need: "ffmpeg"},
+            {outcome: "failed", need: "ffmpeg"},
+            {outcome: "worked", need: "my secret project"},
+            {domain: "video", need: "ffmpeg"},
+        ] as const) {
+            expect(await plan([EDGE], extra)).toMatchObject({status: "refused", rule: "need_shape"});
+        }
+    });
+
     it("has five reasons and no sixth", () => {
         expect(USAGE_REASONS).toEqual(["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"]);
         expect(isUsageReason("because I said so")).toBe(false);

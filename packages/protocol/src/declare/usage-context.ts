@@ -1,6 +1,7 @@
 import {stringToHex, type Address, type Hex} from "viem";
 
 import {PAID_WITH_LABEL} from "../x402-payment.js";
+import {NEEDS_LABEL, needShapeProblem, WITH_LABEL} from "./line-need.js";
 import {encodeCreateAtom, encodeCreateTriple, encodeDeposit, type MultiVaultReads} from "./multivault.js";
 import type {PreparedCall} from "./types.js";
 
@@ -16,6 +17,7 @@ import type {PreparedCall} from "./types.js";
  * T2 = (T1, in context of, video)
  * T3 = (T2, has outcome, failed)
  * T4 = (T3, because, missing-key)
+ * T5 = (T4, needs, OPENAI_API_KEY)     on a worked line instead: (T3, with, ffmpeg)
  * ```
  *
  * With no domain, the outcome is about T1 itself.
@@ -43,7 +45,7 @@ export const BECAUSE_LABEL = "because";
 
 export type UsageContextRefusal = {
     status: "refused";
-    rule: "nothing_to_add" | "not_declared" | "unknown_domain" | "reason_without_failure" | "payment_without_outcome";
+    rule: "nothing_to_add" | "not_declared" | "unknown_domain" | "reason_without_failure" | "payment_without_outcome" | "need_shape";
     detail: string;
 };
 
@@ -55,6 +57,8 @@ export type UsageContextPlan = {
     reasonTripleId: Hex | null;
     /** `(outcome, paid with, payment)`, ADR `0159`. */
     paymentTripleId: Hex | null;
+    /** `(reason, needs, name)` on a failure, or `(outcome, with, name)` on a worked line (task 97, ADR `0166`). */
+    needTripleId: Hex | null;
     calls: PreparedCall[];
     /**
      * Qualifiers already on chain, which this plan does not create. Without a `declarer` nobody can
@@ -92,6 +96,12 @@ export async function prepareUsageContext(params: {
      * check: this plans the triple and reads no paying chain.
      */
     payment?: string;
+    /**
+     * What was missing (with `missing-program` or `missing-key`) or what had to be added (with `worked`): a
+     * program's or an environment variable's name (ADR `0166`). Its shape is checked here. **Whether the
+     * skill's SKILL.md names it is the caller's to check** (`publishableNeed`): this reads no content.
+     */
+    need?: string;
     /** The predicate this chain's other nested claims use. Read from the deployment record. */
     inContextOf: Hex;
     /** Whether a label is a category under `tool`, read from the index. */
@@ -112,6 +122,13 @@ export async function prepareUsageContext(params: {
     }
     if (params.payment !== undefined && params.outcome === undefined) {
         return {status: "refused", rule: "payment_without_outcome", detail: "a payment is attached to an outcome"};
+    }
+    if (params.need !== undefined) {
+        const problem =
+            params.outcome === undefined
+                ? "a need is attached to an outcome"
+                : needShapeProblem({need: params.need, outcome: params.outcome, reason: params.reason ?? ""});
+        if (problem !== null) return {status: "refused", rule: "need_shape", detail: problem};
     }
     if (domain === undefined && params.outcome === undefined) {
         return {status: "refused", rule: "nothing_to_add", detail: "give a domain or an outcome"};
@@ -207,6 +224,14 @@ export async function prepareUsageContext(params: {
         const paymentId = await atom(params.payment, `the payment ${params.payment}`);
         paymentTripleId = await triple(outcomeTripleId, predicate, paymentId, `say this outcome was paid with ${params.payment}`);
     }
+    let needTripleId: Hex | null = null;
+    const needSubject = params.outcome === "worked" ? outcomeTripleId : reasonTripleId;
+    if (params.need !== undefined && needSubject !== null) {
+        const label = params.outcome === "worked" ? WITH_LABEL : NEEDS_LABEL;
+        const predicate = await atom(label, `the word "${label}"`);
+        const nameId = await atom(params.need, `the name "${params.need}"`);
+        needTripleId = await triple(needSubject, predicate, nameId, `say it ${label} ${params.need}`);
+    }
     return {
         status: "planned",
         chainId: reads.chainId,
@@ -214,6 +239,7 @@ export async function prepareUsageContext(params: {
         outcomeTripleId,
         reasonTripleId,
         paymentTripleId,
+        needTripleId,
         calls,
         alreadyWritten,
         totalValue: calls.reduce((sum, call) => sum + call.value, 0n),

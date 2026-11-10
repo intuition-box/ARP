@@ -15,6 +15,7 @@ import {
     readString,
 } from "@arp-protocol/graphql";
 
+import {needKindOf, needKindOfReason} from "./declare/line-need.js";
 import {USAGE_OUTCOMES, USAGE_REASONS, type UsageOutcome, type UsageReason} from "./declare/usage-context.js";
 import {USES} from "./sources/intuition/terms.js";
 import {readIpfsJson} from "./verify/probe.js";
@@ -44,6 +45,10 @@ export type PulseLine = {
     reasons: UsageReason[];
     /** `nested` is form B (ADR `0138`). `sibling` is form A: the outcome sits on the edge, so it applies to each domain there. */
     form: "nested" | "sibling";
+    /** On a failure: what its `missing-program` or `missing-key` reason names, `(reason, needs, ffmpeg)` (ADR `0166`). */
+    needs?: string[];
+    /** On a worked line: what the agent had to add, `(outcome, with, ffmpeg)` (ADR `0166`). */
+    with?: string[];
     /**
      * A receipt was verified for this line. Nothing here sets it: reading a receipt is not in this package yet, so
      * every real line reads as unproven, and the simulation is what sets it (`docs/tasks/66`).
@@ -76,7 +81,10 @@ export type PulseUsage = {
     byOutcome: Record<string, number>;
     /** Reasons the declarer gave for a failure. */
     byReason: Record<string, number>;
-    byOthers: {tripleId: string; writer: string; predicate: "context" | "outcome" | "reason"; value: string}[];
+    /** Declarations per name a failure said was missing, and per name a worked line said was added (ADR `0166`). */
+    byNeed?: Record<string, number>;
+    byWith?: Record<string, number>;
+    byOthers: {tripleId: string; writer: string; predicate: "context" | "outcome" | "reason" | "needs" | "with"; value: string}[];
     /** The read stopped at its limit, so these are a floor. */
     truncated: boolean;
 };
@@ -86,6 +94,12 @@ export type PulseUsageConfig = {
     inContextOf: string;
     hasOutcome: string;
     because: string;
+    /**
+     * The `needs` and `with` atoms (ADR `0166`). Absent, that level is not read: a caller that never shows it
+     * spends no query on it.
+     */
+    needs?: string;
+    with?: string;
     /**
      * Wallets that pay for lines and say nothing by it: the sponsoring service creates the terms of a
      * sponsored line, so as a creator it would read as saying every one of them (ADR `0144`). Their row
@@ -239,6 +253,8 @@ export async function getPulseUsage(
         byDomain: {},
         byOutcome: {},
         byReason: {},
+        byNeed: {},
+        byWith: {},
         byOthers: [],
         truncated: false,
     });
@@ -329,10 +345,12 @@ export async function getPulseUsage(
         outcome: UsageOutcome;
         wallets: Set<string>;
         reasons: Map<string, UsageReason[]>;
+        /** Per wallet, what a reason said was missing, or what a worked line said was added. */
+        named: Map<string, string[]>;
     };
     const contexts = new Map<string, {edge: Edge; domain: string; wallets: Set<string>}>();
     const outcomes = new Map<string, Found>();
-    const others = (edge: Edge, row: ReturnType<typeof parts>, predicate: "context" | "outcome" | "reason") =>
+    const others = (edge: Edge, row: ReturnType<typeof parts>, predicate: PulseUsage["byOthers"][number]["predicate"]) =>
         out.get(edge.tool)?.byOthers.push({
             tripleId: row.termId ?? "",
             writer: row.writer ?? "",
@@ -353,7 +371,7 @@ export async function getPulseUsage(
         if (wallets.size === 0) {
             others(edge, line, isOutcomeLine ? "outcome" : "context");
         } else if (isOutcomeLine && isOutcome(line.value)) {
-            outcomes.set(key(line.termId), {edge, domain: null, form: "sibling", outcome: line.value, wallets, reasons: new Map()});
+            outcomes.set(key(line.termId), {edge, domain: null, form: "sibling", outcome: line.value, wallets, reasons: new Map(), named: new Map()});
         } else {
             contexts.set(key(line.termId), {edge, domain: line.value, wallets});
         }
@@ -369,23 +387,65 @@ export async function getPulseUsage(
         if (wallets.size === 0) {
             others(context.edge, line, "outcome");
         } else {
-            outcomes.set(key(line.termId), {edge: context.edge, domain: context.domain, form: "nested", outcome: line.value, wallets, reasons: new Map()});
+            outcomes.set(key(line.termId), {edge: context.edge, domain: context.domain, form: "nested", outcome: line.value, wallets, reasons: new Map(), named: new Map()});
         }
     }
 
-    // Level 4: the reason for a failure, in the closed list.
+    // Level 4: the reason for a failure, in the closed list. A worked outcome's `with` is read in the same query.
+    const reading = (predicate: string | undefined): predicate is string => predicate !== undefined;
     const failures = [...outcomes.entries()].filter(([, found]) => found.outcome === "failed").map(([id]) => id);
-    const onOutcome = pass(await qualifiers(failures, [config.because]));
+    const worked = [...outcomes.entries()].filter(([, found]) => found.outcome === "worked").map(([id]) => id);
+    const withId = config.with;
+    const onOutcome = pass(
+        await qualifiers(reading(withId) ? [...failures, ...worked] : failures, [config.because, ...(reading(withId) ? [withId] : [])]),
+    );
+    /** A reason a wallet stands behind, so a `needs` on it can be read: ADR `0166`'s level 5. */
+    const reasonTerms = new Map<string, {found: Found; reason: UsageReason; wallets: Set<string>}>();
+    /** Only a name of the shape its level calls for counts; anything else is outside the vocabulary, whoever wrote it. */
+    const addName = (found: Found, wallets: ReadonlySet<string>, name: string) => {
+        for (const wallet of wallets) {
+            const given = found.named.get(wallet) ?? [];
+            if (!given.includes(name)) given.push(name);
+            found.named.set(wallet, given);
+        }
+    };
     for (const row of onOutcome) {
         const line = parts(row);
         const found = line.subjectId === null ? undefined : outcomes.get(key(line.subjectId));
-        if (found === undefined || line.value === null || !isReason(line.value)) continue;
+        if (found === undefined || line.value === null || line.predicateId === null) continue;
+        if (withId !== undefined && key(line.predicateId) === key(withId)) {
+            if (found.outcome !== "worked" || needKindOf(line.value) === null) continue;
+            const wallets = standing(row, found.edge, found.wallets);
+            if (wallets.size === 0) others(found.edge, line, "with");
+            addName(found, wallets, line.value);
+            continue;
+        }
+        if (found.outcome !== "failed" || !isReason(line.value)) continue;
         const wallets = standing(row, found.edge, found.wallets);
         if (wallets.size === 0) others(found.edge, line, "reason");
         for (const wallet of wallets) {
             const given = found.reasons.get(wallet) ?? [];
             if (!given.includes(line.value)) given.push(line.value);
             found.reasons.set(wallet, given);
+        }
+        if (line.termId !== null && wallets.size > 0 && needKindOfReason(line.value) !== null) {
+            reasonTerms.set(key(line.termId), {found, reason: line.value, wallets});
+        }
+    }
+
+    // Level 5: what a missing-program or missing-key failure needed, a name of the shape its reason calls for.
+    const needsId = config.needs;
+    if (reading(needsId)) {
+        const onReason = pass(await qualifiers([...reasonTerms.keys()], [needsId]));
+        for (const row of onReason) {
+            const line = parts(row);
+            const reason = line.subjectId === null ? undefined : reasonTerms.get(key(line.subjectId));
+            if (reason === undefined || line.value === null) continue;
+            const kind = needKindOf(line.value);
+            if (kind === null || kind !== needKindOfReason(reason.reason)) continue;
+            const wallets = standing(row, reason.found.edge, reason.wallets);
+            if (wallets.size === 0) others(reason.found.edge, line, "needs");
+            addName(reason.found, wallets, line.value);
         }
     }
 
@@ -399,14 +459,17 @@ export async function getPulseUsage(
             const declaration = found.edge.declarers.get(wallet);
             if (declaration === undefined) continue;
             const reasons = found.reasons.get(wallet) ?? [];
+            const named = found.named.get(wallet) ?? [];
+            const field = found.outcome === "failed" ? "needs" : "with";
             if (!declaration.outcomes.includes(found.outcome)) declaration.outcomes.push(found.outcome);
             const domains = found.form === "nested" ? [found.domain] : declaration.domains.length > 0 ? declaration.domains : [null];
             for (const domain of domains) {
                 const same = declaration.lines.find((line) => line.domain === domain && line.outcome === found.outcome);
                 if (same === undefined) {
-                    declaration.lines.push({domain, outcome: found.outcome, reasons, form: found.form});
+                    declaration.lines.push({domain, outcome: found.outcome, reasons, form: found.form, ...(named.length === 0 ? {} : {[field]: named})});
                 } else {
                     same.reasons = [...new Set([...same.reasons, ...reasons])];
+                    if (named.length > 0) same[field] = [...new Set([...(same[field] ?? []), ...named])];
                 }
             }
         }
@@ -430,6 +493,10 @@ export async function getPulseUsage(
             for (const reason of new Set(declaration.lines.flatMap((line) => line.reasons))) {
                 usage.byReason[reason] = (usage.byReason[reason] ?? 0) + 1;
             }
+            const byNeed = (usage.byNeed ??= {});
+            for (const name of new Set(declaration.lines.flatMap((line) => line.needs ?? []))) byNeed[name] = (byNeed[name] ?? 0) + 1;
+            const byWith = (usage.byWith ??= {});
+            for (const name of new Set(declaration.lines.flatMap((line) => line.with ?? []))) byWith[name] = (byWith[name] ?? 0) + 1;
         }
     }
     return out;

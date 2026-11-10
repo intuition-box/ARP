@@ -117,3 +117,21 @@ describe("decideShare", () => {
         expect(again.lines).toEqual([]);
     });
 });
+
+describe("decideShare, the need (ADR 0166)", () => {
+    it("carries the name the hook kept, and keys a line with a need apart from one without", () => {
+        const decision = decideShare({
+            on: true,
+            failures: [failure({reason: "missing-program", need: "ffmpeg"})],
+            installed,
+            alreadyShared: new Set([sharedLineKey({toolUrl: "https://github.com/a/b?skill=clip", outcome: "failed", reason: "missing-program"})]),
+        });
+        expect(decision.lines).toEqual([
+            {toolUrl: "https://github.com/a/b?skill=clip", outcome: "failed", reason: "missing-program", need: "ffmpeg"},
+        ]);
+    });
+
+    it("keeps the key a line had before a need existed", () => {
+        expect(sharedLineKey({toolUrl: "u", outcome: "failed", reason: "missing-key"})).toBe("u\u0000\u0000missing-key");
+    });
+});

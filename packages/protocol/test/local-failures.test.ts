@@ -12,6 +12,22 @@ describe("parseLocalFailures", () => {
     });
 });
 
+describe("parseLocalFailures, the need (ADR 0166)", () => {
+    it("keeps a name of the shape its reason calls for, and drops any other while keeping the failure", () => {
+        const rows = parseLocalFailures(
+            [
+                line({need: "OPENAI_API_KEY"}),
+                line({reason: "missing-program", need: "ffmpeg"}),
+                line({need: "ffmpeg"}),
+                line({reason: "missing-program", need: "/home/me/bin/ffmpeg"}),
+                line({reason: "missing-file", need: "ffmpeg"}),
+            ].join("\n"),
+        );
+        expect(rows.map((row) => row.need)).toEqual(["OPENAI_API_KEY", "ffmpeg", undefined, undefined, undefined]);
+        expect(rows).toHaveLength(5);
+    });
+});
+
 describe("yourFailures", () => {
     it("is null for a skill this machine never failed on", () => {
         expect(yourFailures(parseLocalFailures(line()), "other", "a/b")).toBeNull();

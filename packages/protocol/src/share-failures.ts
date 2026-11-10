@@ -5,15 +5,17 @@ import type {LocalFailure} from "./local-failures.js";
 /**
  * What may leave a machine from its local failure memory (`docs/tasks/70` item 2).
  *
- * **Off unless the person turned it on**, and only ever a public skill, `failed`, a closed reason, and
- * the domain of the search that found the skill when there was one. Never a session, a date or a path. `worked` is never here, because the hook cannot
+ * **Off unless the person turned it on**, and only ever a public skill, `failed`, a closed reason, the
+ * domain of the search that found the skill when there was one, and the missing program's or variable's
+ * name when the skill's own SKILL.md names it (ADR `0166`; the hook kept it only then, and the sponsoring
+ * service checks it again). Never a session, a date or a path. `worked` is never here, because the hook cannot
  * tell it (ADR `0140`).
  *
  * **A skill with no known public source stays local.** A hook line usually has no source, and a skill
  * can be private: its name alone must not reach a public graph, and a name resolved by guessing
  * would write a line about somebody else's repository.
  */
-export type SharedLine = {toolUrl: string; outcome: "failed"; domain?: string; reason: UsageReason};
+export type SharedLine = {toolUrl: string; outcome: "failed"; domain?: string; reason: UsageReason; need?: string};
 
 /** What is known about where an installed skill came from. */
 export type InstalledSkill = {skill: string; source: string};
@@ -67,9 +69,13 @@ export function installedFromReceipts(text: string | null): InstalledSkill[] {
     return found;
 }
 
-/** A key for one sentence: the same skill, domain and reason is one line, however often it failed. */
+/**
+ * A key for one sentence: the same skill, domain, reason and need is one line, however often it failed. A
+ * line without a need keeps the key it had before task 97, so what was already shared is not offered again.
+ */
 export function sharedLineKey(line: SharedLine): string {
-    return `${line.toolUrl}\u0000${line.domain ?? ""}\u0000${line.reason}`;
+    const base = `${line.toolUrl}\u0000${line.domain ?? ""}\u0000${line.reason}`;
+    return line.need === undefined ? base : `${base}\u0000${line.need}`;
 }
 
 export function decideShare(params: {
@@ -105,6 +111,7 @@ export function decideShare(params: {
             outcome: "failed",
             ...(failure.domain === undefined ? {} : {domain: failure.domain}),
             reason: failure.reason,
+            ...(failure.need === undefined ? {} : {need: failure.need}),
         };
         const key = sharedLineKey(line);
         if (!params.alreadyShared.has(key)) lines.set(key, line);

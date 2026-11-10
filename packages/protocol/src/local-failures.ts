@@ -1,7 +1,11 @@
+import {needKindOf, needKindOfReason} from "./declare/line-need.js";
 import {isUsageReason, type UsageReason} from "./declare/usage-context.js";
 
-/** One line of `<arpHome>/failures.jsonl`, which the runtime hook writes (`docs/tasks/68`). */
-export type LocalFailure = {at: string; skill: string; source: string | null; domain?: string; reason: UsageReason};
+/**
+ * One line of `<arpHome>/failures.jsonl`, which the runtime hook writes (`docs/tasks/68`). `need` is the program
+ * or the environment variable's name that was missing, kept only when the skill's SKILL.md names it (ADR `0166`).
+ */
+export type LocalFailure = {at: string; skill: string; source: string | null; domain?: string; reason: UsageReason; need?: string};
 
 /** What this machine already hit with a skill: sessions per reason. `byNameOnly`: a line named no source, so it may be a namesake. */
 export type YourFailures = {reasons: Partial<Record<UsageReason, number>>; last: string; byNameOnly: boolean};
@@ -13,10 +17,19 @@ export function parseLocalFailures(text: string): LocalFailure[] {
         if (line.trim() === "") continue;
         try {
             const row = JSON.parse(line) as Record<string, unknown>; // read field by field below
-            const {at, skill, source, domain, reason} = row;
+            const {at, skill, source, domain, reason, need} = row;
             if (typeof at !== "string" || typeof skill !== "string" || typeof reason !== "string") continue;
             if (!isUsageReason(reason)) continue;
-            rows.push({at, skill, source: typeof source === "string" ? source : null, ...(typeof domain === "string" ? {domain} : {}), reason});
+            // A name of the wrong shape for its reason is dropped, and the failure kept without it.
+            const named = typeof need === "string" && needKindOf(need) !== null && needKindOf(need) === needKindOfReason(reason);
+            rows.push({
+                at,
+                skill,
+                source: typeof source === "string" ? source : null,
+                ...(typeof domain === "string" ? {domain} : {}),
+                reason,
+                ...(named ? {need} : {}),
+            });
         } catch {
             continue;
         }
