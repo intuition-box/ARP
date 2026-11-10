@@ -781,6 +781,34 @@ export {
 } from "./skill-install.js";
 export {readAgentContents, type AgentContents, type AgentEndpointFact, type SieveReadingRow} from "./agent-contents.js";
 
+/** Somebody else's figures about a repository or an endpoint, dated and sourced, never scored (task 101). */
+export {
+    endpointFacts,
+    failureIssueQuery,
+    failureIssueSearchUrl,
+    outsideIndex,
+    repoFacts,
+    repoLabelOf,
+    summariseTrustIndex,
+    titleNamesSkill,
+    FAILURE_WORDS,
+    RECENT_ISSUES,
+    TRUST_INDEX_CREDIT,
+    TRUST_INDEX_DATASET,
+    TRUST_INDEX_LICENCE,
+    TRUST_INDEX_LOOKUP,
+    type FailureIssues,
+    type IssueRef,
+    type OutsideFact,
+    type OutsideSignals,
+    type RepoSignals,
+    type RepoStatus,
+    type SkillIssues,
+    type TrustEntry,
+    type TrustHost,
+    type TrustIndexRow,
+} from "./outside-signals.js";
+
 export {
     contentDigest,
     contentReceiptDomain,
