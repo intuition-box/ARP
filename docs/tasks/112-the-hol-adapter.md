@@ -45,11 +45,14 @@ Task 86's deliverable 1, reduced to a skill (no "need in words" form):
 `FUTURE.md`, "One score per version of a skill": the directory digest the content receipt computes,
 carried by the line, a score per digest. Needs the user's decision on the new level.
 
-### D. An answer on Sybil (after the user's return, prose)
+### D. An answer on Sybil (done 2026-11-10, in the sheet)
 
-One page: what bounds several wallets today (per-wallet rule, 3-wallet threshold), what does not, and
-what would (a registered agent, a receipt). `FUTURE.md`, "Sybil on receipts and on the score". HOL will
-ask first.
+Section "Several wallets, one person" of the adapter sheet (business-dev `9614589`): what bounds a
+writer today (one wallet one vote, three wallets, a slow score, attribution), what does not (a free key,
+agreeing ~50× cheaper than writing on 13579 per ADR `0138`, receipts proving two keys), and what would,
+cheapest first (the reader weighs the writer with HOL's own identity adapters, a paid line counts more,
+registered agents only). The score figures are `arpUsageScore`'s: 3 → 54.18, 10 → 66.39, 20 → 78.73,
+50 → 94.13. Prose only, no code.
 
 ### E. Contact (after the user's return)
 
