@@ -387,7 +387,9 @@ function CardBody({row}: {row: EdgeRow}) {
                 <div className="arp-cf-against">{row.opposition} against</div>
             )}
             {row.line === undefined || row.line === null ? null : (
-                <div className="arp-cf-line">{row.line}</div>
+                <div className="arp-cf-line" title={row.line}>
+                    {row.line}
+                </div>
             )}
         </>
     );

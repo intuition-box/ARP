@@ -83,6 +83,9 @@ export function AgentClaims({atomId, name}: {atomId: string; name: string}) {
                             reserveLine
                         />
                     </div>
+                    {/* The list keeps the graph's own groups: its rows spell the whole sentence
+                        ("X uses this agent"), so "uses" here is the incoming edge, unlike the
+                        field's outgoing ring. Relabelled groups would switch it to member mode. */}
                     {view.groups.map((group) => (
                         <Group
                             key={group.predicateAtomId}

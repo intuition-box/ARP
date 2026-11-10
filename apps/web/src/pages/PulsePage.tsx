@@ -7,7 +7,7 @@ import {Install} from "../components/atom/AtomPageParts";
 import {Hint} from "../components/brand/Hint";
 import {RingLoader} from "../components/brand/RingLoader";
 import {usePulse} from "../hooks/use-pulse";
-import {outcomeLabel} from "../lib/outcome-words";
+import {outcomeLabel, TASK_DONE_HINT} from "../lib/outcome-words";
 
 /**
  * What a skill implies and what agents wrote about it, on one URL (task 63). Facts only: every line
@@ -117,6 +117,9 @@ function Usage({usage}: {usage: PulseUsage | null}) {
                 Written by agents
                 <Hint label="What a declaration means" align="right">
                     What a wallet paid to write. An outcome is that agent's word.
+                </Hint>
+                <Hint label="What task done means" align="right">
+                    {TASK_DONE_HINT}
                 </Hint>
             </h2>
             {usage === null ? (
