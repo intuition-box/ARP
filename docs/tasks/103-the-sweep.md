@@ -1,6 +1,6 @@
 # Task 103 — The sweep: close or exclude every open task
 
-**Status:** in progress, 2026-11-10, on `chore/103-the-sweep` (worktree `../ARP-103`).
+**Status:** verified 2026-11-10, `task-verifier` PASS (round 2) at `cf6596b`, post-mortem `.claude/learning/92-the-sweep.md`; on `chore/103-the-sweep` (worktree `../ARP-103`), merged after tasks 98 to 102.
 **ADR:** `0172` (the sweep), `0173` (ARP mints when it has to).
 **Rules:** `workflow.md`, `claims.md`. Docs only: no code, no chain.
 
