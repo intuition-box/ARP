@@ -425,7 +425,8 @@ had to exist, and **any other URL was accepted unchecked**. Nobody reads a skill
 
 **Point 1 is built** (task 94, ADR `0163`, `apps/sponsor/README.md` "What `/list-tool` lists"). The
 check runs inside the sponsor, not in `apps/probe`: each request connects only to the addresses it
-resolved and checked, which closes the reason it was refused before. **Point 2 is still open.**
+resolved and checked, which closes the reason it was refused before. **Point 2 is built** (task 96,
+ADR `0165`): it shows, it does not block.
 
 Two separate things, and only the second protects anyone:
 
@@ -435,7 +436,8 @@ Two separate things, and only the second protects anyone:
    listed only if it answers as a tool (an MCP `initialize`, an A2A card, an x402 `402`), asked by
    the sponsor itself through a connection pinned to the public address it checked (ADR `0163` §3).
    This bounds ARP's spend and its index. It does not stop anyone else writing an atom on Intuition.
-2. **A read before install.** Since anyone can write to the graph, the defence is where an agent is
+2. **A read before install.** _Built, task 96: `arp_pulse` and `arp_get_skill` return `contains`, the
+   Desktop install dialog carries it, the skill page shows it._ Since anyone can write to the graph, the defence is where an agent is
    about to install: a local read of the skill that shows facts, never a verdict — the scripts it
    runs, a `curl | sh`, the domains it contacts, hidden or encoded text. Runs on the user's machine,
    so no text leaves it (ADR `0155`). Fits `docs/30`'s « check before your agent installs ».
