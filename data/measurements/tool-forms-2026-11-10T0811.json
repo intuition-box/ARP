@@ -1,0 +1,433 @@
+{
+  "measuredAt": "2026-11-10T08:11:11.636Z",
+  "script": "scripts/measure/tool-forms.ts",
+  "catalogueReadAt": "2026-10-28",
+  "admitted": 53,
+  "of": 53,
+  "rows": [
+    {
+      "url": "https://github.com/mobbin/mobbin-mcp-server",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "mcp-registry"
+      }
+    },
+    {
+      "url": "https://github.com/SonarSource/sonarqube-mcp-server",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "mcp-registry"
+      }
+    },
+    {
+      "url": "https://github.com/alchemyplatform/alchemy-mcp-server",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "mcp-registry"
+      }
+    },
+    {
+      "url": "https://github.com/apify/apify-mcp-server",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/atlassian/atlassian-mcp-server",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/browserbase/mcp-server-browserbase",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "gemini-extension"
+      }
+    },
+    {
+      "url": "https://github.com/cloudflare/mcp-server-cloudflare",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "mcp-registry"
+      }
+    },
+    {
+      "url": "https://github.com/figma/mcp-server-guide",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/grafana/mcp-grafana",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/hashicorp/terraform-mcp-server",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "gemini-extension"
+      }
+    },
+    {
+      "url": "https://github.com/makenotion/notion-mcp-server",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "mcp-package"
+      }
+    },
+    {
+      "url": "https://github.com/microsoft/mcp",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/mondaycom/mcp",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/neondatabase/mcp-server-neon",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/paypal/paypal-mcp-server",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "mcp-registry"
+      }
+    },
+    {
+      "url": "https://github.com/postmanlabs/postman-mcp-server",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "mcp-registry"
+      }
+    },
+    {
+      "url": "https://github.com/prisma/mcp",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "mcp-registry"
+      }
+    },
+    {
+      "url": "https://github.com/snyk/saw-mcp",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/stripe/agent-toolkit",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/supabase/mcp",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "mcp-registry"
+      }
+    },
+    {
+      "url": "https://github.com/webflow/mcp-server",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "mcp-registry"
+      }
+    },
+    {
+      "url": "https://github.com/zapier/zapier-mcp",
+      "kind": "mcp-server",
+      "admission": {
+        "ok": true,
+        "form": "gemini-extension"
+      }
+    },
+    {
+      "url": "https://github.com/mattpocock/skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/heygen-com/hyperframes",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/microsoft/azure-skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/larksuite/cli",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/prime-skills/runcomfy-agent-skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/leonxlnx/taste-skill",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/coreyhaines31/marketingskills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/juliusbrussee/caveman",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/101-skills/superpowers",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/lllllllama/rigorpilot-skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/vercel-labs/skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/magentosh/superpowers",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/obra/superpowers",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/google/agents-cli",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/anthropics/skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/prisma/skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/remotion-dev/skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/vercel-labs/agent-skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/qu-skills/superpowers",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/emilkowalski/skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/skills-shell/superpowers",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/firebase/agent-skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/its-a-skill-issue/superpowers",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/bankai-skills/superpowers",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/gencraft-labs/skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/pbakaus/impeccable",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/cloudflare/skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/higgsfield-ai/skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "claude-plugin"
+      }
+    },
+    {
+      "url": "https://github.com/vercel-labs/agent-browser",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/flowkit-labs/skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    },
+    {
+      "url": "https://github.com/designed-by-ai/skills",
+      "kind": "skill-repo",
+      "admission": {
+        "ok": true,
+        "form": "skill"
+      }
+    }
+  ]
+}

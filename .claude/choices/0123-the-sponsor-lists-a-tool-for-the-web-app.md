@@ -2,6 +2,10 @@
 
 **Status:** Accepted
 **Date:** 2026-11-03
+**Amended:** 2026-11-10 by ADR `0163` (task 94): step 6's "any other URL is accepted unchecked" no
+longer holds. A listing that would create something is listed only if it is a tool: a GitHub
+repository holding a form a runtime loads, any other URL answering as MCP, A2A or x402, asked through
+a resolver-pinned request that refuses private addresses. The text below is the decision as it stood.
 **Triggered by:** `docs/tasks/53` 53c, and the user's decisions:
 - 2026-11-02: "listing a tool from path C is sponsored on testnet 13579, with a limit"
   (`docs/tasks/53` §2);

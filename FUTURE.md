@@ -419,14 +419,17 @@ measurements (ADR `0132`). Asked for implicitly by the usage demo, 2026-11-03; n
 
 ## `/list-tool` refuses what is not a tool, and a skill is read before it is installed
 
-Asked for by the user, 2026-11-10: « empêcher de mettre n'importe quelle URL ». Today (ADR `0123`
-step 6) a GitHub skill must have a `SKILL.md` in a directory of its name, a GitHub repository must
-answer the tree API, and **any other URL is accepted unchecked**, because the process that holds the
-treasury key must not fetch an arbitrary URL. Nobody reads a skill's content.
+Asked for by the user, 2026-11-10: « empêcher de mettre n'importe quelle URL ». Before task 94 (ADR
+`0123` step 6) a GitHub skill had to have a `SKILL.md` in a directory of its name, a GitHub repository
+had to exist, and **any other URL was accepted unchecked**. Nobody reads a skill's content.
+
+**Point 1 is built** (task 94, ADR `0163`, `apps/sponsor/README.md` "What `/list-tool` lists"). The
+check runs inside the sponsor, not in `apps/probe`: each request connects only to the addresses it
+resolved and checked, which closes the reason it was refused before. **Point 2 is still open.**
 
 Two separate things, and only the second protects anyone:
 
-1. **A gate on what ARP pays to list.** A GitHub repository is listed only if it holds something a
+1. **A gate on what ARP pays to list.** _Built, task 94._ A GitHub repository is listed only if it holds something a
    runtime loads: a `SKILL.md`, an MCP server manifest (`server.json`, a `.claude-plugin/`, a
    package declaring an MCP server), or close forms to be listed when it is built. A non-GitHub URL
    is listed only if it answers as a tool (an MCP `initialize`, an A2A card, an x402 `402`), asked by
@@ -437,7 +440,9 @@ Two separate things, and only the second protects anyone:
    runs, a `curl | sh`, the domains it contacts, hidden or encoded text. Runs on the user's machine,
    so no text leaves it (ADR `0155`). Fits `docs/30`'s « check before your agent installs ».
 
-Not decided: the list of accepted manifests, whether the read before install blocks or only shows.
+Not decided: whether the read before install blocks or only shows. The accepted manifests are
+decided (ADR `0163`); a Python project declaring its MCP SDK only outside `[project] dependencies`
+or Poetry's table, a `.mcp.json` alone and a Desktop extension's `manifest.json` are not among them.
 
 ## The delegation register, read side
 

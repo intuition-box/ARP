@@ -27,7 +27,9 @@
  *  What the user does first (never this script): send the agent address test USDC on Base Sepolia,
  *  https://faucet.circle.com (network "Base Sepolia"). No Base Sepolia ETH is needed anywhere: the
  *  facilitator submits the transfer. The sponsoring service must run locally with its pinning key
- *  (`INTUITION_PIN_API_KEY`, for `/list-tool`) and the same `ARP_X402_NETWORKS` and `ARP_X402_RPC_84532`.
+ *  (`INTUITION_PIN_API_KEY`, for `/list-tool`) and the same `ARP_X402_NETWORKS` and `ARP_X402_RPC_84532`,
+ *  and `ARP_ALLOW_PRIVATE_PROBE=1`: `/list-tool` asks the seller whether it answers as a tool, and refuses a
+ *  loopback address otherwise (task 94, ADR `0163`).
  */
 import {spawnSync} from "node:child_process";
 import {appendFileSync, mkdirSync, readFileSync} from "node:fs";

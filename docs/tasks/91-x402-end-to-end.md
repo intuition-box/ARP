@@ -74,8 +74,12 @@ funding it is the user's step. No key was moved and no funds were sent between k
    ```
    ARP_X402_NETWORKS=eip155:84532=0x036CbD53842c5426634e7929541eC2318f3dCF7e \
    ARP_X402_RPC_84532=https://sepolia.base.org \
+   ARP_ALLOW_PRIVATE_PROBE=1 \
    SPONSOR_KEY_FILE=~/.arp/sponsor.key … bun run apps/sponsor/src/main.ts
    ```
+
+   `ARP_ALLOW_PRIVATE_PROBE=1` since task 94 (ADR `0163`): `/list-tool` asks the seller whether it is
+   a tool, and the seller listens on `127.0.0.1`, which the sponsor otherwise refuses.
 
    Both ARP keys hold tTRUST on 13579 today, so no funding step is needed there. The runbook refuses a
    sponsor whose address is neither `arp.sponsor` nor `arp.sponsorV1`.
