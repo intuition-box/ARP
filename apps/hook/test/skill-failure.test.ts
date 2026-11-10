@@ -6,7 +6,7 @@ import { parseLocalFailures, yourFailures } from '@arp-protocol/core';
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 
 import { appendOwn } from '../src/append.ts';
-import { askedBySkill, contextOf, failureReason, lastUserWords, needOf, programsOf } from '../src/skill-failure.ts';
+import { askedBySkill, contextOf, failureReason, installedSource, lastUserWords, needOf, programsOf } from '../src/skill-failure.ts';
 
 const HOOK = join(import.meta.dir, '..', 'src', 'hook.ts');
 const SKILL = '---\nname: gadget\n---\nRun this:\n\n```bash\nvidcut --in a.mp4\npython3 scripts/render.py\n```\n';
@@ -298,4 +298,23 @@ test("a linked .arp gets no .gitignore written into it", () => {
     env: { ...env, HOME: dir, ARP_HOME: join(dir, 'home') },
   });
   expect(existsSync(join(target, '.gitignore'))).toBe(false);
+});
+
+test('needOf reads the program in the error Claude Code really gets from zsh, never its line number (task 108)', () => {
+  // Captured live, Claude Code 2.1.318 on zsh, 2026-11-10: the command runs through `eval`.
+  const md = '---\nname: pdf\n---\nMerge with qpdf:\n\n```bash\nqpdf --empty --pages a.pdf b.pdf -- out.pdf\npdftotext -f 1 -l 5 in.pdf\n```\n';
+  expect(needOf('missing-program', '(eval):1: command not found: qpdf', md)).toBe('qpdf');
+  // A number alone is never a program, even when the SKILL.md writes it as a word.
+  expect(needOf('missing-program', '(eval):1: command not found: acme-tool', md)).toBeNull();
+  expect(needOf('missing-program', 'line 12: 1: not found', md)).toBeNull();
+});
+
+test('installedSource reads the lock a project install writes beside the project (task 108)', () => {
+  // `npx skills add owner/repo --skill x` without `-g` writes ./skills-lock.json, version 1 (skills 1.7.4).
+  writeFileSync(
+    join(dir, 'skills-lock.json'),
+    JSON.stringify({ version: 1, skills: { 'gadget-108': { source: 'acme/gadgets', sourceType: 'github', skillPath: 'skills/gadget-108/SKILL.md' } } }),
+  );
+  expect(installedSource('gadget-108', dir)).toBe('acme/gadgets');
+  expect(installedSource('gadget-108', join(dir, 'elsewhere'))).toBeNull();
 });

@@ -3753,8 +3753,8 @@ function failureReason(text) {
   return null;
 }
 var PROGRAM_IN_ERROR = [
-  /(?:^|[\s:])([^\s:'"`]+): (?:command )?not found\b/gim,
   /command not found: ([^\s'"`]+)/gi,
+  /(?:^|[\s:])([^\s:'"`]+): (?:command )?not found\b/gim,
   /\bexec(?:utable)?:? "?([^\s"]+)"?: executable file not found/gi,
   /\bspawn ([^\s'"`]+) ENOENT\b/gi,
   /No module named '?([A-Za-z0-9_.-]+)'?/g,
@@ -3774,6 +3774,8 @@ function needOf(reason, text, markdown) {
     for (const match of text.matchAll(pattern)) {
       const named = match[1] ?? "";
       const name = kind === "program" ? (named.split("/").pop() ?? "").toLowerCase() : named;
+      if (!/[a-z]/i.test(name))
+        continue;
       const kept = publishableNeed3(name, markdown, kind);
       if (kept !== null)
         return kept;
@@ -3893,6 +3895,7 @@ var readIfThere = (path) => existsSync(path) ? readFileSync2(path, "utf8") : nul
 function installedSource(name, cwd) {
   const known = [
     ...installedFromSkillLock(readIfThere(join3(homedir2(), ".agents", ".skill-lock.json"))),
+    ...installedFromSkillLock(readIfThere(join3(cwd, "skills-lock.json"))),
     ...installedFromReceipts(readIfThere(join3(arpHome(), "receipts.jsonl"))),
     ...installedFromReceipts(readIfThere(join3(cwd, ".arp", "receipts.jsonl")))
   ];

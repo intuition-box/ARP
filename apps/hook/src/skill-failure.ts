@@ -41,8 +41,10 @@ export function failureReason(text: string): DetectedReason | null {
 
 /** Where an error names the program it could not run. Each captures the name, as the error wrote it. */
 const PROGRAM_IN_ERROR = [
-  /(?:^|[\s:])([^\s:'"`]+): (?:command )?not found\b/gim,
+  // zsh's form first: Claude Code runs a command through `eval`, so zsh writes `(eval):1: command not
+  // found: qpdf`, and the generic form below would read the line number `1` as the program.
   /command not found: ([^\s'"`]+)/gi,
+  /(?:^|[\s:])([^\s:'"`]+): (?:command )?not found\b/gim,
   /\bexec(?:utable)?:? "?([^\s"]+)"?: executable file not found/gi,
   /\bspawn ([^\s'"`]+) ENOENT\b/gi,
   /No module named '?([A-Za-z0-9_.-]+)'?/g,
@@ -69,6 +71,8 @@ export function needOf(reason: DetectedReason, text: string, markdown: string): 
       const named = match[1] ?? '';
       // A path names its program by its last part: `/usr/bin/ffmpeg` is `ffmpeg`, and the rest is the machine's.
       const name = kind === 'program' ? (named.split('/').pop() ?? '').toLowerCase() : named;
+      // A line or exit number is never a program, and a SKILL.md names `1` in nearly every example.
+      if (!/[a-z]/i.test(name)) continue;
       const kept = publishableNeed(name, markdown, kind);
       if (kept !== null) return kept;
     }
@@ -221,11 +225,13 @@ const readIfThere = (path: string) => (existsSync(path) ? readFileSync(path, 'ut
 
 /**
  * Where this skill was installed from, when this machine says so without doubt: the skills CLI's lock
- * file, or a receipt. Without it a failure would land on every skill of that name in a search.
+ * file (global, or the project's own), or a receipt. Without it a failure would land on every skill of that name in a search.
  */
 export function installedSource(name: string, cwd: string): string | null {
   const known = [
     ...installedFromSkillLock(readIfThere(join(homedir(), '.agents', '.skill-lock.json'))),
+    // A project install, the skills CLI's default, writes its lock beside the project (skills 1.7.4).
+    ...installedFromSkillLock(readIfThere(join(cwd, 'skills-lock.json'))),
     ...installedFromReceipts(readIfThere(join(arpHome(), 'receipts.jsonl'))),
     ...installedFromReceipts(readIfThere(join(cwd, '.arp', 'receipts.jsonl'))),
   ];

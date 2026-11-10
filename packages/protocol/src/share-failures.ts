@@ -45,7 +45,7 @@ export function isSharingOn(settings: string | null): boolean {
     }
 }
 
-/** The skills CLI's lock file, `~/.agents/.skill-lock.json`. GitHub entries only. */
+/** The skills CLI's lock file: `~/.agents/.skill-lock.json` for a global install, `skills-lock.json` beside a project for a project install. Both have `skills.<name>.source`. GitHub entries only. */
 export function installedFromSkillLock(lock: string | null): InstalledSkill[] {
     if (lock === null) return [];
     try {
