@@ -1,6 +1,6 @@
 # Task 110 — Two defects task 108's live run found
 
-**Status:** in progress, on `worktree-agent-af6870f82b8f1c11f`.
+**Status:** verified 2026-11-10, `task-verifier` PASS at `054bffa`, post-mortem `.claude/learning/99-two-defects-from-108.md`; on `worktree-agent-af6870f82b8f1c11f`.
 **ADR:** none: both fixes are the obvious answer to a wrong output (`workflow.md`, "Things not worth an ADR").
 **Rules:** `code.md`, `claims.md`, `workflow.md`. Gates: `packages/protocol` test and lint, `apps/cli`
 test, lint, `check:node` and `packages --check`, `apps/web` `tsc -b` and test, root `check` and `test:scripts`.
