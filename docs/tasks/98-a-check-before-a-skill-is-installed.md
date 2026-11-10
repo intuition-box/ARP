@@ -1,6 +1,6 @@
 # Task 98 — a check before a skill is installed
 
-**Status:** in progress 2026-11-10.
+**Status:** verified 2026-11-10, post-mortem `.claude/learning/87-a-check-before-a-skill-is-installed.md`, ADR `0167`.
 **ADR:** `0167`.
 **Rules:** `code.md`, `security.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`. No atom, triple or contract.
