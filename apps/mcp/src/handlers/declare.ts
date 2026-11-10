@@ -34,6 +34,7 @@ import {
 } from '../config.js';
 import { domainWords } from '../domain-words.js';
 import { categoryToSign } from './category.js';
+import { needOf, needProblemInSkill } from './declare-need.js';
 import { type JsonRpcId, fail, text, isAddress } from '../rpc.js';
 import { UNSIGNED_CAVEAT, serialiseDeclarePlan } from '../serialise.js';
 
@@ -129,6 +130,13 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
   if (reason !== undefined && outcome !== 'failed') {
     return fail(id, -32602, 'a reason only follows outcome: failed');
   }
+  const needArg = needOf({ outcome, reason, needs: args['needs'], with: args['with'] });
+  if ('problem' in needArg) return fail(id, -32602, needArg.problem);
+  const need = needArg.need;
+  // One SKILL.md checks one name: a name declared across several tools would claim every file names it.
+  if (need !== undefined && tools.length !== 1) {
+    return fail(id, -32602, 'needs and with go with exactly one tool, the skill whose SKILL.md names it');
+  }
   const declarerRaw = args['declarer'];
   if (declarerRaw !== undefined && !isAddress(declarerRaw)) {
     return fail(id, -32602, 'declarer, when given, must be a 20-byte hex address');
@@ -143,6 +151,10 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
   // and 1155's record has no `in context of` predicate to write with.
   if ((domainRaw !== undefined || outcome !== undefined) && chainId !== 13579) {
     return fail(id, -32602, 'domain and outcome are written on testnet 13579 only for now');
+  }
+  if (need !== undefined) {
+    const problem = await needProblemInSkill(tools[0] as string, need, reason); // one string, checked above
+    if (problem !== null) return fail(id, -32602, problem);
   }
   const plan = await prepareDeclareUsed({
     subject,
@@ -222,6 +234,7 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
       ...(domain === undefined ? {} : { domain }),
       ...(outcome === undefined ? {} : { outcome }),
       ...(reason === undefined ? {} : { reason }),
+      ...(need === undefined ? {} : { need }),
       inContextOf: IN_CONTEXT_OF,
       isCategory: async (label) => tree?.pathToRoot(label).found ?? false,
       ...(declarerRaw === undefined

@@ -306,6 +306,19 @@ export const TOOLS = [
             'Optional, with `outcome: failed`. Why it failed, one more paid triple per tool. An agent that can ' +
             'supply what was missing is not told this failure concerns it. `no-delivery`: paid, got nothing back.',
         },
+        needs: {
+          type: 'string',
+          description:
+            'Optional, after `reason: missing-program` or `missing-key`, with one skill in `tools`: the program ' +
+            "(`ffmpeg`) or the environment variable's name (`OPENAI_API_KEY`, never its value) that was missing. " +
+            "Planned only if the skill's SKILL.md names it; otherwise refused. One more paid triple.",
+        },
+        with: {
+          type: 'string',
+          description:
+            'Optional, after `outcome: worked`, with one skill in `tools`: the program or environment ' +
+            "variable's name you had to add for it to work. Planned only if the skill's SKILL.md names it. One more paid triple.",
+        },
       },
       required: ['agent_chain_id', 'agent_token_id', 'tools'],
     },
