@@ -6,7 +6,7 @@ import type {LandingField} from "./landing-field";
  * The user's decision of 2026-11-09, for the landing only: on testnet every real line comes from
  * ARP's own hidden test identities, so the page showed an empty field and no dot, and « on peut
  * faire des mock data, c'est pas grave ». So when a read **answers** with nothing, scenes 0 to 2
- * show this, and every panel that shows it says « Sample ». A read that **failed** still says it
+ * show this — unmarked since 2026-11-10, when the user removed every « Sample » label. A read that **failed** still says it
  * failed; a sample never stands in for a failure. The moment the chain has a real line, it
  * replaces the sample, panel by panel, and a panel never mixes the two.
  *

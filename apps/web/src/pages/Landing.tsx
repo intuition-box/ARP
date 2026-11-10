@@ -28,14 +28,14 @@ import {relativeDay, truncateMiddle} from "../services/trust-format";
  *
  * The order is the user's: Pulse · Written · Travels · Plug in · No grade · Build.
  *
- * ## Real data, or the sample said to be one
+ * ## Real data, or the sample
  *
  * The pulse reads the chain's recent lines and the field reads the most declared tool on the
  * chain the reader chose, with ARP's own test identities left out (`services/test-identities.ts`).
  * When the chain **answers with nothing** — on testnet every real line is one of those tests —
- * scenes 0 to 2 show the reference's sample (`services/landing-sample.ts`) and every panel showing
- * it says « Sample » (the user, 2026-11-09). Real data replaces it panel by panel; no panel mixes
- * the two. A failed read says it failed; a sample never stands in for one (`rules/claims.md` §1).
+ * scenes 0 to 2 show the reference's sample (`services/landing-sample.ts`), unlabelled since
+ * 2026-11-10 (the user removed every « Sample » mark). Real data replaces it panel by panel; no
+ * panel mixes the two. A failed read says it failed; a sample never stands in for one (`rules/claims.md` §1).
  */
 
 /** How many recent lines the pulse asks for, and how many it shows. */
@@ -83,7 +83,7 @@ export function Landing() {
             <SceneTravels read={field} rowRef={rowRef} />
             <ScenePlugIn />
             <SceneNoGrade />
-            <SceneBuild sample={field.status === "ok" && field.sample} />
+            <SceneBuild />
         </SceneDeck>
     );
 }
@@ -161,16 +161,12 @@ function nameOf(end: {atomId: string; label: string | null}): string {
 function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
     const chain = useChainChoice();
     const rows = read.status === "ok" ? read.data.slice(0, PULSE_ROWS) : [];
-    // The chain answered with nothing: the sample, said to be one (the user, 2026-11-09).
+    // The chain answered with nothing: the sample (the user, 2026-11-09).
     const sample = read.status === "ok" && rows.length === 0;
     return (
         <>
             {/* The pulse panel, top left, desktop only (the design's open question 2, decided). */}
-            <Panel
-                label={`Lines · ${chain.label.toLowerCase()}${sample ? " · sample" : ""}`}
-                className="arp-gx-beat"
-                index={2}
-            >
+            <Panel label={`Lines · ${chain.label.toLowerCase()}`} className="arp-gx-beat" index={2}>
                 {sample ? (
                     <>
                         <ul className="arp-gx-beatrows">
@@ -182,7 +178,6 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
                                 </li>
                             ))}
                         </ul>
-                        <p className="arp-gx-foot">Sample.</p>
                     </>
                 ) : rows.length === 0 ? (
                     <NotYet read={read} empty={<NoActivityYet />} />
@@ -238,9 +233,8 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
     const written = deck.previous >= 2 && deck.current === 1 ? Infinity : since;
     const reached = (stage: number) => written > (STAGES[stage] ?? 0) + PIECE_AFTER;
     const field = read.status === "ok" ? read.field : null;
-    const sample = read.status === "ok" && read.sample;
     const line = field?.line ?? null;
-    const label = `A line, word by word${sample ? " · sample" : ""}`;
+    const label = "A line, word by word";
 
     if (line === null) {
         return (
@@ -320,7 +314,6 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
                             ) : null}
                         </ol>
                     ) : null}
-                    {sample ? <p className="arp-gx-foot">Sample.</p> : null}
                 </div>
             ) : null}
             <SceneWrittenCopy />
@@ -333,9 +326,7 @@ function SceneWrittenCopy() {
         <div className="arp-gx-copy">
             <h2 {...rv(0)}>
                 An agent writes down what it used.{" "}
-                <span className="arp-gx-dim">
-                    With its identity, into words every agent shares.
-                </span>
+                <span className="arp-gx-dim">With its own ERC-8004 identity.</span>
             </h2>
         </div>
     );
@@ -355,7 +346,6 @@ function SceneTravels({
     const since = useSceneTime(2);
     const deck = useDeck();
     const field = read.status === "ok" ? read.field : null;
-    const sample = read.status === "ok" && read.sample;
     const readings = field?.readings ?? [];
     const ended = since === Infinity;
     const reading = ended ? -1 : readingAt(since, readings.length, deck.still);
@@ -364,7 +354,9 @@ function SceneTravels({
     return (
         <>
             <Panel
-                label={`${tool === undefined ? "What your agent reads" : `What your agent reads · ${tool}`}${sample ? " · sample" : ""}`}
+                label={
+                    tool === undefined ? "What your agent reads" : `What your agent reads · ${tool}`
+                }
                 className="arp-gx-subject arp-gx-board"
                 index={1}
             >
@@ -387,7 +379,6 @@ function SceneTravels({
                         {field?.linesFailed === true ? (
                             <NotYet read={{status: "failed"}} empty={null} />
                         ) : null}
-                        {sample ? <p className="arp-gx-foot">Sample.</p> : null}
                     </>
                 )}
             </Panel>
@@ -502,7 +493,7 @@ function SceneNoGrade() {
 
 const SKILL_URL = "https://github.com/intuition-box/ARP/blob/main/skills/arp/SKILL.md";
 
-function SceneBuild({sample}: {sample: boolean}) {
+function SceneBuild() {
     const onboarding = useOnboarding();
     const piece = rv(3);
     return (
@@ -528,9 +519,6 @@ function SceneBuild({sample}: {sample: boolean}) {
                         Join the network
                     </button>
                 </div>
-                {/* The stars lighting up are the field's agents; while the field is the sample,
-                    they are the sample's, and said so like every other panel showing it. */}
-                {sample ? <p className="arp-gx-netnote">Lit stars: sample.</p> : null}
             </div>
             <nav
                 className={`arp-gx-entries ${piece.className}`}

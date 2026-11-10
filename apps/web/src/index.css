@@ -1726,14 +1726,6 @@ a.arp-cf-card:hover {
     }
 }
 
-.arp-gx-netnote {
-    margin: 12px 0 0;
-    font-family: var(--font-mono);
-    font-size: var(--text-label);
-    letter-spacing: 0.06em;
-    color: var(--color-steel);
-}
-
 /* Scene 5's one line of invitation, under the heading. */
 .arp-gx-invite {
     margin: 18px 0 0;
@@ -1804,15 +1796,6 @@ a.arp-cf-card:hover {
 /* The row being read is the selected state: Saffron, as the claim it reads. */
 .arp-gx-reads li[data-on="true"] em {
     color: var(--color-accent);
-}
-
-.arp-gx-foot {
-    margin: 8px 0 0;
-    padding-top: 8px;
-    border-top: 1px solid var(--color-rule);
-    font-family: var(--font-mono);
-    font-size: var(--text-label);
-    color: var(--color-steel);
 }
 
 /* ---- scene 3's cards -------------------------------------------------------- */

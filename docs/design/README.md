@@ -2,7 +2,7 @@
 
 One folder per thing designed. Every reference page is a self-contained HTML file to open in a
 browser; everything marked `sample` in one must never ship — with one exception, the landing's
-sample, shown and marked « Sample » while the chain has nothing (ADR `0152`). Marked `sample` is
+sample, shown while the chain has nothing (ADR `0152`; unmarked since 2026-11-10). Marked `sample` is
 not the same as invented: `landing-galaxy/`'s sample agent ids are real agents on Base
 (`scripts/measure/reference-sample-ids.ts`), which is why the landing renames them.
 
@@ -17,7 +17,7 @@ not the same as invented: `landing-galaxy/`'s sample agent ids are real agents o
 | `cli-v0/`         | `packages/cli` week 1: hook, SQLite, `arp status`, as a patch and as plain files        | not applied — `docs/tasks/34`, and task 33 names the same package                                |
 | `readme-badges/`  | the README badge SVG generator, tested                                                  | deferred to the production release                                                               |
 | `nav-coin/`       | the nav: the mark in a coin at the bar's left, tabs centred, path line. `NAV-COIN.md`   | built, task 80, ADR `0151` (replaces ADR `0057` §3's centred mark)                               |
-| `landing-galaxy/` | the landing as one camera through a galaxy, six scenes. `LANDING-GALAXY.md` + reference | built, task 81, ADR `0152`; its sample shows only while the chain has nothing, marked « Sample » |
+| `landing-galaxy/` | the landing as one camera through a galaxy, six scenes. `LANDING-GALAXY.md` + reference | built, task 81, ADR `0152`; its sample shows only while the chain has nothing, unmarked since 2026-11-10 |
 
 `claim-field/*/` and `cli-v0/` were built against `feat/agent-panel-tabs` at `b5682d9`, before
 `app/` became `apps/web/`: their patches do not apply to the current tree as they are.

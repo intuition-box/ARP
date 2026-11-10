@@ -11,7 +11,7 @@ import {Landing} from "./Landing";
  *
  * - **The copy is the design file's**, to the word, with no kicker above a heading and no lede
  *   under the hero (the user removed both).
- * - **Real data, or the sample said to be one** (the user, 2026-11-09). The reference's sample
+ * - **Real data, or the sample** (the user, 2026-11-09; unlabelled since 2026-11-10). The reference's sample
  *   agent ids (`8453:3107`…) are real agents on Base and never reach the app; the landing's sample
  *   names `agent 1` to `agent 5`, and only while the chain answers with nothing.
  * - **ARP's own test identities are left out**, as on every other page.
@@ -166,7 +166,7 @@ describe("Landing", () => {
         );
         const headings = [...container.querySelectorAll("h2")].map((h) => h.textContent);
         expect(headings).toEqual([
-            "An agent writes down what it used. With its identity, into words every agent shares.",
+            "An agent writes down what it used. With its own ERC-8004 identity.",
             "The next agent knows before it chooses. Useful or not, paid or free, working or not, and what for.",
             "Plug in and participate. Your agent discovers what others already use, and adds what it uses.",
             "No grade. No stars.",
@@ -213,28 +213,25 @@ describe("Landing", () => {
         expect(document.body.textContent).not.toContain("The usual way");
     });
 
-    it("shows the sample, said to be one, when the chain answers with nothing", async () => {
+    it("shows the sample, unlabelled, when the chain answers with nothing", async () => {
         // Scene 1 builds its line only while it is on screen; reduced motion shows its end state.
         reduceMotion(true);
         // The user, 2026-11-09: on testnet every real line is ARP's own hidden test, so the
-        // landing falls back to the reference's sample, and every panel showing it says so.
+        // landing falls back to the reference's sample. The user removed every « Sample » mark
+        // on 2026-11-10, so no panel says it.
         const {container} = renderWithProviders(<Landing />);
-        expect(await screen.findByText("Lines · testnet · sample")).toBeTruthy();
+        expect(await screen.findByText("Lines · testnet")).toBeTruthy();
         const written = scene(container, 1);
         await waitFor(() =>
             expect(written.querySelector(".arp-gx-sentence")?.textContent).toBe(
                 "hyperframes used by agent 1 in context of video has outcome worked",
             ),
         );
-        expect(within(written).getByText("A line, word by word · sample")).toBeTruthy();
-        expect(written.textContent).toContain("Sample.");
+        expect(within(written).getByText("A line, word by word")).toBeTruthy();
         const reads = scene(container, 2);
-        expect(
-            within(reads).getByText("What your agent reads · hyperframes · sample"),
-        ).toBeTruthy();
+        expect(within(reads).getByText("What your agent reads · hyperframes")).toBeTruthy();
         expect(reads.querySelectorAll(".arp-gx-reads li")).toHaveLength(4);
-        expect(reads.textContent).toContain("Sample.");
-        expect(scene(container, 5).textContent).toContain("Lit stars: sample.");
+        expect(container.textContent?.toLowerCase()).not.toContain("sample");
         expect(screen.queryByText("No activity yet.")).toBeNull();
         // The reference's sample ids are real agents on Base: none of them is named here.
         expect(container.textContent).not.toMatch(/\b(8453|13579):\d+/);
@@ -299,9 +296,7 @@ describe("Landing", () => {
         vi.mocked(hiddenAtomIds).mockResolvedValue(new Set([AGENT_ID]));
         const {container} = renderWithProviders(<Landing />);
         // Its only declarer is hidden, so the chain has nothing to show: the sample, never the test.
-        expect(
-            await within(scene(container, 1)).findByText("A line, word by word · sample"),
-        ).toBeTruthy();
+        await waitFor(() => expect(scene(container, 1).textContent).toContain("agent 1"));
         expect(container.textContent).not.toContain("13579:812");
         vi.mocked(hiddenAtomIds).mockResolvedValue(new Set());
     });
@@ -312,7 +307,6 @@ describe("Landing", () => {
         withRealLine();
         const {container} = renderWithProviders(<Landing />);
         await waitFor(() => expect(scene(container, 1).textContent).toContain("13579:812"));
-        expect(scene(container, 5).textContent).not.toContain("sample");
         const text = container.textContent ?? "";
         for (const sample of [
             "8453:3107",
@@ -320,7 +314,6 @@ describe("Landing", () => {
             "8453:44512",
             "hyperframes",
             "marketing",
-            "Sample",
             "paid service",
         ]) {
             expect(text, `sample data on the page: ${sample}`).not.toContain(sample);
