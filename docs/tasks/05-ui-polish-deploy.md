@@ -1,5 +1,7 @@
 # Task 05 — UI Polish and Deploy
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** excluded. The Vercel deploy and the module pages were replaced: the site is self-hosted (task 74, `apps/web/DEPLOY.md`).
+
 ## Objective
 
 Complete the UI with the module detail page and registration flow, polish all interactions, and deploy to Vercel under a custom domain.

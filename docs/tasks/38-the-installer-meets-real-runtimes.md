@@ -17,6 +17,8 @@ before anything is published.
 **Rules:** `code.md`, `security.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier` per part.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** closed at part A (Claude Code). Desktop on macOS and Windows and a real install from GitHub become one task, the tester round, with task 70; not yet written.
+
 ---
 
 ## 1. Why

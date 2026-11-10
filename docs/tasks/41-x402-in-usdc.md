@@ -9,6 +9,8 @@ after" (2026-11-09) — Fizzl's x402 Doctor, what it publishes, and four ways it
 **Rules:** `code.md`, `security.md`, `portability.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** excluded to the mainnet port (`docs/27`, ADR `0102`).
+
 ---
 
 ## 1. Why

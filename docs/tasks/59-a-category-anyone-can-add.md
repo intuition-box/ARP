@@ -5,6 +5,8 @@
 **Rules:** `code.md`, `portability.md`, `security.md` (the sponsor writes), `claims.md`, `workflow.md`.
 **Reviewers:** `intuition-integrator`, `ui-reviewer` if the web proposes, then `task-verifier`.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** done. The last 10 filings went through on 2026-11-09 (61 of 61, task 75), and tasks 73 and 75 carry the rest of the tree's growth.
+
 ---
 
 ## 1. Why

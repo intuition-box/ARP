@@ -35,6 +35,8 @@
 >    a branch the three new agents cannot — which is why the gate walks `1,2,3,4,5` and not `3,4,5`.
 >    Better than the spec, and recorded rather than silently substituted.
 > 2. **Step 3 is NOT done.** See the note at the end of the `Do` list.
+>
+> **Closed 2026-11-10 by task 103 (ADR `0172`):** closed, step 3 not taken up.
 
 ## The finding
 

@@ -1,5 +1,7 @@
 # Task 04 — UI Core
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** excluded. Base Sepolia and the `ModuleRegistry` list are gone since the pivot (ADRs `0002`, `0055`); the UI was rebuilt since.
+
 ## Objective
 
 Build the foundational UI: design system tokens, layout shell, wallet connection, and the module list page reading live data from Base Sepolia.

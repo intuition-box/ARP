@@ -20,6 +20,8 @@ Planned after task 40, which holds the rule in a service first.
 `workflow.md`.
 **Reviewers:** `contract-reviewer`, then `task-verifier`.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** done. `task-verifier` PASS, post-mortem `.claude/learning/31-the-receipt-enforcer.md`; not deployed. This status line was stale.
+
 ---
 
 ## 1. Why

@@ -5,6 +5,8 @@
 **Rules:** `code.md`, `portability.md`, `security.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `intuition-integrator` where an item touches a graph read; `task-verifier` once, at the end of the checklist.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** closed at what is built. A real install from GitHub goes to the tester round, with task 38.
+
 ## The goal
 
 One plugin. An agent searches, checks before it installs or pays, notes what failed on its machine, can share that as a public line on testnet 13579, and the next agent's search reads it. All of it on one machine, with every service running locally.

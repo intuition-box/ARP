@@ -5,6 +5,8 @@
 **Rules:** `workflow.md`, `claims.md`.
 **Reviewers:** `task-verifier`.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** closed at parts 1 and 2. The landing's deposit scenes are excluded: the galaxy landing (task 81) replaced them.
+
 ## Scope of this part
 
 The user approved doing steps 1 and 2 first, then reading before any commit.

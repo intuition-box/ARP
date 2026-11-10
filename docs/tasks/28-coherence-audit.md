@@ -5,6 +5,8 @@
 >
 > Out of scope at the user's request (2026-10-20): `vercel.json`; the tool pages and `/hire`, which are
 > **unfinished, not incoherent**; mint vs "ARP mints nothing", which the user is handling separately.
+>
+> **Closed 2026-11-10 by task 103 (ADR `0172`):** closed at the first batch and the items fixed since. Item 2, the mint question, is ADR `0173`. The punch list's open items are not carried: `FUTURE.md` points here, and an item still true comes back as a task of its own.
 
 ## Objective
 

@@ -4,6 +4,8 @@
 **ADR:** `0154` (proposed).
 **Rules:** `code.md`, `ui.md` (copy), `portability.md`, `workflow.md`, `claims.md`, `security.md` (part B).
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** folded into task 102 (be read where agents already are).
+
 ## Why
 
 Someone asks Gemini or ChatGPT for a task, the assistant searches the web, and ARP should be among what it reads, so it can name a skill and tell the person how to add it (the user, 2026-11-09). Today it cannot: the app is rendered by JavaScript, the crawlers behind those assistants do not run it, and what the site gives a crawler is a list of the app's routes and the docs, not the data (ADR `0154`, Context).

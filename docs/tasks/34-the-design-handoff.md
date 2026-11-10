@@ -5,6 +5,8 @@
 **Reviewers:** `ui-reviewer` (phases 1, 2, 4), then `task-verifier` per phase.
 **Source:** `docs/design/` — its `README.md` says what each folder is and what is already built.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** excluded. The handoff was replaced page by page by tasks 57, 80, 81, 95 and 96.
+
 ---
 
 ## 1. What the handoff holds, against what the repo already has

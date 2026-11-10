@@ -601,3 +601,16 @@ Task 97 put `needs` and `with` on a sponsored line. Three things it left, each a
 3. **Names the skill's other files say.** The guard reads SKILL.md only, on both sides, because the
    service can verify one file with one tree read and one raw read. A program named only in a script
    the skill ships is left off the line, a false negative and never a leak.
+
+## Left by the sweep (task 103, ADR `0172`, 2026-11-10)
+
+Closed or excluded tasks that leave something a later task may want. Each task file keeps the detail.
+
+- **Task 28's punch list.** The open items stay in `docs/tasks/28-coherence-audit.md`. Many are moot
+  since the pages they name were deleted or rebuilt; an item still true comes back as a task of its own.
+- **Task 61, deliverable B: figures per version** of a skill. Waits on someone asking for it, and on
+  deciding what a version is beyond the pin.
+- **Task 68, phase 5: a shorter `arp_pulse` answer** by default. It was to follow task 67's results,
+  which do not exist yet.
+- **Task 67, the demonstration.** Its list is frozen and its runs were never made; the user decides
+  whether to finish it or wait until a demo is needed.

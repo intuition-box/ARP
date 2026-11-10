@@ -6,6 +6,8 @@
 **Reviewers:** `ui-reviewer`, `intuition-integrator` (the cohort query), then `task-verifier`.
 **Required skills:** `intuition` for the query change.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** done. Merged in PR #31, `task-verifier` PASS on round 2, post-mortem `.claude/learning/42-the-journeys.md`; this status line was stale.
+
 ---
 
 ## 1. Why

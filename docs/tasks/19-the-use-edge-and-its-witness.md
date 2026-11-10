@@ -2,6 +2,8 @@
 
 > **Status: STEP 1 DONE, STEPS 2–5 OPEN** (specified 2026-10-16). Implements `docs/14_THE_WITNESS_PROBLEM.md`.
 > **Step 1 is a prerequisite for every other step and for tasks 16 and 17.**
+>
+> **Closed 2026-11-10 by task 103 (ADR `0172`):** excluded. Steps 2 to 5 are replaced by the evidence ladder, `docs/32`: the hook's record and the receipts are the observed tier.
 
 ## Objective
 

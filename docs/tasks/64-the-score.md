@@ -5,6 +5,8 @@
 **Depends on:** task 63.
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** excluded. Stopped by the user on 2026-11-05; the score shipped through `arp_pulse` (ADRs `0138`, `0143`).
+
 ---
 
 ## 1. The score

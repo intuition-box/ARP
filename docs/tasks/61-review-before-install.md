@@ -4,6 +4,8 @@
 deferred** by the user (« pas encore »), and §5 point 4 (what a version is beyond the pin) still
 open.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** closed at A, C, D and E. Deliverable B (per-version figures) is excluded until someone asks for it; `FUTURE.md`.
+
 - **A** — `data/catalogue/skill-pins-13579.json`, 31 repositories pinned at the catalogue's
   `recordedAt` (`scripts/build/build-skill-pins.ts`). The content server reads the listing and the
   bytes at the pin, refuses an unpinned repository, and the receipt names the commit (domain

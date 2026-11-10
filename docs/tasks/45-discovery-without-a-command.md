@@ -7,6 +7,8 @@ for the free read path (see 45e).
 **Rules:** `code.md`, `security.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** folded into task 102 (be read where agents already are), after §45c. Its dependence on task 41 is moot.
+
 ---
 
 ## 1. Why

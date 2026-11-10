@@ -4,6 +4,8 @@
 **Asked by:** the user, 2026-11-05: « go », « je veux surtout avoir un produit fonctionnel sans fioriture qui marche », « sans résidu inutile », no publishing for now.
 **Rules:** `code.md`, `workflow.md`, `claims.md`, `portability.md`.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** closed at phases 1 to 4. Phase 6 (send chosen lines) was done by tasks 70 and 71 (a line through the sponsor, `arp line`); phase 5 (a shorter `arp_pulse` answer) goes to `FUTURE.md`.
+
 ---
 
 ## 1. The loop

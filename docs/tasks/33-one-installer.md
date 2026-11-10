@@ -9,6 +9,8 @@ verified on its own, and the parts that publish are confirmed by the user every 
 **Research:** `docs/23_INSTALLING_ARP.md`. Every third-party fact below comes from there or from the
 sources listed in §6.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** closed at 33a, 33b, 33c, 33d for Claude Code and Gemini, and 33i's first half (capture, `learning/27`). 33h (registries and listings) is folded into task 102. 33i's second half (the other runtimes' payloads) needs real captures and goes to the tester round, with task 38. 33f (release, trusted publishing) comes after the tester round (testers before any official release). 33e (the node's install) and 33g (docs per runtime) are excluded: the node waits for the hire loop, and the docs were rewritten by tasks 72 and 74.
+
 ---
 
 ## 1. Why

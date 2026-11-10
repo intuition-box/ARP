@@ -4,6 +4,8 @@
 **ADR:** none needed unless the landing's scene order changes (a redesign is the user's decision, `docs/30`).
 **Rules:** `code.md`, `ui.md`, `workflow.md`, `claims.md`.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** folded into task 98 (the check before install runs by itself on `skills add`).
+
 ## Why
 
 A network is empty on its first day, so the first person who installs ARP has to get something from it alone. ARP already gives it: `arp_pulse` reads a skill's own files and reports what they mention, a login, key names, paid words, the commands it runs, the hosts it talks to (`apps/mcp/src/handlers/pulse.ts`), with no line written by anyone. `docs/30` allows saying so, "as matches in the file, not requirements".

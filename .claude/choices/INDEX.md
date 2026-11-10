@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-168 decisions. Newest last. `choices/README.md` says when to write one.
+170 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -211,3 +211,5 @@ Read these before relying on them.
 | [0169](0169-the-model-says-whether-a-skill-worked-at-the-end-of-a-turn.md) | 2026-11-10 | Accepted | The model says whether a skill worked, at the end of a turn, once per skill |
 | [0170](0170-outside-signals-are-dated-sourced-facts.md) | 2026-11-10 | Accepted | Outside signals are dated, sourced facts, never ARP's figure and never in an order |
 | [0171](0171-feeds-a-registry-reads-beside-its-listing.md) | 2026-11-10 | Accepted | Feeds a registry reads beside its listing, and listings prepared, not sent |
+| [0172](0172-the-sweep.md) | 2026-11-10 | Accepted | The sweep: every open task is closed, excluded, or folded into a live one |
+| [0173](0173-arp-mints-when-it-has-to.md) | 2026-11-10 (the user's decision of 2026-11-03, recorded) | Accepted | ARP mints into the ERC-8004 registry when it has to |

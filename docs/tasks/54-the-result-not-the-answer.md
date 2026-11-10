@@ -6,6 +6,8 @@
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
 
+**Closed 2026-11-10 by task 103 (ADR `0172`):** folded into task 100 (the model judges at task end whether a skill did the job), the same question. Its harness on `feat/54-result-eval` stays available.
+
 ---
 
 ## 1. Why

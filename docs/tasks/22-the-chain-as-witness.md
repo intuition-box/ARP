@@ -49,6 +49,8 @@
 > this project produces today; it belongs on the surface, which is a separate task and not this one.
 > The idea was right about the evidence class and wrong about the reach, and the reach is now a
 > committed number instead of an estimate.
+>
+> **Closed 2026-11-10 by task 103 (ADR `0172`):** excluded. Steps 2 and 3 were judged not justified at the 2026-10-27 gate; step 4 is in use.
 
 ## The idea, and the correction that improves it
 

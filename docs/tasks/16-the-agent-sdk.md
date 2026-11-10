@@ -43,6 +43,8 @@
 > of the execution and nothing else, so a fee counts against the cap like any other spend. All five
 > are corrected, and a test now asserts the delegated path puts the amount where the enforcer reads
 > it, so the outer `value: 0n` cannot slip past the cap.
+>
+> **Closed 2026-11-10 by task 103 (ADR `0172`):** closed at half 1. Half 2 went to task 25, whose objective ADR `0060` superseded.
 
 ## Objective
 
