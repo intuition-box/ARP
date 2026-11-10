@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-105 entries, one per completed task. Written by `task-verifier` on a pass.
+106 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -110,4 +110,5 @@
 | [97](97-live-hook-defects.md) | `docs/tasks/108-live-hook-defects.md` | PASS (second pass; the first failed on one stale site, `docs/22:107`) | Two defects the live test found in the hook |
 | [98](98-ask-during-the-task.md) | `docs/tasks/109-ask-during-the-task.md` | PASS | Ask whether a skill worked during the task, not at Stop |
 | [99](99-two-defects-from-108.md) | `docs/tasks/110-two-defects-from-108.md` | PASS | Two defects task 108's live run found |
+| [100](100-the-hol-adapter.md) | `docs/tasks/112-the-hol-adapter.md` (A and B only; C, D, E wait for the user's return) | PASS (second pass; first failed on two one-line items) | The HOL adapter, deliverables A and B |
 | [103](103-every-install-route.md) | `docs/tasks/114-every-install-route.md` | PASS | Every way to install ARP, listed in one place |
