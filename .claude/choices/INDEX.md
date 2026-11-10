@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-172 decisions. Newest last. `choices/README.md` says when to write one.
+173 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -39,6 +39,7 @@ Read these before relying on them.
 - **0155** (Accepted. Amended by ADR `0161` (2026-11-10): ARP's hosted read-only MCP endpoint receives the words of a caller who chooses it, and keeps none; point 3 holds for everything a person installs.) — A word names a node through a local alias table; the words never leave the machine
 - **0164** (Accepted (the user saw both versions, 2026-11-10; on `feat/95-agent-lines`)) — The agent page leads with lines, and shows no payment yet
 - **0169** (Accepted. **Amended by ADR `0179`** (2026-11-10): asked when the skill loads, read at `Stop`, never continuing the turn; points 1, 2, the loop guard and the token cost below are superseded there.) — The model says whether a skill worked, at the end of a turn, once per skill
+- **0185** (Accepted (the decision). Not built: the code waits for the user's return.) — A skill's version is the digest of its directory, and a line will carry it
 
 ## All
 
@@ -216,3 +217,4 @@ Read these before relying on them.
 | [0173](0173-arp-mints-when-it-has-to.md) | 2026-11-10 (the user's decision of 2026-11-03, recorded) | Accepted | ARP mints into the ERC-8004 registry when it has to |
 | [0175](0175-cli-sponsor-default-and-registry-namespace.md) | 2026-11-10 | Accepted | The CLI's sponsor default is a committed build setting; the registry name is the user's namespace |
 | [0179](0179-ask-whether-a-skill-worked-during-the-task.md) | 2026-11-10 | Accepted | Ask whether a skill worked during the task, not at Stop |
+| [0185](0185-a-skill-version-is-its-directory-digest.md) | 2026-11-10 | Accepted (the decision). Not built: the code waits for the user's return. | A skill's version is the digest of its directory, and a line will carry it |

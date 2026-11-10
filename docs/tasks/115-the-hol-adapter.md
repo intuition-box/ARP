@@ -40,7 +40,7 @@ Task 86's deliverable 1, reduced to a skill (no "need in words" form):
 - Nothing about the machine leaves it (`feedback_never_collect_user_text`).
 - Tests: a fixture skill whose lines need a program absent from a fake `PATH`, and one present.
 
-### C. A version on the line (after the user's return, ADR first)
+### C. A version on the line (decided 2026-11-10, ADR `0185`; code after the user's return)
 
 `FUTURE.md`, "One score per version of a skill": the directory digest the content receipt computes,
 carried by the line, a score per digest. Needs the user's decision on the new level.

@@ -648,6 +648,8 @@ means nothing before testers write lines.
 
 ## One score per version of a skill
 
+**Decided 2026-11-10, ADR `0185`:** the version is the directory digest. The code waits for the user's return (task 115, C).
+
 **Asked 2026-11-10**, while writing the HOL adapter sheet (`outreach/drafts/hol-arp-usage-adapter-2026-11-10.md`
 in the business-dev repository): _« il faudrait réfléchir au versioning aussi »_. This is task 61's
 deliverable B (excluded by task 103 until someone asks), with an answer to what a version is.
