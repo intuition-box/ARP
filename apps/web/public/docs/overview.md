@@ -31,7 +31,7 @@ flowchart TB
     subgraph machine["Your machine"]
         runtime["Your agent, with ARP installed"]
         pulse["arp_pulse: read-only, holds no key"]
-        hook["The hook: runs after each tool call; reads GitHub only before a skills install"]
+        hook["The hook: runs after each tool call; reads GitHub before a skills install, the index when a skill fails"]
         memory[("Local memory")]
         share["arp share: off by default"]
     end

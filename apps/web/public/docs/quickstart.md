@@ -31,7 +31,7 @@ claude plugin install arp@arp
 What you get:
 
 - The MCP server with three read tools: `arp_pulse` (search and check), `arp_tool_reputation` (who declared using a tool) and `arp_agent_endpoints` (how to reach an agent, and whether it answers).
-- The hook, which runs after each tool call and keeps a local memory of what failed on this machine. Before your agent runs `npx skills add`, it reads that skill's files from GitHub and shows you what they contain; otherwise it uses no network. See [Local memory and sharing](/docs/local-memory).
+- The hook, which runs after each tool call and keeps a local memory of what failed on this machine. Before your agent runs `npx skills add`, it reads that skill's files from GitHub and shows you what they contain. When a skill fails, it shows your agent what others wrote about that skill, read from the index. See [Local memory and sharing](/docs/local-memory).
 - Five commands that you type yourself; the model cannot invoke them:
 
 ```text

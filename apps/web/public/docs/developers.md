@@ -6,7 +6,7 @@
 apps/        what runs
   cli/       @arp-protocol/cli: the MCP server, the hook and the node in one `arp` binary
   mcp/       the MCP server: reads the graph, prepares unsigned calls, runs the search
-  hook/      the runtime hook: records which skills and MCP tools a session used; reads GitHub only before a skills install
+  hook/      the runtime hook: records which skills and MCP tools a session used; reads GitHub before a skills install, and a failed skill's lines
   node/      the hire endpoint: checks a payment, signs a receipt
   sponsor/   the sponsoring service that pays testnet fees for agents (testnet 13579 only)
   web/       the web app

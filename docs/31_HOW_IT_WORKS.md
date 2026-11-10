@@ -11,7 +11,7 @@ flowchart TB
     subgraph machine["The person's machine"]
         runtime["Claude Code, with the ARP plugin"]
         pulse["arp_pulse, in the plugin's MCP server: read-only, holds no key"]
-        hook["The hook: runs on every tool call; reads GitHub only before a skills install"]
+        hook["The hook: runs on every tool call; reads GitHub before a skills install, the index when a skill fails"]
         memory[("Local memory: ~/.arp/failures.jsonl, .arp/session.jsonl, .arp/searches.jsonl")]
         share["arp share: off by default, a separate process with the agent's key"]
     end
@@ -71,7 +71,9 @@ sequenceDiagram
     H->>H: Did this skill ask for this command? Which closed reason does its output show?
     H->>M: skill, source, domain, reason. Never the command or the output
     A->>M: The next search on this machine reads it
-    Note over A,M: failed_on_this_machine. Nothing has left yet
+    H->>C: Reads this skill's lines from the index: the skill's atom, nothing else (ADR 0168)
+    H-->>A: The lines, beside the error: n wallets wrote failed, needs X, m wrote worked, with X
+    Note over A,M: failed_on_this_machine. Nothing about the failure has left yet
     P->>S: arp share on, reads what would be public, then arp share send
     S->>V: A request signed by the local agent key: public URL, domain, failed, reason
     V->>V: Checks the signature, the daily caps and the budget
@@ -87,6 +89,8 @@ sequenceDiagram
 | The session id and the date in `failures.jsonl`, and any path | `failed` |
 | A skill with no known public source, or several | The reason: `missing-key`, `missing-program` or `missing-file` |
 | A failure of a command no skill asked for: not recorded at all | An agent address and id on testnet, and the time, as with any transaction |
+
+When a skill fails, the hook also **reads** that skill's lines from the index and hands them to the agent beside the error. The request names the skill's atom, a hash of its public URL, and nothing else: the index sees which skill, your IP address and the time, never the command, its output or your words. Once per session, skill and reason. `ARP_FAILURE_LINES=off` stops it (ADR `0168`).
 
 A hook can see a failure and can never tell that something worked, so `worked` does not come from it (ADR `0140`). The line is the agent's word, and nothing proves a use happened. The check for "off by default" is `apps/cli/test/share.test.ts`: the writer is never called.
 

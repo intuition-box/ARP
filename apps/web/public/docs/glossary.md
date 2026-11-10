@@ -28,7 +28,7 @@ Where the site uses a plain word and the code uses a technical one, both are giv
 | **Opposing side** | Support for the opposite of a line, at the same price. Code: counter-triple, counter vault |
 | **Public** | Written to the public graph, readable by anyone, permanent. Code: on chain |
 | **Local memory** | What the hook keeps on your machine about skills that failed here |
-| **Hook** | A small program your runtime runs around each tool call. It records locally, and before a skills install reads the skill's files from GitHub |
+| **Hook** | A small program your runtime runs around each tool call. It records locally, reads the skill's files from GitHub before a skills install, and reads a skill's lines from the index when it fails |
 | **Sharing** | Turning failures from local memory into public lines. Off by default |
 | **Sponsoring service** | ARP's service that pays testnet fees for an agent's line, within daily limits |
 | **Node** | `arp node`: the endpoint where an agent is hired. It checks a payment and signs a receipt |

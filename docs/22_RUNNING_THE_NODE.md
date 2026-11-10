@@ -16,7 +16,7 @@ share a trust surface, so each is described on its own and you install only the 
 | launched by    | your MCP client, over stdio                           | you, as a server                                     | your runtime, on every tool call |
 | reachable from | your machine (`127.0.0.1`)                            | `127.0.0.1`, and a tunnel you rent is the way in     | nowhere; it reads stdin          |
 | key            | `~/.arp/receipt-key`, generated, signs content receipts | `~/.arp/node.key`, generated, or `AGENT_PRIVATE_KEY` | none                             |
-| network        | the graph, the RPC, GitHub — counted below            | the RPC; the tunnel binary, if it starts one         | none                             |
+| network        | the graph, the RPC, GitHub — counted below            | the RPC; the tunnel binary, if it starts one         | GitHub before a skills install; the graph when a skill fails — below |
 
 Sections up to "If you want to verify" are about the **MCP server**. The node and the hook have a
 section each after it.
@@ -170,6 +170,8 @@ the signed addresses   `arp_agent_endpoints` asks `/` of an agent's three newest
                        somebody else's servers, through the same guard as any probe. Your words stay here,
                        unless you chose ARP's hosted endpoint instead of this server (ADR 0161)
 ```
+
+The hook, a separate program, reaches two of these too: GitHub before a skills install, with the repository and skill names the command holds (ADR `0167`), and the Intuition graph once when a skill's command fails, with the skill's atom and nothing of yours (ADR `0168`). Its section below has both.
 
 **`arp_pulse` runs somebody else's package, and you should decide about that.** Called with a `query`,
 it runs `npx --yes skills@1.7.6 find <query>` with a short fetch limit, from its private directory rather than your project, and without a project's `node_modules/.bin` on `PATH`: the pinned npm package executes on your machine, as your
@@ -330,6 +332,8 @@ ARP_ACCEPTED_SIGNERS   comma-separated. Which receipt signers THIS server's read
 ARP_CHAIN_ID           which chain's catalogue apps/mcp/src/session-log.ts reads
 ARP_PROJECT_DIR        set by the launch through npx, which starts from /: the project that relative paths below mean. The Claude Code plugin does not set it, as it starts in the project
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
+ARP_FAILURE_LINES      off: the hook reads nothing from the graph when a skill fails (ADR 0168). It also
+                       reads INTUITION_GRAPHQL_URL, and otherwise testnet 13579's graph
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
 ARP_PULSE_SEARCH       off: arp_pulse runs no package, and takes search_output only
 ARP_SKILLS_INDEX_URL   off: arp_find_tools searches ARP's catalogue alone and sends your words nowhere.
@@ -654,7 +658,7 @@ uninstall` takes it out again. It leaves an MCP server named `arp` that it did n
     {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "async": true}
   ]}],
   "PostToolUseFailure": [{"matcher": "*", "hooks": [
-    {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "async": true}
+    {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "timeout": 10}
   ]}],
   "PreToolUse": [{"matcher": "Bash", "hooks": [
     {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js",
@@ -665,7 +669,9 @@ uninstall` takes it out again. It leaves an MCP server named `arp` that it did n
 
 Both `PostToolUse` events, because a failed call reaches only `PostToolUseFailure`. `PreToolUse` is
 waited on, not `async`, because only a waited-on hook can answer before the command runs; its `if`
-rule keeps every other `Bash` call from starting it at all. Grok Build reads this same
+rule keeps every other `Bash` call from starting it at all. `PostToolUseFailure` is waited on
+too, since task 99, so the hook can answer a skill's failure (below); any other failed call it
+records and leaves at once. Grok Build reads this same
 file and sends camelCase keys, which the hook also reads (`apps/hook/src/payload.ts`).
 
 It fires on every tool call and appends one line to `.arp/session.jsonl` (or `ARP_SESSION_LOG`)
@@ -702,9 +708,24 @@ raw.githubusercontent.com   the SKILL.md files that name the skill (others too w
 GitHub, which the install itself is about to clone from. Not your words, not your files, and
 nothing else of the command. `GITHUB_TOKEN`, or `GH_TOKEN` when it is unset, is sent to
 `api.github.com` only. A GitLab, `git@`, local or direct-download source is named and not read, so
-it makes no request. Every other command, and every other event, makes none.
+it makes no request. Every other command makes none, and so does every other event but one,
+below.
 
-The bundle has three request sites, all to those two hosts, and a command lists them:
+**After a skill fails it reads the Intuition graph** (task 99, ADR `0168`). On
+`PostToolUseFailure`, when a command a skill asked for fails for a closed reason (`missing-program`,
+`missing-key`, `missing-file`) and the hook writes that failure to `~/.arp/failures.jsonl`, it then
+reads that skill's lines from the Intuition graph of testnet 13579 (`INTUITION_GRAPHQL_URL`
+overrides it) and hands them to the agent beside the error: how many wallets wrote `failed` and what
+they named as missing, how many wrote `worked` and with what. It sends the skill's atom URI, a hash
+of its public GitHub address, and the four words `has outcome`, `because`, `needs`, `with`: never the
+command, its output, a path, the session or your words (`apps/hook/test/failure-answer.test.ts`
+checks every request body). The graph sees your IP address, the time, and which skill that is, and
+since the read happens only on a failure, it can infer that this skill just failed here, though
+never why. At most once per session, skill and reason, within three seconds, and silent when it
+fails. A skill with no `owner/repo` source is not read. `ARP_FAILURE_LINES=off` stops it.
+
+
+The bundle has three request sites to those two hosts, and a command lists them:
 
 ```
 cd apps/hook && bun run build && grep -oE "(get|fetch)\(\`https://[a-z0-9.-]+" dist/arp-hook.js | sort | uniq -c
@@ -713,5 +734,7 @@ cd apps/hook && bun run build && grep -oE "(get|fetch)\(\`https://[a-z0-9.-]+" d
 prints `2 get(\`https://api.github.com` and `1 get(\`https://raw.githubusercontent.com` on
 2026-11-10. `get` is `githubPulseSource`'s name for `fetch` (`packages/protocol/src/pulse.ts`),
 which is why the check written here before task 98, `grep -cE "fetch\(|createPublicClient\("`,
-still prints `0` and no longer proves anything. A payload it cannot parse exits `0` and writes
+no longer proves anything: it prints `1` on 2026-11-10, and that one hit is the graph client's
+`globalThis.fetch`, the fourth request site, which only the read after a skill's failure reaches and
+whose URL is the graph's, not a literal. A payload it cannot parse exits `0` and writes
 nothing, so a hook never blocks the tool call it is watching.
