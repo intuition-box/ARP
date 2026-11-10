@@ -11,7 +11,8 @@ declaration is built from later.
 It runs after every tool call (`PostToolUse` and `PostToolUseFailure`) and appends one line to
 `.arp/session.jsonl` for each skill or MCP call.
 
-The recording makes no network call. It writes locally and nothing else.
+The recording makes no network call. It writes locally and nothing else. Two answers read the
+network, each on its own event:
 
 **Before a skills install it reads GitHub.** On `PreToolUse`, when the agent is about to run
 `npx skills add` (or `bunx`, `pnpm dlx`, `yarn dlx`, `npm exec`, any version of `skills`), it reads
@@ -20,6 +21,14 @@ what their files contain: programs, keys, scripts, fetch-and-run lines, domains,
 never a verdict, and it blocks nothing (`src/pre-install.ts`, ADR `0167`). What reaches GitHub is
 the repository and skill names already in the command. `GITHUB_TOKEN` or `GH_TOKEN` raises GitHub's
 limit of 60 requests an hour when set. A source that is not on GitHub is named and not read.
+
+**After a skill fails it reads the Intuition graph.** On `PostToolUseFailure`, when a command a
+skill asked for fails because a program, a key or a file is missing, it reads that skill's lines
+from the Intuition graph (testnet 13579) and hands them to the agent beside the error, such as
+`2 wallets wrote failed · because missing-program (2) · needs ffmpeg (2)`. It sends the skill's
+atom, a hash of its public address, which tells the index that skill failed but not why, and never
+the command, its output or your words. Once per session, skill and reason, within three seconds,
+silent when it fails. `ARP_FAILURE_LINES=off` stops it (ADR `0168`).
 
 ## Install
 

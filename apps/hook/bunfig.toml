@@ -1,0 +1,3 @@
+[test]
+# No test reaches the real index: the hook's live read is off unless a test turns it on (ADR `0168`).
+preload = ["./test/setup.ts"]

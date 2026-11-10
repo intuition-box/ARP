@@ -9,10 +9,12 @@
  * ```
  * PreToolUse          pre-install.ts   a skills install, read before it runs (task 98)
  * PostToolUse         the recording    below
- * PostToolUseFailure  the recording    below
+ * PostToolUseFailure  failure-answer.ts  a skill's failure, recorded then answered with its lines (task 99);
+ *                                       any other call is handed to the recording
  * ```
  *
- * A route returns its stdout, or `null` for none, and the hook exits 0 either way. Adding an event
+ * A route returns its stdout, or `null` for none, and the hook exits 0 either way; or `RECORD`, and
+ * the call goes on to the recording. Adding an event
  * is one line in `ROUTES` and one entry in `CLAUDE_HOOKS` (`apps/cli/src/install/edits.ts`), which
  * says how the runtime calls it: in the background or waited on, its timeout, its `if` filter.
  *
@@ -34,15 +36,18 @@
  *     ],
  *     "PostToolUseFailure": [
  *       {"matcher": "*", "hooks": [
- *         {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "async": true}
+ *         {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "timeout": 10}
  *       ]}
  *     ]
  *   }
  * }
  * ```
  *
- * `async` keeps the runtime from waiting on the hook. Grok Build reads this same file and sends a
- * camelCase payload; `payload.ts` reads both.
+ * `async` keeps the runtime from waiting on the hook. `PostToolUseFailure` is synchronous since task 99
+ * (ADR `0168`): when a skill's command failed for a closed reason, the hook reads that skill's lines
+ * from the index, within three seconds, and answers with them as `additionalContext`. Every other
+ * call exits as fast as before. Grok Build reads this same file and sends a camelCase payload;
+ * `payload.ts` reads both.
  *
  * The path is absolute because the hook runs in *your* project, not this one. Build the file once
  * with `cd apps/hook && bun run build`.
@@ -97,28 +102,34 @@ import { readMcpServers, serverUrlOf } from './mcp-config.ts';
 import { capture } from './capture.ts';
 import { eventOf, type PayloadFormat, type ToolCall, toolCallOf } from './payload.ts';
 import { preToolUse } from './pre-install.ts';
+import { postToolUseFailure, RECORD } from './failure-answer.ts';
 import { recordSearch, recordSkillFailure } from './skill-failure.ts';
 
-/** An event's answer: the text for stdout, or `null` for none. Never throws past `route`. */
-type Route = (payload: unknown) => Promise<string | null>;
+/**
+ * An event's answer: the text for stdout, or `null` for none. `RECORD` hands the call to the recording
+ * below, as if the event had no route. Never throws past `route`.
+ */
+type Route = (payload: unknown) => Promise<string | null | typeof RECORD>;
 
 /** One line per event that answers. An event not named here is recorded, below. */
 const ROUTES: Readonly<Record<string, Route>> = {
   PreToolUse: (payload) => preToolUse(payload),
+  PostToolUseFailure: (payload) => postToolUseFailure(payload),
 };
 
-/** Run a route and exit 0, whatever it did. A hook that fails must never stop the session. */
-async function route(handler: Route, payload: unknown): Promise<never> {
-  let out: string | null = null;
+/** Run a route and exit 0, whatever it did, unless it hands the call on. A hook that fails must never stop the session. */
+async function route(handler: Route, payload: unknown): Promise<void> {
+  let out: string | null | typeof RECORD = null;
   try {
     out = await handler(payload);
   } catch {
     out = null;
   }
+  if (out === RECORD) return;
   if (out === null) process.exit(0);
   // Exit once the text is flushed: a pipe written and then cut by `exit` can lose its tail.
   process.stdout.write(`${out}\n`, () => process.exit(0));
-  return new Promise<never>(() => undefined);
+  await new Promise<never>(() => undefined);
 }
 
 type Invocation = {

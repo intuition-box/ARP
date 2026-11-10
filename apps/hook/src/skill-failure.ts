@@ -300,14 +300,16 @@ export function appendFailure(line: FailureLine): boolean {
  * In the home directory and not the project's `.arp/`, because a key or a program missing here is
  * missing in the next project too. The line holds the reason and never the command or its output: at most
  * a program or variable name the skill's own SKILL.md already says (`needOf`).
+ *
+ * Returns the line when it was written now, so the hook can answer it (`failure-answer.ts`), else `null`.
  */
-export function recordSkillFailure(call: ToolCall, cwd: string): void {
+export function recordSkillFailure(call: ToolCall, cwd: string): FailureLine | null {
   const classified = classifyCall(call);
-  if (classified === null || classified.outcome === 'ok' || call.session === null) return;
+  if (classified === null || classified.outcome === 'ok' || call.session === null) return null;
   const command = call.input?.['command'];
-  if (typeof command !== 'string') return;
+  if (typeof command !== 'string') return null;
   const reason = failureReason(failureText(call));
-  if (reason === null) return;
+  if (reason === null) return null;
 
   try {
     const log = process.env['ARP_SESSION_LOG'] ?? join(cwd, '.arp', 'session.jsonl');
@@ -321,7 +323,7 @@ export function recordSkillFailure(call: ToolCall, cwd: string): void {
       const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync(call.transcript, 'utf8')) : '';
       const domain = search?.domain ?? contextOf(words, skill.name);
       const need = needOf(reason, failureText(call), markdown);
-      appendFailure({
+      const line: FailureLine = {
         at: new Date().toISOString(),
         session: call.session,
         skill: skill.name,
@@ -329,10 +331,11 @@ export function recordSkillFailure(call: ToolCall, cwd: string): void {
         ...(domain === null ? {} : { domain }),
         reason,
         ...(need === null ? {} : { need }),
-      });
-      return;
+      };
+      return appendFailure(line) ? line : null;
     }
   } catch {
     // A session must not fail because a record could not be kept.
   }
+  return null;
 }
