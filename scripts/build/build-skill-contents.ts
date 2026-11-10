@@ -1,4 +1,4 @@
-/** Turn the dated contents measurement into the file the skill page bundles (task 96).
+/** Turn the dated contents measurement into the file the skill page bundles (task 96; task 112 for keys and skipped).
  *
  *      bun run scripts/build/build-skill-contents.ts data/measurements/skill-contents-<stamp>.json
  *
@@ -9,6 +9,7 @@
  */
 import {readFileSync, writeFileSync} from "node:fs";
 
+import {beforeInstall} from "../../packages/protocol/src/before-install.ts";
 import type {SkillContents} from "../../packages/protocol/src/skill-contents.ts";
 
 const path = process.argv[2];
@@ -33,11 +34,13 @@ for (const row of measured.rows) {
         programs: c.programs,
         packages: c.packages,
         settings: c.settings,
+        keys: c.keys,
         scripts: c.scripts,
         fetchAndRun: c.fetchAndRun.map((m) => ({...m, text: cut(m.text)})),
         domains: c.domains,
         hidden: c.hidden.map((m) => ({...m, text: cut(m.text)})),
-        notRead: c.read.skipped.length,
+        // Only the text files skipped: a font or an image is nobody's question (task 112).
+        skipped: beforeInstall({...c, skipped: c.read.skipped}).notRead,
         cut: c.cut,
     };
 }

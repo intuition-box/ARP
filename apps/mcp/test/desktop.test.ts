@@ -186,7 +186,7 @@ group('the loop a new agent walks', () => {
     const skill = await getSkill(config, agent, ATOM);
     expect(skill).toMatchObject({ name: 'thumbs', text: '# A skill\n' });
     // Chat gets SKILL.md alone, and what it contains is read from that file.
-    expect(skill.contains).toContain('Fetches and runs code: none found');
+    expect(skill.contains).toContain('Runs on your machine: no scripts; fetches and runs no code');
 
     const done = await declareUsed(config, agent, ATOM);
     expect(done).toEqual({ skill: 'thumbs', created: true, sent: '0x03' });
@@ -315,8 +315,8 @@ group('the loop a new agent walks', () => {
       expect(pages[0]).toContain('2 files');
       // What the files contain is in the dialog the person reads, not only in what the agent gets.
       expect(pages[0]).toContain('What its files contain:');
-      expect(pages[0]).toContain('Scripts: scripts/thumb.py');
-      expect(skill.contains).toContain('Scripts: scripts/thumb.py');
+      expect(pages[0]).toContain('Runs on your machine: 1 script: scripts/thumb.py; fetches and runs no code');
+      expect(skill.contains).toContain('Runs on your machine: 1 script: scripts/thumb.py; fetches and runs no code');
       expect(pages[0]).toContain(`Install thumbs into ${join(skillsDir, 'thumbs')}`);
     });
 

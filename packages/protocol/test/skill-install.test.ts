@@ -123,6 +123,41 @@ describe("readSkillInstall", () => {
         expect(text).not.toMatch(/safe|suspicious|verdict:/i);
     });
 
+    it("reads the skill's other text files too, before an install, and never a font (task 112)", async () => {
+        const source = sourceOf({
+            "skills/video/SKILL.md": skillMd("video", "Render a video."),
+            "skills/video/scripts/bake.mjs":
+                '#!/usr/bin/env node\nconst {default: p} = await import("puppeteer-core");\nexecFileSync("ffmpeg", []);\n',
+            "skills/video/references/film.md": "Captions need `GEMINI_API_KEY`.\n",
+            "skills/video/assets/Inter.woff2": "\u0000binary",
+        });
+        const asked: string[] = [];
+        const file = source.file;
+        source.file = async (repo, path) => {
+            asked.push(path);
+            return file(repo, path);
+        };
+        const install = skillInstallOf("npx skills add o/r --skill video");
+        if (install === null) throw new Error("not recognised");
+        const text = skillInstallReport(await readSkillInstall(install, source, never));
+        expect(text).toContain("Before you install: 1 key · 1 paid service · needs Chrome, ffmpeg, node · 1 script");
+        expect(text).toContain("GEMINI_API_KEY (references/film.md:1)");
+        expect(asked).not.toContain("skills/video/assets/Inter.woff2");
+        expect(text).not.toContain("Not read");
+    });
+
+    it("stops reading other files when told, and names them not fetched", async () => {
+        const source = sourceOf({
+            "skills/video/SKILL.md": skillMd("video"),
+            "skills/video/references/film.md": "Captions need `GEMINI_API_KEY`.\n",
+        });
+        const install = skillInstallOf("npx skills add o/r --skill video");
+        if (install === null) throw new Error("not recognised");
+        const text = skillInstallReport(await readSkillInstall(install, source, never, Promise.resolve()));
+        expect(text).toContain("Not read: references/film.md (not fetched)");
+        expect(text).toContain("1 file not read");
+    });
+
     it(`reads at most ${MAX_SKILLS_READ} skills and says how many it left`, async () => {
         const files = Object.fromEntries(
             ["a", "b", "c", "d", "e"].map((name) => [`skills/${name}/SKILL.md`, skillMd(name)]),

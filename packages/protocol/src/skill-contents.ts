@@ -29,17 +29,22 @@
  * Every list is bounded and sorted, so the same files always give the same answer.
  */
 import {readRequires} from "./skill-requires.js";
+import {keysIn, programsNeededIn, type SkillKey} from "./skill-needs.js";
 
 /**
  * One file of a skill's directory, its path relative to it. `text` is `null` for a binary file, or,
  * with `notFetched`, for a file the caller listed and did not read: it is named, never guessed at.
  */
-export type ContentsFile = {path: string; text: string | null; notFetched?: true};
+export type ContentsFile = {path: string; text: string | null; notFetched?: true; tooLarge?: true};
 
 /** A line of a file, kept so a person can open it: the file, its 1-based number, the text trimmed. */
 export type ContentsLine = {file: string; line: number; text: string};
 
-export type ProgramSource = "declared" | "runs" | "interpreter" | "script";
+/** `spawned`, `package` and `named as needed` are `skill-needs.ts`'s (task 112). */
+export type ProgramSource = "declared" | "runs" | "interpreter" | "script" | "spawned" | "package" | "named as needed";
+
+/** A program, how it was found, and, for the readings that have one, its line and the package that drives it. */
+export type ContentsProgram = {name: string; from: ProgramSource; file?: string; line?: number; via?: string};
 
 export type HiddenKind =
     | "hidden characters"
@@ -57,9 +62,11 @@ export type FetchAndRunKind =
 export type SkippedFile = {path: string; why: "binary" | "too large" | "over the file limit" | "not fetched"};
 
 export type SkillContents = {
-    programs: {name: string; from: ProgramSource}[];
+    programs: ContentsProgram[];
     packages: {manager: string; name: string}[];
     settings: string[];
+    /** The settings a person hands it: a secret by its name, or one SKILL.md says to set (task 112). */
+    keys: SkillKey[];
     scripts: {path: string; namedInSkillMd: boolean}[];
     fetchAndRun: (ContentsLine & {kind: FetchAndRunKind})[];
     domains: string[];
@@ -429,15 +436,16 @@ export function readSkillContents(input: readonly ContentsFile[]): SkillContents
     const files: {path: string; text: string}[] = [];
     for (const file of sorted) {
         if (files.length >= CONTENTS_LIMITS.files) skipped.push({path: file.path, why: "over the file limit"});
-        else if (file.text === null) skipped.push({path: file.path, why: file.notFetched === true ? "not fetched" : "binary"});
+        else if (file.text === null)
+            skipped.push({path: file.path, why: file.tooLarge === true ? "too large" : file.notFetched === true ? "not fetched" : "binary"});
         else if (file.text.length > CONTENTS_LIMITS.fileChars) skipped.push({path: file.path, why: "too large"});
         else files.push({path: file.path, text: file.text.replace(/\r\n?/g, "\n")});
     }
     const skillMd = files.find((file) => file.path === "SKILL.md")?.text ?? "";
 
-    const programs = new Map<string, ProgramSource>();
+    const programs = new Map<string, ContentsProgram>();
     const add = (name: string, from: ProgramSource) => {
-        if (!programs.has(name)) programs.set(name, from);
+        if (!programs.has(name)) programs.set(name, {name, from});
     };
     const requires = readRequires(skillMd);
     for (const name of requires.cli) add(name, "declared");
@@ -484,13 +492,16 @@ export function readSkillContents(input: readonly ContentsFile[]): SkillContents
     }
     // `pip install x` in the instructions is also read as running `x`; it is a package, said once.
     const packageNames = new Set([...packages.values()].map((pkg) => pkg.name));
-    for (const [name, from] of programs) if (from !== "declared" && packageNames.has(name)) programs.delete(name);
+    for (const [name, program] of programs) if (program.from !== "declared" && packageNames.has(name)) programs.delete(name);
+    // What a script runs, a package drives or a line says is needed (task 112): after the rest, so a
+    // program already found keeps how it was found first.
+    for (const needed of programsNeededIn(files)) if (!programs.has(needed.name)) programs.set(needed.name, needed);
 
     const cut: string[] = [];
     return {
         programs: bounded(
             "programs",
-            [...programs.entries()].map(([name, from]) => ({name, from})).sort((a, b) => compare(a.name, b.name)),
+            [...programs.values()].sort((a, b) => compare(a.name, b.name)),
             cut,
         ),
         packages: bounded(
@@ -499,6 +510,7 @@ export function readSkillContents(input: readonly ContentsFile[]): SkillContents
             cut,
         ),
         settings: bounded("settings", [...settings].sort(compare), cut),
+        keys: bounded("keys", keysIn(files, [...settings]), cut),
         scripts: bounded("scripts", scripts.sort((a, b) => compare(a.path, b.path)), cut),
         fetchAndRun: bounded("fetchAndRun", fetchAndRun, cut),
         domains: bounded("domains", [...domains].sort(compare), cut),
@@ -510,39 +522,4 @@ export function readSkillContents(input: readonly ContentsFile[]): SkillContents
         },
         cut,
     };
-}
-
-/**
- * The short block an agent shows the person before it installs: one line per reading, "none found"
- * where the files were read and named nothing. A line's text is the files' own, so it is quoted.
- */
-export function contentsLines(contents: SkillContents, perList = 6): string[] {
-    const list = (items: readonly string[], cut: boolean) =>
-        items.length === 0
-            ? "none found"
-            : `${items.slice(0, perList).join(", ")}${
-                  items.length > perList || cut ? `, and ${Math.max(0, items.length - perList)}${cut ? "+" : ""} more` : ""
-              }`;
-    const at = (rows: readonly (ContentsLine & {kind: string})[], name: string) =>
-        list(
-            rows.map((row) => `${row.kind} at ${row.file}:${row.line} "${row.text}"`),
-            contents.cut.includes(name),
-        );
-    return [
-        `Programs: ${list(contents.programs.map((p) => `${p.name} (${p.from})`), contents.cut.includes("programs"))}`,
-        ...(contents.packages.length === 0
-            ? []
-            : [`Packages: ${list(contents.packages.map((p) => `${p.manager} ${p.name}`), contents.cut.includes("packages"))}`]),
-        `Keys and settings it reads: ${list(contents.settings, contents.cut.includes("settings"))}`,
-        `Scripts: ${list(
-            contents.scripts.map((s) => (s.namedInSkillMd ? `${s.path} (named in SKILL.md)` : s.path)),
-            contents.cut.includes("scripts"),
-        )}`,
-        `Fetches and runs code: ${at(contents.fetchAndRun, "fetchAndRun")}`,
-        `Domains named: ${list(contents.domains, contents.cut.includes("domains"))}`,
-        `Hidden or encoded text: ${at(contents.hidden, "hidden")}`,
-        ...(contents.read.skipped.length === 0
-            ? []
-            : [`Not read: ${list(contents.read.skipped.map((s) => `${s.path} (${s.why})`), false)}`]),
-    ];
 }

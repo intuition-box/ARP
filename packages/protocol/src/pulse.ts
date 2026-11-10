@@ -21,7 +21,7 @@
  * with anything in the repository. `skillMdSha` is git's blob id of the file alone.
  */
 import {directoryOf, skillFilesIn, type RepositoryFile} from "./content-path.js";
-import {readSkillContents, type ContentsFile, type SkillContents} from "./skill-contents.js";
+import {CONTENTS_LIMITS, readSkillContents, type ContentsFile, type SkillContents} from "./skill-contents.js";
 import {readRequires, type SkillRequires} from "./skill-requires.js";
 
 /** One line of `npx skills find`. `installs` is skills.sh's own figure, as the CLI prints it. */
@@ -134,6 +134,10 @@ export type ListingCache = {
 /** Beyond this a repository is a collection, and reading each file's name costs too much per ask. */
 export const MAX_SKILL_FILES_READ = 200;
 const MAX_SCRIPTS_READ = 5;
+/** The text files of a skill's directory read before an install (task 112), past which the rest is named not fetched. */
+export const MAX_DIRECTORY_FILES_READ = 80;
+/** Fonts, images, sound, archives: a reader reads none of them, so they are named and never fetched. */
+const NOT_TEXT = /\.(png|jpe?g|gif|webp|ico|bmp|tiff?|avif|svgz|pdf|zip|gz|tgz|bz2|xz|7z|rar|jar|woff2?|ttf|otf|eot|mp[34]|m4a|wav|ogg|flac|aac|mov|webm|avi|mkv|pptx|docx|xlsx|psd|ai|sketch|fig|db|sqlite|bin|exe|dll|so|dylib|wasm|pyc|class|hdr|exr|glb|ktx2?)$/i;
 const GITHUB_READ_TIMEOUT_MS = 10_000;
 
 /**
@@ -405,8 +409,15 @@ async function readFileOnly(result: SkillSearchResult, source: PulseSource): Pro
     return null;
 }
 
+/**
+ * How much of the skill's directory to read. A search reads `SKILL.md` and the scripts it runs; before
+ * an install (task 112) every text file of the directory is read too, up to `MAX_DIRECTORY_FILES_READ`,
+ * as long as `by` has not resolved: the install is about to download the same files from the same host.
+ */
+export type PulseDepth = {directory: {by: Promise<void>}};
+
 /** Read one search result. Every way it can fail is a status, because "unknown" must stay visible. */
-export async function readPulse(result: SkillSearchResult, source: PulseSource): Promise<SkillPulse> {
+export async function readPulse(result: SkillSearchResult, source: PulseSource, depth?: PulseDepth): Promise<SkillPulse> {
     // `.` and `..` would leave the repository: `new URL` normalises them away.
     if (!/^(?!\.{1,2}\/)[\w.-]+\/(?!\.{1,2}$)[\w.-]+$/.test(result.source)) return {...result, status: "not_github"};
     const listing = await source.listing(result.source);
@@ -431,12 +442,24 @@ export async function readPulse(result: SkillSearchResult, source: PulseSource):
     // Paths relative to the skill's directory, as an install lays them out; a script outside it keeps its own.
     const relative = (path: string) => (path.startsWith(prefix) ? path.slice(prefix.length) : path);
     const fetched = new Set(scriptTexts.filter((entry) => entry.text !== null).map((entry) => entry.file));
+    const others =
+        depth === undefined
+            ? []
+            : await readDirectory(source, result.source, inDirectory, new Set([located.file.path, ...fetched]), depth.directory.by);
+    for (const file of others) if (file.text !== null) fetched.add(file.path);
     const contains = readSkillContents([
         {path: "SKILL.md", text: located.markdown},
         ...scriptTexts.flatMap(({file, text}): ContentsFile[] => (text === null ? [] : [{path: relative(file), text}])),
+        ...others.flatMap(({path, text}): ContentsFile[] => (text === null ? [] : [{path: relative(path), text}])),
         ...inDirectory
-            .filter((file) => SCRIPT.test(file.path) && !fetched.has(file.path))
-            .map((file): ContentsFile => ({path: relative(file.path), text: null, notFetched: true})),
+            .filter((file) => !fetched.has(file.path) && file.path !== located.file.path && (depth !== undefined || SCRIPT.test(file.path)))
+            .map((file): ContentsFile =>
+                NOT_TEXT.test(file.path)
+                    ? {path: relative(file.path), text: null}
+                    : file.size > CONTENTS_LIMITS.fileChars
+                      ? {path: relative(file.path), text: null, notFetched: true, tooLarge: true}
+                      : {path: relative(file.path), text: null, notFetched: true},
+            ),
     ]);
     return {
         ...result,
@@ -452,6 +475,36 @@ export async function readPulse(result: SkillSearchResult, source: PulseSource):
         keysInScriptsItRuns,
         contains,
     };
+}
+
+/**
+ * The directory's other text files, eight at a time, until `by` resolves; a file not in by then is
+ * left unread and named so. Raw files are not on GitHub's hourly quota.
+ */
+async function readDirectory(
+    source: PulseSource,
+    repo: string,
+    inDirectory: readonly ListedFile[],
+    done: ReadonlySet<string>,
+    by: Promise<void>,
+): Promise<{path: string; text: string | null}[]> {
+    let late = false;
+    void by.then(() => {
+        late = true;
+    });
+    const plan = inDirectory
+        .filter((file) => !done.has(file.path) && !NOT_TEXT.test(file.path) && file.size <= CONTENTS_LIMITS.fileChars)
+        .slice(0, MAX_DIRECTORY_FILES_READ);
+    const out: {path: string; text: string | null}[] = [];
+    for (let at = 0; at < plan.length && !late; at += 8) {
+        const batch = Promise.all(
+            plan.slice(at, at + 8).map(async (file) => ({path: file.path, text: await source.file(repo, file.path).catch(() => null)})),
+        );
+        const settled = await Promise.race([batch, by.then(() => null)]);
+        if (settled === null) break;
+        out.push(...settled);
+    }
+    return out;
 }
 
 export type PulseGroup = {contentId: string; members: Extract<SkillPulse, {status: "read"}>[]};

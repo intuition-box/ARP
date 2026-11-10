@@ -34,7 +34,7 @@
  * Pure apart from the `PulseSource` the caller passes: no clock, no chain, no file.
  */
 import {skillFilesIn} from "./content-path.js";
-import {contentsLines} from "./skill-contents.js";
+import {contentsLines} from "./before-install.js";
 import {frontmatterName, readPulse, type PulseSource, type SkillPulse} from "./pulse.js";
 
 export type SkillInstall =
@@ -276,6 +276,8 @@ export async function readSkillInstall(
     install: SkillInstall,
     source: PulseSource,
     deadline: Promise<void>,
+    /** Stop reading the skills' other files then, so the reading lands before `deadline` (task 112). */
+    directoryBy: Promise<void> = deadline,
 ): Promise<InstallRead> {
     if (install.kind === "elsewhere") return install;
     const late = deadline.then(() => "late" as const);
@@ -309,6 +311,7 @@ export async function readSkillInstall(
             const pulse = readPulse(
                 {source: install.repo, skill, installs: null, installsText: null, url: null},
                 source,
+                {directory: {by: directoryBy}},
             )
                 .then((read) => ({skill, pulse: read}))
                 .catch((): InstallReading => ({skill, pulse: null, why: "read failed"}));

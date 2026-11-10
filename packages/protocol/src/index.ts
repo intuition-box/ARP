@@ -776,16 +776,29 @@ export {
 export {
     CONTENTS_LIMITS,
     contentsFileOf,
-    contentsLines,
     readSkillContents,
     type ContentsFile,
     type ContentsLine,
+    type ContentsProgram,
     type FetchAndRunKind,
     type HiddenKind,
     type ProgramSource,
     type SkillContents,
     type SkippedFile,
 } from "./skill-contents.js";
+/** Keys and programs a skill needs, read from its files (task 112). */
+export {isSecretName, isTestFile, keysIn, programsNeededIn, type NeededProgram, type SkillKey} from "./skill-needs.js";
+/** "Before you install": a reading in the order of the questions a person asks (task 112, ADR `0182`). */
+export {
+    beforeInstall,
+    beforeInstallSummary,
+    contentsLines,
+    PAID_SERVICES,
+    programSourceText,
+    type BeforeInstall,
+    type BeforeInstallInput,
+    type PaidService,
+} from "./before-install.js";
 /** A skills install recognised in a shell command and read before it runs (task 98). */
 export {
     MAX_SKILLS_READ,

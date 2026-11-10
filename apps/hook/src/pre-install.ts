@@ -37,6 +37,12 @@ import { toolCallOf } from './payload.ts';
 /** GitHub's whole budget for one install. The entry's own timeout (`edits.ts`) is well above it. */
 export const GITHUB_BUDGET_MS = 6_000;
 
+/**
+ * Before the budget ends, the skill's other files stop being fetched (task 112), so what was read is
+ * reported in time; a file not read by then is named as not fetched.
+ */
+const DIRECTORY_MARGIN_MS = 1_500;
+
 /** Claude Code caps `additionalContext` and `systemMessage` at 10,000 characters. */
 const OUTPUT_CAP = 9_500;
 
@@ -69,13 +75,18 @@ export async function preToolUse(
   // The answer is due at the budget; the requests are cut a little later, so a request cut at the
   // budget reads as "no answer in time" and not as a failed read.
   const deadline = new Promise<void>((resolve) => setTimeout(resolve, budgetMs));
+  const directoryBy = new Promise<void>((resolve) =>
+    setTimeout(resolve, Math.max(0, budgetMs - DIRECTORY_MARGIN_MS)),
+  );
   const source = githubPulseSource({
     ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
     ...(token === undefined ? {} : { token }),
     timeoutMs: budgetMs + 500,
     signal: AbortSignal.timeout(budgetMs + 500),
   });
-  const report = capped(skillInstallReport(await readSkillInstall(install, source, deadline)));
+  const report = capped(
+    skillInstallReport(await readSkillInstall(install, source, deadline, directoryBy)),
+  );
   return JSON.stringify({
     systemMessage: report,
     hookSpecificOutput: {

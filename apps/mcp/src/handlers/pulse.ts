@@ -325,8 +325,9 @@ export function yourFailuresLine(rows: readonly LocalFailure[], skill: string, s
 }
 
 /**
- * What a skill contains, as the lines an agent shows the person before it installs (task 96): one line
- * per reading, the files' own text quoted and cut. Four entries a list keeps it to a screen.
+ * What a skill contains, as the lines an agent shows the person before it installs (task 96): since task
+ * 112 a summary, then one line per question a person asks (`before-install.ts`), the files' own text
+ * quoted and cut. Four entries a list keeps it to a screen.
  */
 const CONTAINS_PER_LIST = 4;
 

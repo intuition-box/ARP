@@ -710,8 +710,9 @@ or a file, and this log later feeds a declaration. A call you cancel is not writ
 command that runs the `skills` CLI's `add` (`npx skills add`, `npx -y skills@<version> add`,
 `bunx`, `pnpm dlx`, `yarn dlx`, `npm exec`, and the aliases `a`, `install`, `i`), it reads what the
 install would take and shows it to you before the command runs, and to the agent beside the command's
-result: the programs, keys,
-scripts, fetch-and-run lines, domains and hidden text in the skill's own files, as facts. It makes
+result, in the order of the questions a person asks (task 112, ADR `0182`): what it asks for (keys),
+the paid services it names, what must be installed, what it runs, the hosts it names and any hidden
+text, from the skill's own files, as facts. It makes
 no permission decision and blocks nothing. At most three skills are read, within six seconds, from
 two hosts:
 
@@ -719,7 +720,9 @@ two hosts:
 api.github.com              the repository's file list and its figures (stars, last push, archived).
                             Two requests per install, counted against GitHub's 60 an hour without a token
 raw.githubusercontent.com   the SKILL.md files that name the skill (others too when its directory does not
-                            carry its name) and up to five scripts it runs, at the default branch's HEAD
+                            carry its name), up to five scripts it runs, and since task 112 up to 80 other
+                            text files of the skill's directory (no font, image or sound), at the default
+                            branch's HEAD, until 1.5 s before the six seconds end
 ```
 
 **What leaves your machine is the repository and skill names the command already carries**, sent to

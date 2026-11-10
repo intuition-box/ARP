@@ -27,7 +27,7 @@ const headers: Record<string, string> = {accept: "application/vnd.github+json", 
 const token = process.env["GITHUB_TOKEN"]?.trim();
 if (token !== undefined && token.length > 0) headers["authorization"] = `Bearer ${token}`;
 
-const BINARY = /\.(png|jpe?g|gif|webp|ico|bmp|tiff?|svgz|pdf|zip|gz|tgz|bz2|xz|7z|rar|jar|woff2?|ttf|otf|eot|mp[34]|m4a|wav|ogg|flac|mov|webm|avi|mkv|pptx|docx|xlsx|odt|key|psd|ai|sketch|fig|db|sqlite|bin|exe|dll|so|dylib|wasm|pyc|class)$/i;
+const BINARY = /\.(png|jpe?g|gif|webp|ico|bmp|tiff?|svgz|pdf|zip|gz|tgz|bz2|xz|7z|rar|jar|woff2?|ttf|otf|eot|mp[34]|m4a|wav|ogg|flac|mov|webm|avi|mkv|pptx|docx|xlsx|odt|key|psd|ai|sketch|fig|db|sqlite|bin|exe|dll|so|dylib|wasm|pyc|class|hdr|exr|glb|ktx2?)$/i;
 const MAX_FETCH_BYTES = CONTENTS_LIMITS.fileChars;
 
 type TreeEntry = {path: string; type: string; size?: number};
@@ -76,10 +76,11 @@ async function readOne(entry: Located): Promise<Row> {
     let fetched = 0;
     const plan = inDirectory.map((file) => {
         const path = file.path.slice(prefix.length);
-        if (BINARY.test(path)) return {path, fetch: false, binary: true};
-        if (fetched >= CONTENTS_LIMITS.files || (file.size ?? 0) > MAX_FETCH_BYTES) return {path, fetch: false, binary: false};
+        if (BINARY.test(path)) return {path, fetch: false, binary: true, tooLarge: false};
+        if ((file.size ?? 0) > MAX_FETCH_BYTES) return {path, fetch: false, binary: false, tooLarge: true};
+        if (fetched >= CONTENTS_LIMITS.files) return {path, fetch: false, binary: false, tooLarge: false};
         fetched += 1;
-        return {path, fetch: true, binary: false};
+        return {path, fetch: true, binary: false, tooLarge: false};
     });
     const files: ContentsFile[] = [];
     // Eight at a time: raw.githubusercontent.com is not on the API's quota, and a root skill can hold 200 files.
@@ -88,6 +89,8 @@ async function readOne(entry: Located): Promise<Row> {
             ...(await Promise.all(
                 plan.slice(at, at + 8).map(async (step): Promise<ContentsFile> => {
                     if (step.binary) return {path: step.path, text: null};
+                    // Named "too large", not "not fetched": a reader of the panel asks why (task 112).
+                    if (step.tooLarge) return {path: step.path, text: null, notFetched: true, tooLarge: true};
                     if (!step.fetch) return {path: step.path, text: null, notFetched: true};
                     const url = `https://raw.githubusercontent.com/${entry.repo}/${repo.commit}/${`${prefix}${step.path}`.split("/").map(encodeURIComponent).join("/")}`;
                     const response = await fetch(url, {signal: AbortSignal.timeout(25_000)}).catch(() => null);
@@ -114,6 +117,16 @@ const counts = {
     unread: rows.length - read.length,
     withPrograms: read.filter((row) => row.contents.programs.length > 0).length,
     withSettings: read.filter((row) => row.contents.settings.length > 0).length,
+    withKeys: read.filter((row) => row.contents.keys.length > 0).length,
+    keys: read.reduce((sum, row) => sum + row.contents.keys.length, 0),
+    settings: read.reduce((sum, row) => sum + row.contents.settings.length, 0),
+    programs: read.reduce((sum, row) => sum + row.contents.programs.length, 0),
+    programsByWay: Object.fromEntries(
+        [...new Set(read.flatMap((row) => row.contents.programs.map((p) => p.from)))].sort().map((from) => [
+            from,
+            read.reduce((sum, row) => sum + row.contents.programs.filter((p) => p.from === from).length, 0),
+        ]),
+    ),
     withScripts: read.filter((row) => row.contents.scripts.length > 0).length,
     withFetchAndRun: read.filter((row) => row.contents.fetchAndRun.length > 0).length,
     withDomains: read.filter((row) => row.contents.domains.length > 0).length,
@@ -135,7 +148,7 @@ writeFileSync(
         {
             measuredAt,
             source: "api.github.com/repos/{repo}/commits/HEAD, …/git/trees/{commit}?recursive=1, raw.githubusercontent.com/{repo}/{commit}/{path}; paths from apps/web/src/data/skill-paths.json",
-            question: "What each skill's files contain: programs, packages, settings, scripts, code fetched and run, domains, hidden or encoded text. Facts from the files, never a verdict.",
+            question: "What each skill's files contain: programs (with how each was found), packages, settings and the keys among them, scripts, code fetched and run, domains, hidden or encoded text. Facts from the files, never a verdict.",
             authenticated: token !== undefined && token.length > 0,
             unreadRepos,
             truncatedTrees: [...commits.entries()].filter(([, value]) => value.truncated).map(([repo]) => repo),
