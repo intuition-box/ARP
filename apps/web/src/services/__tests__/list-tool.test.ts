@@ -66,6 +66,13 @@ describe("listing a tool through the sponsor", () => {
                 "Not answered right now. Try again.",
             ],
             [409, {error: "e", rule: "pending"}, "Already being added. Try again in a minute."],
+            [
+                422,
+                {error: "e", rule: "not-a-tool"},
+                "No skill, plugin, MCP server, A2A agent or x402 endpoint found there.",
+            ],
+            [422, {error: "e", rule: "unreachable"}, "That URL did not answer."],
+            [422, {error: "e", rule: "private-address"}, "That URL is not a public address."],
             [502, {error: "e", rule: "pin"}, "It could not be added."],
         ] as const;
         for (const [status, body, message] of cases) {
