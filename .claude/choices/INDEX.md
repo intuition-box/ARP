@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-174 decisions. Newest last. `choices/README.md` says when to write one.
+175 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -12,6 +12,7 @@ Read these before relying on them.
 - **0041** (Accepted. Amended by `0082` (2026-10-30): a `packages/graphql` read layer goes under it.) — One protocol package, not two, and it is called what it is
 - **0045** (Accepted. **Amended by ADR `0092`** (2026-10-30): ARP may host a service that pays or) — the invariant is the request path, not the runtime
 - **0046** (Superseded by `0137` (2026-11-05): ARP will compute a score. This still describes what ships until one does.) — ARP scores nobody; it makes staking possible and reads the result
+- **0052** (Accepted. **Amended by ADR `0183`** (2026-11-10): a package that ships the MCP server (the Claude Code plugin, the Gemini extension) ships `apps/cli/assets/plugin-skill.md`, which sends the agent to the tools and holds no query; `skills/arp/SKILL.md` stays the procedure for an agent with nothing installed.) — the procedure is the product for the "use" half; the connector is a convenience
 - **0057** (Accepted — 2026-10-27, on the user's instruction to close everything open.) — Brand identity v0.3: The Source, Saffron, Archivo + Geist Mono
 - **0080** (Accepted. **Amended by ADR `0094`** (2026-10-30): constraint 2 holds for a declaration) — The node signs for what it served, and for nothing else
 - **0082** (Accepted. Amends `0041` (a `packages/graphql` under the protocol package).) — Three apps: the MCP server, the agent node and the runtime hook are different programs
@@ -97,7 +98,7 @@ Read these before relying on them.
 | [0049](0049-arp-does-not-calibrate.md) | 2026-10-20 | Accepted | ARP does not calibrate, and the positioning says what it does instead |
 | [0050](0050-a-css-token-gate.md) | 2026-10-20 | Accepted | a gate for CSS custom properties, because neither existing gate reads a class name |
 | [0051](0051-arp-points-and-prices-it-stores-nothing.md) | 2026-10-20 | Accepted | ARP points at things and prices opinions about them; it stores nothing |
-| [0052](0052-the-procedure-is-the-product-for-the-use-half.md) | 2026-10-20 | Accepted | the procedure is the product for the "use" half; the connector is a convenience |
+| [0052](0052-the-procedure-is-the-product-for-the-use-half.md) | 2026-10-20 | Accepted. **Amended by ADR `0183`** (2026-11-10): a package that ships the MCP server (the Claude Code plugin, the Gemini extension) ships `apps/cli/assets/plugin-skill.md`, which sends the agent to the tools and holds no query; `skills/arp/SKILL.md` stays the procedure for an agent with nothing installed. | the procedure is the product for the "use" half; the connector is a convenience |
 | [0053](0053-every-term-is-born-with-a-position.md) | 2026-10-21 | Accepted | Every term is born with a position |
 | [0054](0054-a-tool-atom-is-derived-from-its-url.md) | 2026-10-21 | Accepted | A tool's atom is derived from its URL |
 | [0055](0055-one-contract-not-five.md) | 2026-10-21 | Accepted | One contract, not five |
@@ -219,4 +220,5 @@ Read these before relying on them.
 | [0175](0175-cli-sponsor-default-and-registry-namespace.md) | 2026-11-10 | Accepted | The CLI's sponsor default is a committed build setting; the registry name is the user's namespace |
 | [0179](0179-ask-whether-a-skill-worked-during-the-task.md) | 2026-11-10 | Accepted | Ask whether a skill worked during the task, not at Stop |
 | [0182](0182-before-you-install-answers-the-questions-a-person-asks.md) | 2026-11-10 | Accepted (the user approved the design, 2026-11-10) | Before you install answers the questions a person asks, in the content column |
+| [0183](0183-a-search-reads-a-dated-reading-and-the-packaged-skill-names-tools.md) | 2026-11-10 | Accepted | A search reads a dated reading for catalogued skills, caps what it reads, and the packaged skill names the tools |
 | [0185](0185-a-skill-version-is-its-directory-digest.md) | 2026-11-10 | Accepted (the decision). Not built: the code waits for the user's return. | A skill's version is the digest of its directory, and a line will carry it |

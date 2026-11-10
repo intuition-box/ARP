@@ -1,6 +1,6 @@
 # Task 113 — One search makes far too many requests
 
-**Status:** in progress.
+**Status:** verified 2026-11-10, `task-verifier` PASS (round 2) at `7345c267`, post-mortem `.claude/learning/102-fewer-requests-per-search.md`; on `worktree-agent-ac25d8a4fecf7d0c3`.
 **ADR:** `0183` (amends `0052`).
 **Rules:** `code.md`, `claims.md`, `portability.md`, `workflow.md`. Gates: `apps/mcp` test and lint,
 `packages/protocol` test and lint, `apps/cli` test, `check:node` and `packages --check`, `apps/hook` test,
