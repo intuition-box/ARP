@@ -21,6 +21,7 @@
  * with anything in the repository. `skillMdSha` is git's blob id of the file alone.
  */
 import {directoryOf, skillFilesIn, type RepositoryFile} from "./content-path.js";
+import {readSkillContents, type ContentsFile, type SkillContents} from "./skill-contents.js";
 import {readRequires, type SkillRequires} from "./skill-requires.js";
 
 /** One line of `npx skills find`. `installs` is skills.sh's own figure, as the CLI prints it. */
@@ -51,6 +52,12 @@ export type SkillFacts = {
      */
     keysInScriptsItRuns: {file: string; keys: string[]}[];
     requires: SkillRequires;
+    /**
+     * What the skill contains, for a person to read before it is installed (task 96): from the
+     * `SKILL.md` and the scripts it runs that were read, every other script in its directory named as
+     * not fetched. No request is added for it.
+     */
+    contains: SkillContents;
 };
 
 export type SkillRepository = {stars: number; pushedAt: string | null; archived: boolean};
@@ -74,7 +81,7 @@ export type SkillPulse = SkillSearchResult &
          * GitHub's limit was reached, and the file was read at a usual path without the repository's list.
          * What the file says is known. Its scripts, its size and whether an install takes this copy are not.
          */
-        | ({status: "read_file_only"; path: string} & Pick<SkillFacts, "keys" | "paidWords" | "hosts" | "requires">)
+        | ({status: "read_file_only"; path: string} & Pick<SkillFacts, "keys" | "paidWords" | "hosts" | "requires" | "contains">)
         /** The source is not a GitHub repository, so this reader has nothing to list. */
         | {status: "not_github"}
         | {status: "repository_unreachable"}
@@ -308,6 +315,7 @@ export function readSkillFacts(
         runsAbsentFiles: absentFiles(markdown, repositoryFiles),
         keysInScriptsItRuns: [],
         requires: readRequires(markdown),
+        contains: readSkillContents([{path: "SKILL.md", text: markdown}]),
     };
 }
 
@@ -391,8 +399,8 @@ async function readFileOnly(result: SkillSearchResult, source: PulseSource): Pro
     for (const path of usualPaths(result.skill)) {
         const markdown = await source.file(result.source, path);
         if (markdown === null || normaliseName(frontmatterName(markdown) ?? "") !== wanted) continue;
-        const {keys, paidWords, hosts, requires} = readSkillFacts(markdown, []);
-        return {...result, status: "read_file_only", path, keys, paidWords, hosts, requires};
+        const {keys, paidWords, hosts, requires, contains} = readSkillFacts(markdown, []);
+        return {...result, status: "read_file_only", path, keys, paidWords, hosts, requires, contains};
     }
     return null;
 }
@@ -414,14 +422,22 @@ export async function readPulse(result: SkillSearchResult, source: PulseSource):
     const prefix = directory === "" ? "" : `${directory}/`;
     const inDirectory = listing.files.filter((file) => file.path.startsWith(prefix));
     const scripts = filesItRuns(located.markdown, listing.files).slice(0, MAX_SCRIPTS_READ);
-    const keysInScriptsItRuns = (
-        await Promise.all(
-            scripts.map(async (file) => ({
-                file,
-                keys: [...new Set((await source.file(result.source, file))?.match(KEY_NAME) ?? [])],
-            })),
-        )
-    ).filter((entry) => entry.keys.length > 0);
+    const scriptTexts = await Promise.all(
+        scripts.map(async (file) => ({file, text: await source.file(result.source, file)})),
+    );
+    const keysInScriptsItRuns = scriptTexts
+        .map(({file, text}) => ({file, keys: [...new Set(text?.match(KEY_NAME) ?? [])]}))
+        .filter((entry) => entry.keys.length > 0);
+    // Paths relative to the skill's directory, as an install lays them out; a script outside it keeps its own.
+    const relative = (path: string) => (path.startsWith(prefix) ? path.slice(prefix.length) : path);
+    const fetched = new Set(scriptTexts.filter((entry) => entry.text !== null).map((entry) => entry.file));
+    const contains = readSkillContents([
+        {path: "SKILL.md", text: located.markdown},
+        ...scriptTexts.flatMap(({file, text}): ContentsFile[] => (text === null ? [] : [{path: relative(file), text}])),
+        ...inDirectory
+            .filter((file) => SCRIPT.test(file.path) && !fetched.has(file.path))
+            .map((file): ContentsFile => ({path: relative(file.path), text: null, notFetched: true})),
+    ]);
     return {
         ...result,
         status: "read",
@@ -434,6 +450,7 @@ export async function readPulse(result: SkillSearchResult, source: PulseSource):
         ...(listing.readAt === undefined ? {} : {listingReadAt: listing.readAt}),
         ...readSkillFacts(located.markdown, inDirectory, listing.files),
         keysInScriptsItRuns,
+        contains,
     };
 }
 

@@ -738,6 +738,22 @@ export {
     type ThirdPartyFigure,
 } from "./skill-review.js";
 
+/** What a skill contains, from its own files, shown before it is installed: facts, never a verdict (task 96). */
+export {
+    CONTENTS_LIMITS,
+    contentsFileOf,
+    contentsLines,
+    readSkillContents,
+    type ContentsFile,
+    type ContentsLine,
+    type FetchAndRunKind,
+    type HiddenKind,
+    type ProgramSource,
+    type SkillContents,
+    type SkippedFile,
+} from "./skill-contents.js";
+export {readAgentContents, type AgentContents, type AgentEndpointFact, type SieveReadingRow} from "./agent-contents.js";
+
 export {
     contentDigest,
     contentReceiptDomain,
