@@ -43,7 +43,9 @@ usage
                      --outcome worked|failed [--domain <category>] [--reason <reason>]
                      [--payment-tx <hash> --network eip155:8453]  an x402 payment, read on Base;
                      with it, --tool is the exact URL you paid
-  arp init           add the MCP server and the hook to every runtime found here
+                     [--needs <name>] or [--with <name>]  the program or variable name that was
+                     missing, or that you added; written only if the skill's SKILL.md names it
+  arp init         add the MCP server and the hook to every runtime found here
   arp uninstall      remove them, and only them
   arp doctor         check what is installed and that the server answers
   arp init --node    bind this node to your ERC-8004 agent: the token's owner signs once
@@ -181,7 +183,9 @@ async function run(argv: readonly string[]): Promise<number> {
           'usage: arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>]\n' +
             '       [--parent <category> --why <text>]   adds a --domain the tree lacks, under --parent\n' +
             '       [--payment-tx <hash> --network eip155:8453]   the x402 payment this outcome refers to;\n' +
-            '                                                     --tool is then the exact URL you paid\n',
+            '                                                     --tool is then the exact URL you paid\n' +
+            '       [--needs <name>]   with missing-program or missing-key: the program or variable name (never a value)\n' +
+            '       [--with <name>]    with --outcome worked: what you had to add; either is written only if the SKILL.md names it\n',
         );
         return EXIT.usage;
       }
@@ -196,6 +200,8 @@ async function run(argv: readonly string[]): Promise<number> {
         why: flag('why'),
         paymentTx: flag('payment-tx'),
         network: flag('network'),
+        needs: flag('needs'),
+        with: flag('with'),
       });
       if (input instanceof Error) {
         process.stderr.write(`arp line: ${input.message}\n`);

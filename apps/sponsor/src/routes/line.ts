@@ -2,6 +2,9 @@ import {
   checkLineLimits,
   checkX402Payment,
   exactEndpointNamesTool,
+  needKindOfReason,
+  publishableNeed,
+  skillRefFromUrl,
   parsePaymentAtomLabel,
   paymentLevelLabel,
   encodeCreateTriple,
@@ -31,6 +34,12 @@ import { chainUnreadable, json, REGISTRY, type Body, type SponsorContext } from 
  * **The exact URL paid** (task 93, ADR `0162`) rides in the payment level's atom, after the payment and
  * one space, so naming it costs nothing more. It must normalise to the tool atom's URL, read from the
  * index, or a writer could name any URL beside somebody else's endpoint.
+ *
+ * **What was missing, or added** (task 97, ADR `0166`): `(reason, needs, ffmpeg)` on a missing-program or
+ * missing-key failure, `(outcome, with, ffmpeg)` on a worked line. Written only when the skill's own SKILL.md,
+ * read from GitHub at `HEAD`, names it whole (`publishableNeed`): a word its author published, never one from
+ * the agent's machine. A name the file does not hold refuses the whole request, since the agent signed it, and
+ * nothing is spent.
  */
 export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
   const { options, chainId, wallet, reads, limits, ledger, now, multiVault } = ctx;
@@ -118,6 +127,11 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
     }
   }
 
+  if (request.need !== '') {
+    const refused = await checkNeed(lines, request.tool, request.need, request.outcome === 'worked' ? null : needKindOfReason(request.reason));
+    if (refused !== null) return refused;
+  }
+
   return exclusive(async () => {
     // One payment backs one sponsored line, whoever asks again and under any nonce (ADR `0159`): its
     // label is the key. A replay of the same request names the same payment, so the nonce is covered.
@@ -158,6 +172,7 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
         outcome: request.outcome,
         ...(request.reason === '' ? {} : { reason: request.reason }),
         ...(payment === null ? {} : { payment: paymentLevelLabel(payment, request.endpoint) }),
+        ...(request.need === '' ? {} : { need: request.need }),
         inContextOf: lines.inContextOf,
         isCategory: categories.isCategory,
         reads,
@@ -167,7 +182,7 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
     }
     if (plan.status === 'refused') return json({ error: plan.detail, rule: plan.rule }, 422);
 
-    const levels = [usesId, plan.contextTripleId, plan.outcomeTripleId, plan.reasonTripleId, plan.paymentTripleId].filter(
+    const levels = [usesId, plan.contextTripleId, plan.outcomeTripleId, plan.reasonTripleId, plan.paymentTripleId, plan.needTripleId].filter(
       (term): term is Hex => term !== null,
     );
     const curve = await reads.defaultCurveId();
@@ -247,4 +262,42 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
     ledger.settle('line', key, { status: 'success', hash: transactions.at(-1) as Hex }); // at least one, checked above
     return json({ termId: usesId, levels, created: calls.length > 0, transactions });
   });
+}
+
+/**
+ * Whether the skill's own SKILL.md names `need` (ADR `0166`), or the answer that refuses the line. `kind` is
+ * what the failure's reason calls for, `null` on a worked line, where either shape may stand.
+ */
+async function checkNeed(
+  lines: NonNullable<SponsorContext['options']['lines']>,
+  tool: Hex,
+  need: string,
+  kind: 'program' | 'key' | null,
+): Promise<Response | null> {
+  if (lines.toolUrl === undefined || lines.skillMarkdown === undefined) {
+    return json({ error: 'a line that names what was missing is not configured on this service', rule: 'config' }, 503);
+  }
+  let toolUrl: string | null;
+  try {
+    toolUrl = await lines.toolUrl(tool);
+  } catch (error) {
+    return chainUnreadable(String(error instanceof Error ? error.message : error));
+  }
+  if (toolUrl === null) return json({ error: 'the index has no document for this tool yet', rule: 'tool', retry: true }, 422);
+  if (skillRefFromUrl(toolUrl) === null) {
+    return json({ error: 'a line names what was missing only about a skill, whose SKILL.md names it', rule: 'need' }, 422);
+  }
+  let markdown: string | null;
+  try {
+    markdown = await lines.skillMarkdown(toolUrl);
+  } catch (error) {
+    // GitHub not answering says nothing about the skill, and nothing is written without its file.
+    const reason = String(error instanceof Error ? error.message : error).slice(0, 200);
+    return json({ error: `the skill's SKILL.md could not be read: ${reason}`, rule: 'need' }, 503);
+  }
+  if (markdown === null) return json({ error: `${toolUrl} has no single SKILL.md to check "${need}" against`, rule: 'need' }, 422);
+  if (publishableNeed(need, markdown, kind ?? undefined) === null) {
+    return json({ error: `the skill's SKILL.md does not name "${need}", so it is not written`, rule: 'need' }, 422);
+  }
+  return null;
 }

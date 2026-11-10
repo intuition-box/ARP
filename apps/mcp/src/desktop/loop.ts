@@ -324,6 +324,12 @@ export type LineInput = {
    * With it, `toolUrl` is also signed as the exact URL paid, as typed (task 93, ADR `0162`).
    */
   payment?: X402PaymentRef;
+  /**
+   * `needs` on a missing-program or missing-key failure, `with` on a worked line: a program's or an environment
+   * variable's name, never its value (task 97, ADR `0166`). The sponsor writes it only when the skill's
+   * SKILL.md names it, and refuses the line otherwise.
+   */
+  need?: string;
 };
 /** `toolUrl` is the spelling it was listed under, which can differ from the one asked: GitHub's own wins. */
 export type WrittenLine = { toolUrl: string; termId: Hex; levels: Hex[]; created: boolean; transactions: Hex[] };
@@ -389,6 +395,7 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, input: L
         reason: input.reason ?? '',
         payment: input.payment === undefined ? '' : paymentAtomLabel(input.payment),
         endpoint: input.payment === undefined ? '' : input.toolUrl,
+        need: input.need ?? '',
         nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
         expiresAt: expiresAt(),
       },

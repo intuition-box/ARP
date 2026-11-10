@@ -12,6 +12,8 @@ import {
   githubPulseSource,
   groupByContent,
   BECAUSE_LABEL,
+  NEEDS_LABEL,
+  WITH_LABEL,
   entersList,
   unconfirmedNote,
   type Capability,
@@ -288,6 +290,8 @@ export function usageLine(usage: PulseUsage | undefined, domain: string | null) 
     by_domain: usage.byDomain,
     by_outcome: usage.byOutcome,
     ...(Object.keys(usage.byReason).length === 0 ? {} : { by_reason: usage.byReason }),
+    ...(Object.keys(usage.byNeed ?? {}).length === 0 ? {} : { by_need: usage.byNeed }),
+    ...(Object.keys(usage.byWith ?? {}).length === 0 ? {} : { by_with: usage.byWith }),
     latest: usage.declarations
       .slice(-3)
       .map((row) => ({ agent: row.agent.label, by: row.writer, domains: row.domains, outcomes: row.outcomes, lines: row.lines })),
@@ -542,6 +546,9 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
       inContextOf: IN_CONTEXT_OF,
       hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
       because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
+      // What a failure said was missing, and what a worked line said was added (ADR `0166`).
+      needs: await reads.atomId(stringToHex(NEEDS_LABEL)),
+      with: await reads.atomId(stringToHex(WITH_LABEL)),
       payers: LINE_PAYERS,
     });
   };

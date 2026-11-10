@@ -11,6 +11,7 @@ import {
   isTransactionAbsent,
   isUsageOutcome,
   isUsageReason,
+  needShapeProblem,
   normaliseCategoryLabel,
   readDomainTree,
   resolveDomain,
@@ -50,6 +51,10 @@ export function lineFromArgs(args: {
   /** With `network`, the x402 settlement this outcome refers to (task 89, ADR `0159`). */
   paymentTx?: string | undefined;
   network?: string | undefined;
+  /** With a missing-program or missing-key failure: the program or variable's name that was missing (ADR `0166`). */
+  needs?: string | undefined;
+  /** With a worked outcome: the program or variable's name the agent had to add (ADR `0166`). */
+  with?: string | undefined;
 }, env: Readonly<Record<string, string | undefined>> = process.env): LineInput | Error {
   if ((args.parent === undefined) !== (args.why === undefined)) return new Error('--parent and --why go together');
   if ((args.paymentTx === undefined) !== (args.network === undefined)) return new Error('--payment-tx and --network go together');
@@ -77,6 +82,14 @@ export function lineFromArgs(args: {
     return new Error(`--reason must be one of ${USAGE_REASONS.join(', ')}`);
   }
   if (args.reason !== undefined && args.outcome !== 'failed') return new Error('a reason only follows --outcome failed');
+  if (args.needs !== undefined && args.outcome !== 'failed') return new Error('--needs follows --outcome failed; a worked line takes --with');
+  if (args.with !== undefined && args.outcome !== 'worked') return new Error('--with follows --outcome worked; a failure takes --needs');
+  const need = args.needs ?? args.with;
+  if (need !== undefined) {
+    const problem = needShapeProblem({ need, outcome: args.outcome, reason: args.reason ?? '' });
+    if (problem !== null) return new Error(problem);
+    if (args.paymentTx !== undefined) return new Error("--needs and --with name a skill's word; a paid endpoint has no SKILL.md");
+  }
   return {
     toolUrl: args.toolUrl,
     outcome: args.outcome,
@@ -88,6 +101,7 @@ export function lineFromArgs(args: {
     ...(args.paymentTx === undefined || args.network === undefined
       ? {}
       : { payment: { network: args.network, txHash: args.paymentTx.toLowerCase() as Hex } }), // checked above
+    ...(need === undefined ? {} : { need }),
   };
 }
 

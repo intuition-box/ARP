@@ -2277,6 +2277,7 @@ describe('POST /line', () => {
         reason: 'missing-key',
         payment: '',
         endpoint: '',
+        need: '',
         nonce: keccak256(stringToBytes(`line-${++nonce}`)),
         expiresAt: Math.floor(NOW / 1000) + 600,
         ...over,
@@ -2558,6 +2559,88 @@ describe('POST /line', () => {
       const w = seeded();
       const service = lineService(w, { lines: { inContextOf: IN_CONTEXT, subject: async () => 'other' } });
       expect((await post(service, { request: await withPayment() })).status).toBe(503);
+      expect(w.sent).toHaveLength(0);
+    });
+  });
+
+  describe('with what was missing, or added (task 97, ADR 0166)', () => {
+    const SKILL_URL = 'https://github.com/acme/video-kit?skill=cut-silences';
+    const SKILL_MD = '---\nname: cut-silences\n---\nNeeds FFmpeg and `OPENAI_API_KEY`.\n\n```bash\nffmpeg -i in.mp4 out.mp4\n```\n';
+    const named = (w: World, over: Partial<NonNullable<Parameters<typeof createSponsor>[0]['lines']>> = {}) =>
+      lineService(w, {
+        lines: {
+          inContextOf: IN_CONTEXT,
+          subject: async () => 'github',
+          toolUrl: async () => SKILL_URL,
+          skillMarkdown: async () => SKILL_MD,
+          ...over,
+        },
+      });
+    const has = (w: World, label: string) =>
+      w.sent.some((c) => c.kind === 'create-atom' && c.data.includes(stringToHex(label).slice(2)));
+
+    test('writes needs on the reason, as a fifth level in the agent name', async () => {
+      const w = seeded();
+      const answer = await post(named(w), { request: await request({ reason: 'missing-program', need: 'ffmpeg' }) });
+      expect(answer.status).toBe(200);
+      expect(w.sent.filter((c) => c.kind === 'create-triple')).toHaveLength(5);
+      expect((answer.body.levels as Hex[]).length).toBe(5);
+      expect(w.sent.filter((c) => c.kind === 'deposit')).toHaveLength(5);
+      expect(has(w, 'needs') && has(w, 'ffmpeg')).toBe(true);
+    });
+
+    test('writes with on a worked line', async () => {
+      const w = seeded();
+      const answer = await post(named(w), { request: await request({ outcome: 'worked', reason: '', need: 'ffmpeg' }) });
+      expect(answer.status).toBe(200);
+      expect(w.sent.filter((c) => c.kind === 'create-triple')).toHaveLength(4);
+      expect(has(w, 'with')).toBe(true);
+    });
+
+    test("refuses a name the skill's SKILL.md does not hold, so nothing from the machine is published", async () => {
+      // What an error could name that the skill never did: the person's own program, and their own variable.
+      for (const over of [
+        { reason: 'missing-program', need: 'acme-internal-render' },
+        { reason: 'missing-key', need: 'ACME_CLIENT_TOKEN' },
+        { outcome: 'worked', reason: '', need: 'whisper' },
+      ]) {
+        const w = seeded();
+        const answer = await post(named(w), { request: await request(over) });
+        expect(answer.status).toBe(422);
+        expect(answer.body.rule).toBe('need');
+        expect(w.sent).toHaveLength(0);
+      }
+    });
+
+    test('refuses a path the agent signed, before reading anything', async () => {
+      const w = seeded();
+      let read = false;
+      const service = named(w, { skillMarkdown: async () => ((read = true), SKILL_MD) });
+      const answer = await post(service, { request: await request({ reason: 'missing-program', need: '/home/me/bin/ffmpeg' }) });
+      expect(answer.status).toBe(401);
+      expect(read).toBe(false);
+      expect(w.sent).toHaveLength(0);
+    });
+
+    test('refuses a need about something that is not a skill, or a skill with no single SKILL.md', async () => {
+      const w = seeded();
+      const repo = named(w, { toolUrl: async () => 'https://github.com/acme/video-kit' });
+      expect((await post(repo, { request: await request({ reason: 'missing-program', need: 'ffmpeg' }) })).body.rule).toBe('need');
+      const none = named(w, { skillMarkdown: async () => null });
+      expect((await post(none, { request: await request({ reason: 'missing-program', need: 'ffmpeg' }) })).status).toBe(422);
+      expect(w.sent).toHaveLength(0);
+    });
+
+    test('writes nothing when the SKILL.md cannot be read, and is off without the read', async () => {
+      const w = seeded();
+      const down = named(w, {
+        skillMarkdown: async () => {
+          throw new Error('GitHub answered HTTP 403');
+        },
+      });
+      expect((await post(down, { request: await request({ reason: 'missing-program', need: 'ffmpeg' }) })).status).toBe(503);
+      const off = lineService(w);
+      expect((await post(off, { request: await request({ reason: 'missing-program', need: 'ffmpeg' }) })).status).toBe(503);
       expect(w.sent).toHaveLength(0);
     });
   });

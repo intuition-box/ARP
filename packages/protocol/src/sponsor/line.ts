@@ -1,6 +1,7 @@
 import {getAddress, isAddress, isHex, recoverTypedDataAddress, type Address, type Hex} from "viem";
 
 import {isUsageOutcome, isUsageReason, type UsageOutcome, type UsageReason} from "../declare/usage-context.js";
+import {needShapeProblem} from "../declare/line-need.js";
 import {isExactEndpointUrl, parsePaymentAtomLabel} from "../x402-payment.js";
 
 /**
@@ -23,6 +24,11 @@ import {isExactEndpointUrl, parsePaymentAtomLabel} from "../x402-payment.js";
  * payment requires and nothing else allows. The tool atom stays the canonical URL (`normaliseToolUrl`);
  * the service checks the two agree and writes the exact one in the payment level. A version 2 request no
  * longer verifies, as version 1 did not under version 2: the CLI and the sponsor ship together.
+ *
+ * **Version 4** (task 97, ADR `0166`) adds `need`: on a `missing-program` or `missing-key` failure, the
+ * program or the environment variable's **name** that was missing, and on a worked line what had to be
+ * added; `""` for none. The service writes it only when the skill's own SKILL.md names it
+ * (`publishableNeed`). A version 3 request no longer verifies.
  */
 export const LINE_REQUEST_TYPES = {
     LineRequest: [
@@ -35,6 +41,7 @@ export const LINE_REQUEST_TYPES = {
         {name: "reason", type: "string"},
         {name: "payment", type: "string"},
         {name: "endpoint", type: "string"},
+        {name: "need", type: "string"},
         {name: "nonce", type: "bytes32"},
         {name: "expiresAt", type: "uint256"},
     ],
@@ -60,6 +67,11 @@ export type LineRequest = {
     payment: string;
     /** The exact URL the payer called, as typed (`isExactEndpointUrl`), with a payment; `""` without one. */
     endpoint: string;
+    /**
+     * `needs` on a `missing-program` or `missing-key` failure, `with` on a worked line: a program's or an
+     * environment variable's name (`needKindOf`), or `""`. Never with a payment: an endpoint has no SKILL.md.
+     */
+    need: string;
     nonce: Hex;
     /** Unix seconds. */
     expiresAt: number;
@@ -75,7 +87,7 @@ export type LineRequestVerdict =
 
 export function lineRequestTypedData(request: LineRequest, chainId: number) {
     return {
-        domain: {name: "ARP Line Request", version: "3", chainId} as const,
+        domain: {name: "ARP Line Request", version: "4", chainId} as const,
         types: LINE_REQUEST_TYPES,
         primaryType: "LineRequest" as const,
         message: {...request, expiresAt: BigInt(request.expiresAt)},
@@ -103,7 +115,7 @@ export async function verifyLineRequest(signed: unknown, now: number): Promise<L
     if (typeof request !== "object" || request === null) return {status: "malformed", reason: "no request"};
     if (typeof chainId !== "number" || !Number.isInteger(chainId)) return {status: "malformed", reason: "chainId"};
     if (typeof signature !== "string" || !isHex(signature)) return {status: "malformed", reason: "signature"};
-    const {agent, agentRegistry, agentId, tool, domain, outcome, reason, payment, endpoint, nonce, expiresAt} = request;
+    const {agent, agentRegistry, agentId, tool, domain, outcome, reason, payment, endpoint, need, nonce, expiresAt} = request;
     if (typeof agent !== "string" || !isAddress(agent)) return {status: "malformed", reason: "agent"};
     if (typeof agentRegistry !== "string" || typeof agentId !== "string") return {status: "malformed", reason: "agent reference"};
     if (!isBytes32(tool)) return {status: "malformed", reason: "tool"};
@@ -119,6 +131,10 @@ export async function verifyLineRequest(signed: unknown, now: number): Promise<L
     if (payment !== "" && !isExactEndpointUrl(endpoint)) {
         return {status: "malformed", reason: "a payment names the exact http(s) URL that was called"};
     }
+    if (typeof need !== "string") return {status: "malformed", reason: "need"};
+    const needProblem = needShapeProblem({need, outcome, reason});
+    if (needProblem !== null) return {status: "malformed", reason: needProblem};
+    if (need !== "" && payment !== "") return {status: "malformed", reason: "a need names a skill's word, and a paid endpoint has no SKILL.md"};
     if (!isBytes32(nonce)) return {status: "malformed", reason: "nonce"};
     if (typeof expiresAt !== "number" || !Number.isInteger(expiresAt)) return {status: "malformed", reason: "expiresAt"};
     if (expiresAt <= now) return {status: "expired", expiresAt};

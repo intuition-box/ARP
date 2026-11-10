@@ -70,7 +70,7 @@ import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
 import { listenFrom, type Listen } from './listen.ts';
 import { categoryLog, categoryTree, compoundsFrom, lineSubjectCheck, lineToolUrl, toolCheck } from './categories.ts';
-import { resolveOnGitHubCached } from './github.ts';
+import { resolveOnGitHubCached, skillMarkdownOnGitHub } from './github.ts';
 import { DEFAULT_ENDPOINT_CHECKS_PER_HOUR, pinnedAsk, toolAdmitter } from './admit-tool.ts';
 import { repoSpellingsOnGraph } from './indexer.ts';
 import { intuitionJsonPinner, intuitionPinner } from './pin.ts';
@@ -379,6 +379,8 @@ const service = createSponsor({
     subject: lineSubjectCheck(deployments.chain.graphqlUrl),
     // ADR `0162`: the exact URL an x402 line names must normalise to this.
     toolUrl: lineToolUrl(deployments.chain.graphqlUrl),
+    // ADR `0166`: a `needs` or `with` name is written only when the skill's own SKILL.md names it.
+    skillMarkdown: (url) => skillMarkdownOnGitHub(url),
     // ADR `0159`: an x402 line's payment, read on its own network. Read-only; this key never signs there.
     payments: x402Reading(x402NetworksFrom(X402_DEFAULT_NETWORKS, process.env), process.env),
   },

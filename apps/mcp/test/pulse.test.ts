@@ -126,6 +126,26 @@ describe("usageLine", () => {
         expect(usageLine(empty, null)).toEqual({written_by_agents: "nobody yet, so unknown", truncated: true});
         expect(usageLine({...empty, truncated: false}, null)).toEqual({written_by_agents: "nobody yet, so unknown"});
     });
+
+    it("shows what a failure needed and what a worked line was written with, in the chain's words (ADR 0166)", () => {
+        const line = {domain: "video", outcome: "failed" as const, reasons: ["missing-program" as const], form: "nested" as const, needs: ["ffmpeg"]};
+        const declaration = {tripleId: "0x1", agent: {atomId: "0xa", label: "agent 6"}, writer: "0xw", declaredAt: null, domains: ["video"], outcomes: ["failed"], lines: [line]};
+        const usage = {
+            declarations: [declaration],
+            agents: 1,
+            wallets: 1,
+            byDomain: {video: 1},
+            byOutcome: {failed: 1},
+            byReason: {"missing-program": 1},
+            byNeed: {ffmpeg: 1},
+            byWith: {},
+            byOthers: [],
+            truncated: false,
+        };
+        const shown = usageLine(usage, "video");
+        expect(shown).toMatchObject({by_need: {ffmpeg: 1}, latest: [{lines: [{needs: ["ffmpeg"]}]}]});
+        expect(shown).not.toHaveProperty("by_with");
+    });
 });
 
 describe("edgeWriterWarning", () => {

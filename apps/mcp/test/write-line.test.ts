@@ -141,6 +141,29 @@ describe("writeLine", () => {
     });
 });
 
+describe("writeLine with what was missing (ADR 0166)", () => {
+    it("signs the name in the request, under version 4", async () => {
+        let signed: SignedLineRequest | undefined;
+        const {config, agent} = setup((body) => {
+            signed = body.request;
+            return ok;
+        });
+        await writeLine(config, agent, {...INPUT, reason: "missing-program", need: "ffmpeg"});
+        expect(signed?.request).toMatchObject({reason: "missing-program", need: "ffmpeg"});
+        expect(await verifyLineRequest(signed, Math.floor(Date.now() / 1000))).toEqual({status: "valid", address: account.address});
+    });
+
+    it("signs an empty need when there is none", async () => {
+        let signed: SignedLineRequest | undefined;
+        const {config, agent} = setup((body) => {
+            signed = body.request;
+            return ok;
+        });
+        await writeLine(config, agent, INPUT);
+        expect(signed?.request.need).toBe("");
+    });
+});
+
 describe("writeLine with a domain the tree lacks", () => {
     const NEW = {...INPUT, domain: "slides", newDomain: {parent: "design", why: "no deck category"}};
 
@@ -221,6 +244,21 @@ describe("lineFromArgs", () => {
             toolUrl: "http://127.0.0.1:4021/x402-demo/no-delivery",
         });
         expect(lineFromArgs({...paid, toolUrl: "127.0.0.1:4021/x402-demo/no-delivery"})).toBeInstanceOf(Error);
+    });
+
+    it("takes --needs on a missing program or key, and --with on a worked line (ADR 0166)", () => {
+        expect(lineFromArgs({...args, outcome: "failed", reason: "missing-program", needs: "ffmpeg"})).toMatchObject({need: "ffmpeg"});
+        expect(lineFromArgs({...args, outcome: "failed", reason: "missing-key", needs: "OPENAI_API_KEY"})).toMatchObject({need: "OPENAI_API_KEY"});
+        expect(lineFromArgs({...args, outcome: "worked", with: "ffmpeg"})).toMatchObject({need: "ffmpeg"});
+        for (const bad of [
+            {outcome: "failed", reason: "missing-program", needs: "/home/me/bin/ffmpeg"},
+            {outcome: "failed", reason: "missing-key", needs: "sk-live-123"},
+            {outcome: "failed", reason: "missing-file", needs: "ffmpeg"},
+            {outcome: "failed", reason: "missing-program", with: "ffmpeg"},
+            {outcome: "worked", needs: "ffmpeg"},
+        ]) {
+            expect(lineFromArgs({...args, ...bad})).toBeInstanceOf(Error);
+        }
     });
 
     it("refuses anything else", () => {

@@ -211,6 +211,12 @@ export type SponsorOptions = {
     subject(atomId: Hex): Promise<'github' | 'other' | 'unseen'>;
     /** The tool atom's URL as the index resolves it, or `null` before it does; needed for a payment (ADR `0162`). */
     toolUrl?(atomId: Hex): Promise<string | null>;
+    /**
+     * A skill's SKILL.md, read from its source (`skillMarkdownOnGitHub`), or `null` when it has none. A line
+     * that names what was missing or added is written only when this names it (task 97, ADR `0166`); absent,
+     * such a line answers 503 and every other line is unchanged.
+     */
+    skillMarkdown?(toolUrl: string): Promise<string | null>;
     payments?: { policy: X402NetworkPolicy; readsFor(network: string): X402TransferReads } | null;
   } | null;
   /** Milliseconds. Injected so a test can move the day. */

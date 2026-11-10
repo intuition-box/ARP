@@ -10,7 +10,7 @@
  *  `admit-tool.ts`'s question, asked only when a listing would create something (task 94, ADR
  *  `0163`); any other URL passes here and is asked there.
  */
-import { resolveContentPath, skillRefFromUrl, type RepositoryFile } from '@arp-protocol/core';
+import { rawContentUrl, resolveContentPath, skillRefFromUrl, type RepositoryFile } from '@arp-protocol/core';
 
 const FETCH_TIMEOUT_MS = 10_000;
 
@@ -98,4 +98,56 @@ export async function resolveOnGitHub(
     return { ok: false, reason: `github.com/${fullName} has no SKILL.md for ${ref.skill}` };
   }
   return { ok: true, fullName };
+}
+
+/** A SKILL.md larger than this is cut: a name is looked for in it, and nothing else is read. */
+const SKILL_MARKDOWN_MAX_BYTES = 512 * 1024;
+const markdownCache = new Map<string, { at: number; text: string | null }>();
+
+/**
+ * The SKILL.md a skill's URL refers to, at the repository's `HEAD`, by the content server's rule
+ * (`resolveContentPath`): what `POST /line` checks a `needs` or `with` name against (task 97, ADR `0166`).
+ * `null` when the URL names no skill, or the repository holds no single SKILL.md for it. Throws when GitHub
+ * does not answer, which says nothing about the skill. Remembered for ten minutes per URL, like
+ * {@link resolveOnGitHubCached}, because the tree read spends GitHub's hourly allowance.
+ */
+export async function skillMarkdownOnGitHub(
+  url: string,
+  options: { token?: string | undefined; fetch?: typeof fetch; now?: number } = {},
+): Promise<string | null> {
+  const now = options.now ?? Date.now();
+  const hit = markdownCache.get(url);
+  if (hit !== undefined && now - hit.at < CACHE_MS) return hit.text;
+  const text = await readSkillMarkdown(url, options.token ?? process.env.GITHUB_TOKEN?.trim(), options.fetch ?? fetch);
+  markdownCache.delete(url);
+  markdownCache.set(url, { at: now, text });
+  if (markdownCache.size > CACHE_ENTRIES) markdownCache.delete(markdownCache.keys().next().value ?? url);
+  return text;
+}
+
+async function readSkillMarkdown(url: string, token: string | undefined, fetchImpl: typeof fetch): Promise<string | null> {
+  const ref = skillRefFromUrl(url);
+  if (ref === null || !/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(ref.repo)) return null;
+  const headers: Record<string, string> = { accept: 'application/vnd.github+json', 'user-agent': 'arp-sponsor' };
+  if (token !== undefined && token.length > 0) headers.authorization = `Bearer ${token}`;
+  const treeResponse = await fetchImpl(`https://api.github.com/repos/${ref.repo}/git/trees/HEAD?recursive=1`, {
+    headers,
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (treeResponse.status === 404 || treeResponse.status === 409) return null;
+  if (!treeResponse.ok) throw new Error(`GitHub answered HTTP ${treeResponse.status} for ${ref.repo}`);
+  // GitHub's tree API shape; each entry's `type` is checked below.
+  const tree = (await treeResponse.json()) as { tree?: { path: string; type: string; sha: string }[] };
+  const files: RepositoryFile[] = (tree.tree ?? [])
+    .filter((entry) => entry.type === 'blob')
+    .map((entry) => ({ path: entry.path, sha: entry.sha }));
+  const resolved = resolveContentPath(ref, files);
+  if (resolved.status !== 'resolved') return null;
+  const response = await fetchImpl(rawContentUrl(ref, resolved.path), {
+    headers: { 'user-agent': 'arp-sponsor' },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`raw.githubusercontent.com answered HTTP ${response.status} for ${resolved.path}`);
+  return (await response.text()).slice(0, SKILL_MARKDOWN_MAX_BYTES);
 }
