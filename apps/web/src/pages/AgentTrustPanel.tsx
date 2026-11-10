@@ -18,7 +18,6 @@ import {identityRegistryFor} from "../lib/deployments";
 import {AgentClaims, AgentDeclareCard} from "../components/agent/AgentClaims";
 import {SectionTabs} from "../components/agent/SectionTabs";
 import {AgentEndpoints} from "../components/agent/AgentEndpoints";
-import {AgentLines} from "../components/agent/AgentLines";
 import {useAgentLines} from "../hooks/use-agent-lines";
 import {actionCardClass} from "../lib/surface-class";
 import {useAgentProfile} from "../hooks/use-agent-profile";
@@ -161,11 +160,7 @@ function AgentTrustPanelBody() {
     // Checked, not asserted: `atomTermId` comes off a source handle typed `string`, and a malformed
     // term id would become the address a deposit is sent to.
     const backingAtomId = asStakeTermId(view?.atomTermId ?? null);
-    const linesQuery = useAgentLines(view?.found === true ? (view.atomTermId ?? null) : null);
-    const lines = linesQuery.data;
-    // The strip takes an exact number, so a cut read gives none there; the group heads say `N+`.
-    const linesCount =
-        lines === undefined || lines.truncated ? null : lines.usedBy.length + lines.used.length;
+    const lines = useAgentLines(view?.found === true ? (view.atomTermId ?? null) : null).data;
 
     /**
      * The sections, as tabs.
@@ -174,11 +169,10 @@ function AgentTrustPanelBody() {
      * failed — an always-present "nothing failed" tab is a row of reassurance, which is not
      * information. Declarations are not a tab: they are the Relations block below the market.
      *
-     * **Lines first, Ratings last** (task 95, the user, 2026-11-10): what agents wrote about using
-     * this one, and what it used, is what the page is for. A provider's score comes after.
+     * **Ratings last** (task 95, the user, 2026-11-10): a provider's score comes after what the
+     * agent is and how to reach it. The lines themselves ride the Relations field's loupe.
      */
     const sectionTabs = [
-        {slug: "lines", label: "Lines", count: linesCount},
         {slug: "capabilities", label: "Capabilities", count: view?.capabilityCount ?? null},
         {slug: "endpoints", label: "Endpoints"},
         {slug: "ratings", label: "Ratings", count: view?.rows.length ?? null},
@@ -187,7 +181,7 @@ function AgentTrustPanelBody() {
             : []),
     ];
     const requestedSection = searchParams.get(SECTION_PARAM);
-    const selectedSection = initialSectionOf(sectionTabs, requestedSection) ?? "lines";
+    const selectedSection = initialSectionOf(sectionTabs, requestedSection) ?? "capabilities";
     /**
      * Whether the connected wallet holds a position here, for the sigil's core.
      *
@@ -376,19 +370,6 @@ function AgentTrustPanelBody() {
                                     tabIndex={0}
                                     className="mt-8"
                                 >
-                                    {selectedSection === "lines" ? (
-                                        <AgentLines
-                                            read={
-                                                view.atomTermId === null
-                                                    ? {status: "no-atom"}
-                                                    : linesQuery.isPending
-                                                      ? {status: "pending"}
-                                                      : lines === undefined
-                                                        ? {status: "failed"}
-                                                        : {status: "ok", view: lines}
-                                            }
-                                        />
-                                    ) : null}
                                     {selectedSection === "endpoints" ? (
                                         <AgentEndpoints registrationFile={view.registrationFile} />
                                     ) : null}

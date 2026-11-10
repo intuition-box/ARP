@@ -777,6 +777,21 @@ a.arp-cf-card:hover {
     color: var(--color-alarm);
 }
 
+/* What the use was for and how it went, on the agent page (task 95). */
+.arp-cf-line {
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-silver);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Room for that line before any dot is read, so the card never grows under the loupe. */
+.arp-cf-card.has-line {
+    min-height: 8rem;
+}
+
 /* The total and the key. */
 .arp-cf-total {
     display: flex;

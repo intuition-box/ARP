@@ -1,6 +1,9 @@
 import type {Hex} from "viem";
+import {INTUITION_USES_TERM_ID} from "@arp-protocol/core";
 
+import {useAgentLines} from "../../hooks/use-agent-lines";
 import {useAtomStanding} from "../../hooks/use-atom-standing";
+import {fieldGroups} from "../../services/agent-lines";
 import {useDeclaredModules} from "../../hooks/use-declared-modules";
 import {ClaimField} from "../atom/ClaimField";
 import {Empty, Group} from "../atom/ClaimList";
@@ -33,11 +36,7 @@ import {DeclareUse} from "../usage/DeclareUse";
 export function AgentDeclareCard({atomId, name}: {atomId: Hex; name: string}) {
     const query = useAtomStanding(atomId);
     return (
-        <DeclareUse
-            object={atomId}
-            objectLabel={name}
-            onDeclared={() => void query.refetch()}
-        />
+        <DeclareUse object={atomId} objectLabel={name} onDeclared={() => void query.refetch()} />
     );
 }
 
@@ -48,6 +47,16 @@ export function AgentClaims({atomId, name}: {atomId: string; name: string}) {
         group.rows.map((row) => row.subjectAtomId),
     );
     const modules = useDeclaredModules(subjectIds);
+    // The same query key the page's header reads, so one request serves both.
+    const lines = useAgentLines(atomId).data;
+    const field =
+        view === undefined
+            ? []
+            : fieldGroups(view.groups, view.claims, lines, INTUITION_USES_TERM_ID);
+    const usedCount = field.reduce(
+        (sum, group) => sum + (group.direction === "out" ? group.rows.length : 0),
+        0,
+    );
 
     return (
         <>
@@ -59,16 +68,19 @@ export function AgentClaims({atomId, name}: {atomId: string; name: string}) {
                 <p className="max-w-[64ch] text-[color:var(--color-steel)]">
                     This agent is not on the graph yet, so nothing can point at it.
                 </p>
-            ) : view.groups.length === 0 ? (
+            ) : field.length === 0 ? (
                 <Empty atomId={view.atomId} />
             ) : (
                 <>
+                    {/* The lines ride the loupe: what a use was for and how it went, and a ring
+                        of what this agent used (task 95, the user, 2026-11-10). */}
                     <div className="mb-10">
                         <ClaimField
-                            groups={view.groups}
+                            groups={field}
                             subject={name}
-                            edgeCount={view.edgeCount}
-                            truncated={view.truncated}
+                            edgeCount={view.edgeCount + usedCount}
+                            truncated={view.truncated || (lines?.truncated ?? false)}
+                            reserveLine
                         />
                     </div>
                     {view.groups.map((group) => (

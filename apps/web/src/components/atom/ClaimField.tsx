@@ -57,6 +57,7 @@ export function ClaimField({
     subject,
     edgeCount,
     truncated,
+    reserveLine = false,
 }: {
     groups: readonly GroupView[];
     subject: string;
@@ -67,6 +68,8 @@ export function ClaimField({
      * prefix. Printed as `250+`: a floor rendered as a total is `rules/claims.md`'s whole subject.
      */
     truncated: boolean;
+    /** The card keeps room for a line under the figure, so a dot with one does not grow it (task 95). */
+    reserveLine?: boolean;
 }) {
     // Groups past `MAX_RINGS - 1` share the last ring. Each row keeps its own predicate, so a dot
     // on the folded ring still names its whole triple.
@@ -80,6 +83,7 @@ export function ClaimField({
                     row,
                     predicate: group.label,
                     heading: group.inverse ?? group.label,
+                    out: group.direction === "out",
                 })),
             ),
         );
@@ -179,7 +183,7 @@ export function ClaimField({
                                 if (dot.ring !== ring.ring) return null;
                                 const entry = entries[dot.index];
                                 if (entry === undefined) return null;
-                                const {row, predicate} = entry;
+                                const {row, predicate, out} = entry;
                                 const lit = reading.lit && reading.index === dot.index;
                                 return (
                                     <Link
@@ -204,7 +208,7 @@ export function ClaimField({
                                         {/* The whole triple, on the link itself. Not the word
                                             "backed": `AtomPanel`'s dust test watches for it. */}
                                         <span className="sr-only">
-                                            {claimSentence(row, predicate, subject)}
+                                            {claimSentence(row, predicate, subject, out)}
                                         </span>
                                     </Link>
                                 );
@@ -254,14 +258,18 @@ export function ClaimField({
                 the whole triple as its name, and a second tab stop whose target changes every
                 four seconds would be a keyboard trap of a different kind. */}
             {current === undefined ? (
-                <div aria-hidden="true" data-claim-sentence="none" className="arp-cf-card" />
+                <div
+                    aria-hidden="true"
+                    data-claim-sentence="none"
+                    className={`arp-cf-card ${reserveLine ? "has-line" : ""}`}
+                />
             ) : (
                 <Link
                     to={`/atom/${current.row.subjectAtomId}`}
                     aria-hidden="true"
                     tabIndex={-1}
                     data-claim-sentence="one"
-                    className={`arp-cf-card ${reading.lit ? "is-lit" : ""}`}
+                    className={`arp-cf-card ${reserveLine ? "has-line" : ""} ${reading.lit ? "is-lit" : ""}`}
                     onMouseEnter={() => point(currentPosition)}
                     onMouseLeave={() => release(currentPosition)}
                 >
@@ -339,14 +347,18 @@ function ringCount(total: number, floor: boolean): string {
     return `${total}${floor ? "+" : ""} ${total === 1 && !floor ? "declaration" : "declarations"}`;
 }
 
-/** The accessible name of a dot: the triple, then what stands behind it. */
-function claimSentence(row: EdgeRow, predicate: string, subject: string): string {
+/** The accessible name of a dot: the triple, then what stands behind it, then its line. */
+function claimSentence(row: EdgeRow, predicate: string, subject: string, out: boolean): string {
     const behind =
         row.positions > 0 && row.backing !== null
             ? `${row.backing} behind it, ${row.positions} ${row.positions === 1 ? "support" : "supports"}`
             : "nothing behind it";
     const against = row.opposition === null ? "" : `, ${row.opposition} against`;
-    return `${row.name} ${predicate} ${subject}, ${behind}${against}`;
+    const triple = out
+        ? `${subject} ${predicate} ${row.name}`
+        : `${row.name} ${predicate} ${subject}`;
+    const line = row.line === undefined || row.line === null ? "" : `, ${row.line}`;
+    return `${triple}, ${behind}${against}${line}`;
 }
 
 /** The figure line of the card. Paper, not accent: it is somebody else's position. */
@@ -369,6 +381,9 @@ function CardBody({row}: {row: EdgeRow}) {
             </div>
             {row.opposition === null ? null : (
                 <div className="arp-cf-against">{row.opposition} against</div>
+            )}
+            {row.line === undefined || row.line === null ? null : (
+                <div className="arp-cf-line">{row.line}</div>
             )}
         </>
     );

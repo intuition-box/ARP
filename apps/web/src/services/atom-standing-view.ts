@@ -43,6 +43,8 @@ export type EdgeRow = {
     positions: number;
     /** Deposits on the counter-triple. `null` unless somebody actually took the other side. */
     opposition: string | null;
+    /** What the declarer wrote the use was for and how it went, when a page reads lines (task 95). */
+    line?: string | null;
 };
 
 export type GroupView = {
@@ -63,6 +65,11 @@ export type GroupView = {
      * name of each claim still says the whole triple with it.
      */
     inverse: string | null;
+    /**
+     * `out`: the rows are this atom's **objects**, `(this, predicate, row)`, which the agent page adds
+     * for what an agent used (task 95). Absent for every other group, which are claims about this atom.
+     */
+    direction?: "out";
     rows: EdgeRow[];
     /** The group's summed backing, or `null` when no position stands behind any of it. */
     backing: string | null;
