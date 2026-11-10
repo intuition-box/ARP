@@ -17,7 +17,7 @@ as specified. Two defects were live in 99 and 100:
    (`pdftotext -f 1 -l 5`). Recorded: `{"skill":"pdf","reason":"missing-program","need":"1"}`. zsh is the
    default shell on macOS.
 2. **The source was `null` for a default install.** `npx skills add owner/repo --skill x` without `-g`
-   writes `skills-lock.json` beside the project (skills 1.7.4). `installedSource` read only the global
+   writes `skills-lock.json` beside the project (skills 1.7.x). `installedSource` read only the global
    `~/.agents/.skill-lock.json`. With no source, task 99's answer returns nothing
    (`apps/hook/src/failure-answer.ts`, `failure.source === null`) and a failure or worked answer has no
    public skill to share under.
@@ -28,6 +28,7 @@ as specified. Two defects were live in 99 and 100:
    never a program. `installedSource` also reads `<cwd>/skills-lock.json`.
 2. Two tests in `apps/hook/test/skill-failure.test.ts`, with the live error text. Both fail without the fix.
 3. `packaging/` regenerated.
+4. `docs/22`: the source of a failure, and the files the hook reads, name the project's lock file.
 
 ## The live runs, before and after
 
@@ -51,6 +52,9 @@ The one `worked` wallet is ARP's own test line on 13579 (`docs/tasks/75`), not a
   `arp: pdf failed`. The user's decision; the coordinating session raised it.
 - **False programs in task 98's report.** For `pptx` it lists `lorem`, `ipsum` and `prints` as programs it
   runs, read from the skill's example text (`readSkillContents`, task 96).
+- **`arp share send` fills a missing source from the global lock only** (`apps/cli/src/share.ts:49`). A
+  record written from now on already carries its source, so this reaches only records written before this
+  task, and backfilled ones.
 - **A skill installed in a session is not loaded until the next one.** Claude Code's behaviour, not ARP's;
   a tester following the install with a use in the same session gets `Unknown skill`.
 

@@ -230,7 +230,7 @@ const readIfThere = (path: string) => (existsSync(path) ? readFileSync(path, 'ut
 export function installedSource(name: string, cwd: string): string | null {
   const known = [
     ...installedFromSkillLock(readIfThere(join(homedir(), '.agents', '.skill-lock.json'))),
-    // A project install, the skills CLI's default, writes its lock beside the project (skills 1.7.4).
+    // A project install, the skills CLI's default, writes its lock beside the project (skills 1.7.x).
     ...installedFromSkillLock(readIfThere(join(cwd, 'skills-lock.json'))),
     ...installedFromReceipts(readIfThere(join(arpHome(), 'receipts.jsonl'))),
     ...installedFromReceipts(readIfThere(join(cwd, '.arp', 'receipts.jsonl'))),

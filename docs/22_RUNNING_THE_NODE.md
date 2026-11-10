@@ -104,8 +104,8 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
                        the skill, its source, the session, the date, a closed reason, and a domain:
                        the search's, else a category your request names, else the catalogue's keyword
                        table on the skill's name and description, which can be wrong. The source, with
-                       no search, comes from ~/.agents/.skill-lock.json or a receipt, when only one
-                       source is known for that name. Your words are read for that and not kept. Never
+                       no search, comes from ~/.agents/.skill-lock.json, the project's own
+                       skills-lock.json or a receipt, when only one source is known for that name. Your words are read for that and not kept. Never
                        the command or its output. Stays on this machine unless you run `arp share on`
 ~/.arp/asked.jsonl     on Stop, the skills the hook asked about: the session, the skill, its source, the date
 ~/.arp/outcomes.jsonl  the model's answer to that question, `worked`, `failed` or `unsure`, with a domain
@@ -686,7 +686,9 @@ file and sends camelCase keys, which the hook also reads (`apps/hook/src/payload
 
 It fires on every tool call and appends one line to `.arp/session.jsonl` (or `ARP_SESSION_LOG`)
 for a skill or an MCP call, and nothing for anything else. It reads `.arp/receipts.jsonl` (or
-`ARP_RECEIPTS`) to name the atom of a skill you fetched through an MCP server, and your MCP
+`ARP_RECEIPTS`) to name the atom of a skill you fetched through an MCP server, the skills CLI's lock
+files (`~/.agents/.skill-lock.json`, and `skills-lock.json` in your project) to name where a skill was
+installed from, and your MCP
 configuration (`~/.claude.json`, `.mcp.json`) to name an MCP server by its URL or its npm or PyPI
 page. A script, a local path or localhost names nothing. **A configured URL can hold a key**, so
 the hook drops its query, fragment and `user:pass@`, and keeps only the origin when a path segment
