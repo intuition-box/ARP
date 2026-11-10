@@ -1,6 +1,6 @@
 # Task 94 — `/list-tool` lists only what is a tool
 
-**Status:** in progress.
+**Status:** verified 2026-11-10, post-mortem `.claude/learning/83-list-tool-only-tools.md`, ADR `0163`.
 **ADR:** `0163` (amends `0123` step 6).
 **Rules:** `code.md`, `security.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`. No atom shape changes, so no `intuition-integrator`.

@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-159 decisions. Newest last. `choices/README.md` says when to write one.
+160 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -200,3 +200,4 @@ Read these before relying on them.
 | [0160](0160-a-paying-network-is-added-by-configuration-and-the-demo-pays-on-base-sepolia.md) | 2026-11-09 | Accepted | A paying network is added by configuration, and the demo agent pays on Base Sepolia |
 | [0161](0161-a-hosted-read-only-mcp-endpoint.md) | 2026-11-10 | Accepted | A hosted read-only MCP endpoint, opt-in, that keeps no word it receives |
 | [0162](0162-the-x402-feed-names-the-endpoint-exactly-as-it-was-paid.md) | 2026-11-10 | Accepted | The x402 feed names the endpoint exactly as it was paid, and the tool atom stays canonical |
+| [0163](0163-list-tool-lists-only-what-is-a-tool.md) | 2026-11-10 | Accepted | `/list-tool` lists only what is a tool, and asks a stranger's URL from a pinned connection |
