@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-166 decisions. Newest last. `choices/README.md` says when to write one.
+167 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -206,5 +206,6 @@ Read these before relying on them.
 | [0165](0165-what-a-skill-contains-is-read-before-install.md) | 2026-11-10 | Accepted | What a skill contains is read from its files and shown before install, as facts |
 | [0166](0166-a-line-names-what-was-missing-and-what-made-it-work.md) | 2026-11-10 | Accepted | A line names what was missing, and what made it work, when the skill already says it |
 | [0167](0167-the-hook-reads-a-skill-before-a-skills-install.md) | 2026-11-10 | Accepted | The hook reads a skill before `npx skills add` runs, and so makes a network call |
+| [0168](0168-the-hook-answers-a-skill-failure-with-its-lines.md) | 2026-11-10 | Accepted | The hook answers a skill's failure with that skill's lines, read live |
 | [0170](0170-outside-signals-are-dated-sourced-facts.md) | 2026-11-10 | Accepted | Outside signals are dated, sourced facts, never ARP's figure and never in an order |
 | [0171](0171-feeds-a-registry-reads-beside-its-listing.md) | 2026-11-10 | Accepted | Feeds a registry reads beside its listing, and listings prepared, not sent |

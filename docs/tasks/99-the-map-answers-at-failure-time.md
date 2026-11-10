@@ -1,6 +1,6 @@
 # Task 99 — The map answers at failure time
 
-**Status:** in progress.
+**Status:** verified 2026-11-10, `task-verifier` PASS (round 2; round 1 FAIL on privacy wording and the viem claim, fixed in `7c902f6`), commits `f4838cd`..`7c902f6`, post-mortem `.claude/learning/88-the-map-answers-at-failure-time.md`. Not pushed.
 **ADR:** `0168`.
 **Rules:** `code.md`, `security.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`, `intuition`. **Reviewer:** `intuition-integrator` (no new query: the
