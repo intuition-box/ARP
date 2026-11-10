@@ -162,8 +162,11 @@ the Intuition graph    reads. Set by ARP_TARGET, or INTUITION_GRAPHQL_URL
 the Intuition RPC      reads. Set by ARP_TARGET, or INTUITION_RPC_URL
 api.github.com         one file listing per repository, cached ten minutes on the content route and a
                        day for `arp_pulse`, in ~/.arp/pulse-listings. With no token, no repository figures,
-                       and only as many results read as you asked for, so fewer copies are seen
-raw.githubusercontent.com   the skill's own bytes, passed through, never cached
+                       and only as many results read as you asked for, so fewer copies are seen.
+                       A skill ARP catalogues is answered from a dated reading bundled with the server
+                       (`data/catalogue/pulse-readings.json`, task 113) and asks GitHub nothing
+raw.githubusercontent.com   the skill's own bytes: passed through on the content route, never cached; for
+                       `arp_pulse`, kept in memory ten minutes, never on disk
 gateway.pinata.cloud   a pinned document: an agent's registration file when it published an
                        `ipfs://` one, a proof the index does not hold, or a skill atom's document
 ipfs.io                the same, when Pinata does not serve it
@@ -719,10 +722,12 @@ two hosts:
 ```
 api.github.com              the repository's file list and its figures (stars, last push, archived).
                             Two requests per install, counted against GitHub's 60 an hour without a token
-raw.githubusercontent.com   the SKILL.md files that name the skill (others too when its directory does not
-                            carry its name), up to five scripts it runs, and since task 112 up to 80 other
-                            text files of the skill's directory (no font, image or sound), at the default
-                            branch's HEAD, until 1.5 s before the six seconds end
+raw.githubusercontent.com   the SKILL.md files that name the skill (up to 12 others, nearest its name first,
+                            when its directory does not carry its name), up to five scripts it runs (256 KB
+                            each, 512 KB in all, none under an examples or assets directory; task 113), and
+                            since task 112 up to 80 other text files of the skill's directory (no font,
+                            image or sound), at the default branch's HEAD, until 1.5 s before the six
+                            seconds end
 ```
 
 **What leaves your machine is the repository and skill names the command already carries**, sent to

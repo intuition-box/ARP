@@ -1,6 +1,6 @@
 # 0052 — the procedure is the product for the "use" half; the connector is a convenience
 
-**Status:** Accepted
+**Status:** Accepted. **Amended by ADR `0183`** (2026-11-10): a package that ships the MCP server (the Claude Code plugin, the Gemini extension) ships `apps/cli/assets/plugin-skill.md`, which sends the agent to the tools and holds no query; `skills/arp/SKILL.md` stays the procedure for an agent with nothing installed.
 **Date:** 2026-10-20
 **Triggered by:** user — _« ça veut dire qu'on peut utiliser ARP et déclarer des outils sans être
 obligé d'installer un node, il faut juste la lecture d'un skill ou l'installation de ce skill pour

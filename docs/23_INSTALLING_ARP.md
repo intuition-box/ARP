@@ -46,7 +46,7 @@ arp/
 ├── .claude-plugin/plugin.json
 ├── .mcp.json              the MCP server
 ├── hooks/hooks.json       the hook, on PreToolUse, PostToolUse, PostToolUseFailure and Stop
-└── skills/arp/SKILL.md    the publishable skill, skills/arp/SKILL.md today
+└── skills/arp/SKILL.md    apps/cli/assets/plugin-skill.md: the tools to call, no query (ADR `0183`)
 ```
 
 Install is two shell commands with no JSON to edit, and both run non-interactively:
