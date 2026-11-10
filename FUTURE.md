@@ -610,7 +610,7 @@ Closed or excluded tasks that leave something a later task may want. Each task f
 - **Task 28's punch list.** The open items stay in `docs/tasks/28-coherence-audit.md`. Many are moot
   since the pages they name were deleted or rebuilt; an item still true comes back as a task of its own.
 - **Task 61, deliverable B: figures per version** of a skill. Waits on someone asking for it, and on
-  deciding what a version is beyond the pin.
+  deciding what a version is beyond the pin. A shape is proposed below, "One score per version of a skill" (2026-11-10).
 - **Task 68, phase 5: a shorter `arp_pulse` answer** by default. It was to follow task 67's results,
   which do not exist yet.
 - **Task 86's surfaces**: `arp check <skill>` in the terminal (task 98 exports `skillInstallOf` and
@@ -645,3 +645,49 @@ compared, and a person's activity would be published.
 skill's own SKILL.md names (ADR `0166`). And data: on 2026-11-10 the skill-lines feed holds 10 skills
 and 5 writing wallets, mostly ARP's own rehearsals (`apps/web/public/feeds/skill-lines.json`). A recipe
 means nothing before testers write lines.
+
+## One score per version of a skill
+
+**Asked 2026-11-10**, while writing the HOL adapter sheet (`outreach/drafts/hol-arp-usage-adapter-2026-11-10.md`
+in the business-dev repository): _« il faudrait réfléchir au versioning aussi »_. This is task 61's
+deliverable B (excluded by task 103 until someone asks), with an answer to what a version is.
+
+**Today** a line is about a skill (repository + name), not a version. If the files change, every
+earlier line stays attached to the new ones, which is the risk a pre-install check cares about most.
+
+**What exists.** Each catalogued skill repository is pinned to a commit
+(`data/catalogue/skill-pins-13579.json`, 31 repositories). The content receipt names that commit since
+its version 2 and carries a sha256 over **every file of the skill's directory**, paths relative to it,
+sorted, hashed again (`packages/protocol/src/receipt.ts`). The hook already finds a skill's directory
+under `.claude/skills` in the project or the home directory (`skillDirectory`,
+`apps/hook/src/skill-failure.ts`).
+
+**The proposed shape.**
+
+1. A version is that directory digest, not the repository commit: a commit moves when any file of the
+   repository moves, the digest only when the skill does. Whole directory, never `SKILL.md` alone, or
+   a changed script would keep the old version.
+2. The hook computes it where the skill ran and the line carries it. It is the digest of a public file
+   set and says nothing about the person.
+3. The score is computed per digest; when it changes, earlier lines stay visible and stop counting:
+   "12 wallets on the previous version, 0 on this one".
+
+**Open.**
+
+- **A skill edited locally** matches no published digest. Its line is not written: tying it to nothing
+  is useless, and publishing that digest would reveal that the person changed the skill.
+- **Copies.** 46 of 662 catalogued skills exist byte-identical at several paths of one repository
+  (measured 2026-10-29, cited in `receipt.ts`). Grouping lines by digest would add them up, across
+  atoms. That is a change of model, so an ADR.
+- **Skills installed by a plugin** live elsewhere, and `skillDirectory` does not look there. Untested.
+- Not built, not tested.
+
+## `/account` and the activity page's "Yours" view
+
+**Removed 2026-11-10** at Jer's request, relayed by the user: "delegation — later". `/account`
+held the Smart Account, the delegation form, the signed delegations and the agent's start path;
+"Yours" on `/activity` held the wallet's positions, its own public rows and the local runtime's
+feed. Both pages are in git history before the removal. The delegation services and hooks
+(`services/delegation*.ts`, `hooks/use-account-delegations.ts`, `components/account/DelegationForm.tsx`)
+stay in the tree, tested, with no page reading them, for when delegations come back. Item 37d above
+("`/account` lists the published delegations") now needs a page first.
