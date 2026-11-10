@@ -42860,13 +42860,13 @@ function linesSentence(usage, label, where) {
       ...because.size === 0 ? [] : [`because ${counted(because)}`],
       ...named.size === 0 ? [] : [`${outcome === "failed" ? "needs" : "with"} ${counted(named)}`]
     ];
-    parts.push([`${usage.truncated ? "at least " : ""}${plural2(wallets.size)} wrote ${outcome}`, ...detail].join(" · "));
+    parts.push([`${usage.truncated ? "at least " : ""}${plural3(wallets.size)} wrote ${outcome}`, ...detail].join(" · "));
   }
   if (parts.length === 0)
     return null;
   return `ARP, lines agents wrote on ${label} (${where}): ${parts.join("; ")}.`;
 }
-var plural2 = (n) => `${n} wallet${n === 1 ? "" : "s"}`;
+var plural3 = (n) => `${n} wallet${n === 1 ? "" : "s"}`;
 var init_failure_lines = __esm(() => {
   init_line_need2();
   init_tool_thing2();
@@ -43058,6 +43058,226 @@ var init_skill_requires3 = __esm(() => {
   SHELL_FENCE2 = /^(sh|bash|shell|zsh|console|terminal)$/i;
 });
 
+// ../../packages/protocol/src/skill-needs.ts
+function isTestFile3(path) {
+  return /(^|\/)(tests?|__tests__|spec|fixtures?)\/|\.(test|spec)\.[a-z]+$|(^|\/)test_[^/]+\.py$|_test\.(py|go|rb)$/i.test(path);
+}
+function isSecretName3(name) {
+  return /(^|_)(API_?KEY|KEY|TOKEN|SECRET|PASSWORD|PASSWD|PASS|CREDENTIALS|CREDS)$/.test(name);
+}
+function lineAt2(text2, index2) {
+  let line = 1;
+  for (let at = text2.indexOf(`
+`);at !== -1 && at < index2; at = text2.indexOf(`
+`, at + 1))
+    line += 1;
+  return line;
+}
+function keysIn3(files, settings) {
+  const skillMd = files.find((file) => file.path === "SKILL.md");
+  const toSet = new Set;
+  if (skillMd !== undefined)
+    for (const match of skillMd.text.matchAll(SET_IN_SKILL_MD2))
+      toSet.add(match[1] ?? "");
+  const wanted = new Set(settings.filter((name) => isSecretName3(name) || toSet.has(name)));
+  const ordered = [
+    ...skillMd === undefined ? [] : [skillMd],
+    ...files.filter((file) => file.path !== "SKILL.md" && !isTestFile3(file.path))
+  ];
+  const found2 = new Map;
+  for (const file of ordered) {
+    for (const [index2, line] of file.text.split(`
+`).entries()) {
+      for (const match of line.matchAll(/\b[A-Z][A-Z0-9_]{2,}\b/g)) {
+        const name = match[0];
+        if (!wanted.has(name) || found2.has(name))
+          continue;
+        found2.set(name, { name, why: isSecretName3(name) ? "secret" : "set in SKILL.md", file: file.path, line: index2 + 1 });
+      }
+    }
+  }
+  return [...found2.values()].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+}
+function packageRoot2(specifier) {
+  if (specifier.startsWith("@"))
+    return specifier.split("/").slice(0, 2).join("/");
+  return specifier.split("/")[0]?.split(".")[0] ?? specifier;
+}
+function saysWhatItNeeds2(path, isScript) {
+  if (isScript)
+    return true;
+  if (!MARKDOWN3.test(path))
+    return false;
+  const base2 = path.slice(path.lastIndexOf("/") + 1).toLowerCase();
+  return base2 === "skill.md" || /^(readme|requirements?|prerequisites?|setup|install(ation)?|dependencies|getting-started)\b/.test(base2);
+}
+function namedAfterVerb2(line, program) {
+  for (const verb of line.matchAll(NEEDED_GLOBAL2)) {
+    const at = verb.index;
+    const after = line.slice(at + verb[0].length).slice(0, 40).split(/[.;:!?](?:\s|$)/)[0] ?? "";
+    const before = line.slice(Math.max(0, at - 30), at).split(/[.;:!?](?:\s|$)/).at(-1) ?? "";
+    if (program.test(after) || program.test(before))
+      return true;
+  }
+  return false;
+}
+function programsNeededIn3(files) {
+  const out = new Map;
+  const add = (program) => {
+    if (!out.has(program.name))
+      out.set(program.name, program);
+  };
+  for (const file of files) {
+    if (isTestFile3(file.path))
+      continue;
+    const lines = file.text.split(`
+`);
+    const isScript = SCRIPT4.test(file.path) || lines[0]?.startsWith("#!") === true;
+    if (isScript && !/\.(sh|bash|zsh)$/i.test(file.path)) {
+      for (const pattern of SPAWNS2) {
+        for (const match of file.text.matchAll(pattern)) {
+          const name = match[1] ?? "";
+          const line = lineAt2(file.text, match.index);
+          if (name === "" || EVERYWHERE2.has(name) || COMMENT_LINE3.test(lines[line - 1] ?? ""))
+            continue;
+          add({ name: ALIASES2[name] ?? name, from: "spawned", file: file.path, line });
+        }
+      }
+      for (const pattern of IMPORTS2) {
+        for (const match of file.text.matchAll(pattern)) {
+          const root2 = packageRoot2(match[1] ?? match[2] ?? "");
+          const driven = DRIVES2[root2];
+          const line = lineAt2(file.text, match.index);
+          if (driven === undefined || COMMENT_LINE3.test(lines[line - 1] ?? ""))
+            continue;
+          add({ name: driven, from: "package", file: file.path, line, via: root2 });
+        }
+      }
+    }
+    if (/(^|\/)package\.json$/.test(file.path)) {
+      for (const [index2, line] of lines.entries()) {
+        const name = /^\s*"(@?[\w./-]+)"\s*:\s*"/.exec(line)?.[1];
+        const driven = name === undefined ? undefined : DRIVES2[name];
+        if (driven !== undefined)
+          add({ name: driven, from: "package", file: file.path, line: index2 + 1, via: name ?? "" });
+      }
+    }
+    if (/(^|\/)requirements[\w.-]*\.txt$/i.test(file.path)) {
+      for (const [index2, line] of lines.entries()) {
+        const name = /^\s*([A-Za-z0-9][\w.-]*)/.exec(line.replace(/#.*/, ""))?.[1]?.toLowerCase();
+        const driven = name === undefined ? undefined : DRIVES2[name];
+        if (driven !== undefined)
+          add({ name: driven, from: "package", file: file.path, line: index2 + 1, via: name ?? "" });
+      }
+    }
+    if (saysWhatItNeeds2(file.path, isScript)) {
+      for (const [index2, line] of lines.entries()) {
+        if (NOT_NEEDED2.test(line) || NOT_AFTER2.test(line))
+          continue;
+        if (isScript && !COMMENT_OR_STRING2.test(line))
+          continue;
+        for (const { name, pattern } of NAMED_PROGRAMS2) {
+          if (namedAfterVerb2(line, pattern))
+            add({ name, from: "named as needed", file: file.path, line: index2 + 1 });
+        }
+      }
+    }
+  }
+  return [...out.values()];
+}
+var MARKDOWN3, SCRIPT4, COMMENT_LINE3, SET_IN_SKILL_MD2, EVERYWHERE2, ALIASES2, SPAWNS2, DRIVES2, IMPORTS2, NAMED_PROGRAMS2, NEEDED2, NEEDED_GLOBAL2, NOT_NEEDED2, NOT_AFTER2, COMMENT_OR_STRING2;
+var init_skill_needs2 = __esm(() => {
+  MARKDOWN3 = /\.(md|mdx|markdown)$/i;
+  SCRIPT4 = /\.(sh|bash|zsh|py|js|mjs|cjs|ts|rb|pl|ps1|php|lua)$/i;
+  COMMENT_LINE3 = /^\s*(?:#|\/\/|\*|--|;|rem\s)/i;
+  SET_IN_SKILL_MD2 = /(?:^|\s|`)(?:export\s+|set\s+|\$env:)?([A-Z][A-Z0-9_]{2,})=/g;
+  EVERYWHERE2 = new Set("sh bash zsh dash env cat ls echo printf mkdir rm cp mv ln grep sed awk tr cut head tail sort uniq wc find xargs test true false base64 date sleep chmod touch tee kill ps uname which open xdg-open cmd powershell pwsh taskkill taskkill.exe where where.exe".split(" "));
+  ALIASES2 = {
+    soffice: "LibreOffice",
+    libreoffice: "LibreOffice",
+    "google-chrome": "Chrome",
+    chromium: "Chrome",
+    "chromium-browser": "Chrome",
+    magick: "ImageMagick",
+    convert: "ImageMagick",
+    pdftoppm: "poppler",
+    pdftotext: "poppler",
+    python: "python3",
+    docker: "Docker"
+  };
+  SPAWNS2 = [
+    /\b(?:execFileSync|execFile|spawnSync|spawn|execaSync|execa)\(\s*["'`]([a-z][\w.+-]*)["'`]/g,
+    /\b(?:execSync|exec)\(\s*["'`]([a-z][\w.+-]*)[\s"'`]/g,
+    /\bBun\.spawn(?:Sync)?\(\s*\[\s*["'`]([a-z][\w.+-]*)["'`]/g,
+    /\bnew\s+Deno\.Command\(\s*["'`]([a-z][\w.+-]*)["'`]/g,
+    /\bsubprocess\.(?:run|call|check_call|check_output|Popen)\(\s*\[\s*["']([a-z][\w.+-]*)["']/g,
+    /\bsubprocess\.(?:run|call|check_call|check_output|Popen)\(\s*["']([a-z][\w.+-]*)[\s"']/g,
+    /\bos\.(?:system|popen)\(\s*["']([a-z][\w.+-]*)[\s"']/g
+  ];
+  DRIVES2 = {
+    puppeteer: "Chrome",
+    "puppeteer-core": "Chrome",
+    "chrome-launcher": "Chrome",
+    "chrome-remote-interface": "Chrome",
+    pyppeteer: "Chrome",
+    playwright: "a Playwright browser",
+    "playwright-core": "a Playwright browser",
+    "@playwright/test": "a Playwright browser",
+    "selenium-webdriver": "a browser and its driver",
+    selenium: "a browser and its driver",
+    "fluent-ffmpeg": "ffmpeg",
+    "ffmpeg-python": "ffmpeg",
+    ffmpeg: "ffmpeg",
+    pydub: "ffmpeg",
+    moviepy: "ffmpeg",
+    "openai-whisper": "ffmpeg",
+    whisper: "ffmpeg",
+    pytesseract: "tesseract",
+    "node-tesseract-ocr": "tesseract",
+    pdf2image: "poppler",
+    "pdf-poppler": "poppler",
+    wand: "ImageMagick",
+    gm: "ImageMagick",
+    pypandoc: "pandoc",
+    "node-pandoc": "pandoc",
+    docker: "Docker",
+    dockerode: "Docker"
+  };
+  IMPORTS2 = [
+    /\bfrom\s+["']([@\w./-]+)["']/g,
+    /\bimport\s*\(\s*["']([@\w./-]+)["']\s*\)/g,
+    /\bimport\s+["']([@\w./-]+)["']/g,
+    /\brequire\(\s*["']([@\w./-]+)["']\s*\)/g,
+    /^\s*(?:from\s+([\w.]+)\s+import|import\s+([\w.]+))/gm
+  ];
+  NAMED_PROGRAMS2 = [
+    { name: "ffmpeg", pattern: /\bffmpeg\b/i },
+    { name: "ffprobe", pattern: /\bffprobe\b/i },
+    { name: "Chrome", pattern: /\b(?:Google Chrome|Chrome|Chromium|chrome-headless-shell|google-chrome|chromium-browser)\b/ },
+    { name: "Docker", pattern: /\b[Dd]ocker\b/ },
+    { name: "git", pattern: /\bgit\b(?!\s*(?:hub|lab))/ },
+    { name: "jq", pattern: /\bjq\b/ },
+    { name: "pandoc", pattern: /\bpandoc\b/i },
+    { name: "ImageMagick", pattern: /\b(?:ImageMagick|imagemagick|magick)\b/ },
+    { name: "yt-dlp", pattern: /\byt-dlp\b/ },
+    { name: "tesseract", pattern: /\btesseract\b/i },
+    { name: "poppler", pattern: /\b(?:poppler|pdftoppm|pdftotext)\b/i },
+    { name: "LibreOffice", pattern: /\b(?:LibreOffice|libreoffice|soffice)\b/ },
+    { name: "sox", pattern: /\bsox\b/ },
+    { name: "exiftool", pattern: /\bexiftool\b/i },
+    { name: "ollama", pattern: /\b[Oo]llama\b/ },
+    { name: "gh", pattern: /\bgh\s+(?:CLI|cli)\b|\bGitHub CLI\b/ },
+    { name: "python3", pattern: /\b[Pp]ython\s?3?\b(?![-.\w])/ },
+    { name: "node", pattern: /\b(?:Node\.js|node)\b(?![-.\w])/ },
+    { name: "Java", pattern: /\b(?:Java|JDK|JRE)\b/ }
+  ];
+  NEEDED2 = /\b(?:requires?|required|requirements?|needs?|needed|prerequisites?|depends on|must (?:be )?install(?:ed)?|must have|install(?:ed)? first|has to be installed|be installed)\b/i;
+  NEEDED_GLOBAL2 = new RegExp(NEEDED2.source, "gi");
+  NOT_NEEDED2 = /\b(?:no|not|never|without|doesn't|don't|isn't|aren't|zero)\b[^.;]{0,30}\b(?:requires?|required|needs?|needed|install)/i;
+  NOT_AFTER2 = /\b(?:requires?|needs?)\s+(?:no|nothing|neither)\b/i;
+  COMMENT_OR_STRING2 = /^\s*(?:#|\/\/|\*|\/\*|"""|''')|["'`][^"'`]*\b(?:requires?|needs?|install)/i;
+});
+
 // ../../packages/protocol/src/skill-contents.ts
 function cap2(text2) {
   const flat = text2.replace(/\s+/g, " ").trim();
@@ -43075,7 +43295,7 @@ function interpreterOf2(firstLine) {
   return /^[a-z][\w.-]*$/i.test(name) && !BASE_SHELLS2.has(name) ? name : null;
 }
 function programsInScriptLine2(line, shell) {
-  if (COMMENT_LINE2.test(line))
+  if (COMMENT_LINE4.test(line))
     return [];
   const matches = shell ? [...line.matchAll(SCRIPT_PROBE2), ...line.matchAll(SYSTEM_INSTALL2)] : [...line.matchAll(PYTHON_PROBE2)];
   return matches.map((match) => match[1] ?? "").filter((name) => name !== "");
@@ -43121,7 +43341,7 @@ function settingsIn2(path, text2, code) {
     for (const match of text2.matchAll(pattern))
       found2.add((match[1] ?? "").toUpperCase());
   }
-  if (MARKDOWN2.test(path)) {
+  if (MARKDOWN4.test(path)) {
     for (const match of text2.matchAll(EXPORT_IN_PROSE2))
       found2.add(match[1] ?? "");
     for (const match of text2.matchAll(KEY_NAMED2))
@@ -43137,7 +43357,7 @@ function codeOf2(path, text2, isScript) {
 `);
   if (isScript)
     return lines;
-  if (!MARKDOWN2.test(path))
+  if (!MARKDOWN4.test(path))
     return [];
   const out = [];
   let fenced = false;
@@ -43281,7 +43501,7 @@ function readSkillContents2(input) {
     if (files.length >= CONTENTS_LIMITS2.files)
       skipped.push({ path: file.path, why: "over the file limit" });
     else if (file.text === null)
-      skipped.push({ path: file.path, why: file.notFetched === true ? "not fetched" : "binary" });
+      skipped.push({ path: file.path, why: file.tooLarge === true ? "too large" : file.notFetched === true ? "not fetched" : "binary" });
     else if (file.text.length > CONTENTS_LIMITS2.fileChars)
       skipped.push({ path: file.path, why: "too large" });
     else
@@ -43292,7 +43512,7 @@ function readSkillContents2(input) {
   const programs = new Map;
   const add = (name, from14) => {
     if (!programs.has(name))
-      programs.set(name, from14);
+      programs.set(name, { name, from: from14 });
   };
   const requires = readRequires2(skillMd);
   for (const name of requires.cli)
@@ -43304,11 +43524,11 @@ function readSkillContents2(input) {
   const domains = new Set;
   const fetchAndRun = [];
   const hidden = [];
-  const scripts = skipped.filter((file) => file.why === "not fetched" && SCRIPT3.test(file.path)).map((file) => ({ path: file.path, namedInSkillMd: namesFile2(skillMd, file.path) }));
+  const scripts = skipped.filter((file) => file.why === "not fetched" && SCRIPT5.test(file.path)).map((file) => ({ path: file.path, namedInSkillMd: namesFile2(skillMd, file.path) }));
   for (const file of files) {
     const lines = file.text.split(`
 `);
-    const isScript = SCRIPT3.test(file.path) || lines[0]?.startsWith("#!") === true;
+    const isScript = SCRIPT5.test(file.path) || lines[0]?.startsWith("#!") === true;
     const code = codeOf2(file.path, file.text, isScript);
     const shell = isShell2(file.path, file.text);
     for (const line of code) {
@@ -43341,18 +43561,22 @@ function readSkillContents2(input) {
       if (run !== undefined)
         fetchAndRun.push({ kind: run.kind, file: file.path, line: index2 + 1, text: cap2(line) });
     }
-    if (MARKDOWN2.test(file.path))
+    if (MARKDOWN4.test(file.path))
       hidden.push(...hiddenInMarkdown2(file.path, file.text));
   }
   const packageNames = new Set([...packages.values()].map((pkg) => pkg.name));
-  for (const [name, from14] of programs)
-    if (from14 !== "declared" && packageNames.has(name))
+  for (const [name, program] of programs)
+    if (program.from !== "declared" && packageNames.has(name))
       programs.delete(name);
+  for (const needed of programsNeededIn3(files))
+    if (!programs.has(needed.name))
+      programs.set(needed.name, needed);
   const cut = [];
   return {
-    programs: bounded3("programs", [...programs.entries()].map(([name, from14]) => ({ name, from: from14 })).sort((a, b) => compare2(a.name, b.name)), cut),
+    programs: bounded3("programs", [...programs.values()].sort((a, b) => compare2(a.name, b.name)), cut),
     packages: bounded3("packages", [...packages.values()].sort((a, b) => compare2(`${a.manager} ${a.name}`, `${b.manager} ${b.name}`)), cut),
     settings: bounded3("settings", [...settings].sort(compare2), cut),
+    keys: bounded3("keys", keysIn3(files, [...settings]), cut),
     scripts: bounded3("scripts", scripts.sort((a, b) => compare2(a.path, b.path)), cut),
     fetchAndRun: bounded3("fetchAndRun", fetchAndRun, cut),
     domains: bounded3("domains", [...domains].sort(compare2), cut),
@@ -43365,36 +43589,23 @@ function readSkillContents2(input) {
     cut
   };
 }
-function contentsLines2(contents, perList = 6) {
-  const list = (items, cut) => items.length === 0 ? "none found" : `${items.slice(0, perList).join(", ")}${items.length > perList || cut ? `, and ${Math.max(0, items.length - perList)}${cut ? "+" : ""} more` : ""}`;
-  const at = (rows, name) => list(rows.map((row) => `${row.kind} at ${row.file}:${row.line} "${row.text}"`), contents.cut.includes(name));
-  return [
-    `Programs: ${list(contents.programs.map((p) => `${p.name} (${p.from})`), contents.cut.includes("programs"))}`,
-    ...contents.packages.length === 0 ? [] : [`Packages: ${list(contents.packages.map((p) => `${p.manager} ${p.name}`), contents.cut.includes("packages"))}`],
-    `Keys and settings it reads: ${list(contents.settings, contents.cut.includes("settings"))}`,
-    `Scripts: ${list(contents.scripts.map((s) => s.namedInSkillMd ? `${s.path} (named in SKILL.md)` : s.path), contents.cut.includes("scripts"))}`,
-    `Fetches and runs code: ${at(contents.fetchAndRun, "fetchAndRun")}`,
-    `Domains named: ${list(contents.domains, contents.cut.includes("domains"))}`,
-    `Hidden or encoded text: ${at(contents.hidden, "hidden")}`,
-    ...contents.read.skipped.length === 0 ? [] : [`Not read: ${list(contents.read.skipped.map((s) => `${s.path} (${s.why})`), false)}`]
-  ];
-}
-var CONTENTS_LIMITS2, SCRIPT3, MARKDOWN2, FENCE2, BASE_SHELLS2, SCRIPT_PROBE2, SYSTEM_INSTALL2, COMMENT_LINE2, PYTHON_PROBE2, PACKAGE_INSTALL2, SHELL_VARIABLES2, READS_IN_CODE2, SHELL_READ2, SHELL_ASSIGN2, SHELL_LOOP2, EXPORT_IN_PROSE2, KEY_NAMED2, FETCH_AND_RUN2, URL_HOST2, PLACEHOLDER_HOST2, FILE_LIKE_HOST2, INVISIBLE2, PICTOGRAPH2, BASE64_RUN2, DATA_URI2, URL_TEXT2, IGNORE_INSTRUCTIONS2, KEEP_FROM_PERSON2, COMMENT_WORDS2 = 4;
+var CONTENTS_LIMITS2, SCRIPT5, MARKDOWN4, FENCE2, BASE_SHELLS2, SCRIPT_PROBE2, SYSTEM_INSTALL2, COMMENT_LINE4, PYTHON_PROBE2, PACKAGE_INSTALL2, SHELL_VARIABLES2, READS_IN_CODE2, SHELL_READ2, SHELL_ASSIGN2, SHELL_LOOP2, EXPORT_IN_PROSE2, KEY_NAMED2, FETCH_AND_RUN2, URL_HOST2, PLACEHOLDER_HOST2, FILE_LIKE_HOST2, INVISIBLE2, PICTOGRAPH2, BASE64_RUN2, DATA_URI2, URL_TEXT2, IGNORE_INSTRUCTIONS2, KEEP_FROM_PERSON2, COMMENT_WORDS2 = 4;
 var init_skill_contents2 = __esm(() => {
   init_skill_requires3();
+  init_skill_needs2();
   CONTENTS_LIMITS2 = {
     files: 200,
     fileChars: 512 * 1024,
     items: 40,
     lineChars: 160
   };
-  SCRIPT3 = /\.(sh|bash|zsh|py|js|mjs|cjs|ts|rb|pl|ps1|php|lua)$/i;
-  MARKDOWN2 = /\.(md|mdx|markdown)$/i;
+  SCRIPT5 = /\.(sh|bash|zsh|py|js|mjs|cjs|ts|rb|pl|ps1|php|lua)$/i;
+  MARKDOWN4 = /\.(md|mdx|markdown)$/i;
   FENCE2 = /^\s*(?:```|~~~)/;
   BASE_SHELLS2 = new Set(["sh", "bash", "zsh", "dash"]);
   SCRIPT_PROBE2 = /(?:^|[;&|(!{]|\bif|\bthen|\$\()\s*(?:!\s*)?(?:command\s+-v|which|type\s+-p|hash)\s+([a-z][\w.+-]*)/g;
   SYSTEM_INSTALL2 = /\b(?:brew|apt-get|apt|dnf|yum|apk|pacman|choco|winget|scoop|port)\s+(?:install|add|-S)\s+(?:-\S+\s+)*([a-z][\w.+-]*)/g;
-  COMMENT_LINE2 = /^\s*(?:#|\/\/|\*|--|;|rem\s)/i;
+  COMMENT_LINE4 = /^\s*(?:#|\/\/|\*|--|;|rem\s)/i;
   PYTHON_PROBE2 = /\bshutil\.which\(\s*["']([a-z][\w.+-]*)["']/g;
   PACKAGE_INSTALL2 = /\b(pip3?|pipx|uv\s+pip|uv\s+add|poetry\s+add|npm|pnpm|yarn|bun|gem|cargo)\s+(?:install|add|i)\b([^\n|;&#`)]*)/gi;
   SHELL_VARIABLES2 = new Set(("HOME PATH PWD OLDPWD USER LOGNAME SHELL TERM LANG LC_ALL TMPDIR TMP TEMP HOSTNAME IFS PS1 PS2 " + "RANDOM SECONDS LINENO BASH_SOURCE BASH_VERSION FUNCNAME PIPESTATUS OPTARG OPTIND EUID UID PPID " + "REPLY EDITOR VISUAL PAGER DISPLAY XDG_CONFIG_HOME XDG_DATA_HOME XDG_CACHE_HOME CI NODE_ENV DEBUG").split(" "));
@@ -43500,7 +43711,7 @@ function readSkillFacts2(markdown, filesInDirectory, repositoryFiles = filesInDi
   return {
     files: filesInDirectory.length,
     bytes: filesInDirectory.reduce((total, file) => total + file.size, 0),
-    scripts: filesInDirectory.filter((file) => SCRIPT4.test(file.path)).length,
+    scripts: filesInDirectory.filter((file) => SCRIPT6.test(file.path)).length,
     keys: [...new Set(markdown.match(KEY_NAME5) ?? [])],
     paidWords: [...new Set((markdown.match(PAID_WORD2) ?? []).map((word) => word.toLowerCase()))],
     hosts: [...new Set(hosts)],
@@ -43570,7 +43781,7 @@ async function readFileOnly2(result2, source) {
   }
   return null;
 }
-async function readPulse2(result2, source) {
+async function readPulse2(result2, source, depth) {
   if (!/^(?!\.{1,2}\/)[\w.-]+\/(?!\.{1,2}$)[\w.-]+$/.test(result2.source))
     return { ...result2, status: "not_github" };
   const listing2 = await source.listing(result2.source);
@@ -43593,10 +43804,15 @@ async function readPulse2(result2, source) {
   const keysInScriptsItRuns = scriptTexts.map(({ file, text: text2 }) => ({ file, keys: [...new Set(text2?.match(KEY_NAME5) ?? [])] })).filter((entry) => entry.keys.length > 0);
   const relative = (path) => path.startsWith(prefix) ? path.slice(prefix.length) : path;
   const fetched = new Set(scriptTexts.filter((entry) => entry.text !== null).map((entry) => entry.file));
+  const others = depth === undefined ? [] : await readDirectory2(source, result2.source, inDirectory, new Set([located.file.path, ...fetched]), depth.directory.by);
+  for (const file of others)
+    if (file.text !== null)
+      fetched.add(file.path);
   const contains = readSkillContents2([
     { path: "SKILL.md", text: located.markdown },
     ...scriptTexts.flatMap(({ file, text: text2 }) => text2 === null ? [] : [{ path: relative(file), text: text2 }]),
-    ...inDirectory.filter((file) => SCRIPT4.test(file.path) && !fetched.has(file.path)).map((file) => ({ path: relative(file.path), text: null, notFetched: true }))
+    ...others.flatMap(({ path, text: text2 }) => text2 === null ? [] : [{ path: relative(path), text: text2 }]),
+    ...inDirectory.filter((file) => !fetched.has(file.path) && file.path !== located.file.path && (depth !== undefined || SCRIPT6.test(file.path))).map((file) => NOT_TEXT2.test(file.path) ? { path: relative(file.path), text: null } : file.size > CONTENTS_LIMITS2.fileChars ? { path: relative(file.path), text: null, notFetched: true, tooLarge: true } : { path: relative(file.path), text: null, notFetched: true })
   ]);
   return {
     ...result2,
@@ -43612,6 +43828,22 @@ async function readPulse2(result2, source) {
     keysInScriptsItRuns,
     contains
   };
+}
+async function readDirectory2(source, repo, inDirectory, done, by) {
+  let late = false;
+  by.then(() => {
+    late = true;
+  });
+  const plan = inDirectory.filter((file) => !done.has(file.path) && !NOT_TEXT2.test(file.path) && file.size <= CONTENTS_LIMITS2.fileChars).slice(0, MAX_DIRECTORY_FILES_READ2);
+  const out = [];
+  for (let at = 0;at < plan.length && !late; at += 8) {
+    const batch = Promise.all(plan.slice(at, at + 8).map(async (file) => ({ path: file.path, text: await source.file(repo, file.path).catch(() => null) })));
+    const settled = await Promise.race([batch, by.then(() => null)]);
+    if (settled === null)
+      break;
+    out.push(...settled);
+  }
+  return out;
 }
 function githubPulseSource2(options = {}) {
   const get = options.fetch ?? fetch;
@@ -43707,10 +43939,11 @@ function githubPulseSource2(options = {}) {
     quota: () => ({ ...quota })
   };
 }
-var MAX_SKILL_FILES_READ2 = 200, MAX_SCRIPTS_READ2 = 5, GITHUB_READ_TIMEOUT_MS2 = 1e4, INSTALLER_ORDER2, KEY_NAME5, PAID_WORD2, HOST2, NOT_A_SERVICE2, LOOKS_LIKE_A_FILE2, SCRIPT4, RUNS_FILE2, PLACEHOLDER2;
+var MAX_SKILL_FILES_READ2 = 200, MAX_SCRIPTS_READ2 = 5, MAX_DIRECTORY_FILES_READ2 = 80, NOT_TEXT2, GITHUB_READ_TIMEOUT_MS2 = 1e4, INSTALLER_ORDER2, KEY_NAME5, PAID_WORD2, HOST2, NOT_A_SERVICE2, LOOKS_LIKE_A_FILE2, SCRIPT6, RUNS_FILE2, PLACEHOLDER2;
 var init_pulse3 = __esm(() => {
   init_skill_contents2();
   init_skill_requires3();
+  NOT_TEXT2 = /\.(png|jpe?g|gif|webp|ico|bmp|tiff?|avif|svgz|pdf|zip|gz|tgz|bz2|xz|7z|rar|jar|woff2?|ttf|otf|eot|mp[34]|m4a|wav|ogg|flac|aac|mov|webm|avi|mkv|pptx|docx|xlsx|psd|ai|sketch|fig|db|sqlite|bin|exe|dll|so|dylib|wasm|pyc|class|hdr|exr|glb|ktx2?)$/i;
   INSTALLER_ORDER2 = [
     "",
     "skills/",
@@ -43753,9 +43986,177 @@ var init_pulse3 = __esm(() => {
   HOST2 = /https?:\/\/([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
   NOT_A_SERVICE2 = /(^|\.)(github\.com|githubusercontent\.com|example\.(com|org|net))$/;
   LOOKS_LIKE_A_FILE2 = /\.(jpe?g|png|gif|webp|mp[34]|wav|mov|webm|pdf|md|json|txt)$/;
-  SCRIPT4 = /\.(sh|bash|py|js|mjs|cjs|ts|rb|pl)$/i;
+  SCRIPT6 = /\.(sh|bash|py|js|mjs|cjs|ts|rb|pl)$/i;
   RUNS_FILE2 = /\b(?:node|bun|deno|tsx|python3?|bash|sh)\s+((?:~|\.{1,2})?\/?[\w.@-]+(?:\/[\w.@-]+)*\.(?:mjs|cjs|js|ts|py|sh))\b/g;
   PLACEHOLDER2 = /(^|\/)(path|your|my|foo|example|script|file|input|output)(\/|\.|$)/i;
+});
+
+// ../../packages/protocol/src/before-install.ts
+function under2(host, base2) {
+  return host === base2 || host.endsWith(`.${base2}`);
+}
+function beforeInstall2(input) {
+  const services = new Map;
+  const service = (name) => {
+    const found2 = services.get(name) ?? { name, hosts: [], keys: [] };
+    services.set(name, found2);
+    return found2;
+  };
+  const apiHosts = [];
+  const staticHosts = [];
+  const otherHosts = [];
+  for (const host of input.domains) {
+    const known = PAID_SERVICES2.find((entry) => entry.hosts.some((base2) => under2(host, base2)));
+    if (known !== undefined) {
+      service(known.name).hosts.push(host);
+      apiHosts.push(host);
+    } else if (STATIC_HOSTS2.some((base2) => under2(host, base2)) || STATIC_SHAPE2.test(host))
+      staticHosts.push(host);
+    else if (API_SHAPE2.test(host))
+      apiHosts.push(host);
+    else
+      otherHosts.push(host);
+  }
+  for (const key of input.keys) {
+    if (key.why !== "secret")
+      continue;
+    const known = PAID_SERVICES2.find((entry) => entry.keyPrefixes.some((prefix) => key.name.startsWith(prefix)));
+    if (known !== undefined)
+      service(known.name).keys.push(key.name);
+  }
+  const asked = new Set(input.keys.map((key) => key.name));
+  return {
+    fetchAndRun: [...input.fetchAndRun],
+    keys: [...input.keys],
+    otherSettings: input.settings.filter((name) => !asked.has(name)).length,
+    services: [...services.values()].sort((a, b) => a.name < b.name ? -1 : 1),
+    programs: [...input.programs],
+    scripts: [...input.scripts],
+    apiHosts,
+    staticHosts,
+    otherHosts,
+    hidden: [...input.hidden],
+    notRead: input.skipped.filter((file) => file.why !== "binary" && !ASSET2.test(file.path)),
+    cut: [...input.cut]
+  };
+}
+function programNames2(programs, shown = 4) {
+  const names = programs.map((program) => program.name);
+  return names.length <= shown ? names.join(", ") : `${names.slice(0, shown).join(", ")} +${names.length - shown}`;
+}
+function beforeInstallSummary2(view) {
+  const secrets = view.keys.filter((key) => key.why === "secret").length;
+  const toSet = view.keys.length - secrets;
+  const asks = secrets + toSet === 0 ? "no keys" : [secrets === 0 ? null : plural4(secrets, "key"), toSet === 0 ? null : plural4(toSet, "setting")].filter((part) => part !== null).join(", ");
+  return [
+    ...view.fetchAndRun.length === 0 ? [] : ["fetches and runs code"],
+    asks,
+    view.services.length === 0 ? "no paid services" : plural4(view.services.length, "paid service"),
+    view.programs.length === 0 ? "nothing to install named" : `needs ${programNames2(view.programs)}`,
+    view.scripts.length === 0 ? "no scripts" : plural4(view.scripts.length, "script"),
+    ...view.hidden.length === 0 ? [] : [plural4(view.hidden.length, "hidden text", "hidden texts")],
+    ...view.notRead.length === 0 ? [] : [`${plural4(view.notRead.length, "file")} not read`]
+  ].join(" · ");
+}
+function programSourceText2(program) {
+  const at = program.file === undefined ? "" : `${program.file}${program.line === undefined ? "" : `:${program.line}`}`;
+  switch (program.from) {
+    case "declared":
+      return "declared in SKILL.md";
+    case "runs":
+      return "run in SKILL.md";
+    case "interpreter":
+      return "script interpreter";
+    case "script":
+      return "a script checks for it or installs it";
+    case "spawned":
+      return `run by ${at}`;
+    case "package":
+      return `via ${program.via ?? "a package"}, ${at}`;
+    case "named as needed":
+      return `said to be needed, ${at}`;
+  }
+}
+function contentsLines2(contents, perList = 6) {
+  const view = beforeInstall2({ ...contents, skipped: contents.read.skipped });
+  const list = (items, cut2) => `${items.slice(0, perList).join(", ")}${items.length > perList || cut2 ? `, and ${Math.max(0, items.length - perList)}${cut2 ? "+" : ""} more` : ""}`;
+  const cut = (name) => view.cut.includes(name);
+  const at = (rows, name) => list(rows.map((row) => `${row.kind} at ${row.file}:${row.line} "${row.text}"`), cut(name));
+  const others = view.otherSettings === 0 ? "" : `; ${plural4(view.otherSettings, "other setting")} it reads`;
+  const hostParts = [
+    view.apiHosts.length === 0 ? "no API host" : list(view.apiHosts, false),
+    ...view.staticHosts.length === 0 ? [] : [`fonts, CDNs and map tiles: ${view.staticHosts.length}`],
+    ...view.otherHosts.length === 0 ? [] : [`other sites named: ${view.otherHosts.length}`]
+  ];
+  return [
+    `Before you install: ${beforeInstallSummary2(view)}`,
+    ...view.fetchAndRun.length === 0 ? [] : [`Fetches and runs code: ${at(view.fetchAndRun, "fetchAndRun")}`],
+    `Asks for: ${view.keys.length === 0 ? `no keys${others}` : `${list(view.keys.map((key) => `${key.name} (${key.why === "secret" ? "" : "set in SKILL.md, "}${key.file}:${key.line})`), cut("keys"))}${others}`}`,
+    `Paid services: ${view.services.length === 0 ? "none named" : list(view.services.map((entry) => `${entry.name} (${[...entry.hosts, ...entry.keys].join(", ")})`), false)}`,
+    `Needs installed: ${view.programs.length === 0 ? "none named" : list(view.programs.map((program) => `${program.name} (${programSourceText2(program)})`), cut("programs"))}`,
+    `Runs on your machine: ${view.scripts.length === 0 ? "no scripts" : `${plural4(view.scripts.length, "script")}: ${list(view.scripts.map((script) => script.namedInSkillMd ? `${script.path} (named in SKILL.md)` : script.path), cut("scripts"))}`}${view.fetchAndRun.length === 0 ? "; fetches and runs no code" : ""}`,
+    `Sends data to (hosts its files name, not shown to be contacted): ${hostParts.join("; ")}`,
+    ...view.hidden.length === 0 ? [] : [`Hidden or encoded text: ${at(view.hidden, "hidden")}`],
+    ...view.notRead.length === 0 ? [] : [`Not read: ${list(view.notRead.map((file) => `${file.path} (${file.why})`), false)}`]
+  ];
+}
+var PAID_SERVICES2, STATIC_HOSTS2, STATIC_SHAPE2, API_SHAPE2, ASSET2, plural4 = (count, one, many = `${one}s`) => `${count} ${count === 1 ? one : many}`;
+var init_before_install2 = __esm(() => {
+  PAID_SERVICES2 = [
+    { name: "Anthropic", hosts: ["api.anthropic.com"], keyPrefixes: ["ANTHROPIC_"] },
+    { name: "AssemblyAI", hosts: ["api.assemblyai.com"], keyPrefixes: ["ASSEMBLYAI_"] },
+    { name: "Azure OpenAI", hosts: ["openai.azure.com"], keyPrefixes: ["AZURE_OPENAI_"] },
+    { name: "Brave Search", hosts: ["api.search.brave.com"], keyPrefixes: ["BRAVE_"] },
+    { name: "Browserbase", hosts: ["api.browserbase.com"], keyPrefixes: ["BROWSERBASE_"] },
+    { name: "Cohere", hosts: ["api.cohere.ai", "api.cohere.com"], keyPrefixes: ["COHERE_", "CO_API_"] },
+    { name: "Deepgram", hosts: ["api.deepgram.com"], keyPrefixes: ["DEEPGRAM_"] },
+    { name: "DeepSeek", hosts: ["api.deepseek.com"], keyPrefixes: ["DEEPSEEK_"] },
+    { name: "ElevenLabs", hosts: ["api.elevenlabs.io"], keyPrefixes: ["ELEVENLABS_", "ELEVEN_"] },
+    { name: "Exa", hosts: ["api.exa.ai"], keyPrefixes: ["EXA_"] },
+    { name: "fal", hosts: ["fal.run", "queue.fal.run"], keyPrefixes: ["FAL_"] },
+    { name: "Firecrawl", hosts: ["api.firecrawl.dev"], keyPrefixes: ["FIRECRAWL_"] },
+    { name: "Fireworks AI", hosts: ["api.fireworks.ai"], keyPrefixes: ["FIREWORKS_"] },
+    { name: "Google Gemini", hosts: ["generativelanguage.googleapis.com"], keyPrefixes: ["GEMINI_"] },
+    { name: "Google Vertex AI", hosts: ["aiplatform.googleapis.com"], keyPrefixes: ["VERTEX_"] },
+    { name: "Groq", hosts: ["api.groq.com"], keyPrefixes: ["GROQ_"] },
+    { name: "HeyGen", hosts: ["api.heygen.com"], keyPrefixes: ["HEYGEN_"] },
+    { name: "Mistral", hosts: ["api.mistral.ai"], keyPrefixes: ["MISTRAL_"] },
+    { name: "OpenAI", hosts: ["api.openai.com"], keyPrefixes: ["OPENAI_"] },
+    { name: "OpenRouter", hosts: ["openrouter.ai"], keyPrefixes: ["OPENROUTER_"] },
+    { name: "Perplexity", hosts: ["api.perplexity.ai"], keyPrefixes: ["PERPLEXITY_", "PPLX_"] },
+    { name: "Replicate", hosts: ["api.replicate.com"], keyPrefixes: ["REPLICATE_"] },
+    { name: "Resend", hosts: ["api.resend.com"], keyPrefixes: ["RESEND_"] },
+    { name: "Runway", hosts: ["api.dev.runwayml.com", "api.runwayml.com"], keyPrefixes: ["RUNWAY_", "RUNWAYML_"] },
+    { name: "SerpApi", hosts: ["serpapi.com"], keyPrefixes: ["SERPAPI_", "SERP_API_"] },
+    { name: "Stability AI", hosts: ["api.stability.ai"], keyPrefixes: ["STABILITY_"] },
+    { name: "Tavily", hosts: ["api.tavily.com"], keyPrefixes: ["TAVILY_"] },
+    { name: "Together AI", hosts: ["api.together.xyz", "api.together.ai"], keyPrefixes: ["TOGETHER_"] },
+    { name: "Twilio", hosts: ["api.twilio.com"], keyPrefixes: ["TWILIO_"] },
+    { name: "xAI", hosts: ["api.x.ai"], keyPrefixes: ["XAI_"] }
+  ];
+  STATIC_HOSTS2 = [
+    "fonts.googleapis.com",
+    "gstatic.com",
+    "cdn.jsdelivr.net",
+    "unpkg.com",
+    "cdnjs.cloudflare.com",
+    "esm.sh",
+    "cdn.skypack.dev",
+    "ga.jspm.io",
+    "githubusercontent.com",
+    "cdn.tailwindcss.com",
+    "code.jquery.com",
+    "use.typekit.net",
+    "fonts.bunny.net",
+    "rsms.me",
+    "cartocdn.com",
+    "tile.openstreetmap.org",
+    "server.arcgisonline.com",
+    "images.unsplash.com"
+  ];
+  STATIC_SHAPE2 = /^(?:cdn|static|fonts?|tiles?|assets|img|images|media)\d*[.-]|(?:^|[.-])cdn(?:[.-]|$)|\.cdn\./;
+  API_SHAPE2 = /^api\d*[.-]|[.-]api\.|^.*\.googleapis\.com$/;
+  ASSET2 = /\.(woff2?|ttf|otf|eot|png|jpe?g|gif|webp|svgz?|ico|bmp|tiff?|avif|heic|hdr|exr|mp[34]|m4a|wav|ogg|flac|aac|mov|webm|avi|mkv|psd|ai|sketch|fig|glb|gltf|fbx|blend|ktx2?|basis|pdf|zip|gz|tgz)$|(^|\/)\.(gitkeep|keep|DS_Store)$/i;
 });
 
 // ../../packages/protocol/src/skill-install.ts
@@ -43772,7 +44173,7 @@ async function namesUnder(install, source) {
   }));
   return { names, total: files.length };
 }
-async function readSkillInstall2(install, source, deadline) {
+async function readSkillInstall2(install, source, deadline, directoryBy = deadline) {
   if (install.kind === "elsewhere")
     return install;
   const late = deadline.then(() => "late");
@@ -43800,7 +44201,7 @@ async function readSkillInstall2(install, source, deadline) {
     total = install.skills.length;
   }
   const readings = await Promise.all(names.map(async (skill) => {
-    const pulse2 = readPulse2({ source: install.repo, skill, installs: null, installsText: null, url: null }, source).then((read2) => ({ skill, pulse: read2 })).catch(() => ({ skill, pulse: null, why: "read failed" }));
+    const pulse2 = readPulse2({ source: install.repo, skill, installs: null, installsText: null, url: null }, source, { directory: { by: directoryBy } }).then((read2) => ({ skill, pulse: read2 })).catch(() => ({ skill, pulse: null, why: "read failed" }));
     const settled = await Promise.race([pulse2, late]);
     return settled === "late" ? { skill, pulse: null, why: "no answer in time" } : settled;
   }));
@@ -43823,9 +44224,9 @@ function readingLines(repo, reading) {
     case "read": {
       const facts = [
         `${pulse2.path}`,
-        plural3(pulse2.files, "file"),
+        plural5(pulse2.files, "file"),
         ...pulse2.repository === null ? [] : [
-          plural3(pulse2.repository.stars, "star"),
+          plural5(pulse2.repository.stars, "star"),
           ...pulse2.repository.pushedAt === null ? [] : [`last push ${pulse2.repository.pushedAt.slice(0, 10)}`],
           ...pulse2.repository.archived ? ["archived"] : []
         ]
@@ -43843,7 +44244,7 @@ function readingLines(repo, reading) {
       ];
     case "absent":
       return [
-        `${head}: no SKILL.md in the repository names it (${plural3(pulse2.skillFiles, "skill file")} read)`
+        `${head}: no SKILL.md in the repository names it (${plural5(pulse2.skillFiles, "skill file")} read)`
       ];
     case "ambiguous":
       return [
@@ -43878,15 +44279,15 @@ ${read2.source}: not read (ARP reads GitHub sources only)`;
   for (const reading of read2.readings)
     lines.push(...readingLines(install.repo, reading));
   if (read2.notRead > 0)
-    lines.push(`${plural3(read2.notRead, "more skill")} in this install not read (ARP reads ${MAX_SKILLS_READ2})`);
+    lines.push(`${plural5(read2.notRead, "more skill")} in this install not read (ARP reads ${MAX_SKILLS_READ2})`);
   if (install.ref !== null)
     lines.push(`Read at the default branch's HEAD; the command names ${install.ref}.`);
   return lines.join(`
 `);
 }
-var MAX_SKILLS_READ2 = 3, ADD, RUNNERS, plural3 = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
+var MAX_SKILLS_READ2 = 3, ADD, RUNNERS, plural5 = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
 var init_skill_install = __esm(() => {
-  init_skill_contents2();
+  init_before_install2();
   init_pulse3();
   ADD = new Set(["add", "a", "install", "i"]);
   RUNNERS = new Set(["npx", "pnpx", "bunx"]);
