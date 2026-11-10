@@ -1,0 +1,74 @@
+# Changelog
+
+`@arp-protocol/cli`. What a person or an agent running `arp` sees change, with the task that changed it
+(`docs/tasks/<n>-*.md` in the repository). Everything writes on Intuition testnet 13579 only.
+
+## 0.0.3 — unreleased
+
+The first release since 0.0.1 (published 2026-11-06 07:59 UTC). 0.0.2 was prepared on 2026-11-09 and
+never published; its changes are listed here.
+
+**Breaking: the line request is version 4.** A line sent by 0.0.1 is refused by a sponsoring service
+built from today's `main` (HTTP 401): version 3 signs the exact x402 endpoint (task 93), version 4
+signs what was missing (task 97), and each one stops the previous from verifying. Update the CLI and
+the sponsoring service together.
+
+### Before a skill is installed
+
+- The hook reads a skill before `npx skills add` installs it, and tells the person and the agent what
+  agents wrote about it. It asks GitHub for the repository and skill names, nothing else, and never
+  blocks the install (task 98).
+- `arp_pulse` and `arp_get_skill` return `contains`: the programs, packages, settings (names only),
+  scripts, fetch-and-run lines, domains and hidden text in a skill's own files (task 96).
+- `arp_pulse`, `arp_find_tools` and `arp_agent_endpoints` return `outside`: dated facts from GitHub
+  (archived, not found, issue titles naming a failure) and x402 Doctor's Trust Index, never in a score
+  (task 101).
+- `arp_find_tools` also searches skills.sh's index (task 82), and finds a category by a word people use
+  (`slides` for `presentation`) through a local alias table (task 84).
+- `arp_find_agents` reads the 8004 sieve: agents with a callable endpoint, by their highest rung
+  (task 87).
+
+### While a skill runs, and after
+
+- When a skill fails for a missing program, key or file, the hook answers with what other agents wrote
+  about that skill's failures (task 99). `ARP_FAILURE_LINES=off` turns it off.
+- On `Stop`, the hook asks the model once per skill used whether it did its job, and keeps the answer
+  in `~/.arp/outcomes.jsonl` (task 100).
+- A failure the hook records keeps the missing program or key name when the skill's SKILL.md names it
+  (task 97).
+- The hook records a category node, never the person's words (task 84).
+
+### Writing a line
+
+- `arp line --needs <name>` after a missing-program or missing-key failure, `--with <name>` on a worked
+  line: published only when the skill's SKILL.md names it (task 97).
+- `arp line --payment-tx <hash> --network eip155:<chain>`: an x402 line names its payment, read on its
+  own chain before any key (task 89); `ARP_X402_NETWORKS` adds a paying network (task 91); `--tool` is
+  the exact URL paid (task 93).
+- `arp line --parent <category> --why <reason>` adds a category the tree lacks, by the agent's signed
+  request (task 75).
+- `arp_declare_used` takes `needs` and `with`, under the same guard: one skill, and its SKILL.md must
+  name the word (task 105).
+- A declaration can add the category it needs (`domain_parent`, `domain_reason`, then
+  `arp_propose_category`), and `arp_file_category` files a skill under a category in the sponsored mode
+  (tasks 59, 73).
+- `arp line` checks its domain and the sponsoring service before it makes a key (task 74).
+
+### Install and modes
+
+- Every install offers sharing once, off unless the person agrees: `arp init --share` / `--no-share`,
+  `arp share on|off`, `arp share send` (task 88).
+- `ARP_HOSTED=1` runs the MCP server as a hosted read-only endpoint: no key, no tool argument logged
+  (task 92).
+- The sponsoring service's default address is set when the package is built, from `package.json`'s
+  `config.sponsorDefault`, loopback (`http://127.0.0.1:3200`) when empty; `ARP_SPONSOR` still overrides
+  it (task 105).
+- A refused tool listing says its status, rule and reason (task 94).
+- `--help` after any command prints the usage and starts nothing; a mode serves exactly the tools it
+  lists; the search keeps no npm log with the query in it (task 74).
+- `mcpName` is `io.github.Wieedze/arp`, for the official MCP Registry (task 105).
+
+## 0.0.1 — 2026-11-06
+
+The first published version: `arp mcp`, `arp hook`, `arp node`, `arp init`, `arp doctor`,
+`arp uninstall` (task 33b).

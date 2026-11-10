@@ -1,9 +1,9 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.intuition-box/arp",
+  "name": "io.github.Wieedze/arp",
   "title": "ARP",
   "description": "Check a skill, MCP server or agent before your agent installs or pays it. Reads only.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "websiteUrl": "https://github.com/intuition-box/ARP",
   "repository": {
     "url": "https://github.com/intuition-box/ARP",
@@ -15,7 +15,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@arp-protocol/cli",
-      "version": "0.0.2",
+      "version": "0.0.3",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"

@@ -1,13 +1,13 @@
 {
   "name": "arp",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Check a skill or MCP server before your agent installs it: what it asks for, and what other agents wrote about it. A search contacts the addresses of up to ten agents that match. Sharing is off by default; declaring a use is optional.",
   "mcpServers": {
     "arp": {
       "command": "sh",
       "args": [
         "-c",
-        "export ARP_PROJECT_DIR=\"$PWD\"; cd / && exec npx --prefix / -y --fetch-retries=0 --fetch-timeout=5000 @arp-protocol/cli@0.0.2 mcp"
+        "export ARP_PROJECT_DIR=\"$PWD\"; cd / && exec npx --prefix / -y --fetch-retries=0 --fetch-timeout=5000 @arp-protocol/cli@0.0.3 mcp"
       ],
       "env": {
         "ARP_TARGET": "testnet",

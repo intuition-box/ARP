@@ -24378,6 +24378,19 @@ function needKindOfReason2(reason) {
     return "key";
   return null;
 }
+function namedInSkill2(name, markdown) {
+  const kind = needKindOf2(name);
+  if (kind === null)
+    return false;
+  const pattern = new RegExp(`(?<![A-Za-z0-9_+.-])${escaped(name)}(?![A-Za-z0-9_+-])(?!\\.[A-Za-z0-9])`, kind === "program" ? "i" : "");
+  return pattern.test(markdown);
+}
+function publishableNeed2(name, markdown, kind) {
+  const shape2 = needKindOf2(name);
+  if (shape2 === null || kind !== undefined && shape2 !== kind)
+    return null;
+  return namedInSkill2(name, markdown) ? name : null;
+}
 function needShapeProblem2(params) {
   const { need, outcome, reason } = params;
   if (need === "")
@@ -24392,7 +24405,7 @@ function needShapeProblem2(params) {
     return "a need follows a missing-program or missing-key failure";
   return shape2 === wanted ? null : `${reason} names ${wanted === "program" ? "a program" : "an environment variable"}`;
 }
-var NEEDS_LABEL2 = "needs", WITH_LABEL2 = "with", PROGRAM_NAME2, KEY_NAME3;
+var NEEDS_LABEL2 = "needs", WITH_LABEL2 = "with", PROGRAM_NAME2, KEY_NAME3, escaped = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 var init_line_need = __esm(() => {
   PROGRAM_NAME2 = /^[a-z0-9][a-z0-9._+-]{0,39}$/;
   KEY_NAME3 = /^[A-Z][A-Z0-9_]{2,63}$/;
@@ -34027,7 +34040,7 @@ function domainWalk() {
     attestor: DOMAIN_ATTESTORS
   };
 }
-var refusedHosting, HOSTED, PORT, RECEIPT_SIGNER, DESKTOP, SKILLS_DIR, READ_ONLY, CONTENT_URL, SPONSOR_URL, SESSION_LOG, RECEIPTS_LOG, TARGETS, targetName, chainId, recorded, record, sessionCatalogue, accepted = null, GRAPHQL_URL, RPC_URL, MULTI_VAULT_RAW, GRAPHQL, SKILLS_INDEX, RPC, MULTI_VAULT, reads, toolAtoms, DOMAIN_ROOT = "tool", REACHABLE_ATOM = "0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805", DOMAIN_ATTESTORS, directory, IN_CONTEXT_OF, LINE_PAYERS;
+var refusedHosting, HOSTED, PORT, RECEIPT_SIGNER, DESKTOP, SKILLS_DIR, READ_ONLY, CONTENT_URL, SPONSOR_DEFAULT = "http://127.0.0.1:3200", SPONSOR_URL, SESSION_LOG, RECEIPTS_LOG, TARGETS, targetName, chainId, recorded, record, sessionCatalogue, accepted = null, GRAPHQL_URL, RPC_URL, MULTI_VAULT_RAW, GRAPHQL, SKILLS_INDEX, RPC, MULTI_VAULT, reads, toolAtoms, DOMAIN_ROOT = "tool", REACHABLE_ATOM = "0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805", DOMAIN_ATTESTORS, directory, IN_CONTEXT_OF, LINE_PAYERS;
 var init_config = __esm(() => {
   init_dist2();
   init__esm();
@@ -34055,7 +34068,7 @@ var init_config = __esm(() => {
   SKILLS_DIR = process.env["ARP_SKILLS_DIR"] === undefined ? undefined : inProject(process.env["ARP_SKILLS_DIR"]);
   READ_ONLY = process.env["ARP_TOOLS"] === "read" || DESKTOP;
   CONTENT_URL = process.env["ARP_CONTENT"] ?? "http://127.0.0.1:3002";
-  SPONSOR_URL = process.env["ARP_SPONSOR"] ?? "http://127.0.0.1:3200";
+  SPONSOR_URL = process.env["ARP_SPONSOR"] ?? SPONSOR_DEFAULT;
   SESSION_LOG = inProject(process.env["ARP_SESSION_LOG"] ?? ".arp/session.jsonl");
   RECEIPTS_LOG = inProject(process.env["ARP_RECEIPTS"] ?? ".arp/receipts.jsonl");
   TARGETS = { mainnet: 1155, testnet: 13579 };
@@ -35429,6 +35442,14 @@ var init_tools = __esm(() => {
             type: "string",
             enum: ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"],
             description: "Optional, with `outcome: failed`. Why it failed, one more paid triple per tool. An agent that can " + "supply what was missing is not told this failure concerns it. `no-delivery`: paid, got nothing back."
+          },
+          needs: {
+            type: "string",
+            description: "Optional, after `reason: missing-program` or `missing-key`, with one skill in `tools`: the program " + "(`ffmpeg`) or the environment variable's name (`OPENAI_API_KEY`, never its value) that was missing. " + "Planned only if the skill's SKILL.md names it; otherwise refused. One more paid triple."
+          },
+          with: {
+            type: "string",
+            description: "Optional, after `outcome: worked`, with one skill in `tools`: the program or environment " + "variable's name you had to add for it to work. Planned only if the skill's SKILL.md names it. One more paid triple."
           }
         },
         required: ["agent_chain_id", "agent_token_id", "tools"]
@@ -35861,6 +35882,53 @@ var init_category3 = __esm(() => {
   init_config();
 });
 
+// ../mcp/src/handlers/declare-need.ts
+function needOf(args) {
+  const { outcome, reason, needs, with: withName } = args;
+  if (needs !== undefined && typeof needs !== "string")
+    return { problem: "needs, when given, must be a name" };
+  if (withName !== undefined && typeof withName !== "string")
+    return { problem: "with, when given, must be a name" };
+  if (needs !== undefined && outcome !== "failed")
+    return { problem: "needs follows outcome: failed; a worked use takes with" };
+  if (withName !== undefined && outcome !== "worked")
+    return { problem: "with follows outcome: worked; a failure takes needs" };
+  const need = needs ?? withName;
+  if (need === undefined)
+    return { need: undefined };
+  const problem = needShapeProblem2({
+    need,
+    outcome,
+    reason: typeof reason === "string" ? reason : ""
+  });
+  return problem === null ? { need } : { problem };
+}
+async function needProblemInSkill(toolUrl, need, reason, source = defaultSource()) {
+  const ref = skillRefFromUrl(toolUrl);
+  if (ref === null)
+    return "needs and with name a skill's word: the tool must be a skill URL (github.com/<owner>/<repo>?skill=<name>)";
+  const listing2 = await source.listing(ref.repo);
+  if (listing2 === "rate_limited")
+    return "GitHub's hourly limit is reached, so the skill's SKILL.md could not be read; set GITHUB_TOKEN or try later";
+  if (listing2 === "unreachable")
+    return `github.com/${ref.repo} could not be listed, so "${need}" cannot be checked against its SKILL.md`;
+  const resolved = resolveContentPath(ref, listing2.files);
+  if (resolved.status !== "resolved")
+    return `${toolUrl} has no single SKILL.md to check "${need}" against`;
+  const markdown = await source.file(ref.repo, resolved.path);
+  if (markdown === null)
+    return `the skill's SKILL.md could not be read, so "${need}" is not planned`;
+  const kind = typeof reason === "string" ? needKindOfReason2(reason) : null;
+  return publishableNeed2(need, markdown, kind ?? undefined) === null ? `the skill's SKILL.md does not name "${need}", so it is not planned` : null;
+}
+function defaultSource() {
+  const token = process.env["GITHUB_TOKEN"]?.trim();
+  return githubPulseSource({ withRepository: false, ...token ? { token } : {} });
+}
+var init_declare_need = __esm(() => {
+  init_dist2();
+});
+
 // ../mcp/src/handlers/declare.ts
 import { readFileSync as readFileSync5 } from "node:fs";
 async function readLocalReceipts() {
@@ -35937,6 +36005,13 @@ async function declareUsed2(id, args) {
   if (reason !== undefined && outcome !== "failed") {
     return fail(id, -32602, "a reason only follows outcome: failed");
   }
+  const needArg = needOf({ outcome, reason, needs: args["needs"], with: args["with"] });
+  if ("problem" in needArg)
+    return fail(id, -32602, needArg.problem);
+  const need = needArg.need;
+  if (need !== undefined && tools.length !== 1) {
+    return fail(id, -32602, "needs and with go with exactly one tool, the skill whose SKILL.md names it");
+  }
   const declarerRaw = args["declarer"];
   if (declarerRaw !== undefined && !isAddress3(declarerRaw)) {
     return fail(id, -32602, "declarer, when given, must be a 20-byte hex address");
@@ -35948,6 +36023,11 @@ async function declareUsed2(id, args) {
   const overBudget = (total) => budgetRaw === undefined ? null : budgetRefusal2(total, BigInt(budgetRaw));
   if ((domainRaw !== undefined || outcome !== undefined) && chainId !== 13579) {
     return fail(id, -32602, "domain and outcome are written on testnet 13579 only for now");
+  }
+  if (need !== undefined) {
+    const problem = await needProblemInSkill(tools[0], need, reason);
+    if (problem !== null)
+      return fail(id, -32602, problem);
   }
   const plan = await prepareDeclareUsed({
     subject,
@@ -36013,6 +36093,7 @@ async function declareUsed2(id, args) {
       ...domain === undefined ? {} : { domain },
       ...outcome === undefined ? {} : { outcome },
       ...reason === undefined ? {} : { reason },
+      ...need === undefined ? {} : { need },
       inContextOf: IN_CONTEXT_OF,
       isCategory: async (label) => tree?.pathToRoot(label).found ?? false,
       ...declarerRaw === undefined ? {} : {
@@ -36138,6 +36219,7 @@ var init_declare2 = __esm(() => {
   init_config();
   init_domain_words2();
   init_category3();
+  init_declare_need();
   init_serialise();
 });
 
@@ -42744,11 +42826,11 @@ function programsOf(command) {
   return found2;
 }
 function askedBySkill(command, markdown, directory2) {
-  if (new RegExp(`${escaped(directory2)}(?=[/\\s'"]|$)`).test(command))
+  if (new RegExp(`${escaped2(directory2)}(?=[/\\s'"]|$)`).test(command))
     return true;
   const { cli, runs } = readRequires(markdown);
   const named = new Set([...cli, ...runs]);
-  return programsOf(command).some((program) => named.has(program) || program.includes(".") && new RegExp(`(?:^|[\\s\`'"/(])${escaped(program)}(?=[\\s\`'")]|$)`, "m").test(markdown));
+  return programsOf(command).some((program) => named.has(program) || program.includes(".") && new RegExp(`(?:^|[\\s\`'"/(])${escaped2(program)}(?=[\\s\`'")]|$)`, "m").test(markdown));
 }
 function contextOf(words, skill) {
   return domainInText2(words, WORDS) ?? SKILL_NODE[skill.split(":").pop() ?? skill] ?? null;
@@ -42776,7 +42858,7 @@ function appendFailure(line) {
 `);
   return true;
 }
-var MISSING_KEY, MISSING_KEY_VARIABLE, MISSING_PROGRAM, MISSING_FILE, RUNNERS, escaped = (text2) => text2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), NODES, WORDS, SKILL_NODE;
+var MISSING_KEY, MISSING_KEY_VARIABLE, MISSING_PROGRAM, MISSING_FILE, RUNNERS, escaped2 = (text2) => text2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), NODES, WORDS, SKILL_NODE;
 var init_skill_failure = __esm(() => {
   init_append();
   init_dist2();
@@ -44460,7 +44542,7 @@ init_node2();
 import { dirname as dirname8 } from "node:path";
 import { fileURLToPath } from "node:url";
 // package.json
-var version2 = "0.0.2";
+var version2 = "0.0.3";
 
 // src/cli.ts
 var USAGE = `arp ${version2} — ARP's agent-side programs
