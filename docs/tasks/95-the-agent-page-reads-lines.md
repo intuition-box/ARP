@@ -1,6 +1,6 @@
 # Task 95 — The agent page reads lines
 
-**Status:** in verification, branch `feat/95-agent-lines`, worktree `../ARP-95`. Not pushed. Reshaped twice on 2026-11-10 by the user after seeing it: the lines ride the Relations loupe, and `worked` reads « task done » (ADR `0164` amendment).
+**Status:** verified 2026-11-10: `ui-reviewer` PASS (loupe version), `task-verifier` PASS (round 2), commits `0101207`..`4f2be74`, post-mortem `.claude/learning/84-the-agent-page-reads-lines.md`. Branch `feat/95-agent-lines`, worktree `../ARP-95`. Not pushed. Reshaped twice on 2026-11-10 by the user after seeing it: the lines ride the Relations loupe, and `worked` reads « task done » (ADR `0164` amendment).
 **ADR:** `0164`.
 **Rules:** `code.md`, `ui.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`.

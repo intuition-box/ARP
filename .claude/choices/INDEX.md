@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-160 decisions. Newest last. `choices/README.md` says when to write one.
+161 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -36,6 +36,7 @@ Read these before relying on them.
 - **0148** (Accepted (design; nothing built)) — The hire loop reuses x402, ERC-8183 and ERC-8004, and checks the payment at read time
 - **0154** (Proposed) — Public read pages are dated static snapshots, not a live endpoint
 - **0155** (Accepted. Amended by ADR `0161` (2026-11-10): ARP's hosted read-only MCP endpoint receives the words of a caller who chooses it, and keeps none; point 3 holds for everything a person installs.) — A word names a node through a local alias table; the words never leave the machine
+- **0164** (Proposed (on `feat/95-agent-lines`, waiting on the user's look)) — The agent page leads with lines, and shows no payment yet
 
 ## All
 
@@ -201,3 +202,4 @@ Read these before relying on them.
 | [0161](0161-a-hosted-read-only-mcp-endpoint.md) | 2026-11-10 | Accepted | A hosted read-only MCP endpoint, opt-in, that keeps no word it receives |
 | [0162](0162-the-x402-feed-names-the-endpoint-exactly-as-it-was-paid.md) | 2026-11-10 | Accepted | The x402 feed names the endpoint exactly as it was paid, and the tool atom stays canonical |
 | [0163](0163-list-tool-lists-only-what-is-a-tool.md) | 2026-11-10 | Accepted | `/list-tool` lists only what is a tool, and asks a stranger's URL from a pinned connection |
+| [0164](0164-the-agent-page-leads-with-lines.md) | 2026-11-10 | Proposed (on `feat/95-agent-lines`, waiting on the user's look) | The agent page leads with lines, and shows no payment yet |
