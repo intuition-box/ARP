@@ -178,6 +178,30 @@ Three different problems. Being listed solves the first and does nothing for the
 Third-party directories (Smithery, mcp.so, Glama) mostly copy the official registry. They come
 after it, not instead of it.
 
+_Amended 2026-11-10 (task 102, ADR `0171`), re-read the same day._ Three rows above changed:
+
+- **MCP Registry.** The schema is `https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`;
+  `description` is 100 characters at most; the npm check reads `mcpName` from the exact version
+  listed, so that version must be on npm with the field. A server with only `remotes` needs no
+  package, and the registry does not check who controls a remote URL
+  (github.com/modelcontextprotocol/registry, `docs/modelcontextprotocol-io/remote-servers.mdx` and
+  `internal/validators/registries/npm.go`, commit `d39ac76b47`). `server.json` at this repository's
+  root is prepared, not published; `docs/tasks/102` has the steps.
+- **`claude-plugins-official` takes no submissions.** Anthropic's directory does, from the developer
+  portal at claude.ai/directory/manage, with a paid claude.ai plan; it lists plugins and MCP servers
+  as connectors, and reaches Claude Code as `<name>@synced`. "Anthropic's official marketplace,
+  `claude-plugins-official`, doesn't take submissions through the directory portal"
+  (https://code.claude.com/docs/en/plugins/publish, "Submit to Anthropic's directory"). The form
+  named in the row above is the earlier route.
+- **skills.sh.** ARP's skill is not listed: a search for `intuition-box` returns one other skill,
+  and `skills.sh/intuition-box/arp/arp` answers "arp isn't available in this repository"
+  (`curl -s 'https://skills.sh/api/search?q=intuition-box'`, 2026-11-10).
+
+**Feeds, read beside a listing.** Three dated files under `/feeds/` on ARP's site, readable from any
+origin, each rebuilt by a script in `scripts/build/`: `x402-outcomes.json` (task 89),
+`skill-lines.json` and `agent-sieve.json` (task 102). Their schemas are the site's docs pages
+`x402-feed`, `skill-lines-feed` and `agent-sieve-feed`.
+
 **Every listing shows one command**, its runtime's, with uninstall directly below it. A listing that
 offers six ways in is a decision handed to the reader.
 
