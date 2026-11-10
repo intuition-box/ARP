@@ -1,6 +1,6 @@
 # Task 112 — "Before you install": the contents panel answers the questions a person asks
 
-**Status:** in progress.
+**Status:** built on `worktree-agent-af0ef7116e2ddff59`, `ui-reviewer` PASS (second round), awaiting `task-verifier`.
 **ADR:** `0182`.
 **Rules:** `code.md`, `ui.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`. No atom, triple or contract.
@@ -89,6 +89,102 @@ the name, Before you call, the description, Identity, then the tabs.
    facts column loses Contains. Agent page as proposed above.
 4. A new dated reading (`scripts/measure/skill-contents.ts`) and the bundle rebuilt.
 5. `packaging/` regenerated.
+6. Added while building, because the hook answered hyperframes "no keys · nothing to install named":
+   before an install, `readPulse` also reads up to 80 text files of the skill's directory from
+   `raw.githubusercontent.com`, stopping 1.5 s before the hook's six seconds (ADR `0182` §5). A
+   search (`arp_pulse`) does not, and its summary says how many files it did not read.
+7. `scripts/measure/skill-contents.ts --commits-from <run>` reads each repository at an earlier run's
+   commit: one API request a repository instead of two, and the same files as that run.
+
+## What came out
+
+Measured by `scripts/measure/skill-contents.ts --commits-from
+data/measurements/skill-contents-2026-11-10T1325.json`, written to
+`data/measurements/skill-contents-2026-11-10T1647.json`, so both runs read the same commits. 518 skills
+read of 521, the same 518 in both. Before is task 110's reader at 13:25; after is this one.
+
+| | before (13:25) | after (16:47) |
+| --- | --- | --- |
+| Names shown under "Keys" | 626 settings in 139 skills | 290 keys in 118 skills (276 secrets, 14 set in SKILL.md); the other settings are one count |
+| Programs | 372 in 291 skills | 424 in 304 skills: declared 208, run in SKILL.md 96, interpreter 34, script probe 34, run by a script 26, named as needed 23, driven by a package 3 |
+| Skills with a "Not read" row | 19 | 8 (text files only) |
+| hyperframes | 22 settings, programs `node` | keys `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `OPENROUTER_API_KEY`; programs Chrome (via `puppeteer-core`), ffmpeg, ffprobe (run by its scripts), node |
+
+The 23 "named as needed" were each read against their line: about 14 say the program is required
+(`It needs Node.js 22+ and FFmpeg`, `Requires Node.js 22.18 or later`); the rest are prose near the
+verb (`git remote` beside "needs a reachable repo", a Java SDK named in the same sentence). Each shows
+its line, so a reader can check it. A first pass at 14:36 read every reference file and gave 94; it
+was narrowed before this run and that file was not kept.
+
+What hyperframes needs, from its files at `b4c7f9c` (fetched for this task, not committed):
+`scripts/bake-basemap.mjs:37` "Needs puppeteer-core, ffmpeg, a Chrome or chrome-headless-shell", `:43`
+imports `puppeteer-core`, `:280` runs `ffmpeg`; `scripts/locate.mjs:7` "node + ffmpeg (both already
+required by hyperframes)", `:35` runs `ffmpeg`, `:39` runs `ffprobe`. SKILL.md itself names none:
+every command it gives is `npx hyperframes …`.
+
+## Before and after
+
+The skill page's panel for hyperframes, before (facts column, below Classification):
+
+```
+CONTAINS
+Programs      node
+Keys          BEARING, CENTER, CHROME, COUNTRIES, DUR, FPS +16
+Scripts       scripts/bake-basemap.mjs, …, scripts/plugin-cli.test.mjs (six)
+Fetch and run none found
+Domains       a.basemaps.cartocdn.com, cdn.jsdelivr.net, fonts.googleapis.com, … +3
+Hidden text   none found
+Not read      6 files
+```
+
+After (content column, under the name, before the description):
+
+```
+BEFORE YOU INSTALL                                             10 Nov 2026
+3 keys · 2 paid services · needs Chrome, ffmpeg, ffprobe, node · 6 scripts
+Asks for              GEMINI_API_KEY, GOOGLE_API_KEY, OPENROUTER_API_KEY (each linked to its line)
+                      19 other settings
+Paid services         Google Gemini, OpenRouter
+Needs installed       Chrome via puppeteer-core · ffmpeg run by … · ffprobe run by … · node
+Runs on your machine  ▸ 6 scripts
+Sends data to         generativelanguage.googleapis.com
+                      ▸ fonts, CDNs and map tiles: 5   ▸ other sites named: 3
+```
+
+What the agent was given before `npx skills add heygen-com/hyperframes --skill hyperframes` (the hook
+read SKILL.md alone; reproduced over the same files with `main`'s `contentsLines`):
+
+```
+Programs: none found
+Keys and settings it reads: none found
+Scripts: scripts/bake-basemap.mjs, …, scripts/plugin-cli.test.mjs
+Fetches and runs code: none found
+Domains named: none found
+Hidden or encoded text: none found
+Not read: scripts/bake-basemap.mjs (not fetched), … (six scripts)
+```
+
+After (the hook reads the directory's text files; run through `preToolUse` with GitHub mocked by the
+files at `b4c7f9c`):
+
+```
+Before you install: 3 keys · 2 paid services · needs Chrome, ffmpeg, ffprobe, node · 6 scripts
+Asks for: GEMINI_API_KEY (references/film.md:16), GOOGLE_API_KEY (…), OPENROUTER_API_KEY (…); 19 other settings it reads
+Paid services: Google Gemini (generativelanguage.googleapis.com, GEMINI_API_KEY), OpenRouter (OPENROUTER_API_KEY)
+Needs installed: Chrome (via puppeteer-core, scripts/bake-basemap.mjs:43), ffmpeg (run by scripts/bake-basemap.mjs:280), ffprobe (run by scripts/locate.mjs:39), node (script interpreter)
+Runs on your machine: 6 scripts: …; fetches and runs no code
+Sends data to (hosts its files name, not shown to be contacted): generativelanguage.googleapis.com; fonts, CDNs and map tiles: 5; other sites named: 3
+```
+
+## Not settled
+
+- The 23 "named as needed" programs read prose; about 9 are not requirements. Tightening the program
+  patterns (`node` only as "Node.js" or with a version, `Java` only as JDK, JRE or with a version)
+  needs another dated run.
+- `data/catalogue/skill-requires.json`, which `arp_find_tools` reads, is still built from the
+  2026-11-04 measurement (task 110's note); nothing here reads it.
+- `arp_pulse` (a search) reads `SKILL.md` and up to five scripts, not the directory, so its summary can
+  say "no keys" where the install check finds some; it says how many files it did not read.
 
 ## Do not do in this task
 
