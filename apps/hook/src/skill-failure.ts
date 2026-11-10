@@ -12,6 +12,7 @@ import {
 
 // The pure module, not the package index: the published hook carries no dependency (ADR `0145`).
 import { domainInText } from '../../../packages/protocol/src/domain-words.ts';
+import { publishableNeed } from '../../../packages/protocol/src/declare/line-need.ts';
 import aliasTable from '../../../data/catalogue/domain-aliases.json';
 import skillNodes from '../../../data/catalogue/skill-nodes-13579.json';
 
@@ -35,6 +36,43 @@ export function failureReason(text: string): DetectedReason | null {
   if (MISSING_PROGRAM.test(text)) return 'missing-program';
   if (MISSING_KEY.test(text) || MISSING_KEY_VARIABLE.test(text)) return 'missing-key';
   if (MISSING_FILE.test(text)) return 'missing-file';
+  return null;
+}
+
+/** Where an error names the program it could not run. Each captures the name, as the error wrote it. */
+const PROGRAM_IN_ERROR = [
+  /(?:^|[\s:])([^\s:'"`]+): (?:command )?not found\b/gim,
+  /command not found: ([^\s'"`]+)/gi,
+  /\bexec(?:utable)?:? "?([^\s"]+)"?: executable file not found/gi,
+  /\bspawn ([^\s'"`]+) ENOENT\b/gi,
+  /No module named '?([A-Za-z0-9_.-]+)'?/g,
+  /Cannot find module '([^']+)'/g,
+  /(?:^|\s)'?([^\s'"`]+)'? is not installed\b/gim,
+];
+/** Where an error names the variable it wanted. A name only, never what follows an `=`. */
+const KEY_IN_ERROR = [
+  /\b([A-Z][A-Z0-9_]{2,63})\b[^=\n]{0,30}\b(?:not set|missing|required|unset|is empty)\b/g,
+  /\b(?:set|export|provide|missing|define)\s+(?:the\s+)?(?:environment variable\s+)?\$?([A-Z][A-Z0-9_]{2,63})\b/gi,
+  /\$?\b([A-Z][A-Z0-9_]*(?:API_KEY|TOKEN|SECRET|ACCESS_KEY)[A-Z0-9_]*)\b/g,
+];
+
+/**
+ * The program or variable name a failure's own text names, kept only when the skill's SKILL.md names it too
+ * (`publishableNeed`, ADR `0166`). So the name is a word the skill published, never one from the person's
+ * command, path or machine, and `null` whenever that cannot be said.
+ */
+export function needOf(reason: DetectedReason, text: string, markdown: string): string | null {
+  const kind = reason === 'missing-program' ? 'program' : reason === 'missing-key' ? 'key' : null;
+  if (kind === null) return null;
+  for (const pattern of kind === 'program' ? PROGRAM_IN_ERROR : KEY_IN_ERROR) {
+    for (const match of text.matchAll(pattern)) {
+      const named = match[1] ?? '';
+      // A path names its program by its last part: `/usr/bin/ffmpeg` is `ffmpeg`, and the rest is the machine's.
+      const name = kind === 'program' ? (named.split('/').pop() ?? '').toLowerCase() : named;
+      const kept = publishableNeed(name, markdown, kind);
+      if (kept !== null) return kept;
+    }
+  }
   return null;
 }
 
@@ -240,6 +278,8 @@ export type FailureLine = {
   /** The search's domain in this session, else `contextOf`. Absent when neither gives a closed word. */
   domain?: string;
   reason: DetectedReason;
+  /** The missing program or variable's name, only when the skill's SKILL.md names it (`needOf`, ADR `0166`). */
+  need?: string;
 };
 
 /** Appends unless this session, skill and reason are already there. Says whether it wrote. */
@@ -258,7 +298,8 @@ export function appendFailure(line: FailureLine): boolean {
  * asked for and its output shows a closed reason. At most one line per session, skill and reason.
  *
  * In the home directory and not the project's `.arp/`, because a key or a program missing here is
- * missing in the next project too. The line holds the reason and never the command or its output.
+ * missing in the next project too. The line holds the reason and never the command or its output: at most
+ * a program or variable name the skill's own SKILL.md already says (`needOf`).
  */
 export function recordSkillFailure(call: ToolCall, cwd: string): void {
   const classified = classifyCall(call);
@@ -279,6 +320,7 @@ export function recordSkillFailure(call: ToolCall, cwd: string): void {
       const search = foundBySearch(cwd, call.session, skill.name);
       const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync(call.transcript, 'utf8')) : '';
       const domain = search?.domain ?? contextOf(words, skill.name);
+      const need = needOf(reason, failureText(call), markdown);
       appendFailure({
         at: new Date().toISOString(),
         session: call.session,
@@ -286,6 +328,7 @@ export function recordSkillFailure(call: ToolCall, cwd: string): void {
         source: skill.source ?? search?.source ?? installedSource(skill.name.split(':').pop() ?? skill.name, cwd),
         ...(domain === null ? {} : { domain }),
         reason,
+        ...(need === null ? {} : { need }),
       });
       return;
     }

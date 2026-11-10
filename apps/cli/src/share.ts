@@ -91,7 +91,7 @@ export function describe(decision: ShareDecision & { on: boolean }): string {
   if (decision.lines.length > 0) {
     out.push('', 'would be public on testnet 13579:');
     for (const line of decision.lines) {
-      out.push(`  ${line.toolUrl}  ${line.domain ?? '(no domain)'}  failed  ${line.reason}`);
+      out.push(`  ${line.toolUrl}  ${line.domain ?? '(no domain)'}  failed  ${line.reason}${line.need === undefined ? '' : `  needs ${line.need}`}`);
     }
   }
   if (decision.keptLocal.length > 0) {

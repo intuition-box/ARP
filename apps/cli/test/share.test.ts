@@ -82,3 +82,17 @@ test('the summary says what would be public and what stays', () => {
   expect(on).toContain('https://github.com/a/b?skill=clip  (no domain)  failed  missing-key');
   expect(on).toContain('my-private-skill: no known public source');
 });
+
+test('a name the hook kept is sent with the line and shown before it goes (ADR 0166)', async () => {
+  writeFileSync(
+    join(env.arpHome, 'failures.jsonl'),
+    `${JSON.stringify({ at: '2026-11-05T10:00:00Z', session: 'S', skill: 'clip', source: 'a/b', reason: 'missing-program', need: 'ffmpeg' })}\n`,
+  );
+  setSharing(env, true);
+  expect(describeShare(decide(env))).toContain('failed  missing-program  needs ffmpeg');
+  const written: unknown[] = [];
+  await sendShared(env, async (line) => {
+    written.push(line);
+  });
+  expect(written).toEqual([{ toolUrl: 'https://github.com/a/b?skill=clip', outcome: 'failed', reason: 'missing-program', need: 'ffmpeg' }]);
+});

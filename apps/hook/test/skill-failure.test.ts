@@ -6,7 +6,7 @@ import { parseLocalFailures, yourFailures } from '@arp-protocol/core';
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 
 import { appendOwn } from '../src/append.ts';
-import { askedBySkill, contextOf, failureReason, lastUserWords, programsOf } from '../src/skill-failure.ts';
+import { askedBySkill, contextOf, failureReason, lastUserWords, needOf, programsOf } from '../src/skill-failure.ts';
 
 const HOOK = join(import.meta.dir, '..', 'src', 'hook.ts');
 const SKILL = '---\nname: gadget\n---\nRun this:\n\n```bash\nvidcut --in a.mp4\npython3 scripts/render.py\n```\n';
@@ -212,6 +212,44 @@ test('a failure the skill asked for is recorded, without the command or its outp
   expect(rows[0]).toMatchObject({ session: 's1', skill: 'gadget', reason: 'missing-program' });
   expect(JSON.stringify(rows[0])).not.toContain('secret-name');
   expect(JSON.stringify(rows[0])).not.toContain('command not found');
+});
+
+test('needOf names the program or variable an error names, only when the SKILL.md names it too (ADR 0166)', () => {
+  const md = '---\nname: cut\n---\nNeeds FFmpeg and `REPLICATE_API_TOKEN`.\n\n```bash\nffmpeg -i a.mp4 b.mp4\n```\n';
+  expect(needOf('missing-program', 'zsh: command not found: ffmpeg', md)).toBe('ffmpeg');
+  expect(needOf('missing-program', 'bash: line 1: ffmpeg: command not found', md)).toBe('ffmpeg');
+  expect(needOf('missing-program', 'Error: spawn /usr/local/bin/ffmpeg ENOENT', md)).toBe('ffmpeg');
+  expect(needOf('missing-program', 'exec: "ffmpeg": executable file not found in $PATH', md)).toBe('ffmpeg');
+  expect(needOf('missing-key', 'Error: REPLICATE_API_TOKEN is not set', md)).toBe('REPLICATE_API_TOKEN');
+  expect(needOf('missing-key', 'please export REPLICATE_API_TOKEN=... first', md)).toBe('REPLICATE_API_TOKEN');
+  // The person's own program, path and variable: the error names them, the skill does not.
+  expect(needOf('missing-program', 'zsh: command not found: acme-private-encoder', md)).toBeNull();
+  expect(needOf('missing-program', 'spawn /home/max/clients/acme/wedding-cut.sh ENOENT', md)).toBeNull();
+  expect(needOf('missing-key', 'Error: ACME_CLIENT_TOKEN is not set', md)).toBeNull();
+  expect(needOf('missing-key', 'HTTP 401 Unauthorized', md)).toBeNull();
+  expect(needOf('missing-file', 'ffmpeg: No such file or directory', md)).toBeNull();
+});
+
+test('a failure keeps the program its SKILL.md names, and nothing the skill does not say', () => {
+  useSkill();
+  bashFails('vidcut --in a.mp4', 'zsh: command not found: vidcut');
+  bashFails('python3 scripts/render.py', 'Error: MY_COMPANY_SECRET is not set');
+  const rows = failures();
+  expect(rows).toHaveLength(2);
+  expect(rows[0]).toMatchObject({ reason: 'missing-program', need: 'vidcut' });
+  expect(rows[1]).toMatchObject({ reason: 'missing-key' });
+  expect(rows[1]).not.toHaveProperty('need');
+  expect(JSON.stringify(rows)).not.toContain('MY_COMPANY_SECRET');
+});
+
+test('a program the error names but the skill does not is kept out of the record', () => {
+  useSkill();
+  bashFails('python3 scripts/render.py', 'Error: spawn /home/me/private/acme-encoder ENOENT');
+  const rows = failures();
+  expect(rows).toHaveLength(1);
+  expect(rows[0]).toMatchObject({ reason: 'missing-program' });
+  expect(JSON.stringify(rows)).not.toContain('acme-encoder');
+  expect(JSON.stringify(rows)).not.toContain('/home/me');
 });
 
 test('the same failure twice in a session is one line, and another reason is another', () => {
