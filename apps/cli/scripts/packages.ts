@@ -20,6 +20,10 @@
  * | `packaging/claude/arp/` | the Claude Code plugin, which Grok Build reads unchanged: MCP server, hook, skill, commands |
  * | `packaging/gemini/arp/` | the Gemini CLI extension: MCP server and the skill as its context file |
  *
+ * The plugin's icon is copied from `assets/icon.png`, which `scripts/plugin-icon.ts` renders from the
+ * Source mark (task 107). The marketplace entry has no icon field: `claude plugin validate --strict`
+ * flags one as unknown, tried 2026-11-10.
+ *
  * The hook is shipped as a built file, `bin/hook.js`, because a plugin's hook runs on every tool
  * call and `npx` there would resolve the package each time (ADR `0089` §2). It has no import but
  * Node's own, so it runs from the plugin directory with nothing installed. `bin/arp.js` is the whole
@@ -45,7 +49,8 @@ const pkg = JSON.parse(readFileSync(join(CLI, 'package.json'), 'utf8')) as {
   license: string;
 };
 
-type Files = Map<string, string>;
+/** Text, or the icon's bytes. */
+type Files = Map<string, string | Uint8Array>;
 
 const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
 
@@ -182,11 +187,13 @@ function files(source: Source, cli: string): Files {
     json({
       name: 'arp',
       version: pkg.version,
+      icon: './.claude-plugin/icon.png',
       ...meta,
       author: { name: 'ARP' },
       keywords: ['mcp', 'agent', 'reputation', 'erc-8004', 'intuition'],
     }),
   );
+  out.set(`${claude}/.claude-plugin/icon.png`, readFileSync(join(CLI, 'assets', 'icon.png')));
   // Nothing to fetch and no shell, so the project stays the working directory and no `npx` puts its
   // `node_modules/.bin` on `PATH`: `ARP_PROJECT_DIR` is for the launch through `npx`.
   out.set(
@@ -316,10 +323,13 @@ if (args[0] === '--local') {
   console.log(`archive ${join(target, packed ?? '')}: serve it at that URL`);
 } else if (args[0] === '--check') {
   const expected = files({ kind: 'npm' }, cli);
-  const stale = [...expected].filter(
-    ([path, text]) =>
-      !existsSync(join(ROOT, path)) || readFileSync(join(ROOT, path), 'utf8') !== text,
-  );
+  const stale = [...expected].filter(([path, content]) => {
+    if (!existsSync(join(ROOT, path))) return true;
+    const committed = readFileSync(join(ROOT, path));
+    return typeof content === 'string'
+      ? committed.toString('utf8') !== content
+      : !committed.equals(content);
+  });
   // A file nobody generates would pass a check that only compares the expected ones.
   const extra = listed(join(ROOT, 'packaging')).filter((path) => !expected.has(path));
   for (const [path] of stale) console.error(`stale: ${path}`);
