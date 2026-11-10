@@ -21,7 +21,7 @@ export function SkillContains({read, repo}: {read: SkillContentsRead; repo: stri
             aside={
                 read.status === "pending" ? null : (
                     <>
-                        <Hint label="What Contains is read from" align="right">
+                        <Hint label="What Contains is read from">
                             {read.status === "read"
                                 ? `Names found in the skill's files at commit ${read.entry.commit.slice(0, 7)}, not requirements.`
                                 : "This skill's files were not in the last reading."}
@@ -89,6 +89,7 @@ function None() {
 
 function More({count, cut}: {count: number; cut: boolean}) {
     if (count <= 0 && !cut) return null;
+    // A cut list is always longer than what is shown (40 against 6), so "+0+" cannot print.
     return <span className="text-[color:var(--color-steel)]">{` +${Math.max(count, 0)}${cut ? "+" : ""}`}</span>;
 }
 
@@ -117,10 +118,10 @@ function Matches({
     if (matches.length === 0) return <None />;
     return (
         <ul className="m-0 flex list-none flex-col gap-1 p-0">
-            {matches.slice(0, SHOWN).map((match) => {
+            {matches.slice(0, SHOWN).map((match, index) => {
                 const where = `${match.file}:${match.line}`;
                 return (
-                    <li key={`${match.kind} ${where}`} className="[overflow-wrap:anywhere]">
+                    <li key={`${index} ${match.kind} ${where}`} className="[overflow-wrap:anywhere]">
                         <span>{match.kind}</span>{" "}
                         {repo === null ? (
                             <span className="text-[color:var(--color-steel)]">{where}</span>

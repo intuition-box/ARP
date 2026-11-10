@@ -66,6 +66,7 @@ describe("agent contents", () => {
 
     it("keeps no registration file and an unreadable one apart", async () => {
         expect(await readAgentContentsOf({registrationFile: null, chainId: 8453, tokenId: "1"}, SIEVE, noFetch)).toEqual({status: "none"});
+        // Safe: `readRegistrationDocument` only calls it and reads the Response, which this returns.
         const refused = (async () => new Response("no", {status: 404})) as typeof fetch;
         expect(
             await readAgentContentsOf({registrationFile: "https://host.dev/a.json", chainId: 8453, tokenId: "1"}, SIEVE, refused),
