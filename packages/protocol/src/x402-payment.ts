@@ -56,8 +56,9 @@ export function parsePaymentAtomLabel(label: string): X402PaymentRef | null {
 }
 
 /**
- * The longest exact URL a payment level carries. 1,000 bytes is `atomDataMaxLength` on testnet 13579
- * (read 2026-11-10); 512 leaves the network and the hash room under it. Mainnet's is read before a port.
+ * The longest exact URL a payment level carries. `atomDataMaxLength` is 1,000 bytes on testnet 13579 and
+ * on mainnet 1155 (2026-11-10, `scripts/measure/atom-data-max-length.ts`); 512 leaves the network and the
+ * hash room under it. Governance can change it, so re-run that script before relying on it again.
  */
 export const MAX_EXACT_ENDPOINT_LENGTH = 512;
 

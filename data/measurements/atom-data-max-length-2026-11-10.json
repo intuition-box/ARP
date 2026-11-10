@@ -1,0 +1,27 @@
+{
+ "script": "scripts/measure/atom-data-max-length.ts",
+ "readAt": "2026-11-10T11:28:08.911Z",
+ "call": "MultiVault.getGeneralConfig()",
+ "readings": [
+  {
+   "chainId": 13579,
+   "multiVault": "0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91",
+   "blockNumber": "9378420",
+   "atomDataMaxLength": "1000",
+   "minDeposit": "1000000000000000",
+   "minShare": "1000000",
+   "feeDenominator": "10000",
+   "feeThreshold": "100000000000000000"
+  },
+  {
+   "chainId": 1155,
+   "multiVault": "0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e",
+   "blockNumber": "10795862",
+   "atomDataMaxLength": "1000",
+   "minDeposit": "10000000000000000",
+   "minShare": "1000000",
+   "feeDenominator": "10000",
+   "feeThreshold": "1000000000000000000"
+  }
+ ]
+}

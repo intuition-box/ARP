@@ -3,6 +3,10 @@
 **Status:** Accepted
 **Date:** 2026-11-10
 **Amends:** ADR `0159` (decision 1, the payment level's object; decision 4, the line request's version; decision 6, the feed's record), `.claude/rules/security.md` (the line request's signing-site entry and the sponsoring table's line row)
+**Amended:** 2026-11-10 by task 107: decision 2's mainnet read is done. `atomDataMaxLength` is 1,000 on
+testnet 13579 (block 9,378,420) and on mainnet 1155 (block 10,795,862), read by
+`scripts/measure/atom-data-max-length.ts` into `data/measurements/atom-data-max-length-2026-11-10.json`.
+The 512-character bound holds on both. The text below is the decision as it stood.
 **Triggered by:** the user, 2026-11-10, after task 91's end-to-end run published `"endpoint": "https://127.0.0.1:4021/x402-demo/no-delivery"` for a seller called at `http://127.0.0.1:4021/x402-demo/no-delivery`
 
 ## Context
