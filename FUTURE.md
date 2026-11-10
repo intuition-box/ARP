@@ -440,6 +440,10 @@ Two separate things, and only the second protects anyone:
    runs, a `curl | sh`, the domains it contacts, hidden or encoded text. Runs on the user's machine,
    so no text leaves it (ADR `0155`). Fits `docs/30`'s « check before your agent installs ».
 
+Left from task 94: the web app's `listToolMessage` has no sentence for `not-a-tool`, `unreachable`
+or `private-address` (it says "It could not be added."), and the task 91 seller passing the check is
+untested until that demo runs again.
+
 Not decided: whether the read before install blocks or only shows. The accepted manifests are
 decided (ADR `0163`); a Python project declaring its MCP SDK only outside `[project] dependencies`
 or Poetry's table, a `.mcp.json` alone and a Desktop extension's `manifest.json` are not among them.

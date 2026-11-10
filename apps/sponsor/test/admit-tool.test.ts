@@ -190,6 +190,12 @@ describe('admitEndpoint', () => {
     expect(asked).toHaveLength(3);
   });
 
+  it('asks for the card under the path, not after the query', async () => {
+    const { ask, asked } = scripted({});
+    await admitEndpoint('https://tool.example/api?key=1', ask);
+    expect(asked.at(-1)).toBe('GET https://tool.example/api/.well-known/agent-card.json');
+  });
+
   it('names a redirect it did not follow', async () => {
     const { ask } = scripted({ [`GET ${URL_}`]: { status: 301, headers: { location: 'https://elsewhere.example/' } } });
     const answer = await admitEndpoint(URL_, ask);
