@@ -430,10 +430,10 @@ resolved and checked, which closes the reason it was refused before. **Point 2 i
 Two separate things, and only the second protects anyone:
 
 1. **A gate on what ARP pays to list.** _Built, task 94._ A GitHub repository is listed only if it holds something a
-   runtime loads: a `SKILL.md`, an MCP server manifest (`server.json`, a `.claude-plugin/`, a
-   package declaring an MCP server), or close forms to be listed when it is built. A non-GitHub URL
-   is listed only if it answers as a tool (an MCP `initialize`, an A2A card, an x402 `402`), asked by
-   a process with no key: `apps/probe` already asks catalogued MCP endpoints on a cron (ADR `0093`).
+   runtime loads: a `SKILL.md`, a Claude plugin or Gemini extension, an MCP registry `server.json`,
+   or a root manifest depending on an MCP SDK (the list is ADR `0163` §1). A non-GitHub URL is
+   listed only if it answers as a tool (an MCP `initialize`, an A2A card, an x402 `402`), asked by
+   the sponsor itself through a connection pinned to the public address it checked (ADR `0163` §3).
    This bounds ARP's spend and its index. It does not stop anyone else writing an atom on Intuition.
 2. **A read before install.** Since anyone can write to the graph, the defence is where an agent is
    about to install: a local read of the skill that shows facts, never a verdict — the scripts it

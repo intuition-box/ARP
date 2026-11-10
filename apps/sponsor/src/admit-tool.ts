@@ -248,7 +248,11 @@ export async function admitEndpoint(url: string, ask: Ask): Promise<ToolAdmissio
     seen.push(`initialize ${init.status}`);
 
     if (!/\.json$/i.test(new URL(url).pathname)) {
-      const cardUrl = `${url.replace(/\/+$/, '')}/.well-known/agent-card.json`;
+      // Under the URL's path, without its query: `?a=1/.well-known/…` is no path at all.
+      const cardTarget = new URL(url);
+      cardTarget.search = '';
+      cardTarget.pathname = `${cardTarget.pathname.replace(/\/+$/, '')}/.well-known/agent-card.json`;
+      const cardUrl = cardTarget.toString();
       const card = await ask(cardUrl, { method: 'GET', headers: { accept: 'application/json' } });
       if (isA2aCard(card.status, card.body)) return { ok: true, form: 'a2a-card' };
       seen.push(`agent card ${card.status}`);
@@ -294,6 +298,7 @@ export async function admitRepository(
   }
   if (!treeResponse.ok)
     throw new Error(`GitHub answered HTTP ${treeResponse.status} for ${fullName}`);
+  // GitHub's tree API shape; every field is read as optional and each entry's `type` is checked below.
   const tree = (await treeResponse.json()) as {
     tree?: { path: string; type: string }[];
     truncated?: boolean;
