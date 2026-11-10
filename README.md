@@ -105,7 +105,7 @@ ARP/
 │   ├── web/                  the web app — search, tools, agents, activity
 │   ├── cli/                  `arp` — MCP server, hook and node in one binary
 │   ├── mcp/                  the MCP server: reads the graph, prepares calls, serves skills
-│   ├── hook/                 records which tools a session used — locally, no network
+│   ├── hook/                 records which tools a session used, locally; reads GitHub only before a skills install
 │   ├── node/                 the hire endpoint: checks a payment, signs a receipt
 │   ├── sponsor/              the sponsoring service that pays testnet fees for agents
 │   ├── probe/                cron worker (every 5 min): which MCP endpoints answer

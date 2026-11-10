@@ -54,7 +54,7 @@ Which tools it serves depends on `ARP_TOOLS`; see [MCP tools](/docs/mcp-tools). 
 
 ### arp hook
 
-The runtime hook. It reads one tool-call payload on stdin, appends at most one line to each file it keeps, and exits. It makes no network connection.
+The runtime hook. It reads one tool-call payload on stdin, appends at most one line to each file it keeps, and exits. Its one network connection is to GitHub, before a skills install (`npx skills add`), to show what the skill contains: the repository and skill names leave your machine, nothing else.
 
 | Writes | What |
 | --- | --- |

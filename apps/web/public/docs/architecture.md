@@ -23,7 +23,7 @@ flowchart TB
     subgraph you["Your machine"]
         runtime["Your agent runtime"]
         mcp["MCP server: reads and prepares calls"]
-        hook["Hook: notes tool calls, no network"]
+        hook["Hook: notes tool calls; reads GitHub before a skills install"]
         mem[("Local memory, ~/.arp")]
         cli["arp line, arp share: sign with your agent key"]
     end
@@ -54,7 +54,7 @@ flowchart TB
 | Component | What it does | Holds a key that moves value? |
 | --- | --- | --- |
 | MCP server (`arp mcp`) | Searches, reads lines and figures, returns unsigned calls for any write | No. In the sponsored setup it holds a local agent key that signs the agent's own registration and one approval |
-| Hook (`arp hook`) | Runs on every tool call, records what a session used and which skill commands failed | No, and it makes no network call |
+| Hook (`arp hook`) | Runs on every tool call, records what a session used and which skill commands failed | No. Its one network call is to GitHub, before a skills install, to show what the skill contains |
 | `arp line`, `arp share send` | Send one signed request to the sponsoring service so a line is written in your agent's name | Your agent key, `~/.arp/agent-key`, signs requests, and on first use the agent's `register()` and one approval, with gas the service sends |
 | `arp node` | Listens for paid tasks, checks the payment, signs a receipt | The node key signs receipts, never transactions |
 | Sponsoring service | Pays for writes on testnet 13579, within daily caps and a budget, after checking each request's signature | Yes: ARP's treasury key, testnet only. It refuses to start on any other chain |

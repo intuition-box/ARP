@@ -146,7 +146,9 @@ would stop accepting your receipts.
 
 Seven fixed hosts, the first two configurable, and agents' own signed addresses. The sponsored mode also reaches two more, both
 configurable: ARP's content server (`ARP_CONTENT`) and ARP's sponsoring service (`ARP_SPONSOR`),
-both local by default. `arp line` and `arp share send` reach the sponsoring service too. `arp_pulse` reaches up to ten agents' signed addresses on a search with words: `GET /`, with none of your words, though each node sees your IP and the time.
+both local by default. `arp line` and `arp share send` reach the sponsoring service too. The hook
+reaches `api.github.com` and `raw.githubusercontent.com` before a skills install, and at no other
+time ([The hook](#the-hook--appshook)). `arp_pulse` reaches up to ten agents' signed addresses on a search with words: `GET /`, with none of your words, though each node sees your IP and the time.
 
 ```
 the Intuition graph    reads. Set by ARP_TARGET, or INTUITION_GRAPHQL_URL
@@ -319,7 +321,8 @@ INTUITION_GRAPHQL_URL  override the graph
 INTUITION_RPC_URL      override the RPC
 ARP_MULTI_VAULT        override the contract address
 ARP_DOMAIN_ATTESTOR    whose domain tags to read, one address or several comma-separated (default: ARP's two). A property of the server, never a request parameter
-GITHUB_TOKEN           optional. Keeps the whole window and the repository's figures, and raises GitHub's 60-requests-an-hour limit on file listings
+GITHUB_TOKEN           optional. Keeps the whole window and the repository's figures, and raises GitHub's 60-requests-an-hour limit on file listings.
+                       The hook reads it too, or GH_TOKEN when it is unset, for the check before a skills install
 ARP_HOME               where the receipt key and the sponsored mode's state live. Default ~/.arp
 ARP_RECEIPT_KEY        a key you manage, instead of the generated one. Never a funded one
 ARP_NO_RECEIPTS        set to 1 to run with no key at all
@@ -354,8 +357,8 @@ ARP_HOSTED             1: ARP's hosted endpoint (apps/mcp/Dockerfile, ADR 0161).
 ARP_PUBLIC_HOST        with ARP_HOSTED=1 only: the public name it answers, as Host and as https origin
 ```
 
-`GITHUB_TOKEN` is the only one that is a credential, it is read server-side only, and it is sent to
-`api.github.com` and nowhere else. It needs **no scopes** — public repository listings are public.
+`GITHUB_TOKEN` is the only one that is a credential (with `GH_TOKEN`, which only the hook reads), it
+is read server-side or by the hook only, and it is sent to `api.github.com` and nowhere else. It needs **no scopes** — public repository listings are public.
 Give it none.
 
 **`session-log.ts --serve` opens a second listener**, and only when asked: the activity feed the web
@@ -639,7 +642,7 @@ cd apps/hook && bun run build      # once: writes apps/hook/dist/arp-hook.js
 ```
 
 `arp init` writes this for you (`@arp-protocol/cli`, `apps/cli`): it copies the hook to
-`~/.arp/bin/hook.js`, registers it on both events, and backs up `settings.json` first. `arp
+`~/.arp/bin/hook.js`, registers it on its three events (below), and backs up `settings.json` first. `arp
 uninstall` takes it out again. It leaves an MCP server named `arp` that it did not write, and says so. A run that had to leave a file out, one that is not valid JSON for instance, does the rest, names the file at the end and exits 6. By hand, it is:
 
 <!-- prettier-ignore -->
@@ -652,11 +655,17 @@ uninstall` takes it out again. It leaves an MCP server named `arp` that it did n
   ]}],
   "PostToolUseFailure": [{"matcher": "*", "hooks": [
     {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "async": true}
+  ]}],
+  "PreToolUse": [{"matcher": "Bash", "hooks": [
+    {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js",
+     "if": "Bash(*skills*)", "timeout": 15}
   ]}]
 }}
 ```
 
-Both events, because a failed call reaches only `PostToolUseFailure`. Grok Build reads this same
+Both `PostToolUse` events, because a failed call reaches only `PostToolUseFailure`. `PreToolUse` is
+waited on, not `async`, because only a waited-on hook can answer before the command runs; its `if`
+rule keeps every other `Bash` call from starting it at all. Grok Build reads this same
 file and sends camelCase keys, which the hook also reads (`apps/hook/src/payload.ts`).
 
 It fires on every tool call and appends one line to `.arp/session.jsonl` (or `ARP_SESSION_LOG`)
@@ -673,12 +682,36 @@ Per call it writes the call id, an outcome (`ok`, `tool_error`, `auth`, `timeout
 of the response, never its content, its arguments or the error's text**. A response can hold a key
 or a file, and this log later feeds a declaration. A call you cancel is not written.
 
-It makes no network call. The bundle carries host literals from protocol constants it never calls;
-the call sites are what matter, and there are none:
+**Before a skills install it reads GitHub** (task 98, ADR `0167`). On `PreToolUse`, for a `Bash`
+command that runs the `skills` CLI's `add` (`npx skills add`, `npx -y skills@<version> add`,
+`bunx`, `pnpm dlx`, `yarn dlx`, `npm exec`, and the aliases `a`, `install`, `i`), it reads what the
+install would take and shows it to you before the command runs, and to the agent beside the command's
+result: the programs, keys,
+scripts, fetch-and-run lines, domains and hidden text in the skill's own files, as facts. It makes
+no permission decision and blocks nothing. At most three skills are read, within six seconds, from
+two hosts:
 
 ```
-cd apps/hook && bun run build && grep -cE "fetch\(|createPublicClient\(" dist/arp-hook.js
+api.github.com              the repository's file list and its figures (stars, last push, archived).
+                            Two requests per install, counted against GitHub's 60 an hour without a token
+raw.githubusercontent.com   the SKILL.md files that name the skill (others too when its directory does not
+                            carry its name) and up to five scripts it runs, at the default branch's HEAD
 ```
 
-prints `0` on 2026-10-30. A payload it cannot parse exits `0` and writes nothing, so a hook never
-blocks the tool call it is watching.
+**What leaves your machine is the repository and skill names the command already carries**, sent to
+GitHub, which the install itself is about to clone from. Not your words, not your files, and
+nothing else of the command. `GITHUB_TOKEN`, or `GH_TOKEN` when it is unset, is sent to
+`api.github.com` only. A GitLab, `git@`, local or direct-download source is named and not read, so
+it makes no request. Every other command, and every other event, makes none.
+
+The bundle has three request sites, all to those two hosts, and a command lists them:
+
+```
+cd apps/hook && bun run build && grep -oE "(get|fetch)\(\`https://[a-z0-9.-]+" dist/arp-hook.js | sort | uniq -c
+```
+
+prints `2 get(\`https://api.github.com` and `1 get(\`https://raw.githubusercontent.com` on
+2026-11-10. `get` is `githubPulseSource`'s name for `fetch` (`packages/protocol/src/pulse.ts`),
+which is why the check written here before task 98, `grep -cE "fetch\(|createPublicClient\("`,
+still prints `0` and no longer proves anything. A payload it cannot parse exits `0` and writes
+nothing, so a hook never blocks the tool call it is watching.

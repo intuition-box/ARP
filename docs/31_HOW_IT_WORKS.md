@@ -11,7 +11,7 @@ flowchart TB
     subgraph machine["The person's machine"]
         runtime["Claude Code, with the ARP plugin"]
         pulse["arp_pulse, in the plugin's MCP server: read-only, holds no key"]
-        hook["The hook: runs on every tool call, no network"]
+        hook["The hook: runs on every tool call; reads GitHub only before a skills install"]
         memory[("Local memory: ~/.arp/failures.jsonl, .arp/session.jsonl, .arp/searches.jsonl")]
         share["arp share: off by default, a separate process with the agent's key"]
     end
