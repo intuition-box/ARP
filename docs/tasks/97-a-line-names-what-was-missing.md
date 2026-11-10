@@ -1,6 +1,6 @@
 # Task 97 — A line names what was missing, and what made it work
 
-**Status:** in progress.
+**Status:** verified 2026-11-10, `task-verifier` PASS (round 1), commits `225dfb1`..`dd99149`, post-mortem `.claude/learning/86-a-line-names-what-was-missing.md`; `intuition-integrator` PASS, its two non-blocking items fixed in `dd99149`. Not pushed.
 **ADR:** `0166`.
 **Rules:** `code.md`, `security.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`, `intuition`. **Reviewer:** `intuition-integrator`.
