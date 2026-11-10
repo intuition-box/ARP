@@ -22,7 +22,7 @@ type Row = {
     creator_id: string;
     created_at: string;
     subject: {term_id: string; label: string | null} | null;
-    object: {term_id: string; label: string | null; value: {thing: {url: string} | null} | null};
+    object: {term_id: string; label: string | null; data?: string | null; value: {thing: {url: string} | null} | null};
     positions: {account_id: string}[];
 };
 
@@ -33,7 +33,8 @@ const row = (term: number, subject: number | null, predicate: string, label: str
     creator_id: SPONSOR,
     created_at: "2026-11-09T20:00:00.000",
     subject: null,
-    object: {term_id: id(term + 1000), label, value: null},
+    // The index cuts a text atom's label at 256 characters and keeps `data` whole (13579, 2026-11-10).
+    object: {term_id: id(term + 1000), label: label.slice(0, 256), data: label, value: null},
     positions: holders.map((account_id) => ({account_id})),
     ...extra,
 });
@@ -122,6 +123,17 @@ describe("buildX402Feed", () => {
         const feed = await buildX402Feed(config(line(0, PAYER.toLowerCase(), TX, "failed", null)));
         expect(feed.records.map((r) => [r.endpoint, r.endpoint_canonical])).toEqual([[null, ENDPOINT]]);
         expect(feed.by_endpoint[ENDPOINT]?.records).toBe(1);
+    });
+
+    it("reads the exact URL from the atom's data, whole, where the index's label is cut at 256", async () => {
+        const long = `${CALLED}?q=${"a".repeat(300)}`;
+        const tool = `${ENDPOINT}?q=${"a".repeat(300)}`;
+        const rows = line(0, PAYER.toLowerCase(), TX, "failed", long).map((r) =>
+            r.predicate_id === PRED.uses ? {...r, object: {...r.object, value: {thing: {url: tool}}}} : r,
+        );
+        expect((rows[0] as Row).object.label?.length).toBe(256);
+        const feed = await buildX402Feed(config(rows));
+        expect(feed.records.map((r) => [r.endpoint, r.endpoint_canonical])).toEqual([[long, tool]]);
     });
 
     it("leaves out an exact URL that does not normalise to the tool's URL", async () => {

@@ -68,6 +68,8 @@ describe("the payment level with the exact URL paid (task 93, ADR 0162)", () => 
             expect(exactEndpointNamesTool(exact, tool)).toBe(false);
         }
         expect(exactEndpointNamesTool(called, "https://127.0.0.1:4021/x402-demo/no-delivery")).toBe(true);
+        // A Thing listed outside normaliseToolUrl still matches its own spellings.
+        expect(exactEndpointNamesTool("https://x.example/a", "https://www.x.example/a/")).toBe(true);
     });
 });
 

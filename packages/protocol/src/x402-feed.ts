@@ -125,7 +125,8 @@ type Level = {
     predicateId: string | null;
     createdAt: string | null;
     subject: {atomId: string | null; label: string | null};
-    object: {label: string | null; url: string | null};
+    /** `data` is the atom's whole string; the index cuts `label` at 256 characters. */
+    object: {label: string | null; data: string | null; url: string | null};
     /** The creator and every holder, lower case. */
     standing: Set<string>;
     /** The index caps a nested list at 100 with no sign of the cut. */
@@ -150,7 +151,7 @@ function levelOf(row: Record<string, unknown>): Level | null {
         predicateId: readString(row, "predicate_id"),
         createdAt: readString(row, "created_at"),
         subject: {atomId: subject === null ? null : readString(subject, "term_id"), label: subject === null ? null : readString(subject, "label")},
-        object: {label: object === null ? null : readString(object, "label"), url: thing === null ? null : readString(thing, "url")},
+        object: {label: object === null ? null : readString(object, "label"), data: object === null ? null : readString(object, "data"), url: thing === null ? null : readString(thing, "url")},
         standing: new Set(wallets.filter((wallet): wallet is string => wallet !== null).map(key)),
         capped: holders.length >= NESTED_CAP,
     };
@@ -230,7 +231,9 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
     type Candidate = {payment: Level; record: Omit<X402FeedRecord, "payer" | "pay_to" | "amount" | "asset" | "paid_at" | "writer">; writers: Set<string>; owner: Address | null; agentWallet: Address | null};
     const candidates: Candidate[] = [];
     for (const payment of payments) {
-        const level = payment.object.label === null ? null : parsePaymentLevelLabel(payment.object.label);
+        // `data`, not `label`: the index cuts a label at 256 characters and the exact URL can be longer.
+        const written = payment.object.data ?? payment.object.label;
+        const level = written === null ? null : parsePaymentLevelLabel(written);
         if (level === null) {
             skip("the payment is not written as eip155:<chain>/tx/<hash>, then optionally a space and the URL called");
             continue;

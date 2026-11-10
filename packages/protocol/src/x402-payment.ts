@@ -77,13 +77,14 @@ export function isExactEndpointUrl(value: string): boolean {
 }
 
 /**
- * Whether the exact URL names the tool the line is about: its canonical form is the tool atom's URL. A
- * writer could otherwise name any URL beside somebody else's endpoint (ADR `0162`).
+ * Whether the exact URL names the tool the line is about: both normalise to one URL. A writer could
+ * otherwise name any URL beside somebody else's endpoint (ADR `0162`). The tool's URL is normalised too,
+ * so a Thing listed outside `normaliseToolUrl` with `https://www.x.com/` still matches.
  */
 export function exactEndpointNamesTool(exact: string, toolUrl: string): boolean {
     if (!isExactEndpointUrl(exact)) return false;
     try {
-        return normaliseToolUrl(exact) === toolUrl;
+        return normaliseToolUrl(exact) === normaliseToolUrl(toolUrl);
     } catch {
         return false;
     }

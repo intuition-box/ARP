@@ -6791,6 +6791,7 @@ var LEVEL = `term_id
         object {
             term_id
             label
+            data
             value {
                 thing {
                     url
