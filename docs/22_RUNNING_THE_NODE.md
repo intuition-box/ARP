@@ -106,7 +106,9 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
                        table on the skill's name and description, which can be wrong. The source, with
                        no search, comes from ~/.agents/.skill-lock.json, the project's own
                        skills-lock.json or a receipt, when only one source is known for that name. Your words are read for that and not kept. Never
-                       the command or its output. Stays on this machine unless you run `arp share on`
+                       the command or its output. Stays on this machine unless you run `arp share on`.
+                       A source still empty is looked up again by `arp share`, from the same files,
+                       with the project it runs in as the project
 ~/.arp/asked.jsonl     on Stop, the skills the hook asked about: the session, the skill, its source, the date
 ~/.arp/outcomes.jsonl  the model's answer to that question, `worked`, `failed` or `unsure`, with a domain
                        found as for a failure, and on a worked answer the `with` name an earlier failure
