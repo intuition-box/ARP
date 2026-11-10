@@ -98,10 +98,50 @@ const INSTALL =
 const PROBE = /\b(?:command\s+-v|which)\s+([a-z][\w-]*)/i;
 const COMMAND = /^[a-z][a-z0-9_-]*$/;
 
+/**
+ * A line of shell without its comment, cut into the commands it chains. A `#` starts a comment only
+ * outside quotes and at a word's start, and `|`, `;` and `&&` separate commands only outside quotes:
+ * `grep -E "lorem|ipsum"` runs `grep` alone, and `# copy it; prints the path` runs nothing (task 110,
+ * anthropics/skills `pptx`). A backslash escapes the next character outside single quotes.
+ */
+function shellSegments(line: string): string[] {
+    const segments: string[] = [];
+    let current = "";
+    let quote: string | null = null;
+    for (let index = 0; index < line.length; index += 1) {
+        const char = line[index] ?? "";
+        if (char === "\\" && quote !== "'") {
+            current += char + (line[index + 1] ?? "");
+            index += 1;
+            continue;
+        }
+        if (quote !== null) {
+            if (char === quote) quote = null;
+            current += char;
+            continue;
+        }
+        if (char === '"' || char === "'") {
+            quote = char;
+            current += char;
+            continue;
+        }
+        if (char === "#" && (index === 0 || /\s/.test(line[index - 1] ?? ""))) break;
+        if (char === "|" || char === ";" || (char === "&" && line[index + 1] === "&")) {
+            segments.push(current);
+            current = "";
+            if (line[index + 1] === char) index += 1;
+            continue;
+        }
+        current += char;
+    }
+    segments.push(current);
+    return segments;
+}
+
 /** What one line of shell runs. `explicitOnly` keeps a probe or an install line and nothing else. */
 function commandsIn(shell: string, explicitOnly: boolean): string[] {
     const found: string[] = [];
-    for (const segment of shell.split(/&&|\|\||[|;]/)) {
+    for (const segment of shellSegments(shell)) {
         const line = segment.trim().replace(/^\$\s+/, "");
         if (line === "" || line.startsWith("#")) continue;
         const named = INSTALL.exec(line)?.[1] ?? PROBE.exec(line)?.[1];
@@ -135,7 +175,8 @@ function shellLinesRun(lines: readonly string[]): string[] {
         if (quote === null && !continued) run.push(line);
         continued = line.trimEnd().endsWith("\\");
         heredocEnd = /<<-?\s*['"]?([A-Za-z_]+)/.exec(line)?.[1] ?? null;
-        for (const char of line) {
+        // A comment's apostrophe (`the new slide's path`) opens no quote.
+        for (const char of quote === null ? shellSegments(line).join(";") : line) {
             if (quote === null && (char === '"' || char === "'")) quote = char;
             else if (char === quote) quote = null;
         }

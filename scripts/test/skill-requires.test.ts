@@ -107,6 +107,21 @@ describe("what a SKILL.md says it needs", () => {
         expect(readRequires(markdown).runs).toEqual(["tool"]);
     });
 
+    it("splits commands outside quotes only, and drops a trailing comment (task 110)", () => {
+        const markdown = [
+            "---",
+            "name: x",
+            "---",
+            "```bash",
+            "tool a.xml   # copy it; prints the new slide's path",
+            "next b.xml",
+            'grep -iE "lorem|ipsum" out.txt && other --x || third; fourth \\| fifth',
+            "echo 'a|b;c' | sixth",
+            "```",
+        ].join("\n");
+        expect(readRequires(markdown).runs).toEqual(["tool", "next", "other", "third", "fourth", "sixth"]);
+    });
+
     it("does not name what a skill declares twice", () => {
         const markdown = "---\nallowed-tools: Bash(belt *)\n---\n```bash\nbelt login\n```\n";
         expect(readRequires(markdown).runs).toEqual([]);

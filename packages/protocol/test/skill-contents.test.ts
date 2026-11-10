@@ -245,6 +245,28 @@ describe("readSkillContents", () => {
             ]);
         });
 
+        it("words in a quoted grep pattern and in a trailing comment are not programs (anthropics/skills pptx)", () => {
+            const contents = read(
+                skill(
+                    [
+                        "```bash",
+                        "python scripts/add_slide.py unpacked/ slide2.xml   # duplicate a slide; prints the new slide's path",
+                        "python scripts/clean.py unpacked/                  # after deletions",
+                        "```",
+                        "",
+                        "```bash",
+                        'markitdown output.pptx | grep -iE "\\bx{3,}\\b|lorem|ipsum|\\bTODO|\\[insert"',
+                        "grep -E 'a|b' notes.txt; pdftoppm -jpeg out.pdf slide",
+                        "```",
+                    ].join("\n"),
+                ),
+            );
+            expect(contents.programs).toEqual([
+                {name: "markitdown", from: "runs"},
+                {name: "pdftoppm", from: "runs"},
+            ]);
+        });
+
         it("an example variable in a Markdown block is not a setting", () => {
             const contents = read(skill(["```bash", 'curl "$URL" -o "$TITLE.json"', "```"].join("\n")));
             expect(contents.settings).toEqual([]);
