@@ -36,7 +36,6 @@ describe("nav sections", () => {
             "/tools",
             "/register",
             "/start/agent",
-            "/account",
             "/activity",
             "/atom/0xabc",
             "/",

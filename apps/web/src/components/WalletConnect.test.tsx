@@ -3,7 +3,7 @@ import {MemoryRouter, Route, Routes} from "react-router-dom";
 import {describe, expect, it, vi} from "vitest";
 
 /**
- * The wallet menu (`docs/tasks/35` §0): copy the address, open `/account`, disconnect. wagmi is
+ * The wallet menu (`docs/tasks/35` §0): copy the address, disconnect (`/account` left on 2026-11-10). wagmi is
  * mocked to a connected account, because the real config never connects under `happy-dom`.
  */
 const disconnect = vi.fn();
@@ -24,7 +24,6 @@ function renderMenu() {
         <MemoryRouter initialEntries={["/"]}>
             <Routes>
                 <Route path="/" element={<WalletConnect />} />
-                <Route path="/account" element={<p>account page</p>} />
             </Routes>
         </MemoryRouter>,
     );
@@ -32,19 +31,12 @@ function renderMenu() {
 }
 
 describe("the wallet menu", () => {
-    it("offers copy, Account and disconnect, in that order", () => {
+    it("offers copy and disconnect, in that order", () => {
         renderMenu();
         expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
             "Copy address",
-            "Account",
             "Disconnect",
         ]);
-    });
-
-    it("opens /account from Account", () => {
-        renderMenu();
-        fireEvent.click(screen.getByRole("menuitem", {name: "Account"}));
-        expect(screen.getByText("account page")).toBeInTheDocument();
     });
 
     it("disconnects from Disconnect", () => {
@@ -72,6 +64,6 @@ describe("the wallet menu", () => {
         const menu = screen.getByRole("menu");
         // A menu owns menu items only; the alert sits beside it.
         expect(menu).not.toContainElement(alert);
-        expect(menu.children).toHaveLength(3);
+        expect(menu.children).toHaveLength(2);
     });
 });

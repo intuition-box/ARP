@@ -1,5 +1,4 @@
 import {useEffect, useRef, useState} from "react";
-import {useNavigate} from "react-router-dom";
 import {useAccount, useConnect, useDisconnect} from "wagmi";
 
 /**
@@ -26,7 +25,6 @@ export function WalletConnect() {
     const {address, isConnected, status} = useAccount();
     const {isPending: isConnectPending} = useConnect();
     const {disconnect} = useDisconnect();
-    const navigate = useNavigate();
 
     const [open, setOpen] = useState(false);
     const [copyFailed, setCopyFailed] = useState(false);
@@ -102,17 +100,6 @@ export function WalletConnect() {
                             className={MENU_ITEM}
                         >
                             Copy address
-                        </button>
-                        <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                                setOpen(false);
-                                navigate("/account");
-                            }}
-                            className={MENU_ITEM}
-                        >
-                            Account
                         </button>
                         <button
                             type="button"

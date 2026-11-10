@@ -16,9 +16,6 @@ import {siteRoutes} from "./site-routes";
 const ActivityPage = lazy(() =>
     import("./pages/ActivityPage").then((module) => ({default: module.ActivityPage})),
 );
-const AccountPage = lazy(() =>
-    import("./pages/AccountPage").then((module) => ({default: module.AccountPage})),
-);
 const AgentDirectory = lazy(() =>
     import("./pages/AgentDirectory").then((module) => ({default: module.AgentDirectory})),
 );
@@ -104,19 +101,9 @@ function App() {
                             </Suspense>
                         }
                     />
-                    {/* What the operator authorised and configured: the Smart Account, its
-                    delegations and the runtime they name. Reached from the wallet menu (user,
-                    2026-10-30). It replaced `/rig`'s steps 3 and 4, and `/profile`'s positions
-                    moved to `/activity`; `/rig`, `/profile` and `/me` are gone (`docs/tasks/35`
-                    §0), so an old link lands on no route rather than on a redirect. */}
-                    <Route
-                        path="/account"
-                        element={
-                            <Suspense fallback={<RouteFallback label="account" />}>
-                                <AccountPage />
-                            </Suspense>
-                        }
-                    />
+                    {/* `/account` (the Smart Account and its delegations) was removed on
+                    2026-11-10 by the user; delegations come back later (`FUTURE.md`). An old link
+                    lands on no route, like `/rig`, `/profile` and `/me` (`docs/tasks/35` §0). */}
                     {/* Folded into `/start/<profile>` (task 62, ADR `0125`): it wrote what Get started
                     writes, with a wallet. Redirected, not removed, for the links in commits and ADRs. */}
                     <Route path="/register" element={<RegisterRedirect />} />

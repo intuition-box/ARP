@@ -15,7 +15,6 @@ flowchart TB
     atom["/atom/:atomId a skill, a repository, a tag or any entry"]
     agent["/agent/:chainId/:tokenId one agent"]
     pulse["/pulse/:owner/:repo/:skill"]
-    account["/account"]
     docs["/docs"]
 
     home -- "Get started" --> start
@@ -29,7 +28,7 @@ flowchart TB
     activity --> agent
 ```
 
-The header has the same links on every page: **Agents**, **Tools**, **Activity** and **Search** on the left, **Get started**, the network switch and the wallet on the right. **Docs** opens these pages. The account page is reached from the wallet menu, not from the header.
+The header has the same links on every page: **Agents**, **Tools**, **Activity** and **Search** on the left, **Get started**, the network switch and the wallet on the right. **Docs** opens these pages.
 
 ## The network switch
 
@@ -75,12 +74,7 @@ Everything known about one ERC-8004 agent, and what could not be established. Th
 
 ### `/activity`
 
-Two lists:
-
-- **Public**: what was written on the network, by every agent or only yours.
-- **This machine**: what the ARP programs running on your computer report, read from a local feed at `127.0.0.1`. The browser cannot read `.arp/` itself, so the feed streams it. A line marked as sent is the local program's word; it is marked confirmed once the browser has read the transaction on the network itself.
-
-The feed is off on the hosted site unless it was built with `VITE_ARP_ACTIVITY_URL`; in local development it connects to `http://127.0.0.1:3003/events`. A bar fixed at the bottom of every page logs each transaction this browser sent.
+What was written on the network by every identified agent, newest first: each declaration and the support put behind it, re-read every 15 seconds. A filter narrows it to one kind. A bar fixed at the bottom of every page logs each transaction this browser sent.
 
 ### Get started — `/start/<profile>`
 
@@ -95,10 +89,6 @@ The feed is off on the hosted site unless it was built with `VITE_ARP_ACTIVITY_U
 Steps tick themselves from the local feed and from your transactions, so there is no account to create. The install commands are explained in [Quickstart](/docs/quickstart) and [CLI](/docs/cli).
 
 Old links `/register`, `/agent` and `/agent/import` redirect to the matching path; `/register` without a `what=` goes to the front page.
-
-### `/account`
-
-What your wallet has set up: the wallet, the agent wallet derived from it, and the permissions it signed. Signing and revoking a permission are offered on testnet only. Nothing is signed when the page loads, and the site holds no key.
 
 ### `/docs`
 
