@@ -12,6 +12,8 @@ const PRED = {paidWith: id(1), hasOutcome: id(2), because: id(3), inContextOf: i
 const SPONSOR = "0x7793000000000000000000000000000000007ec9";
 const OTHER = getAddress(`0x${"22".repeat(20)}`);
 const ENDPOINT = "https://api.example.com/x402/weather";
+/** What the payer called: http, www, a trailing slash. It normalises to `ENDPOINT`. */
+const CALLED = "http://www.api.example.com/x402/weather/";
 
 type Row = {
     term_id: string;
@@ -36,10 +38,13 @@ const row = (term: number, subject: number | null, predicate: string, label: str
     ...extra,
 });
 
-/** One line, form B, by `writer`: uses → in context of `data` → failed → because no-delivery, paid with `tx`. */
-function line(base: number, writer: string, tx: string = TX, outcome = "failed") {
+/**
+ * One line, form B, by `writer`: uses → in context of `data` → failed → because no-delivery, paid with `tx`
+ * at `called`. `called` `null` is a line written before task 93, which named no exact URL.
+ */
+function line(base: number, writer: string, tx: string = TX, outcome = "failed", called: string | null = CALLED) {
     return [
-        row(base + 1, base + 2, PRED.paidWith, `eip155:8453/tx/${tx}`, [writer]),
+        row(base + 1, base + 2, PRED.paidWith, `eip155:8453/tx/${tx}${called === null ? "" : ` ${called}`}`, [writer]),
         row(base + 2, base + 3, PRED.hasOutcome, outcome, [writer]),
         row(base + 3, base + 4, PRED.inContextOf, "data", [writer]),
         row(base + 4, null, PRED.uses, "weather", [writer], {
@@ -88,7 +93,8 @@ describe("buildX402Feed", () => {
         const feed = await buildX402Feed(config(rows));
         expect(feed.records).toEqual([
             {
-                endpoint: ENDPOINT,
+                endpoint: CALLED,
+                endpoint_canonical: ENDPOINT,
                 outcome: "failed",
                 reason: "no-delivery",
                 domain: "data",
@@ -104,10 +110,26 @@ describe("buildX402Feed", () => {
                 written_at: "2026-11-09T20:00:00.000Z",
             },
         ]);
+        // Keyed by the canonical URL, so every spelling of one endpoint counts under one key.
         expect(feed.by_endpoint[ENDPOINT]).toEqual({records: 1, worked: 0, failed: 1, no_delivery: 1, payers: 1});
         expect(feed.skipped).toEqual({count: 0, reasons: {}});
         expect(feed.trace.chain).toBe("eip155:13579");
+        expect(feed.schema).toBe("arp.x402-outcomes/2");
         expect(feed.note).toContain("3 distinct wallets");
+    });
+
+    it("keeps a line older than task 93 with its canonical URL, and says the exact one is unknown", async () => {
+        const feed = await buildX402Feed(config(line(0, PAYER.toLowerCase(), TX, "failed", null)));
+        expect(feed.records.map((r) => [r.endpoint, r.endpoint_canonical])).toEqual([[null, ENDPOINT]]);
+        expect(feed.by_endpoint[ENDPOINT]?.records).toBe(1);
+    });
+
+    it("leaves out an exact URL that does not normalise to the tool's URL", async () => {
+        for (const called of ["https://api.example.com/x402/other", "https://evil.example/x402/weather"]) {
+            const feed = await buildX402Feed(config(line(0, PAYER.toLowerCase(), TX, "failed", called)));
+            expect(feed.records).toEqual([]);
+            expect(feed.skipped.reasons).toEqual({"the exact URL does not normalise to the tool's URL": 1});
+        }
     });
 
     it("leaves out a line whose writer did not make the payment, and counts why", async () => {

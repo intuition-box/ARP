@@ -12,7 +12,8 @@ import {getAddress, type Address, type Hex} from "viem";
 import {isUsageOutcome, isUsageReason, type UsageOutcome} from "./declare/usage-context.js";
 import {
     checkX402Payment,
-    parsePaymentAtomLabel,
+    exactEndpointNamesTool,
+    parsePaymentLevelLabel,
     type X402NetworkPolicy,
     type X402TransferReads,
 } from "./x402-payment.js";
@@ -25,16 +26,26 @@ import {
  * verifies each settlement itself (`FUTURE.md`, x402 section). So a record carries what that check
  * needs: the endpoint, the outcome, the settlement transaction, its network and the dates.
  *
+ * **The endpoint is the URL the payer called** (task 93, ADR `0162`), as the payment level carries it:
+ * `http`, `www.`, a trailing slash and the query's order kept, because Doctor matches on that URL. The
+ * tool atom's canonical URL (`normaliseToolUrl`) is beside it, and the exact one is kept only when it
+ * normalises to it. A line written before task 93 names no exact URL: its `endpoint` is `null`.
+ *
  * **What a record proves:** a payment of an accepted asset, from the wallet that wrote the line (or
  * that agent's `agentWallet`), and that wallet's word about the outcome. **Not** that the endpoint
  * delivered or failed to: that is the payer's claim. Nor that the recipient is the endpoint's own
  * payee, which only the endpoint's 402 answer says; a reader such as Doctor checks it.
  */
-export const X402_FEED_SCHEMA = "arp.x402-outcomes/1";
+export const X402_FEED_SCHEMA = "arp.x402-outcomes/2";
 
 export type X402FeedRecord = {
-    /** The endpoint's URL, as its atom's document holds it. */
-    endpoint: string;
+    /**
+     * The URL the payer called, exactly as the line names it, or `null` for a line written before task 93
+     * (ADR `0162`), which named none: unknown, never guessed from the canonical form.
+     */
+    endpoint: string | null;
+    /** The tool atom's URL, `normaliseToolUrl`'s form: https, no `www.`, no trailing `/`, query sorted. */
+    endpoint_canonical: string;
     outcome: UsageOutcome;
     /** The closed reason the writer gave, or `null`. Several, sorted and joined by a comma. */
     reason: string | null;
@@ -75,6 +86,7 @@ export type X402Feed = {
     networks: string[];
     note: string;
     records: X402FeedRecord[];
+    /** Keyed by `endpoint_canonical`, so every spelling of one endpoint counts once, old lines included. */
     by_endpoint: Record<string, X402EndpointSummary>;
     /** Lines that name a payment and are left out, by why. */
     skipped: {count: number; reasons: Record<string, number>};
@@ -218,11 +230,12 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
     type Candidate = {payment: Level; record: Omit<X402FeedRecord, "payer" | "pay_to" | "amount" | "asset" | "paid_at" | "writer">; writers: Set<string>; owner: Address | null; agentWallet: Address | null};
     const candidates: Candidate[] = [];
     for (const payment of payments) {
-        const ref = payment.object.label === null ? null : parsePaymentAtomLabel(payment.object.label);
-        if (ref === null) {
-            skip("the payment is not written as eip155:<chain>/tx/<hash>");
+        const level = payment.object.label === null ? null : parsePaymentLevelLabel(payment.object.label);
+        if (level === null) {
+            skip("the payment is not written as eip155:<chain>/tx/<hash>, then optionally a space and the URL called");
             continue;
         }
+        const {ref} = level;
         if (!config.policy.has(ref.network)) {
             skip(`network ${ref.network} is not read`);
             continue;
@@ -243,9 +256,13 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
             skip("the outcome is not on a use");
             continue;
         }
-        const endpoint = uses.object.url;
-        if (endpoint === null) {
+        const canonical = uses.object.url;
+        if (canonical === null) {
             skip("the tool has no URL the index resolved");
+            continue;
+        }
+        if (level.endpoint !== null && !exactEndpointNamesTool(level.endpoint, canonical)) {
+            skip("the exact URL does not normalise to the tool's URL");
             continue;
         }
         const chain = [payment, outcome, ...(uses === above ? [] : above === undefined ? [] : [above]), uses];
@@ -274,7 +291,8 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
             owner,
             agentWallet,
             record: {
-                endpoint,
+                endpoint: level.endpoint,
+                endpoint_canonical: canonical,
                 outcome: outcome.object.label,
                 reason: reasons.length === 0 ? null : [...new Set(reasons)].sort().join(","),
                 domain,
@@ -343,12 +361,12 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
     const byEndpoint: Record<string, X402EndpointSummary> = {};
     const payersOf = new Map<string, Set<string>>();
     for (const record of records) {
-        const summary = (byEndpoint[record.endpoint] ??= {records: 0, worked: 0, failed: 0, no_delivery: 0, payers: 0});
+        const summary = (byEndpoint[record.endpoint_canonical] ??= {records: 0, worked: 0, failed: 0, no_delivery: 0, payers: 0});
         summary.records += 1;
         summary[record.outcome] += 1;
         if (record.reason?.split(",").includes("no-delivery") === true) summary.no_delivery += 1;
-        payersOf.set(record.endpoint, (payersOf.get(record.endpoint) ?? new Set()).add(key(record.payer)));
-        summary.payers = payersOf.get(record.endpoint)?.size ?? 0;
+        payersOf.set(record.endpoint_canonical, (payersOf.get(record.endpoint_canonical) ?? new Set()).add(key(record.payer)));
+        summary.payers = payersOf.get(record.endpoint_canonical)?.size ?? 0;
     }
     const skippedCount = Object.values(skipped).reduce((sum, n) => sum + n, 0);
     return {

@@ -41,7 +41,8 @@ usage
 
   arp line           write one public line on testnet 13579 through ARP's sponsor: --tool <url>
                      --outcome worked|failed [--domain <category>] [--reason <reason>]
-                     [--payment-tx <hash> --network eip155:8453]  an x402 payment, read on Base
+                     [--payment-tx <hash> --network eip155:8453]  an x402 payment, read on Base;
+                     with it, --tool is the exact URL you paid
   arp init           add the MCP server and the hook to every runtime found here
   arp uninstall      remove them, and only them
   arp doctor         check what is installed and that the server answers
@@ -179,7 +180,8 @@ async function run(argv: readonly string[]): Promise<number> {
         process.stderr.write(
           'usage: arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>]\n' +
             '       [--parent <category> --why <text>]   adds a --domain the tree lacks, under --parent\n' +
-            '       [--payment-tx <hash> --network eip155:8453]   the x402 payment this outcome refers to\n',
+            '       [--payment-tx <hash> --network eip155:8453]   the x402 payment this outcome refers to;\n' +
+            '                                                     --tool is then the exact URL you paid\n',
         );
         return EXIT.usage;
       }

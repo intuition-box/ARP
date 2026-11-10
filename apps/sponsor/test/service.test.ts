@@ -36,6 +36,7 @@ import {
   keccak256,
   parseAbi,
   stringToBytes,
+  stringToHex,
   verifyTypedData,
   type Address,
   type Hex,
@@ -2183,6 +2184,7 @@ describe('POST /line', () => {
         outcome: 'failed',
         reason: 'missing-key',
         payment: '',
+        endpoint: '',
         nonce: keccak256(stringToBytes(`line-${++nonce}`)),
         expiresAt: Math.floor(NOW / 1000) + 600,
         ...over,
@@ -2341,6 +2343,9 @@ describe('POST /line', () => {
 
   describe('with an x402 payment (ADR 0159)', () => {
     const TX = `0x${'ef'.repeat(32)}` as Hex;
+    /** The tool atom's URL, and what the payer called: http, www, a trailing slash, the query reversed (ADR 0162). */
+    const TOOL_URL = 'https://seller.example/x402/weather?a=1&b=2';
+    const CALLED = 'http://www.seller.example/x402/weather/?b=2&a=1';
     const USDC = getAddress('0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913');
     const word = (address: Address) => `0x${address.slice(2).toLowerCase().padStart(64, '0')}` as Hex;
     /** A recorded-shape Base receipt: one USDC transfer from `payer`, sent by a facilitator. */
@@ -2361,12 +2366,48 @@ describe('POST /line', () => {
         lines: {
           inContextOf: IN_CONTEXT,
           subject: async () => 'other',
+          toolUrl: async () => TOOL_URL,
           payments: { policy: x402Policy(X402_DEFAULT_NETWORKS), readsFor: () => reads },
         },
         ...over,
       });
     const withPayment = (over: Record<string, unknown> = {}) =>
-      request({ domain: '', reason: 'no-delivery', payment: `eip155:8453/tx/${TX}`, ...over });
+      request({ domain: '', reason: 'no-delivery', payment: `eip155:8453/tx/${TX}`, endpoint: CALLED, ...over });
+
+    test('writes the exact URL called in the payment atom, as typed (ADR 0162)', async () => {
+      const w = seeded();
+      expect((await post(paid(w, base(AGENT.address)), { request: await withPayment() })).status).toBe(200);
+      const label = stringToHex(`eip155:8453/tx/${TX} ${CALLED}`);
+      expect(w.sent.some((c) => c.kind === 'create-atom' && c.data.includes(label.slice(2)))).toBe(true);
+    });
+
+    test('refuses an exact URL that is not a spelling of the tool, before anything is sent', async () => {
+      const w = seeded();
+      const answer = await post(paid(w, base(AGENT.address)), { request: await withPayment({ endpoint: 'https://evil.example/x402/weather' }) });
+      expect(answer.status).toBe(422);
+      expect(answer.body.rule).toBe('endpoint');
+      expect(w.sent).toHaveLength(0);
+    });
+
+    test('says try again while the index has no URL for the tool, and is off without the read', async () => {
+      const w = seeded();
+      const unseen = paid(w, base(AGENT.address), {
+        lines: {
+          inContextOf: IN_CONTEXT,
+          subject: async () => 'other',
+          toolUrl: async () => null,
+          payments: { policy: x402Policy(X402_DEFAULT_NETWORKS), readsFor: () => base(AGENT.address) },
+        },
+      });
+      const answer = await post(unseen, { request: await withPayment() });
+      expect(answer.status).toBe(422);
+      expect(answer.body.retry).toBe(true);
+      const off = paid(w, base(AGENT.address), {
+        lines: { inContextOf: IN_CONTEXT, subject: async () => 'other', payments: { policy: x402Policy(X402_DEFAULT_NETWORKS), readsFor: () => base(AGENT.address) } },
+      });
+      expect((await post(off, { request: await withPayment() })).status).toBe(503);
+      expect(w.sent).toHaveLength(0);
+    });
 
     test('lets a line be about an endpoint, and writes the payment as one more level in the agent name', async () => {
       const w = seeded();

@@ -1,7 +1,9 @@
 import {
   checkLineLimits,
   checkX402Payment,
+  exactEndpointNamesTool,
   parsePaymentAtomLabel,
+  paymentLevelLabel,
   encodeCreateTriple,
   planDepositApproval,
   planSponsoredDeposit,
@@ -25,6 +27,10 @@ import { chainUnreadable, json, REGISTRY, type Body, type SponsorContext } from 
  * The service reads that transaction on its own network, read-only, before it spends anything: one
  * transfer of an accepted asset from the agent's holder or its `agentWallet`. That is also what lets a
  * line be about an endpoint, which ADR `0144` refused: lifting an endpoint now costs a real payment.
+ *
+ * **The exact URL paid** (task 93, ADR `0162`) rides in the payment level's atom, after the payment and
+ * one space, so naming it costs nothing more. It must normalise to the tool atom's URL, read from the
+ * index, or a writer could name any URL beside somebody else's endpoint.
  */
 export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
   const { options, chainId, wallet, reads, limits, ledger, now, multiVault } = ctx;
@@ -96,6 +102,20 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
     });
     if (checked.status === 'unreadable') return chainUnreadable(checked.reason);
     if (checked.status === 'refused') return json({ error: `the payment does not check: ${checked.reason}`, rule: 'payment' }, 422);
+
+    if (lines.toolUrl === undefined) {
+      return json({ error: 'a line with a payment is not configured on this service', rule: 'config' }, 503);
+    }
+    let toolUrl: string | null;
+    try {
+      toolUrl = await lines.toolUrl(request.tool);
+    } catch (error) {
+      return chainUnreadable(String(error instanceof Error ? error.message : error));
+    }
+    if (toolUrl === null) return json({ error: 'the index has no document for this tool yet', rule: 'tool', retry: true }, 422);
+    if (!exactEndpointNamesTool(request.endpoint, toolUrl)) {
+      return json({ error: `${request.endpoint} is not a spelling of the tool's URL ${toolUrl}`, rule: 'endpoint' }, 422);
+    }
   }
 
   return exclusive(async () => {
@@ -137,7 +157,7 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
         ...(request.domain === '' ? {} : { domain: request.domain }),
         outcome: request.outcome,
         ...(request.reason === '' ? {} : { reason: request.reason }),
-        ...(request.payment === '' ? {} : { payment: request.payment }),
+        ...(payment === null ? {} : { payment: paymentLevelLabel(payment, request.endpoint) }),
         inContextOf: lines.inContextOf,
         isCategory: categories.isCategory,
         reads,

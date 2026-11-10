@@ -1,6 +1,7 @@
 import {createPublicClient, getAddress, hexToBigInt, http, isHex, keccak256, stringToBytes, type Address, type Hex} from "viem";
 
 import {ChainUnreadableError, isTransactionAbsent} from "./chain-errors.js";
+import {normaliseToolUrl} from "./declare/tool-thing.js";
 
 /**
  * The payment an x402 line refers to, and the check of it at read time (task 89, ADR `0159`).
@@ -52,6 +53,67 @@ export function parsePaymentAtomLabel(label: string): X402PaymentRef | null {
     const match = PAYMENT_LABEL.exec(label);
     if (match === null) return null;
     return {network: match[1] as string, txHash: match[2] as Hex}; // both groups matched
+}
+
+/**
+ * The longest exact URL a payment level carries. 1,000 bytes is `atomDataMaxLength` on testnet 13579
+ * (read 2026-11-10); 512 leaves the network and the hash room under it. Mainnet's is read before a port.
+ */
+export const MAX_EXACT_ENDPOINT_LENGTH = 512;
+
+/**
+ * Whether a string is an exact endpoint URL a payment level may carry (task 93, ADR `0162`): `http` or
+ * `https` with a host, printable ASCII without a space, at most {@link MAX_EXACT_ENDPOINT_LENGTH}. It is
+ * kept **as typed**, never normalised: a reader such as x402 Doctor matches on the URL the payer called.
+ */
+export function isExactEndpointUrl(value: string): boolean {
+    if (value.length === 0 || value.length > MAX_EXACT_ENDPOINT_LENGTH) return false;
+    if (!/^https?:\/\/[\x21-\x7e]+$/i.test(value)) return false;
+    try {
+        return new URL(value).hostname.length > 0;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Whether the exact URL names the tool the line is about: its canonical form is the tool atom's URL. A
+ * writer could otherwise name any URL beside somebody else's endpoint (ADR `0162`).
+ */
+export function exactEndpointNamesTool(exact: string, toolUrl: string): boolean {
+    if (!isExactEndpointUrl(exact)) return false;
+    try {
+        return normaliseToolUrl(exact) === toolUrl;
+    } catch {
+        return false;
+    }
+}
+
+const PAYMENT_LEVEL_LABEL = /^(eip155:[1-9][0-9]{0,9})\/tx\/(0x[0-9a-f]{64})(?: (\S+))?$/;
+
+/**
+ * The payment level's object, as written on the trace chain (task 93, ADR `0162`): the payment, then one
+ * space and the exact URL the payer called. One atom per payment as before, since a settlement pays one
+ * call; the URL rides in it so that naming it costs no atom and no triple more. `endpoint` `null` writes
+ * the label task 89 wrote. Throws on an endpoint {@link isExactEndpointUrl} refuses.
+ */
+export function paymentLevelLabel(ref: X402PaymentRef, endpoint: string | null): string {
+    const payment = paymentAtomLabel(ref);
+    if (endpoint === null) return payment;
+    if (!isExactEndpointUrl(endpoint)) throw new Error(`${JSON.stringify(endpoint)} is not an exact http(s) URL a payment level can carry`);
+    return `${payment} ${endpoint}`;
+}
+
+/**
+ * A payment level's object read back: the payment, and the exact URL or `null` when the line is older
+ * than task 93 and named none. `null` for a label this module does not write, an exact URL included.
+ */
+export function parsePaymentLevelLabel(label: string): {ref: X402PaymentRef; endpoint: string | null} | null {
+    const match = PAYMENT_LEVEL_LABEL.exec(label);
+    if (match === null) return null;
+    const endpoint = match[3] ?? null;
+    if (endpoint !== null && !isExactEndpointUrl(endpoint)) return null;
+    return {ref: {network: match[1] as string, txHash: match[2] as Hex}, endpoint}; // groups 1 and 2 matched
 }
 
 /** The networks a payment may be on, with the assets accepted on each. Configuration, never a constant here. */

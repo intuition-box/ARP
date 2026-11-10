@@ -7,6 +7,7 @@
 import {
   chainIdOfNetwork,
   isCategoryIn,
+  isExactEndpointUrl,
   isTransactionAbsent,
   isUsageOutcome,
   isUsageReason,
@@ -65,6 +66,10 @@ export function lineFromArgs(args: {
     if (!networks.has(args.network)) return new Error(`--network must be one of ${[...networks.keys()].join(', ')}`);
   }
   if (args.paymentTx !== undefined && !/^0x[0-9a-fA-F]{64}$/.test(args.paymentTx)) return new Error('--payment-tx is a 32-byte transaction hash');
+  // The line names the URL exactly as it was called, beside the tool's canonical atom (ADR `0162`).
+  if (args.paymentTx !== undefined && !isExactEndpointUrl(args.toolUrl)) {
+    return new Error('with --payment-tx, --tool is the exact URL you paid, scheme included, as you called it');
+  }
   if (args.parent !== undefined && args.domain === undefined) return new Error('--parent and --why add a --domain');
   if (args.why !== undefined && args.why.trim() === '') return new Error('--why says why no category fits');
   if (!isUsageOutcome(args.outcome)) return new Error('--outcome must be worked or failed');
@@ -139,6 +144,7 @@ export async function writeLineChecked(
   let line = input;
   let payment: ReadPayment | null = null;
   if (input.payment !== undefined) {
+    if (!isExactEndpointUrl(input.toolUrl)) throw new Error(`${input.toolUrl} is not the exact http(s) URL that was paid`);
     if (steps.payments === undefined) throw new Error('this build reads no payment network');
     payment = await readLinePayment(input, steps.payments);
   }

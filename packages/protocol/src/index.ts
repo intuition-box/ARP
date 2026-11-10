@@ -391,14 +391,19 @@ export {ARP_DOMAIN_ATTESTORS, intuitionMainnet, intuitionTestnet, X402_DEFAULT_N
 
 /**
  * An x402 line's payment and the outcomes feed built from them (task 89, ADR `0159`). Reads the paying
- * chain, never signs on it.
+ * chain, never signs on it. Since task 93 (ADR `0162`) the payment level also carries the exact URL paid.
  */
 export {
     checkX402Payment,
     chainIdOfNetwork,
+    exactEndpointNamesTool,
+    isExactEndpointUrl,
+    MAX_EXACT_ENDPOINT_LENGTH,
     PAID_WITH_LABEL,
     parsePaymentAtomLabel,
+    parsePaymentLevelLabel,
     paymentAtomLabel,
+    paymentLevelLabel,
     TRANSFER_TOPIC,
     transfersIn,
     x402NetworksFrom,

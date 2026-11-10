@@ -206,6 +206,15 @@ describe("lineFromArgs", () => {
         expect((missingRpc as Error).message).toContain("ARP_X402_RPC_84532"); // checked to be an Error on the line above
     });
 
+    it("asks a paid line for the exact URL called, scheme included (ADR 0162)", () => {
+        const tx = `0x${"ab".repeat(32)}`;
+        const paid = {...args, outcome: "failed", reason: "no-delivery", paymentTx: tx, network: "eip155:8453"};
+        expect(lineFromArgs({...paid, toolUrl: "http://127.0.0.1:4021/x402-demo/no-delivery"})).toMatchObject({
+            toolUrl: "http://127.0.0.1:4021/x402-demo/no-delivery",
+        });
+        expect(lineFromArgs({...paid, toolUrl: "127.0.0.1:4021/x402-demo/no-delivery"})).toBeInstanceOf(Error);
+    });
+
     it("refuses anything else", () => {
         expect(lineFromArgs({...args, outcome: "maybe"})).toBeInstanceOf(Error);
         expect(lineFromArgs({...args, outcome: "failed", reason: "the moon"})).toBeInstanceOf(Error);
@@ -332,6 +341,7 @@ describe("writeLineChecked", () => {
             });
             const written = await writeLineChecked({config, isCategory: async () => true, payments: payments(true), agent: () => agent}, PAID);
             expect(signed?.request.payment).toBe(`eip155:8453/tx/${TX}`);
+            expect(signed?.request.endpoint).toBe(INPUT.toolUrl);
             expect(written.payment?.transfers).toEqual([{asset: USDC, payer: account.address, payTo: getAddress(SPONSOR), amount: "20000"}]);
         });
     });

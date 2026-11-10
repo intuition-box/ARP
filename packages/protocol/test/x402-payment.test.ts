@@ -6,8 +6,12 @@ import {describe, expect, it} from "vitest";
 import {
     chainIdOfNetwork,
     checkX402Payment,
+    exactEndpointNamesTool,
+    isExactEndpointUrl,
     parsePaymentAtomLabel,
+    parsePaymentLevelLabel,
     paymentAtomLabel,
+    paymentLevelLabel,
     transfersIn,
     x402NetworksFrom,
     x402Policy,
@@ -31,6 +35,39 @@ describe("the payment label", () => {
         expect(parsePaymentAtomLabel("eip155:8453 0xabc")).toBeNull();
         expect(chainIdOfNetwork("eip155:8453")).toBe(8453);
         expect(chainIdOfNetwork("eip155:08453")).toBeNull();
+    });
+});
+
+describe("the payment level with the exact URL paid (task 93, ADR 0162)", () => {
+    const ref = {network: "eip155:84532", txHash: TX};
+    const called = "http://127.0.0.1:4021/x402-demo/no-delivery";
+
+    it("keeps the URL as typed after one space, and reads back the label task 89 wrote", () => {
+        expect(paymentLevelLabel(ref, called)).toBe(`eip155:84532/tx/${TX} ${called}`);
+        expect(parsePaymentLevelLabel(`eip155:84532/tx/${TX} ${called}`)).toEqual({ref, endpoint: called});
+        expect(paymentLevelLabel(ref, null)).toBe(`eip155:84532/tx/${TX}`);
+        expect(parsePaymentLevelLabel(`eip155:84532/tx/${TX}`)).toEqual({ref, endpoint: null});
+    });
+
+    it("refuses what is not an exact http(s) URL, written or read", () => {
+        for (const bad of ["127.0.0.1:4021/x", "ftp://a.example", "http://a.example/a b", "http://", `https://a.example/${"a".repeat(512)}`, "http://a.example/\u0000"]) {
+            expect(isExactEndpointUrl(bad)).toBe(false);
+            expect(() => paymentLevelLabel(ref, bad)).toThrow();
+        }
+        expect(parsePaymentLevelLabel(`eip155:84532/tx/${TX} ftp://a.example`)).toBeNull();
+        expect(parsePaymentLevelLabel(`eip155:84532/tx/${TX}  ${called}`)).toBeNull();
+        expect(parsePaymentLevelLabel(`eip155:84532/tx/${TX} ${called} more`)).toBeNull();
+    });
+
+    it("names the tool only when it normalises to the tool's URL: http, www, a trailing slash, query order", () => {
+        const tool = "https://seller.example/api?a=1&b=2";
+        for (const exact of ["http://www.seller.example/api/?b=2&a=1", "https://seller.example/api?a=1&b=2", "HTTP://seller.example/api?b=2&a=1"]) {
+            expect(exactEndpointNamesTool(exact, tool)).toBe(true);
+        }
+        for (const exact of ["https://seller.example/other", "https://evil.example/api?a=1&b=2", "seller.example/api?a=1&b=2"]) {
+            expect(exactEndpointNamesTool(exact, tool)).toBe(false);
+        }
+        expect(exactEndpointNamesTool(called, "https://127.0.0.1:4021/x402-demo/no-delivery")).toBe(true);
     });
 });
 

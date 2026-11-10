@@ -319,7 +319,10 @@ export type LineInput = {
   reason?: UsageReason;
   /** A `domain` the tree lacks: the existing category it goes under, and why none fits (task 75, ADR `0146`). */
   newDomain?: { parent: string; why: string };
-  /** The x402 payment this outcome refers to (task 89, ADR `0159`): its CAIP-2 network and settlement transaction. */
+  /**
+   * The x402 payment this outcome refers to (task 89, ADR `0159`): its CAIP-2 network and settlement transaction.
+   * With it, `toolUrl` is also signed as the exact URL paid, as typed (task 93, ADR `0162`).
+   */
   payment?: X402PaymentRef;
 };
 /** `toolUrl` is the spelling it was listed under, which can differ from the one asked: GitHub's own wins. */
@@ -383,6 +386,7 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, input: L
         outcome: input.outcome,
         reason: input.reason ?? '',
         payment: input.payment === undefined ? '' : paymentAtomLabel(input.payment),
+        endpoint: input.payment === undefined ? '' : input.toolUrl,
         nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
         expiresAt: expiresAt(),
       },

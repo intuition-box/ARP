@@ -14,7 +14,9 @@
  *  5. The line goes through the normal `arp line` path, `--reason no-delivery --payment-tx --network`,
  *     to the sponsoring service at `ARP_SPONSOR` (default `http://127.0.0.1:3200`), which writes on 13579.
  *  6. The feed is built with Base Sepolia enabled into `~/.arp/x402-e2e/feed.json` (not the site's
- *     copy), and the record is checked: payer = the agent, pay_to = the seller, amount = the price.
+ *     copy), and the record is checked: payer = the agent, pay_to = the seller, amount = the price, and
+ *     `endpoint` = the URL actually called (`http://127.0.0.1:…`), its canonical form beside it (task 93,
+ *     ADR `0162`).
  *
  *  Every effect is appended to `~/.arp/x402-e2e.jsonl` (ADR `0037`: recorded where a later reader looks).
  *
@@ -42,6 +44,7 @@ import {generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount} from "v
 import deployment from "../../data/deployments/13579.json";
 import {X402_DEFAULT_NETWORKS} from "../../packages/protocol/src/arp/x402-networks.ts";
 import {arpHome, readKeyFile} from "../../packages/protocol/src/node/local-state.ts";
+import {normaliseToolUrl} from "../../packages/protocol/src/declare/tool-thing.ts";
 import {checkX402Payment, x402NetworksFrom, x402Policy, x402TransferReads} from "../../packages/protocol/src/x402-payment.ts";
 import {BASE_SEPOLIA, BASE_SEPOLIA_USDC, MAX_TIMEOUT_SECONDS, PRICE_UNITS, startFakeSeller} from "./x402-fake-seller.ts";
 
@@ -250,7 +253,7 @@ try {
 
     // 6. The feed, with Base Sepolia enabled, until the indexer has the line.
     const out = join(home, "x402-e2e", "feed.json");
-    type Feed = {records: {settlement_tx: string; network: string; payer: string; pay_to: string; amount: string; endpoint: string; reason: string | null}[]; skipped: {reasons: Record<string, number>}};
+    type Feed = {records: {settlement_tx: string; network: string; payer: string; pay_to: string; amount: string; endpoint: string | null; endpoint_canonical: string; reason: string | null}[]; skipped: {reasons: Record<string, number>}};
     let found: Feed["records"][number] | undefined;
     for (let attempt = 0; attempt < 12 && found === undefined; attempt += 1) {
         if (attempt > 0) await new Promise((done) => setTimeout(done, 10_000));
@@ -266,10 +269,12 @@ try {
         getAddress(found.payer) === agent.address &&
         getAddress(found.pay_to) === payTo &&
         found.amount === PRICE_UNITS.toString() &&
-        found.reason === "no-delivery";
+        found.reason === "no-delivery" &&
+        found.endpoint === seller.url &&
+        found.endpoint_canonical === normaliseToolUrl(seller.url);
     record("feed", {out, record: found, right});
     if (!right) stop(`the record is in the feed but wrong: ${JSON.stringify(found)}`);
-    say(`6. the feed holds it: ${found.endpoint}, payer ${found.payer}, pay_to ${found.pay_to}, ${found.amount} units, ${found.reason}. ${out}`);
+    say(`6. the feed holds it: ${found.endpoint} (canonical ${found.endpoint_canonical}), payer ${found.payer}, pay_to ${found.pay_to}, ${found.amount} units, ${found.reason}. ${out}`);
 } finally {
     seller.stop();
 }

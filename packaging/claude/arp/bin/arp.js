@@ -22472,6 +22472,17 @@ function paymentAtomLabel(ref) {
     throw new Error(`${ref.txHash} is not a transaction hash`);
   return `${ref.network}/tx/${txHash}`;
 }
+function isExactEndpointUrl(value) {
+  if (value.length === 0 || value.length > MAX_EXACT_ENDPOINT_LENGTH)
+    return false;
+  if (!/^https?:\/\/[\x21-\x7e]+$/i.test(value))
+    return false;
+  try {
+    return new URL(value).hostname.length > 0;
+  } catch {
+    return false;
+  }
+}
 function transfersIn(logs, assets) {
   const accepted = new Set(assets.map((asset) => asset.toLowerCase()));
   const word = (topic) => getAddress(`0x${(topic ?? "").slice(26)}`);
@@ -22528,7 +22539,7 @@ function x402Reading(networks, env) {
     }
   };
 }
-var PAID_WITH_LABEL = "paid with", TRANSFER_TOPIC, NETWORK, TX_HASH, NETWORK_ENTRY;
+var PAID_WITH_LABEL = "paid with", TRANSFER_TOPIC, NETWORK, TX_HASH, MAX_EXACT_ENDPOINT_LENGTH = 512, NETWORK_ENTRY;
 var init_x402_payment = __esm(() => {
   init__esm();
   TRANSFER_TOPIC = keccak256(stringToBytes("Transfer(address,address,uint256)"));
@@ -25903,7 +25914,7 @@ var init_list_tool = __esm(() => {
 // ../../packages/protocol/dist/sponsor/line.js
 function lineRequestTypedData(request, chainId) {
   return {
-    domain: { name: "ARP Line Request", version: "2", chainId },
+    domain: { name: "ARP Line Request", version: "3", chainId },
     types: LINE_REQUEST_TYPES,
     primaryType: "LineRequest",
     message: { ...request, expiresAt: BigInt(request.expiresAt) }
@@ -25924,6 +25935,7 @@ var init_line = __esm(() => {
       { name: "outcome", type: "string" },
       { name: "reason", type: "string" },
       { name: "payment", type: "string" },
+      { name: "endpoint", type: "string" },
       { name: "nonce", type: "bytes32" },
       { name: "expiresAt", type: "uint256" }
     ]
@@ -34112,6 +34124,7 @@ async function writeLine(config, agent, input) {
       outcome: input.outcome,
       reason: input.reason ?? "",
       payment: input.payment === undefined ? "" : paymentAtomLabel(input.payment),
+      endpoint: input.payment === undefined ? "" : input.toolUrl,
       nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
       expiresAt: expiresAt()
     }, DESKTOP_CHAIN_ID, agent.account);
@@ -34371,6 +34384,9 @@ function lineFromArgs(args, env = process.env) {
   }
   if (args.paymentTx !== undefined && !/^0x[0-9a-fA-F]{64}$/.test(args.paymentTx))
     return new Error("--payment-tx is a 32-byte transaction hash");
+  if (args.paymentTx !== undefined && !isExactEndpointUrl(args.toolUrl)) {
+    return new Error("with --payment-tx, --tool is the exact URL you paid, scheme included, as you called it");
+  }
   if (args.parent !== undefined && args.domain === undefined)
     return new Error("--parent and --why add a --domain");
   if (args.why !== undefined && args.why.trim() === "")
@@ -34417,6 +34433,8 @@ async function writeLineChecked(steps, input) {
   let line = input;
   let payment = null;
   if (input.payment !== undefined) {
+    if (!isExactEndpointUrl(input.toolUrl))
+      throw new Error(`${input.toolUrl} is not the exact http(s) URL that was paid`);
     if (steps.payments === undefined)
       throw new Error("this build reads no payment network");
     payment = await readLinePayment(input, steps.payments);
@@ -43666,7 +43684,8 @@ usage
 
   arp line           write one public line on testnet 13579 through ARP's sponsor: --tool <url>
                      --outcome worked|failed [--domain <category>] [--reason <reason>]
-                     [--payment-tx <hash> --network eip155:8453]  an x402 payment, read on Base
+                     [--payment-tx <hash> --network eip155:8453]  an x402 payment, read on Base;
+                     with it, --tool is the exact URL you paid
   arp init           add the MCP server and the hook to every runtime found here
   arp uninstall      remove them, and only them
   arp doctor         check what is installed and that the server answers
@@ -43794,7 +43813,8 @@ async function run(argv) {
       if (toolUrl === undefined || outcome === undefined) {
         process.stderr.write(`usage: arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>]
        [--parent <category> --why <text>]   adds a --domain the tree lacks, under --parent
-       [--payment-tx <hash> --network eip155:8453]   the x402 payment this outcome refers to
+       [--payment-tx <hash> --network eip155:8453]   the x402 payment this outcome refers to;
+                                                     --tool is then the exact URL you paid
 `);
         return EXIT2.usage;
       }

@@ -69,7 +69,7 @@ import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
 import { listenFrom, type Listen } from './listen.ts';
-import { categoryLog, categoryTree, compoundsFrom, lineSubjectCheck, toolCheck } from './categories.ts';
+import { categoryLog, categoryTree, compoundsFrom, lineSubjectCheck, lineToolUrl, toolCheck } from './categories.ts';
 import { resolveOnGitHubCached } from './github.ts';
 import { repoSpellingsOnGraph } from './indexer.ts';
 import { intuitionJsonPinner, intuitionPinner } from './pin.ts';
@@ -363,6 +363,8 @@ const service = createSponsor({
   lines: {
     inContextOf: deployments.arp.endpointBinding.inContextOf as Hex,
     subject: lineSubjectCheck(deployments.chain.graphqlUrl),
+    // ADR `0162`: the exact URL an x402 line names must normalise to this.
+    toolUrl: lineToolUrl(deployments.chain.graphqlUrl),
     // ADR `0159`: an x402 line's payment, read on its own network. Read-only; this key never signs there.
     payments: x402Reading(x402NetworksFrom(X402_DEFAULT_NETWORKS, process.env), process.env),
   },

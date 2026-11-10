@@ -57,6 +57,20 @@ export function categoryTree(graphqlUrl: string) {
  * line about an agent would lift it in a list ordered on `worked`. A tool that is only an endpoint is refused with it.
  */
 export function lineSubjectCheck(graphqlUrl: string): (atomId: string) => Promise<'github' | 'other' | 'unseen'> {
+  const read = lineToolUrl(graphqlUrl);
+  return async (atomId) => {
+    const url = await read(atomId);
+    if (url === null) return 'unseen';
+    try {
+      return new URL(url).hostname === 'github.com' ? 'github' : 'other';
+    } catch {
+      return 'other';
+    }
+  };
+}
+
+/** A tool atom's URL as the index resolves it (`thing.url`), or `null` before it does (ADR `0162`). */
+export function lineToolUrl(graphqlUrl: string): (atomId: string) => Promise<string | null> {
   return async (atomId) => {
     const response = await fetch(graphqlUrl, {
       method: 'POST',
@@ -71,12 +85,7 @@ export function lineSubjectCheck(graphqlUrl: string): (atomId: string) => Promis
     if (!response.ok) throw new Error(`the index answered ${response.status}`);
     const body = (await response.json()) as { data?: { atom?: { value?: { thing?: { url?: string } | null } | null } | null } }; // read by shape
     const url = body.data?.atom?.value?.thing?.url;
-    if (typeof url !== 'string') return 'unseen';
-    try {
-      return new URL(url).hostname === 'github.com' ? 'github' : 'other';
-    } catch {
-      return 'other';
-    }
+    return typeof url === 'string' ? url : null;
   };
 }
 

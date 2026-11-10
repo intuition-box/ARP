@@ -1,6 +1,6 @@
 {
-  "schema": "arp.x402-outcomes/1",
-  "generated_at": "2026-11-09T19:35:11.248Z",
+  "schema": "arp.x402-outcomes/2",
+  "generated_at": "2026-11-10T07:37:52.201Z",
   "trace": {
     "chain": "eip155:13579",
     "graphql": "https://testnet.intuition.sh/v1/graphql"
@@ -12,8 +12,10 @@
   "records": [],
   "by_endpoint": {},
   "skipped": {
-    "count": 0,
-    "reasons": {}
+    "count": 1,
+    "reasons": {
+      "network eip155:84532 is not read": 1
+    }
   },
   "truncated": false
 }

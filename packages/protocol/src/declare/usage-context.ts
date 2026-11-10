@@ -87,8 +87,9 @@ export async function prepareUsageContext(params: {
     /** Only with `outcome: "failed"`. */
     reason?: UsageReason;
     /**
-     * The x402 payment the outcome refers to, as `paymentAtomLabel` writes it (ADR `0159`). Only with an
-     * outcome. Its format is the caller's to check: this plans the triple and reads no paying chain.
+     * The x402 payment the outcome refers to, as `paymentLevelLabel` writes it: the payment and, since task
+     * 93, the exact URL paid (ADRs `0159`, `0162`). Only with an outcome. Its format is the caller's to
+     * check: this plans the triple and reads no paying chain.
      */
     payment?: string;
     /** The predicate this chain's other nested claims use. Read from the deployment record. */
