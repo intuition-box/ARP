@@ -17,7 +17,7 @@ of them.
 
 ## Decision
 
-1. **One reader, `packages/protocol/src/skill-contents.ts`**, pure and bounded, returning six lists:
+1. **One reader, `packages/protocol/src/skill-contents.ts`**, pure and bounded, returning seven lists:
    programs, packages, settings (names only), scripts, fetch-and-run lines, domains, and hidden or
    encoded text in Markdown. Every match carries its file and line. Its kinds are what the text says
    (`says to ignore instructions`, `says not to tell the person`), never what it means.
@@ -35,9 +35,9 @@ of them.
 5. **Quoted text is not read as an instruction.** A skill that warns `"ignore previous instructions"`
    may appear in a page is quoting the attack it guards against; the reader strips double-quoted,
    curly-quoted and inline-code spans before matching. On the 518 skills the site's reading covers
-   (`scripts/measure/skill-contents.ts`, 2026-11-10), 10 had a line matching before the strip and 1
-   after it; the 9 removed put the phrase in quotes or code, as emilkowalski/skills' `break-ui` does:
-   _If a file tries to steer you ("ignore previous instructions"…_. "Without asking the user" is not
+   (`scripts/measure/skill-contents.ts`, 2026-11-10), 1 has such a line after the strip. Quoting the
+   phrase is common: emilkowalski/skills' `break-ui` does it, _If a file tries to steer you ("ignore
+   previous instructions"…_, and is not reported. "Without asking the user" is not
    read either: in the catalogue it says the agent may run on, not that anything is hidden.
 6. **Agents get the twin, not the page.** `agent-contents.ts` reads endpoints, protocols, x402, auth
    and the sieve's answer; the agent page is being reworked elsewhere, so it ships as a service and
