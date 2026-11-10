@@ -86,10 +86,16 @@ export type HookEvent = {
  *
  * | event | why |
  * | --- | --- |
- * | `PostToolUse`, `PostToolUseFailure` | the recording; a failed call reaches only the second (ADR `0090`) |
+ * | `PostToolUse` on every tool but `Skill`, `PostToolUseFailure` | the recording; a failed call reaches only the second (ADR `0090`) |
+ * | `PostToolUse` on `Skill`, waited on | the recording, and once per skill per session a request for one closed line at the end of the final reply (task 109, ADR `0179`) |
  * | the same `PostToolUseFailure` row, waited on | a skill's failure is also answered with that skill's lines; the hook bounds its read at 3 s (task 99, ADR `0168`) |
  * | `PreToolUse` on `Bash`, waited on | a skills install, read before it runs (task 98, ADR `0167`) |
- * | `Stop`, waited on | asks the model once per skill used whether it did its job (task 100, ADR `0169`) |
+ * | `Stop`, waited on | reads that line into `outcomes.jsonl`; prints nothing, so it never continues the turn (task 100, ADR `0179`) |
+ *
+ * `^(?!Skill$)` is a JavaScript regular expression (any character outside letters, digits, `_`, `-`,
+ * spaces, `,` and `|` puts a matcher on that path, per the docs read 2026-11-10): every tool but
+ * `Skill`, so a skill's call runs the hook once, waited on, and every other call stays in the background.
+ * An async hook's `additionalContext` reaches the model only on the next turn, too late for the reply.
  *
  * The `PreToolUse` rule is `Bash(*skills*)`, wider than an install, because the command has many
  * spellings (`npx -y skills@1.7.4 add`, `bunx skills i`, `pnpm dlx skills add`) and one rule per
@@ -100,7 +106,8 @@ export type HookEvent = {
 export const CLAUDE_HOOKS: HookSpec = {
   shape: 'nested',
   events: [
-    { name: 'PostToolUse', matcher: '*' },
+    { name: 'PostToolUse', matcher: '^(?!Skill$)' },
+    { name: 'PostToolUse', matcher: 'Skill', sync: true, timeout: 5 },
     { name: 'PostToolUseFailure', matcher: '*', sync: true },
     { name: 'PreToolUse', matcher: 'Bash', sync: true, timeout: 15, if: 'Bash(*skills*)' },
     { name: 'Stop', sync: true, timeout: 10 },

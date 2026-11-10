@@ -1,9 +1,9 @@
 import {needKindOf} from "./declare/line-need.js";
 
 /**
- * What the model said about a skill it used, at the end of a turn (task 100, ADR `0169`). The runtime hook asks
- * one closed question per skill on `Stop`, reads the answer on the next `Stop`, and writes one line of
- * `<arpHome>/outcomes.jsonl`. **Pure and dependency-free**, so the hook imports it by path (ADR `0145`).
+ * What the model said about a skill it used, at the end of its final reply (task 100, ADR `0169`, ADR `0179`). The
+ * runtime hook asks for one closed line when the skill loads, reads it on `Stop` from the last message, and writes
+ * one line of `<arpHome>/outcomes.jsonl`. **Pure and dependency-free**, so the hook imports it by path (ADR `0145`).
  *
  * `worked` is the model's word that the skill did its job and the task finished with it, never a verdict on the
  * result (`docs/28`). `unsure` is kept so the question is not asked twice, and is never shared.

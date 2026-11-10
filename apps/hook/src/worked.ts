@@ -1,54 +1,39 @@
 /**
- * `Stop`: asks the model, once per skill used in the session, whether the skill did its job (task 100, ADR `0169`).
+ * Whether a skill did its job, in the model's word (task 100, ADR `0169`; asked during the task since task 109, ADR `0179`).
  *
  * The hook cannot tell a worked use from the calls it sees: no error does not show the job was done (ADR `0140`).
- * The model that did the work can say it, so at the end of a turn this asks one closed question and reads the
- * answer on the next `Stop`, from `last_assistant_message`:
+ * The model that did the work can say it. So when a skill is loaded, the hook asks, once per skill per session, for
+ * one closed line at the end of the final reply, and on `Stop` it reads that line from `last_assistant_message`:
  *
  * ```
- * Stop, stop_hook_active false   a skill used and never asked → {"decision":"block","reason":<the question>}
- * Stop, stop_hook_active true    the answer lines `arp: <skill> worked|failed|unsure` → outcomes.jsonl; never blocks
+ * PostToolUse on Skill   a skill not yet asked this session → additionalContext: add `arp: <skill> worked|failed|unsure`
+ * Stop                   the answer lines for the skills asked → outcomes.jsonl; prints nothing, never continues the turn
  * ```
  *
- * **Bounded three ways.** It never blocks while `stop_hook_active` is true, so it adds at most one continuation per
- * turn, far under Claude Code's cap of eight. A skill is asked at most once per session (`asked.jsonl`), answered or
- * not. And at most `MAX_ASKED` skills per question.
+ * Until task 109 the question went out on `Stop` with `decision: "block"`, which starts one more model turn; under
+ * `claude -p` that turn's answer became the session's result (task 108). Asked during the task, the line rides in the
+ * reply the model writes anyway. If the model leaves it out, nothing is recorded.
  *
  * Nothing leaves this machine. The model's message is read for the closed answer line and dropped; the person's
  * words are matched against the tree's closed words for a domain, as for a failure, and never copied.
  */
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 
 // Pure modules by path, never the package index: the published hook carries no dependency (ADR `0145`).
 import { answersIn, type LocalOutcome, type OutcomeAnswer } from '../../../packages/protocol/src/local-outcomes.ts';
 import { publishableNeed } from '../../../packages/protocol/src/declare/line-need.ts';
 
 import { appendOwn } from './append.ts';
-import {
-  arpHome,
-  contextOf,
-  foundBySearch,
-  installedSource,
-  lastUserWords,
-  skillDirectory,
-  skillsOfSession,
-} from './skill-failure.ts';
-
-/** At most this many skills in one question. The rest wait for the next turn's `Stop`. */
-export const MAX_ASKED = 5;
+import { arpHome, contextOf, foundBySearch, installedSource, lastUserWords, skillDirectory } from './skill-failure.ts';
 
 export type StopInput = {
   session: string;
   cwd: string;
-  /** `stop_hook_active`: Claude Code is already continuing because a Stop hook blocked. */
-  active: boolean;
   /** `last_assistant_message`: read for the closed answer line only. */
   last: string;
   transcript: string | null;
 };
-
-export type StopDecision = { decision: 'block'; reason: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -65,19 +50,23 @@ export function stopInputOf(raw: unknown): StopInput | null {
   return {
     session,
     cwd: text(raw['cwd']) ?? process.cwd(),
-    active: field(raw, 'stop_hook_active', 'stopHookActive') === true,
     last: text(field(raw, 'last_assistant_message', 'lastAssistantMessage')) ?? '',
     transcript: text(field(raw, 'transcript_path', 'transcriptPath')),
   };
 }
 
-/** The question, closed: three words, one line per skill. */
-export function questionFor(skills: readonly string[]): string {
+/** The request, closed: one line, three words to choose from, at the end of a reply the model writes anyway. */
+export function requestFor(skill: string): string {
   return (
-    'ARP asks once per skill: did each skill you used here do its job, and did the task finish with it? ' +
-    'Reply with one line per skill and nothing else: `arp: <skill> worked`, `arp: <skill> failed` or `arp: <skill> unsure`. ' +
-    `Kept on this machine unless \`arp share\` is on. Skills: ${skills.join(', ')}`
+    `ARP: at the end of your final reply, add one line saying whether the skill ${skill} did its job: ` +
+    `\`arp: ${skill} worked\`, \`arp: ${skill} failed\` or \`arp: ${skill} unsure\`. ` +
+    'Kept on this machine unless `arp share` is on.'
   );
+}
+
+/** The runtime's answer to a skill's call: Claude Code's `hookSpecificOutput` for `PostToolUse`. */
+export function requestOutput(context: string): string {
+  return JSON.stringify({ hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: context } });
 }
 
 /** ARP's own skill is not asked about: it would rate itself in every session it is used. */
@@ -144,24 +133,39 @@ function record(input: StopInput, asked: Asked, outcome: OutcomeAnswer, at: stri
   appendOwn(join(arpHome(), 'outcomes.jsonl'), `${JSON.stringify(line)}\n`);
 }
 
-/** `ROUTES.Stop` in `hook.ts`: the decision as stdout, or `null` to let the turn end. Never `RECORD`: a Stop is no call. */
-export async function stop(payload: unknown): Promise<string | null> {
-  const input = stopInputOf(payload);
-  if (input === null) return null;
-  const ask = onStop(input);
-  return ask === null ? null : JSON.stringify(ask);
-}
-
 /**
- * Records the answers in this message, then asks about the skills not yet asked, unless a Stop hook is already
- * continuing the turn. Returns what to print, or `null` to let the turn end.
+ * Called by the recording in `hook.ts` once a skill's call succeeded on `PostToolUse`: the request for that skill,
+ * or `null` when it was already asked this session, is ARP's own, or cannot be marked asked. It is marked before it
+ * goes out, so a skill is asked once per session even when the model never answers.
  */
-export function onStop(input: StopInput, now: Date = new Date()): StopDecision | null {
+export function askOnSkill(session: string, skill: string, source: string | null, now: Date = new Date()): string | null {
+  if (isArpsOwn(skill)) return null;
   try {
     const home = arpHome();
     mkdirSync(home, { recursive: true });
     const askedPath = join(home, 'asked.jsonl');
-    const asked = rows(askedPath).flatMap((row): Asked[] =>
+    if (rows(askedPath).some((row) => row['session'] === session && row['skill'] === skill)) return null;
+    const row: Asked = { at: now.toISOString(), session, skill, source };
+    appendOwn(askedPath, `${JSON.stringify(row)}\n`);
+    return requestFor(skill);
+  } catch {
+    // Not marked, not asked: a request that could not be remembered would go out on every call.
+    return null;
+  }
+}
+
+/** `ROUTES.Stop` in `hook.ts`: records the answers and prints nothing, so the turn always ends. Never `RECORD`. */
+export async function stop(payload: unknown): Promise<null> {
+  const input = stopInputOf(payload);
+  if (input !== null) onStop(input);
+  return null;
+}
+
+/** Records the answers in the last message, for the skills asked this session and not answered yet. */
+export function onStop(input: StopInput, now: Date = new Date()): void {
+  try {
+    const home = arpHome();
+    const asked = rows(join(home, 'asked.jsonl')).flatMap((row): Asked[] =>
       row['session'] === input.session && typeof row['skill'] === 'string'
         ? [{
             at: typeof row['at'] === 'string' ? row['at'] : '',
@@ -183,26 +187,7 @@ export function onStop(input: StopInput, now: Date = new Date()): StopDecision |
       const row = pending.find((entry) => entry.skill === skill);
       if (row !== undefined) record(input, row, answer, at);
     }
-
-    // The loop guard: never block a turn a Stop hook is already continuing.
-    if (input.active) return null;
-
-    const known = new Set(asked.map((row) => row.skill));
-    const log = process.env['ARP_SESSION_LOG'] ?? join(input.cwd, '.arp', 'session.jsonl');
-    const fresh: Asked[] = [];
-    for (const skill of skillsOfSession(log, input.session)) {
-      if (known.has(skill.name) || isArpsOwn(skill.name)) continue;
-      known.add(skill.name);
-      fresh.push({ at, session: input.session, skill: skill.name, source: skill.source });
-    }
-    const ask = fresh.slice(0, MAX_ASKED);
-    if (ask.length === 0) return null;
-    // Marked asked before the question goes out: if it cannot be marked, it is not asked, so it is never asked twice.
-    mkdirSync(dirname(askedPath), { recursive: true });
-    appendOwn(askedPath, ask.map((row) => `${JSON.stringify(row)}\n`).join(''));
-    return { decision: 'block', reason: questionFor(ask.map((row) => row.skill)) };
   } catch {
-    // A session must not fail, or loop, because a record could not be kept.
-    return null;
+    // A session must not fail because a record could not be kept.
   }
 }

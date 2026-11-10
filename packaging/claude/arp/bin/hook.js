@@ -16,7 +16,7 @@ function appendOwn(path, text) {
 // ../hook/src/hook.ts
 import { existsSync as existsSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync4, readFileSync as readFileSync4, writeFileSync as writeFileSync2 } from "node:fs";
 import { homedir as homedir3 } from "node:os";
-import { dirname as dirname4, join as join5 } from "node:path";
+import { dirname as dirname3, join as join5 } from "node:path";
 // ../../packages/graphql/dist/http.js
 var DEFAULT_TIMEOUT_MS = 1e4;
 var DEFAULT_MAX_BODY_BYTES = 8 * 1024 * 1024;
@@ -4099,7 +4099,7 @@ async function postToolUseFailure(payload) {
 
 // ../hook/src/worked.ts
 import { existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3 } from "node:fs";
-import { dirname as dirname3, join as join4 } from "node:path";
+import { join as join4 } from "node:path";
 
 // ../../packages/protocol/src/local-outcomes.ts
 var OUTCOME_ANSWERS2 = ["worked", "failed", "unsure"];
@@ -4122,7 +4122,6 @@ function answersIn2(text, asked) {
 }
 
 // ../hook/src/worked.ts
-var MAX_ASKED = 5;
 function isRecord5(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -4137,13 +4136,15 @@ function stopInputOf(raw) {
   return {
     session,
     cwd: text(raw["cwd"]) ?? process.cwd(),
-    active: field(raw, "stop_hook_active", "stopHookActive") === true,
     last: text(field(raw, "last_assistant_message", "lastAssistantMessage")) ?? "",
     transcript: text(field(raw, "transcript_path", "transcriptPath"))
   };
 }
-function questionFor(skills) {
-  return "ARP asks once per skill: did each skill you used here do its job, and did the task finish with it? " + "Reply with one line per skill and nothing else: `arp: <skill> worked`, `arp: <skill> failed` or `arp: <skill> unsure`. " + `Kept on this machine unless \`arp share\` is on. Skills: ${skills.join(", ")}`;
+function requestFor(skill) {
+  return `ARP: at the end of your final reply, add one line saying whether the skill ${skill} did its job: ` + `\`arp: ${skill} worked\`, \`arp: ${skill} failed\` or \`arp: ${skill} unsure\`. ` + "Kept on this machine unless `arp share` is on.";
+}
+function requestOutput(context) {
+  return JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: context } });
 }
 var isArpsOwn = (name) => name === "arp" || name.endsWith(":arp");
 function rows(path) {
@@ -4204,19 +4205,33 @@ function record(input, asked, outcome, at) {
   appendOwn(join4(arpHome(), "outcomes.jsonl"), `${JSON.stringify(line)}
 `);
 }
-async function stop(payload) {
-  const input = stopInputOf(payload);
-  if (input === null)
+function askOnSkill(session, skill, source, now = new Date) {
+  if (isArpsOwn(skill))
     return null;
-  const ask = onStop(input);
-  return ask === null ? null : JSON.stringify(ask);
-}
-function onStop(input, now = new Date) {
   try {
     const home = arpHome();
     mkdirSync3(home, { recursive: true });
     const askedPath = join4(home, "asked.jsonl");
-    const asked = rows(askedPath).flatMap((row) => row["session"] === input.session && typeof row["skill"] === "string" ? [{
+    if (rows(askedPath).some((row2) => row2["session"] === session && row2["skill"] === skill))
+      return null;
+    const row = { at: now.toISOString(), session, skill, source };
+    appendOwn(askedPath, `${JSON.stringify(row)}
+`);
+    return requestFor(skill);
+  } catch {
+    return null;
+  }
+}
+async function stop(payload) {
+  const input = stopInputOf(payload);
+  if (input !== null)
+    onStop(input);
+  return null;
+}
+function onStop(input, now = new Date) {
+  try {
+    const home = arpHome();
+    const asked = rows(join4(home, "asked.jsonl")).flatMap((row) => row["session"] === input.session && typeof row["skill"] === "string" ? [{
       at: typeof row["at"] === "string" ? row["at"] : "",
       session: input.session,
       skill: row["skill"],
@@ -4230,27 +4245,7 @@ function onStop(input, now = new Date) {
       if (row !== undefined)
         record(input, row, answer, at);
     }
-    if (input.active)
-      return null;
-    const known = new Set(asked.map((row) => row.skill));
-    const log = process.env["ARP_SESSION_LOG"] ?? join4(input.cwd, ".arp", "session.jsonl");
-    const fresh = [];
-    for (const skill of skillsOfSession(log, input.session)) {
-      if (known.has(skill.name) || isArpsOwn(skill.name))
-        continue;
-      known.add(skill.name);
-      fresh.push({ at, session: input.session, skill: skill.name, source: skill.source });
-    }
-    const ask = fresh.slice(0, MAX_ASKED);
-    if (ask.length === 0)
-      return null;
-    mkdirSync3(dirname3(askedPath), { recursive: true });
-    appendOwn(askedPath, ask.map((row) => `${JSON.stringify(row)}
-`).join(""));
-    return { decision: "block", reason: questionFor(ask.map((row) => row.skill)) };
-  } catch {
-    return null;
-  }
+  } catch {}
 }
 
 // ../hook/src/hook.ts
@@ -4397,13 +4392,19 @@ var line = {
   response: responseOf(call, classified.outcome)
 };
 try {
-  mkdirSync4(dirname4(path), { recursive: true });
-  if (dirname4(path) === own && lstatSync2(own).isSymbolicLink())
+  mkdirSync4(dirname3(path), { recursive: true });
+  if (dirname3(path) === own && lstatSync2(own).isSymbolicLink())
     throw new Error(`${own} is a symbolic link`);
   const ignore = join5(own, ".gitignore");
-  if (dirname4(path) === own && !existsSync3(ignore))
+  if (dirname3(path) === own && !existsSync3(ignore))
     writeFileSync2(ignore, `*
 `, { flag: "wx" });
   appendOwn(path, `${JSON.stringify(line)}
 `);
 } catch {}
+if (what.kind === "skill" && call.event === "PostToolUse" && classified.outcome === "ok" && call.session !== null) {
+  const request = askOnSkill(call.session, what.name, what.source);
+  if (request !== null)
+    process.stdout.write(`${requestOutput(request)}
+`);
+}

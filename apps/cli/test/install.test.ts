@@ -180,7 +180,14 @@ describe('init', () => {
       env: { ARP_TARGET: 'testnet' },
     });
     const hooks = at(json(join(home, '.claude', 'settings.json')), 'hooks');
-    expect(at(hooks, 'PostToolUse', 0, 'hooks', 0)).toMatchObject({ async: true });
+    // Every tool but Skill in the background; Skill waited on, so its request reaches the model (task 109).
+    expect(at(hooks, 'PostToolUse', 0)).toMatchObject({ matcher: '^(?!Skill$)', hooks: [{ async: true }] });
+    expect(at(hooks, 'PostToolUse', 1)).toEqual({
+      matcher: 'Skill',
+      hooks: [{ type: 'command', command: expect.stringContaining('hook.js'), timeout: 5 }],
+    });
+    expect(new RegExp('^(?!Skill$)').test('Skill')).toBe(false);
+    expect(['Bash', 'mcp__arp__arp_pulse', 'SkillX', 'Read'].every((tool) => /^(?!Skill$)/.test(tool))).toBe(true);
     expect(at(hooks, 'PostToolUseFailure')).toHaveLength(1);
     // The install check is waited on, so it can answer before the command runs, and filtered.
     expect(at(hooks, 'PreToolUse', 0)).toMatchObject({
@@ -190,7 +197,7 @@ describe('init', () => {
     expect(at(hooks, 'PreToolUse', 0, 'hooks', 0, 'async')).toBeUndefined();
     // Waited on too, so a skill's failure can be answered (ADR `0168`); bounded by the runtime's timeout.
     expect(at(hooks, 'PostToolUseFailure', 0, 'hooks', 0)).toEqual({ type: 'command', command: expect.any(String), timeout: 10 });
-    // Stop answers the runtime (task 100), so it is waited on, and takes no matcher.
+    // Stop records the answer and prints nothing (task 109); waited on so `claude -p` does not cancel it.
     expect(at(hooks, 'Stop', 0)).toEqual({ hooks: [{ type: 'command', command: expect.stringContaining('hook.js'), timeout: 10 }] });
     expect(readFileSync(join(home, '.arp', 'bin', 'hook.js'), 'utf8')).toBe('// the hook\n');
   });

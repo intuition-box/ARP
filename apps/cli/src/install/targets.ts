@@ -13,6 +13,7 @@ import {
   withHooks,
   withCodexServer,
   withMcpServer,
+  type HookEvent,
   type HookSpec,
   type McpServer,
 } from './edits.ts';
@@ -319,6 +320,14 @@ function claudeMcpSteps(
   ];
 }
 
+/** How `init` names a waited-on row: the background rows get nothing, a filtered one says on what. */
+function waitedLabel(event: HookEvent): string {
+  if (event.sync !== true) return '';
+  if (event.if !== undefined) return ' (waited on, Bash skills installs only)';
+  if (event.matcher !== undefined && event.matcher !== '*') return ` (waited on, ${event.matcher} calls only)`;
+  return ' (waited on)';
+}
+
 function claudeHookStep(
   env: InstallEnv,
   commands: Commands,
@@ -332,7 +341,7 @@ function claudeHookStep(
     remove
       ? `hooks: arp removed from ${eventNames(CLAUDE_HOOKS).join(', ')}`
       : `hooks: arp on ${CLAUDE_HOOKS.events
-          .map((event) => `${event.name}${event.sync !== true ? '' : event.if === undefined ? ' (waited on)' : ' (waited on, Bash skills installs only)'}`)
+          .map((event) => `${event.name}${waitedLabel(event)}`)
           .join(', ')}`,
     (settings) => hooksOf(settings, CLAUDE_HOOKS, commands.hookFile),
   );

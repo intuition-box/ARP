@@ -8,10 +8,12 @@
  *
  * ```
  * PreToolUse          pre-install.ts   a skills install, read before it runs (task 98)
- * PostToolUse         the recording    below
+ * PostToolUse         the recording    below; on a `Skill` call it also asks, once per skill per session, for
+ *                                      one closed line at the end of the final reply (worked.ts, task 109)
  * PostToolUseFailure  failure-answer.ts  a skill's failure, recorded then answered with its lines (task 99);
  *                                       any other call is handed to the recording
- * Stop                worked.ts        once per skill used, asks the model whether it did its job (task 100)
+ * Stop                worked.ts        reads that line from the last message into outcomes.jsonl; prints
+ *                                      nothing, so the turn ends (task 100, ADR `0179`)
  * ```
  *
  * A route returns its stdout, or `null` for none, and the hook exits 0 either way; or `RECORD`, and
@@ -31,8 +33,11 @@
  * {
  *   "hooks": {
  *     "PostToolUse": [
- *       {"matcher": "*", "hooks": [
+ *       {"matcher": "^(?!Skill$)", "hooks": [
  *         {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "async": true}
+ *       ]},
+ *       {"matcher": "Skill", "hooks": [
+ *         {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "timeout": 5}
  *       ]}
  *     ],
  *     "PostToolUseFailure": [
@@ -44,7 +49,10 @@
  * }
  * ```
  *
- * `async` keeps the runtime from waiting on the hook. `PostToolUseFailure` is synchronous since task 99
+ * `async` keeps the runtime from waiting on the hook. A `Skill` call is the one `PostToolUse` that waits
+ * (task 109): its answer, asking for one line at the end of the reply, has to reach the model, and an
+ * async hook's answer arrives a turn late. The two matchers split the calls so none runs the hook twice.
+ * `PostToolUseFailure` is synchronous since task 99
  * (ADR `0168`): when a skill's command failed for a closed reason, the hook reads that skill's lines
  * from the index, within three seconds, and answers with them as `additionalContext`. Every other
  * call exits as fast as before. Grok Build reads this same file and sends a camelCase payload;
@@ -105,7 +113,7 @@ import { eventOf, type PayloadFormat, type ToolCall, toolCallOf } from './payloa
 import { preToolUse } from './pre-install.ts';
 import { postToolUseFailure, RECORD } from './failure-answer.ts';
 import { recordSearch, recordSkillFailure } from './skill-failure.ts';
-import { stop } from './worked.ts';
+import { askOnSkill, requestOutput, stop } from './worked.ts';
 
 /**
  * An event's answer: the text for stdout, or `null` for none. `RECORD` hands the call to the recording
@@ -368,6 +376,13 @@ try {
   appendOwn(path, `${JSON.stringify(line)}\n`);
 } catch {
   // Same reason as above. A session must not fail because a record could not be kept.
+}
+
+// A skill that loaded is asked about once per session, in the reply the model writes anyway (task 109, ADR `0179`).
+// Only the waited-on `Skill` entry is read before the model goes on; the background entry never sees `Skill`.
+if (what.kind === 'skill' && call.event === 'PostToolUse' && classified.outcome === 'ok' && call.session !== null) {
+  const request = askOnSkill(call.session, what.name, what.source);
+  if (request !== null) process.stdout.write(`${requestOutput(request)}\n`);
 }
 
 // A module, not a global script — see the note in scripts/measure/predicate-objects.ts.

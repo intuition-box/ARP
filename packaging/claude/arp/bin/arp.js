@@ -43824,7 +43824,8 @@ var init_edits = __esm(() => {
   CLAUDE_HOOKS = {
     shape: "nested",
     events: [
-      { name: "PostToolUse", matcher: "*" },
+      { name: "PostToolUse", matcher: "^(?!Skill$)" },
+      { name: "PostToolUse", matcher: "Skill", sync: true, timeout: 5 },
       { name: "PostToolUseFailure", matcher: "*", sync: true },
       { name: "PreToolUse", matcher: "Bash", sync: true, timeout: 15, if: "Bash(*skills*)" },
       { name: "Stop", sync: true, timeout: 10 }
@@ -43972,8 +43973,17 @@ function claudeMcpSteps(env, commands, project, remove, allowCli) {
     jsonStep(files.mcp, (config) => withMcpServer(config, SERVER_NAME, remove ? null : mcpEntry(commands.mcp, false)), remove ? "mcpServers.arp removed" : `mcpServers.arp → ${commands.mcp.command} ${commands.mcp.args.join(" ")}`, (config) => serversOf(config)[SERVER_NAME])
   ];
 }
+function waitedLabel(event) {
+  if (event.sync !== true)
+    return "";
+  if (event.if !== undefined)
+    return " (waited on, Bash skills installs only)";
+  if (event.matcher !== undefined && event.matcher !== "*")
+    return ` (waited on, ${event.matcher} calls only)`;
+  return " (waited on)";
+}
 function claudeHookStep(env, commands, project, remove) {
-  return jsonStep(claudeFiles(env, project).settings, (settings) => withHooks(settings, CLAUDE_HOOKS, remove ? null : commands.hook, commands.hookFile), remove ? `hooks: arp removed from ${eventNames(CLAUDE_HOOKS).join(", ")}` : `hooks: arp on ${CLAUDE_HOOKS.events.map((event) => `${event.name}${event.sync !== true ? "" : event.if === undefined ? " (waited on)" : " (waited on, Bash skills installs only)"}`).join(", ")}`, (settings) => hooksOf(settings, CLAUDE_HOOKS, commands.hookFile));
+  return jsonStep(claudeFiles(env, project).settings, (settings) => withHooks(settings, CLAUDE_HOOKS, remove ? null : commands.hook, commands.hookFile), remove ? `hooks: arp removed from ${eventNames(CLAUDE_HOOKS).join(", ")}` : `hooks: arp on ${CLAUDE_HOOKS.events.map((event) => `${event.name}${waitedLabel(event)}`).join(", ")}`, (settings) => hooksOf(settings, CLAUDE_HOOKS, commands.hookFile));
 }
 function claudeVersionCheck(env) {
   if (env.which("claude") === null)
