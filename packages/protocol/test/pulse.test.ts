@@ -237,8 +237,8 @@ describe("readPulse", () => {
         const source = sourceOf(files);
         const counting: PulseSource = {...source, file: async (repo, path) => (read.push(path), source.file(repo, path))};
         expect(await readPulse(result("a/b", "Smart Contract Audit"), counting)).toMatchObject({path: "ethskills-audit/SKILL.md"});
-        expect(read[0]).toBe("ethskills-audit/SKILL.md");
-        expect(read.length).toBeLessThanOrEqual(MAX_NAME_READS);
+        // Only the one file sharing a word with the name is read: no other shares one, so none is a second copy.
+        expect(read).toEqual(["ethskills-audit/SKILL.md"]);
     });
 
     it("says incomplete, never absent, when the name is not among the files it read", async () => {

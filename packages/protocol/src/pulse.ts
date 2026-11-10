@@ -355,13 +355,12 @@ const wordsOf = (text: string): string[] => text.toLowerCase().split(/[^a-z0-9]+
  * Candidates ordered by how many of the name's words their path shares, then by path. `Smart Contract Audit`
  * sits in `ethskills-audit/` in `bankrbot/skills`, among 156 skill files (2026-11-10), and is the first read.
  */
-function byNearness(files: readonly ListedFile[], wanted: string): ListedFile[] {
+function byNearness(files: readonly ListedFile[], wanted: string): {file: ListedFile; shared: number}[] {
     const words = new Set(wordsOf(wanted));
     const shared = (file: ListedFile) => wordsOf(parentOf(file.path)).filter((word) => words.has(word)).length;
     return files
         .map((file) => ({file, shared: shared(file)}))
-        .sort((a, b) => b.shared - a.shared || (a.file.path < b.file.path ? -1 : a.file.path > b.file.path ? 1 : 0))
-        .map((entry) => entry.file);
+        .sort((a, b) => b.shared - a.shared || (a.file.path < b.file.path ? -1 : a.file.path > b.file.path ? 1 : 0));
 }
 
 /** Find the file whose frontmatter names the skill, trying directories that carry the name first. */
@@ -390,15 +389,18 @@ async function locate(
         // Read the files nearest the name first, and no more than `MAX_NAME_READS`: reading every other
         // `SKILL.md` was 173 of one search's 215 requests (task 113, `scripts/measure/pulse-requests.ts`).
         // A file found past the cap would have been found by an installer, so the answer is `incomplete`,
-        // never `absent`. A second copy is looked for only among the same nearest files.
+        // never `absent`. A second copy is looked for only among the files that share a word with the name.
         const nearest = byNearness(others, wanted).slice(0, MAX_NAME_READS);
+        const sharing = nearest.filter((entry) => entry.shared > 0).length;
         let readTo = 0;
         while (readTo < nearest.length && named.length === 0) {
-            named = await read(nearest.slice(readTo, readTo + NAME_BATCH));
-            readTo += NAME_BATCH;
+            // The files sharing a word first, all together; then the rest, a batch at a time.
+            const size = readTo < sharing ? sharing - readTo : NAME_BATCH;
+            named = await read(nearest.slice(readTo, readTo + size).map((entry) => entry.file));
+            readTo += size;
         }
         if (named.length > 0) {
-            named = [...named, ...(await read(nearest.slice(readTo)))];
+            named = [...named, ...(await read(nearest.slice(readTo, sharing).map((entry) => entry.file)))];
         } else if (nearest.length < others.length) {
             return {status: "incomplete", reason: "too_many_skill_files"};
         }

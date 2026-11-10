@@ -13,7 +13,6 @@ import {
   parseCaip19,
   partitionByCheckability,
   readDeclaredEndpoints,
-  readDomainTree,
   readLineReceipts,
   receiptHolds,
   resolveAgent,
@@ -29,7 +28,8 @@ import {
 } from '@arp-protocol/core';
 import { createPublicClient, getAddress, http, parseAbi } from 'viem';
 
-import { chainId, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, RPC, directory, domainWalk, reads, record } from '../config.js';
+import { chainId, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, RPC, directory, reads, record } from '../config.js';
+import { searchDomainTree } from '../domain-tree.js';
 import sieveReading from '../../../../data/catalogue/agent-sieve-13579.json';
 import { hostGuard, type HostGuard } from '../host-guard.js';
 import { endpointOutside, OUTSIDE_NOTE } from '../outside.js';
@@ -735,7 +735,7 @@ export async function agentsForDomain(domain: string): Promise<Record<string, un
       note: `Lines by domain are not read on chain ${chainId} yet.`,
     };
   }
-  const tree = await readDomainTree(domainWalk());
+  const tree = await searchDomainTree();
   const scope = [...new Set([domain, ...tree.subtree(domain)])];
   const { agents: found, truncated } = await findAgentsInDomains(scope, {
     graphqlUrl: GRAPHQL,

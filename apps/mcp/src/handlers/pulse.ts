@@ -17,7 +17,6 @@ import {
   type LocalFailure,
   parseLocalFailures,
   parseSkillsFind,
-  readDomainTree,
   readThingUrl,
   SCORE_VERSION,
   scoreSkill,
@@ -40,7 +39,8 @@ import { loggable } from '../hosted.js';
 import { OUTSIDE_NOTE, skillOutside } from '../outside.js';
 import { readWindow } from '../pulse-window.js';
 import { openCall, runSearch, withoutPaths } from '../search-run.js';
-import { DESKTOP, DOMAIN_ROOT, domainWalk, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, READ_ONLY } from '../config.js';
+import { DESKTOP, DOMAIN_ROOT, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, READ_ONLY } from '../config.js';
+import { searchDomainTree } from '../domain-tree.js';
 import { LINE_WORDS, lineWordIds } from '../line-words.js';
 import { datedPulse } from '../pulse-readings.js';
 import { diskListingCache, processFileCache } from '../pulse-cache.js';
@@ -519,7 +519,7 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
     let scope: Set<string> | null = domain === null ? null : new Set([domain]);
     const { near } = draft;
     if (scored) {
-      const tree = await readDomainTree(domainWalk());
+      const tree = await searchDomainTree();
       const words = domainWords(tree, DOMAIN_ROOT);
       // A domain given by name or by a word people use ("slides") is the node it names (task 84).
       if (domain !== null) {
