@@ -32,7 +32,7 @@ The agents ARP's directory lists on testnet 13579, walked from 18:01 to 18:27 UT
 
 On Base, the 40 that speak are served by 36 hosts and 39 owners; no host serves more than 4. The 31 on 13579 are ARP's own test identities: 30 were minted with no registration file, and one (13579/8) has a file that declares no endpoint. "Could not say" is counted inside the rung columns, not beside them. No agent in the directory reaches rung 5.
 
-`/agents` opens on these, highest rung first, and `arp_find_agents` returns them with `order: answers-now`.
+`/agents` opens on these, highest rung first, and `arp_find_agents` returns them with `order: answers-now`. A registry can read the same reading as one file: [the agent sieve feed](/docs/agent-sieve-feed).
 
 ## A sample of all of Base, 2026-11-09
 

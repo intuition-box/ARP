@@ -1,0 +1,301 @@
+{
+ "schema": "arp.skill-lines/1",
+ "generated_at": "2026-11-10T10:44:54.483Z",
+ "trace": {
+  "chain": "eip155:13579",
+  "graphql": "https://testnet.intuition.sh/v1/graphql"
+ },
+ "note": "Each line is one wallet's public declaration about one skill, written on Intuition. It is the writer's word: nothing in it proves the use happened. ARP's own ranking counts an outcome only once 3 distinct wallets say it (ADR 0143); this feed lists every line and leaves the counting to the reader. Lines marked arp_test are ARP's own rehearsals.",
+ "skills": [
+  {
+   "url": "https://github.com/agenticluke/claude-skill-video-editing-plus?skill=video-editing",
+   "repo": "agenticluke/claude-skill-video-editing-plus",
+   "skill": "video-editing",
+   "atom_id": "0x6a7186bb7f62374f852843bc3610b034cfdf14633e25ad4ee609c9a9cadc6d8f",
+   "wallets": 1,
+   "wallets_outside_arp": 0,
+   "by_outcome": {
+    "worked": 1
+   },
+   "by_reason": {},
+   "by_need": {},
+   "by_with": {},
+   "lines": [
+    {
+     "writer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+     "agent_atom": "0x05dde3ef63d5076e14cc572043055d0b8bb07a0ecc0857ca3a1dbfc3b636f70f",
+     "agent": "Agent 13579:6",
+     "declared_at": "2026-11-05T10:07:37+00:00",
+     "arp_test": true,
+     "domain": "video",
+     "outcome": "worked",
+     "reasons": [],
+     "needs": [],
+     "with": []
+    }
+   ]
+  },
+  {
+   "url": "https://github.com/anthropics/skills?skill=pptx",
+   "repo": "anthropics/skills",
+   "skill": "pptx",
+   "atom_id": "0x4cb49a8e2058467977e5f7bdff59df19af0e280f06c2373637bafda3af023027",
+   "wallets": 1,
+   "wallets_outside_arp": 0,
+   "by_outcome": {
+    "worked": 1
+   },
+   "by_reason": {},
+   "by_need": {},
+   "by_with": {},
+   "lines": [
+    {
+     "writer": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42",
+     "agent_atom": "0xf00b50aedd6394070dd92a80648e3490cd712752296f32d7e974c70f7400267c",
+     "agent": "Agent 13579:12",
+     "declared_at": null,
+     "arp_test": true,
+     "domain": null,
+     "outcome": "worked",
+     "reasons": [],
+     "needs": [],
+     "with": []
+    }
+   ]
+  },
+  {
+   "url": "https://github.com/intuition-box/ARP?skill=arp",
+   "repo": "intuition-box/ARP",
+   "skill": "arp",
+   "atom_id": "0xee6f20f09cbf6623d40f22bc9f3e8574fac50e394c8f2cf7495bd7463d95242b",
+   "wallets": 1,
+   "wallets_outside_arp": 0,
+   "by_outcome": {
+    "failed": 1
+   },
+   "by_reason": {
+    "missing-file": 1
+   },
+   "by_need": {},
+   "by_with": {},
+   "lines": [
+    {
+     "writer": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42",
+     "agent_atom": "0xf00b50aedd6394070dd92a80648e3490cd712752296f32d7e974c70f7400267c",
+     "agent": "Agent 13579:12",
+     "declared_at": null,
+     "arp_test": true,
+     "domain": null,
+     "outcome": "failed",
+     "reasons": [
+      "missing-file"
+     ],
+     "needs": [],
+     "with": []
+    }
+   ]
+  },
+  {
+   "url": "https://github.com/magentosh/superpowers?skill=product-photography",
+   "repo": "magentosh/superpowers",
+   "skill": "product-photography",
+   "atom_id": "0x02cc3ce7a6f521fec0a3a6ae6c9160ec6ecc160feebeed0cfb7d1f9fe9453a79",
+   "wallets": 1,
+   "wallets_outside_arp": 0,
+   "by_outcome": {},
+   "by_reason": {},
+   "by_need": {},
+   "by_with": {},
+   "lines": [
+    {
+     "writer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+     "agent_atom": "0x05dde3ef63d5076e14cc572043055d0b8bb07a0ecc0857ca3a1dbfc3b636f70f",
+     "agent": "Agent 13579:6",
+     "declared_at": "2026-10-29T18:39:22+00:00",
+     "arp_test": true,
+     "domain": null,
+     "outcome": null,
+     "reasons": [],
+     "needs": [],
+     "with": []
+    }
+   ]
+  },
+  {
+   "url": "https://github.com/nateherkai/herk-edit-kit?skill=cut-silences",
+   "repo": "nateherkai/herk-edit-kit",
+   "skill": "cut-silences",
+   "atom_id": "0x1a05bacde0e03b8b862e111696a9d68d89007e3a96d5a3f0f570e5413908d541",
+   "wallets": 1,
+   "wallets_outside_arp": 0,
+   "by_outcome": {
+    "failed": 1
+   },
+   "by_reason": {
+    "missing-key": 1
+   },
+   "by_need": {},
+   "by_with": {},
+   "lines": [
+    {
+     "writer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+     "agent_atom": "0x05dde3ef63d5076e14cc572043055d0b8bb07a0ecc0857ca3a1dbfc3b636f70f",
+     "agent": "Agent 13579:6",
+     "declared_at": "2026-11-05T10:06:46+00:00",
+     "arp_test": true,
+     "domain": "video",
+     "outcome": "failed",
+     "reasons": [
+      "missing-key"
+     ],
+     "needs": [],
+     "with": []
+    }
+   ]
+  },
+  {
+   "url": "https://github.com/obra/superpowers?skill=brainstorming",
+   "repo": "obra/superpowers",
+   "skill": "brainstorming",
+   "atom_id": "0xf205a19595893612b5b716e6e5742d036c70a2cc82cf6581c394cbe3b9310885",
+   "wallets": 1,
+   "wallets_outside_arp": 0,
+   "by_outcome": {},
+   "by_reason": {},
+   "by_need": {},
+   "by_with": {},
+   "lines": [
+    {
+     "writer": "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
+     "agent_atom": "0x20c54d3344d3026cbd41d6fb5d9903686df8063b40f74969692a2a4d081d00b2",
+     "agent": "Agent 13579:8",
+     "declared_at": "2026-10-30T13:17:10+00:00",
+     "arp_test": true,
+     "domain": null,
+     "outcome": null,
+     "reasons": [],
+     "needs": [],
+     "with": []
+    }
+   ]
+  },
+  {
+   "url": "https://github.com/obra/superpowers?skill=using-git-worktrees",
+   "repo": "obra/superpowers",
+   "skill": "using-git-worktrees",
+   "atom_id": "0x02f91b9675137a2ee045784dc85a4e8f50ce1e7348e8f8eddbd297f681c06045",
+   "wallets": 1,
+   "wallets_outside_arp": 0,
+   "by_outcome": {},
+   "by_reason": {},
+   "by_need": {},
+   "by_with": {},
+   "lines": [
+    {
+     "writer": "0x9C985BEFD57e3c45372105Fe7091e132b6d7e868",
+     "agent_atom": "0x80b823f57d4420ed4737ab5dc026c42977782af9073727e15f6ecdbde828e186",
+     "agent": "Agent 13579:7",
+     "declared_at": "2026-10-30T01:25:55+00:00",
+     "arp_test": true,
+     "domain": null,
+     "outcome": null,
+     "reasons": [],
+     "needs": [],
+     "with": []
+    }
+   ]
+  },
+  {
+   "url": "https://github.com/obra/superpowers?skill=writing-plans",
+   "repo": "obra/superpowers",
+   "skill": "writing-plans",
+   "atom_id": "0x7e6faaefcbe1e6c7ce1608afe46837c257d0c68c95a06817c678f16230240271",
+   "wallets": 1,
+   "wallets_outside_arp": 0,
+   "by_outcome": {},
+   "by_reason": {},
+   "by_need": {},
+   "by_with": {},
+   "lines": [
+    {
+     "writer": "0xB86F5f4E338eCEEC5DD095f48acF764465587FCF",
+     "agent_atom": "0x20c54d3344d3026cbd41d6fb5d9903686df8063b40f74969692a2a4d081d00b2",
+     "agent": "Agent 13579:8",
+     "declared_at": "2026-10-30T13:17:10+00:00",
+     "arp_test": true,
+     "domain": null,
+     "outcome": null,
+     "reasons": [],
+     "needs": [],
+     "with": []
+    }
+   ]
+  },
+  {
+   "url": "https://github.com/prime-skills/runcomfy-agent-skills?skill=flux-2-klein",
+   "repo": "prime-skills/runcomfy-agent-skills",
+   "skill": "flux-2-klein",
+   "atom_id": "0x078c817bc92f453d3d6ef8979994908062871345aaa8aa17e5a53dc77d0da653",
+   "wallets": 1,
+   "wallets_outside_arp": 0,
+   "by_outcome": {},
+   "by_reason": {},
+   "by_need": {},
+   "by_with": {},
+   "lines": [
+    {
+     "writer": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
+     "agent_atom": "0x05dde3ef63d5076e14cc572043055d0b8bb07a0ecc0857ca3a1dbfc3b636f70f",
+     "agent": "Agent 13579:6",
+     "declared_at": "2026-10-30T02:04:59+00:00",
+     "arp_test": true,
+     "domain": null,
+     "outcome": null,
+     "reasons": [],
+     "needs": [],
+     "with": []
+    }
+   ]
+  },
+  {
+   "url": "https://github.com/softaworks/agent-toolkit?skill=web-to-markdown",
+   "repo": "softaworks/agent-toolkit",
+   "skill": "web-to-markdown",
+   "atom_id": "0x4c301beda47a7e16085bda1e86fb4e14bf5de40fa413cbdbc45d445d08ce519d",
+   "wallets": 1,
+   "wallets_outside_arp": 0,
+   "by_outcome": {
+    "failed": 1
+   },
+   "by_reason": {
+    "missing-program": 1
+   },
+   "by_need": {},
+   "by_with": {},
+   "lines": [
+    {
+     "writer": "0xd092f619687e774150b195f70EC54864C6053Db0",
+     "agent_atom": "0xf14faf6890a389448a1ebec2f32a3cff3d8321233ca46489943c298fdcbe395f",
+     "agent": "Agent 13579:38",
+     "declared_at": null,
+     "arp_test": true,
+     "domain": null,
+     "outcome": "failed",
+     "reasons": [
+      "missing-program"
+     ],
+     "needs": [],
+     "with": []
+    }
+   ]
+  }
+ ],
+ "skipped": {
+  "count": 36,
+  "reasons": {
+   "an edge a payer created, which says nothing": 33,
+   "domain outside ARP's tree, written null": 3
+  }
+ },
+ "truncated": false
+}

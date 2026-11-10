@@ -19,6 +19,8 @@ A line can stop at any level. "This agent uses this tool" alone is a line. Each 
 
 A line about a paid x402 call can add one more statement on its outcome: paid with a given transaction. See [The x402 outcomes feed](/docs/x402-feed).
 
+Every line about a skill is also collected in one file a registry can read: [the skill lines feed](/docs/skill-lines-feed).
+
 ## What a line is on the public graph
 
 Lines live on Intuition, a public graph anyone can read. In its terms, a thing (an agent, a tool, a word) is an **atom**, and a statement about things is a **triple**: subject, predicate, object. A line nests its triples: each one is the subject of the next.

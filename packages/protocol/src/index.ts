@@ -427,6 +427,23 @@ export {
     type X402FeedConfig,
     type X402FeedRecord,
 } from "./x402-feed.js";
+export {
+    buildSkillLinesFeed,
+    SKILL_LINES_NOTE,
+    SKILL_LINES_SCHEMA,
+    type SkillLineRecord,
+    type SkillLinesEntry,
+    type SkillLinesFeed,
+    type SkillLinesInput,
+} from "./skill-lines-feed.js";
+export {
+    AGENT_SIEVE_NOTE,
+    AGENT_SIEVE_SCHEMA,
+    buildAgentSieveFeed,
+    type AgentSieveFeed,
+    type AgentSieveRecord,
+    type AgentSieveRow,
+} from "./agent-sieve-feed.js";
 
 export {
     getAccountActivity,

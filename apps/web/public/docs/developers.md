@@ -58,6 +58,8 @@ Only **`@arp-protocol/cli`** is on npm. `@arp-protocol/core` and `@arp-protocol/
 
 The Claude Code plugin is not on npm. It is `packaging/claude/arp/`, listed by `.claude-plugin/marketplace.json` at the repository root, which is what `claude plugin marketplace add intuition-box/ARP` reads. It carries the CLI as one file, `bin/arp.js`.
 
+Three dated feeds are served from this site under `/feeds/`, readable from any origin, each rebuilt by a script in `scripts/build/`: [the x402 outcomes feed](/docs/x402-feed) (`x402-outcomes.json`), [the skill lines feed](/docs/skill-lines-feed) (`skill-lines.json`) and [the agent sieve feed](/docs/agent-sieve-feed) (`agent-sieve.json`).
+
 ## The MCP tools
 
 The server serves one of three sets, chosen by `ARP_TOOLS`:

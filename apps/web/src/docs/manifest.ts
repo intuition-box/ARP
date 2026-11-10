@@ -34,6 +34,8 @@ export const DOC_SECTIONS: readonly DocSection[] = [
             {slug: "agents-and-nodes", title: "Agents and nodes", summary: "Finding an agent, checking its address, and being hired through a node."},
             {slug: "the-sieve", title: "The 8004 sieve", summary: "Which ERC-8004 agents exist, which answer, which speak, and how each is checked."},
             {slug: "x402-feed", title: "The x402 outcomes feed", summary: "Outcomes of paid x402 calls, each tied to a payment checked on its own chain."},
+            {slug: "skill-lines-feed", title: "The skill lines feed", summary: "Every public line about a skill, for a registry to read beside its own listing."},
+            {slug: "agent-sieve-feed", title: "The agent sieve feed", summary: "Each ERC-8004 agent's sieve rung, for a registry to read beside its own listing."},
         ],
     },
     {
