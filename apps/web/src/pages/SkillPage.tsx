@@ -27,6 +27,7 @@ import {
 import {splitFirstSentence} from "../services/skill-md";
 import {intuitionPortalUrl, truncateMiddle} from "../services/trust-format";
 import {SkillContains} from "../components/atom/SkillContains";
+import {SkillOutside} from "../components/atom/SkillOutside";
 import {ToolWallets} from "../components/atom/ToolWallets";
 import {Block, ClsRow, Install, Panel, RecordRow, Signal} from "../components/atom/AtomPageParts";
 import {formatDay, githubApiUrlOf, LABEL} from "../lib/atom-page";
@@ -132,6 +133,7 @@ export function SkillPage({
                         <Classification view={view} source={source} />
                         <SkillContains read={contents} repo={repo} />
                         <ExternalSignals view={view} source={source} />
+                        <SkillOutside label={view.label} />
                     </div>
                 </div>
             </header>

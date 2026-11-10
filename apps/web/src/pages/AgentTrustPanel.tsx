@@ -18,6 +18,7 @@ import {identityRegistryFor} from "../lib/deployments";
 import {AgentClaims, AgentDeclareCard} from "../components/agent/AgentClaims";
 import {SectionTabs} from "../components/agent/SectionTabs";
 import {AgentEndpoints} from "../components/agent/AgentEndpoints";
+import {AgentTrustIndex} from "../components/agent/AgentTrustIndex";
 import {useAgentLines} from "../hooks/use-agent-lines";
 import {actionCardClass} from "../lib/surface-class";
 import {useAgentProfile} from "../hooks/use-agent-profile";
@@ -351,6 +352,11 @@ function AgentTrustPanelBody() {
                             <Panel label="Identity">
                                 <AgentIdentityPanel view={view} />
                             </Panel>
+                            {/* Somebody else's dated figure on its endpoints (task 101); renders
+                                nothing when the reading did not ask about any of them. */}
+                            <div className="mt-4 empty:hidden">
+                                <AgentTrustIndex registrationFile={view.registrationFile} />
+                            </div>
                         </div>
 
                         {/* **What a reader reads, as tabs.** Stacked, each answer meant scrolling
