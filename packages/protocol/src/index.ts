@@ -437,6 +437,15 @@ export {
     type SkillLinesInput,
 } from "./skill-lines-feed.js";
 export {
+    ARP_USAGE_ADAPTER,
+    ARP_USAGE_NOTE,
+    ARP_USAGE_SCHEMA,
+    arpUsageScore,
+    buildArpUsageFeed,
+    type ArpUsageFeed,
+    type ArpUsageRecord,
+} from "./arp-usage.js";
+export {
     AGENT_SIEVE_NOTE,
     AGENT_SIEVE_SCHEMA,
     buildAgentSieveFeed,
