@@ -1,6 +1,6 @@
 # Task 107 — Small leftovers: the atom size limit, the plugin's icon, stale defect rows
 
-**Status:** in progress 2026-11-10, worktree `agent-ae7f87f7e12a1240e`.
+**Status:** verified 2026-11-10, `task-verifier` PASS at `e9fd532`, post-mortem `.claude/learning/96-small-leftovers.md`; worktree `agent-ae7f87f7e12a1240e`.
 **ADR:** none new. ADR `0162` gains an **Amended** header line (`.claude/choices/README.md`'s convention, as ADR `0123` was amended by `0163`).
 **Rules:** `workflow.md`, `code.md`, `claims.md`, `portability.md`. Reads only on chain: nothing written, nothing deployed, published or pushed.
 
