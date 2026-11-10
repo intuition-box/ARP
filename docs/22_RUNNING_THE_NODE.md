@@ -107,8 +107,13 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
                        no search, comes from ~/.agents/.skill-lock.json or a receipt, when only one
                        source is known for that name. Your words are read for that and not kept. Never
                        the command or its output. Stays on this machine unless you run `arp share on`
-~/.arp/sharing.json    whether failures may become public lines. Absent means off
-~/.arp/shared-failures.jsonl  what has been made public: a skill's public URL, `failed`, a closed reason, and a domain if known
+~/.arp/asked.jsonl     on Stop, the skills the hook asked about: the session, the skill, its source, the date
+~/.arp/outcomes.jsonl  the model's answer to that question, `worked`, `failed` or `unsure`, with a domain
+                       found as for a failure, and on a worked answer the `with` name an earlier failure
+                       named, only when the skill's SKILL.md names it. Never the model's message
+~/.arp/sharing.json    whether failures and worked answers may become public lines. Absent means off
+~/.arp/shared-failures.jsonl  what has been made public: a skill's public URL, `failed` and a closed reason or
+                       `worked`, a domain if known, and a `needs` or `with` name
 .arp/searches.jsonl    what `arp_pulse` answered, if you wired the hook: the session, the domain, the skills
                        found and their source. Never your query. Stays on this machine
 .arp/receipts.jsonl    what you fetched through a server, and the receipts
@@ -646,7 +651,7 @@ cd apps/hook && bun run build      # once: writes apps/hook/dist/arp-hook.js
 ```
 
 `arp init` writes this for you (`@arp-protocol/cli`, `apps/cli`): it copies the hook to
-`~/.arp/bin/hook.js`, registers it on its three events (below), and backs up `settings.json` first. `arp
+`~/.arp/bin/hook.js`, registers it on its four events (below), and backs up `settings.json` first. `arp
 uninstall` takes it out again. It leaves an MCP server named `arp` that it did not write, and says so. A run that had to leave a file out, one that is not valid JSON for instance, does the rest, names the file at the end and exits 6. By hand, it is:
 
 <!-- prettier-ignore -->
@@ -663,6 +668,9 @@ uninstall` takes it out again. It leaves an MCP server named `arp` that it did n
   "PreToolUse": [{"matcher": "Bash", "hooks": [
     {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js",
      "if": "Bash(*skills*)", "timeout": 15}
+  ]}],
+  "Stop": [{"hooks": [
+    {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "timeout": 10}
   ]}]
 }}
 ```
@@ -671,7 +679,9 @@ Both `PostToolUse` events, because a failed call reaches only `PostToolUseFailur
 waited on, not `async`, because only a waited-on hook can answer before the command runs; its `if`
 rule keeps every other `Bash` call from starting it at all. `PostToolUseFailure` is waited on
 too, since task 99, so the hook can answer a skill's failure (below); any other failed call it
-records and leaves at once. Grok Build reads this same
+records and leaves at once. `Stop` is waited on as well, because there the hook answers: once per
+skill used in the session it asks the model whether the skill did its job, and reads the closed
+answer on the next `Stop` (ADR `0169`). Grok Build reads this same
 file and sends camelCase keys, which the hook also reads (`apps/hook/src/payload.ts`).
 
 It fires on every tool call and appends one line to `.arp/session.jsonl` (or `ARP_SESSION_LOG`)

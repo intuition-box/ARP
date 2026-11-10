@@ -41,7 +41,7 @@ and skills together:
 arp/
 ├── .claude-plugin/plugin.json
 ├── .mcp.json              the MCP server
-├── hooks/hooks.json       the hook, on PostToolUse and PostToolUseFailure
+├── hooks/hooks.json       the hook, on PostToolUse, PostToolUseFailure and Stop
 └── skills/arp/SKILL.md    the publishable skill, skills/arp/SKILL.md today
 ```
 

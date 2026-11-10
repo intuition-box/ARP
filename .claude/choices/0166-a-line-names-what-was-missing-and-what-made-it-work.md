@@ -112,7 +112,8 @@ read there before any port; nothing here is tuned on them.
 - The direct path (`arp_declare_used`) does not take a name yet (`FUTURE.md`).
 
 **Neutral (worth knowing):**
-- The hook cannot tell a worked use (ADR `0140`), so `with` is written by the agent, with `arp line --with`.
+- ~~The hook cannot tell a worked use (ADR `0140`), so `with` is written by the agent, with `arp line --with`.~~
+  Struck 2026-11-10: the hook asks the model on `Stop` and writes `with` from an earlier `needs` record (ADR `0169`).
 - `needs` and `with` are ARP's words, read by nobody else until published (`docs/28`, Open).
 
 ## References

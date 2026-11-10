@@ -1,6 +1,6 @@
 # 0140 — The hook records a skill's failure, in one file, and writes `worked` never
 
-**Status:** Accepted
+**Status:** Accepted; its "writes `worked` never" superseded by `0169` (2026-11-10)
 **Date:** 2026-11-05
 **Triggered by:** `docs/tasks/68`, the user's « go », 2026-11-05. Extends ADR `0090`.
 
@@ -12,7 +12,7 @@ ADR `0090` limits what the hook keeps from a call, and the hook ignored `Bash`. 
 
 A failed `Bash` call writes one line to `<arpHome>/failures.jsonl` when a skill used earlier in the session asks for that command and the output shows `missing-key`, `missing-program` or `missing-file`. The line holds the date, session, skill, source and reason, at most once per session, skill and reason. `arp backfill` applies the same rule to old transcripts. Neither sends anything.
 
-The hook never writes `worked`, because no error does not show that the job was done. The command and its output stay out of the line, as ADR `0090` requires of content: they are read to choose a reason and dropped.
+~~The hook never writes `worked`, because no error does not show that the job was done.~~ Struck 2026-11-10: it still never infers it from a call, and since ADR `0169` it asks the model on `Stop`. The command and its output stay out of the line, as ADR `0090` requires of content: they are read to choose a reason and dropped.
 
 ## Alternatives considered
 
