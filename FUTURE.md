@@ -612,5 +612,5 @@ Closed or excluded tasks that leave something a later task may want. Each task f
   deciding what a version is beyond the pin.
 - **Task 68, phase 5: a shorter `arp_pulse` answer** by default. It was to follow task 67's results,
   which do not exist yet.
-- **Task 67, the demonstration.** Its list is frozen and its runs were never made; the user decides
-  whether to finish it or wait until a demo is needed.
+- **Task 67, the demonstration.** Excluded by the user on 2026-11-10. Its list is frozen and its runs
+  were never made; a demonstration, when one is needed, starts from its file.

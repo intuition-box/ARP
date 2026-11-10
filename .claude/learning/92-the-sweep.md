@@ -52,3 +52,5 @@
 No column or tier: a docs-only cleanup that removes work competing with tasks 98 to 102, which
 target the skill column's observed and corroborated tiers. It changes no signal, so ARP does not
 move.
+
+**Amended 2026-11-10, after this post-mortem:** the user excluded task 67 (« 67 on exclu »). Its closing line, ADR `0172`, `FUTURE.md` and `STATE.md` say so; this entry is otherwise unchanged.

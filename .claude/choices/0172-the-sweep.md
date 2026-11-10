@@ -27,10 +27,10 @@ Every open task gets one of four outcomes, written on its own status line with t
 | **Done**: finished by a later task, never verified on its own | 59 (its last 10 filings, task 75: `docs/tasks/75`) |
 | **Closed at what was built**: the rest is dropped or moved | 16 (half 1), 24 (step 3 deferred), 28 (first batch; punch list to `FUTURE.md`), 33 (33a–33d, 33i's first half; 33h → 102, 33f after the tester round, 33e and 33g excluded), 61 (A, C, D, E; B to `FUTURE.md`), 68 (phases 1–4; phase 6 done by tasks 70 and 71, phase 5 to `FUTURE.md`) |
 | **Folded into a live task** | 86 → 98; 45 and 83 → 102; 54 → 100; 38 and 70 → the tester round (one task, not yet written) |
-| **Excluded**: replaced, stopped, or out of today's scope | 04, 05 (Base Sepolia and Vercel, abandoned by the pivot), 19 (replaced by the evidence ladder, `docs/32`), 22 (steps 2–3 judged not justified, 2026-10-27), 34 (replaced page by page by tasks 57, 80, 81, 95, 96), 41 (to the mainnet port, `docs/27`), 64 (stopped by the user 2026-11-05; the score shipped through `arp_pulse`, ADRs `0138`, `0143`), 69's landing scenes (replaced by the galaxy landing, task 81) |
+| **Excluded**: replaced, stopped, or out of today's scope | 67 (the user, 2026-11-10), 04, 05 (Base Sepolia and Vercel, abandoned by the pivot), 19 (replaced by the evidence ladder, `docs/32`), 22 (steps 2–3 judged not justified, 2026-10-27), 34 (replaced page by page by tasks 57, 80, 81, 95, 96), 41 (to the mainnet port, `docs/27`), 64 (stopped by the user 2026-11-05; the score shipped through `arp_pulse`, ADRs `0138`, `0143`), 69's landing scenes (replaced by the galaxy landing, task 81) |
 
-**Task 67 is not decided**: its list is frozen and its runs were never made. The user chooses
-between finishing it and excluding it until a demo is needed. Its status line is left as it is.
+**Task 67 is excluded**, by the user the same day (« 67 on exclu »): its list is frozen and its
+runs were never made. A demonstration, when one is needed, starts from its file.
 
 Task 28's item 2, the mint question, is recorded as ADR `0173`.
 

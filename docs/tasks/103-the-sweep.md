@@ -26,7 +26,7 @@ approved the same day (« ok parfait »).
 ## Do not do in this task
 
 - Touch tasks 98 to 102 or their files: the coordinating session runs them.
-- Decide task 67: it is the user's choice, and its status line is left as it is.
+- Decide task 67 on the user's behalf. (The user decided after the first verification: excluded, « 67 on exclu », 2026-11-10.)
 - Delete a task file. An excluded task stays readable.
 - Change code.
 

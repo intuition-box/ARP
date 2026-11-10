@@ -1,6 +1,9 @@
 # Task 67 — The demonstration: three proofs, on tasks where the choice of a skill matters
 
 **Status:** in progress. The list of §3 was validated by the user on 2026-11-05 and is frozen, before any run: `data/measurements/demonstration-candidates-2026-11-05.json`, sha256 `a1fc3cceeae496b3749ba3e2a8e079cc8bba4afab2c6214ab2eaf26d21d61493`. Not committed yet.
+
+**Closed 2026-11-10 by task 103 (ADR `0172`):** excluded by the user (« 67 on exclu »). The frozen list and its hash above stay as the record; nothing was run. A demonstration, when one is needed, starts from this file.
+
 **Depends on:** task 63, task 64, task 66 (form B, the score), ADR `0136`.
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
 
