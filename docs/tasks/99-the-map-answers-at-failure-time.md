@@ -20,10 +20,11 @@ the hook answers then, with a **live read** of the index, not a local copy.
    from the Intuition graph and returns them as `additionalContext` on `PostToolUseFailure`: distinct
    wallets per outcome, the reasons, and the `needs` / `with` names. Facts, no verdict
    (`linesSentence`, `packages/protocol/src/failure-lines.ts`).
-2. The read reuses the pulse reader (`findToolAtoms`, `getPulseUsage`), imported **by path**; every module
-   it reaches is free of viem, checked by `apps/cli/test/cli.test.ts` ("the packaged hook imports no
-   dependency") and `check:node`. Two constants modules split out for that: `declare/thing-cid.ts` and
-   `declare/usage-words.ts`, re-exported where they were.
+2. The read reuses the pulse reader (`findToolAtoms`, `getPulseUsage`), imported **by path**; the packaged
+   hook imports no viem, checked by `apps/cli/test/cli.test.ts` ("the packaged hook imports no dependency")
+   and `check:node`. Two modules split out for that: `declare/thing-cid.ts` and `declare/usage-words.ts`,
+   re-exported where they were. One module it reaches, `declare/tool-thing.ts`, still imports
+   `agent-atom.ts` (viem), dropped by tree-shaking because no binding of it is used (ADR `0168` §7).
 3. Bounded: 3 s in all (`ANSWER_MS`), silent on any failure; the failure record is written first.
    `ARP_FAILURE_LINES=off` sends nothing.
 4. Only the skill's identity leaves: its atom URI and the four predicate words. Tested over HTTP against a

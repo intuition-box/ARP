@@ -41,10 +41,14 @@ the person's text never leaves the machine; a hook must never block or break a s
    output is delivered "on the next conversation turn", and waits for the next user interaction when the
    session is idle, too late for the decision it is meant for. `PostToolUse` is untouched and stays async: a
    success has nothing to answer.
-7. **No viem in the hook.** The read's modules are imported by path. Two pure modules were split out so
-   that holds by construction rather than by tree-shaking: `declare/thing-cid.ts` (the Thing document and its
-   CID from a digest, so the hook hashes with `node:crypto`) and `declare/usage-words.ts` (the closed words).
-   Both are re-exported where they were, so no caller changed.
+7. **No viem in the hook.** The read's modules are imported by path. Two pure modules were split out,
+   because the bundle kept `import "viem"` while the hook used a binding of a module that imports viem:
+   `declare/thing-cid.ts` (the Thing document and its CID from a digest, so the hook hashes with
+   `node:crypto`) and `declare/usage-words.ts` (the closed words), both re-exported where they were. It is
+   **not** viem-free by construction: `failure-lines.ts` still reaches `declare/tool-thing.ts`, which imports
+   `agent-atom.ts` (viem); that module is dropped by tree-shaking (`sideEffects: false`) because the hook uses
+   none of its bindings. The guard is `apps/cli/test/cli.test.ts` ("the packaged hook imports no
+   dependency") and `check:node`, which fail if `import "viem"` reappears.
 
 ## Alternatives considered
 
@@ -66,7 +70,9 @@ the person's text never leaves the machine; a hook must never block or break a s
 **Negative:**
 - The hook now has a network call. A failed skill command can wait up to 3 s, and a sync entry costs every
   failed tool call a process start before it returns, where async cost nothing visible.
-- Intuition's index learns, by IP and time, which skill failed somewhere. `ARP_FAILURE_LINES=off` is the
+- Intuition's index learns, by IP and time, which skill failed somewhere (never the reason): the request
+  happens only on a failure. The public docs say so (`docs/22`, `docs/31`, the site's `local-memory`,
+  `overview` and `testers` pages). `ARP_FAILURE_LINES=off` is the
   answer for whoever minds.
 - `dist/hook.js` grows from 70,535 to about 119,400 bytes (the GraphQL client, the reader and the
   deployment record), measured 2026-11-10 with `bun run --cwd apps/cli build`.

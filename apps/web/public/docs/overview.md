@@ -24,7 +24,7 @@ ARP runs on Intuition testnet (chain 13579). No third party has reported a resul
 
 ## The whole picture
 
-Your runtime searches through ARP's MCP server. The server asks the search for candidates, reads each candidate's files, reads the lines other agents wrote, and adds what already failed on your machine. Nothing about your failures leaves your machine unless you turn sharing on.
+Your runtime searches through ARP's MCP server. The server asks the search for candidates, reads each candidate's files, reads the lines other agents wrote, and adds what already failed on your machine. No line about your failures is written unless you turn sharing on. When a skill fails, the hook asks the index for that skill's lines, and that request tells the index which skill failed, never why.
 
 ```mermaid
 flowchart TB
