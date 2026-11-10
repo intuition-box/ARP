@@ -417,6 +417,28 @@ A skill listed through the sponsoring service reaches the chain but not `data/ca
 content server answers `unknown-atom` and a search says `file_not_read` until someone re-runs the
 measurements (ADR `0132`). Asked for implicitly by the usage demo, 2026-11-03; not built.
 
+## `/list-tool` refuses what is not a tool, and a skill is read before it is installed
+
+Asked for by the user, 2026-11-10: « empêcher de mettre n'importe quelle URL ». Today (ADR `0123`
+step 6) a GitHub skill must have a `SKILL.md` in a directory of its name, a GitHub repository must
+answer the tree API, and **any other URL is accepted unchecked**, because the process that holds the
+treasury key must not fetch an arbitrary URL. Nobody reads a skill's content.
+
+Two separate things, and only the second protects anyone:
+
+1. **A gate on what ARP pays to list.** A GitHub repository is listed only if it holds something a
+   runtime loads: a `SKILL.md`, an MCP server manifest (`server.json`, a `.claude-plugin/`, a
+   package declaring an MCP server), or close forms to be listed when it is built. A non-GitHub URL
+   is listed only if it answers as a tool (an MCP `initialize`, an A2A card, an x402 `402`), asked by
+   a process with no key: `apps/probe` already asks catalogued MCP endpoints on a cron (ADR `0093`).
+   This bounds ARP's spend and its index. It does not stop anyone else writing an atom on Intuition.
+2. **A read before install.** Since anyone can write to the graph, the defence is where an agent is
+   about to install: a local read of the skill that shows facts, never a verdict — the scripts it
+   runs, a `curl | sh`, the domains it contacts, hidden or encoded text. Runs on the user's machine,
+   so no text leaves it (ADR `0155`). Fits `docs/30`'s « check before your agent installs ».
+
+Not decided: the list of accepted manifests, whether the read before install blocks or only shows.
+
 ## The delegation register, read side
 
 **Left 2026-11-03**, when task 37 closed at 37b and 37c (`docs/tasks/37`). Publishing works on
@@ -531,3 +553,26 @@ networks Doctor reads are mainnets (Base, Solana and others, `openapi.json`, rea
 
 **When it is picked up:** start with the read feed above, the shape Frits asked for. **Built 2026-11-09 by task 89** (ADR `0159`): `/feeds/x402-outcomes.json`, empty until a line names a real payment. Since task 93 (ADR `0162`, schema `arp.x402-outcomes/2`) a record's `endpoint` is the URL the payer called, as typed, with `endpoint_canonical` beside it; a line written before then has `endpoint: null`. Then do point 2, which is the cheapest. Do 41b, the node
 answering 402, with Doctor's `diagnose` as its test.
+
+## x402 as a feature: who is actually paid, then what they delivered
+
+Asked for by the user, 2026-11-10, as a lead, not a decision: rather than exploring ERC-8004
+agents (on 13579's directory, 2026-11-09, 40 of 283 speak MCP or A2A and none was used by another
+wallet, `data/catalogue/agent-sieve-13579.json`), look at who is paid over x402, then reach them.
+
+- **Read the payments.** Settlements to an endpoint's `payTo` on Base, read the way
+  `x402-payment.ts` already reads one (the token's `Transfer` log, never `tx.from`). ARP reads and
+  never signs there.
+- **Join a payment to an endpoint** through public x402 listings. Which ones exist and what they
+  already show (volumes, payers) is to be checked before anything is built, so ARP does not
+  re-publish someone else's figures as its own.
+- **Add what a payment does not prove:** whether something was delivered — the `worked` and
+  `failed` lines, and the feed Doctor reads (task 89, task 93).
+- On `docs/32`'s ladder: the hire column, observed tier.
+
+**Other registries, the same posture.** The user, 2026-11-10: also talk to other registries and
+agent-marketplace providers. The model is the one with Doctor: ARP publishes a read feed (lines,
+outcomes, the sieve's rung), and the registry or marketplace reads it beside its own listing; ARP
+never asks them to write to Intuition. Targets and the problem each has are in the business-dev
+repository's `outreach/drafts/agent-marketplaces-2026-11-09.md`; contacts stay drafts until the
+user is back (2026-11-10).
