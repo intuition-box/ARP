@@ -2,7 +2,7 @@ import {describe, expect, it} from "vitest";
 
 import {edgeWriterWarning} from "../src/handlers/declare.js";
 import {canSearch, searchInvocation, setAsideBecause, SKILLS_CLI, toCheck, usageLine, yourFailuresLine} from "../src/handlers/pulse.js";
-import type {SkillPulse} from "@arp-protocol/core";
+import {readSkillContents, type SkillPulse} from "@arp-protocol/core";
 
 const read = (overrides: Partial<Extract<SkillPulse, {status: "read"}>> = {}): SkillPulse => ({
     source: "a/b",
@@ -26,6 +26,7 @@ const read = (overrides: Partial<Extract<SkillPulse, {status: "read"}>> = {}): S
     runsAbsentFiles: [],
     keysInScriptsItRuns: [],
     requires: {cli: [], runs: [], login: null, description: null},
+    contains: readSkillContents([]),
     ...overrides,
 });
 

@@ -31,10 +31,13 @@ import {
 import {
   bundleMatchesReceipt,
   contentRequestTypedData,
+  contentsFileOf,
+  contentsLines,
   encodeApproveDeposit,
   INTUITION_USES_TERM_ID,
   multiVaultDeclareAbi,
   paymentAtomLabel,
+  readSkillContents,
   receiptMatchesContent,
   signCategoryRequest,
   signLineRequest,
@@ -106,6 +109,11 @@ export type ServedSkill = {
   url: string;
   name: string;
   text: string;
+  /**
+   * What the files served contain, as the lines the person reads before it is installed (task 96):
+   * from the whole directory where it is installed, from SKILL.md alone in Chat.
+   */
+  contains: string[];
   files?: number;
   /** Where the person accepted it into. */
   installedAt?: string;
@@ -226,7 +234,8 @@ export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex
   mkdirSync(config.stateDir, { recursive: true, mode: 0o700 });
   const line: ReceiptLine = { atom: signed.receipt.atom, url: signed.receipt.url, skill: ref?.skill ?? null, receipt: signed };
   appendFileSync(join(config.stateDir, 'receipts.jsonl'), `${JSON.stringify(line)}\n`);
-  const served = { atom: signed.receipt.atom, url: signed.receipt.url, name: ref?.skill ?? signed.receipt.url, text: new TextDecoder().decode(skillMd.bytes) };
+  const contains = contentsLines(readSkillContents(files.map((file) => contentsFileOf(file.path, file.bytes))));
+  const served = { atom: signed.receipt.atom, url: signed.receipt.url, name: ref?.skill ?? signed.receipt.url, text: new TextDecoder().decode(skillMd.bytes), contains };
   if (config.skillsDir === undefined || ref === null || !SAFE_SKILL_NAME.test(ref.skill)) return served;
 
   // The question is always asked (task 61): an absent `ask` is the same as nobody to ask.

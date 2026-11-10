@@ -17,6 +17,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } fr
 import { dirname, join } from 'node:path';
 
 import {
+  contentsFileOf,
+  contentsLines,
+  readSkillContents,
   renderSkillPrompt,
   reviewSkill,
   skillRefFromUrl,
@@ -43,7 +46,7 @@ export function installPrompt(
   context: ReviewContext,
 ): SkillPrompt {
   const ref = skillRefFromUrl(receipt.receipt.url);
-  return renderSkillPrompt(
+  const prompt = renderSkillPrompt(
     reviewSkill({
       repo: ref?.repo ?? receipt.receipt.url,
       skill: ref?.skill ?? receipt.receipt.url,
@@ -55,6 +58,9 @@ export function installPrompt(
     }),
     installPath,
   );
+  // What the files contain, in the dialog itself (task 96): the person reads it here, not through the agent.
+  const contains = contentsLines(readSkillContents(files.map((file) => contentsFileOf(file.path, file.bytes))), 3);
+  return { ...prompt, message: [prompt.message, '', 'What its files contain:', ...contains].join('\n') };
 }
 
 /**

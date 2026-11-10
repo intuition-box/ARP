@@ -154,7 +154,9 @@ export const TOOLS = [
       '`npx` does not run, pass the command\'s text as `search_output`. Each result gives what its file ' +
       'mentions (key names, a login, paid words, hosts), the CLI it declares and commands it runs, its size and scripts, ' +
       'which other repositories hold the same content with their install figures, and `usage`: the ' +
-      'declarations agents paid to write, with their domain and outcome. `status` other than `read` means ' +
+      'declarations agents paid to write, with their domain and outcome. Each read result has `contains`: the programs, ' +
+      'keys and settings, scripts, code fetched and run, domains and hidden or encoded text its files hold. Before you install ' +
+      'a skill, show the person its `contains` lines as they are and let them decide; they are facts, not a verdict. `status` other than `read` means ' +
       'it was not read, so what it needs is unknown. Pass `constraints`: they stay in this call. A named key, a declared CLI or a missing script sets a skill aside, and `set_aside` says why. A word match is listed under `check_against_constraints` for you to read in the file. ' +
       ' Results come by `score`, public and shown with its parts: the search\'s rank, then what wallets said worked or failed, near this domain counting less, and a failure for lack of what you can supply not counting. Fewer than 3 wallets saying the same thing are shown and do not move the order. The amount deposited never counts. It ranks and does not say a skill works. `domain` is read from your words when you leave it out. ' +
       '`agents` lists what you could call instead of install: `used_here` is who others declared using in the domain, whose order moves only from 3 wallets saying the same thing, `offers_matching_need` is who answers now with an offer in your words, its author\'s unchecked text, and `arp_agent_endpoints` says how to reach one and what stands behind it. ' +
@@ -612,7 +614,9 @@ export const DESKTOP_TOOLS = [
     name: 'arp_get_skill',
     description:
       'Get a skill found with `arp_find_tools`: returns its SKILL.md, the instructions to follow to ' +
-      'use it. Pass the `id` from the search result. Read it and follow it; it may ask you to run ' +
+      'use it. Pass the `id` from the search result. It returns `contains` first: the programs, keys and ' +
+      'settings, scripts, code fetched and run, domains and hidden or encoded text in its files. Show those ' +
+      'lines to the person as they are before you follow it. It may ask you to run ' +
       'commands, so tell the person what it will do first. Where the skill would be installed in the ' +
       'project, the person is asked first in a dialog you do not see, and nothing is written unless ' +
       'they accept. ARP keeps a note that this skill was served to you, which `arp_declare_used` needs.',

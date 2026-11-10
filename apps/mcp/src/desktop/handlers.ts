@@ -129,6 +129,9 @@ export async function desktopTool(id: JsonRpcId, name: string, args: Record<stri
       return text(id, {
         name: skill.name,
         source: skill.url,
+        contains: skill.contains,
+        show_the_person_first:
+          'Show the person the `contains` lines above as they are before you follow the skill or install it: facts from its files, not a verdict.',
         skill_md: skill.text,
         ...(skill.installedAt !== undefined
           ? {
