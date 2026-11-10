@@ -19,6 +19,7 @@
 import { writeFileSync } from 'node:fs';
 
 import catalogue from '../../data/catalogue/tools.json';
+import skillPaths from '../../apps/web/src/data/skill-paths.json';
 
 type Repo = {
   stargazers_count?: number;
@@ -29,7 +30,22 @@ type Repo = {
   message?: string;
 };
 
-const rows = (catalogue as { tools: { url: string; kind: string }[] }).tools;
+// The catalogue's tools, then every repository a skill page reads a SKILL.md from that the
+// catalogue does not already name (task 101): an archived or deleted skill repository is a fact the
+// skill page shows, and it was read only when the repository happened to be catalogued.
+const catalogued = (catalogue as { tools: { url: string; kind: string }[] }).tools;
+const known = new Set(catalogued.map((tool) => tool.url.toLowerCase()));
+const skillRepos = [
+  ...new Set(
+    Object.keys((skillPaths as { paths: Record<string, string> }).paths).map(
+      (label) => `https://${label.split('?')[0]}`,
+    ),
+  ),
+]
+  .filter((url) => !known.has(url.toLowerCase()))
+  .sort()
+  .map((url) => ({ url, kind: 'skill-repository' }));
+const rows = [...catalogued, ...skillRepos];
 function arg(name: string): string | undefined {
   const index = process.argv.indexOf(`--${name}`);
   return index === -1 ? undefined : process.argv[index + 1];

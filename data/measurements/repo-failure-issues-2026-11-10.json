@@ -1,0 +1,6190 @@
+{
+ "measuredAt": "2026-11-10T10:47:46.725Z",
+ "source": "api.github.com/search/issues",
+ "query": "repo:<owner/name> is:issue in:title error OR fail OR failed OR broken OR crash",
+ "authenticated": false,
+ "repositories": 53,
+ "rows": [
+  {
+   "repo": "101-skills/superpowers",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {
+    "github.com/101-skills/superpowers?skill=ai-video-generation": [],
+    "github.com/101-skills/superpowers?skill=ai-image-generation": [],
+    "github.com/101-skills/superpowers?skill=twitter-automation": [],
+    "github.com/101-skills/superpowers?skill=ai-avatar-video": [],
+    "github.com/101-skills/superpowers?skill=agent-browser": [],
+    "github.com/101-skills/superpowers?skill=web-search": [],
+    "github.com/101-skills/superpowers?skill=remotion-render": [],
+    "github.com/101-skills/superpowers?skill=infsh-cli": [],
+    "github.com/101-skills/superpowers?skill=agent-tools": [],
+    "github.com/101-skills/superpowers?skill=python-executor": [],
+    "github.com/101-skills/superpowers?skill=landing-page-design": [],
+    "github.com/101-skills/superpowers?skill=product-photography": [],
+    "github.com/101-skills/superpowers?skill=app-store-screenshots": [],
+    "github.com/101-skills/superpowers?skill=character-design-sheet": [],
+    "github.com/101-skills/superpowers?skill=storyboard-creation": [],
+    "github.com/101-skills/superpowers?skill=video-ad-specs": [],
+    "github.com/101-skills/superpowers?skill=competitor-teardown": [],
+    "github.com/101-skills/superpowers?skill=youtube-thumbnail-design": [],
+    "github.com/101-skills/superpowers?skill=product-hunt-launch": [],
+    "github.com/101-skills/superpowers?skill=image-to-video": [],
+    "github.com/101-skills/superpowers?skill=happyhorse": [],
+    "github.com/101-skills/superpowers?skill=gpt-image": [],
+    "github.com/101-skills/superpowers?skill=p-image": [],
+    "github.com/101-skills/superpowers?skill=p-video": [],
+    "github.com/101-skills/superpowers?skill=p-video-avatar": [],
+    "github.com/101-skills/superpowers?skill=seedance": []
+   }
+  },
+  {
+   "repo": "alchemyplatform/alchemy-mcp-server",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "anthropics/skills",
+   "status": "read",
+   "total": 52,
+   "open": 47,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 2145,
+     "state": "open",
+     "opened": "2026-11-06"
+    },
+    {
+     "number": 2011,
+     "state": "open",
+     "opened": "2026-10-12"
+    },
+    {
+     "number": 2000,
+     "state": "open",
+     "opened": "2026-10-11"
+    },
+    {
+     "number": 1943,
+     "state": "open",
+     "opened": "2026-10-01"
+    },
+    {
+     "number": 1938,
+     "state": "open",
+     "opened": "2026-09-29"
+    },
+    {
+     "number": 1893,
+     "state": "open",
+     "opened": "2026-09-27"
+    },
+    {
+     "number": 1886,
+     "state": "open",
+     "opened": "2026-09-27"
+    },
+    {
+     "number": 1878,
+     "state": "open",
+     "opened": "2026-09-26"
+    },
+    {
+     "number": 1859,
+     "state": "open",
+     "opened": "2026-09-26"
+    },
+    {
+     "number": 1827,
+     "state": "open",
+     "opened": "2026-09-24"
+    },
+    {
+     "number": 1809,
+     "state": "open",
+     "opened": "2026-09-23"
+    },
+    {
+     "number": 1692,
+     "state": "open",
+     "opened": "2026-08-30"
+    },
+    {
+     "number": 1686,
+     "state": "open",
+     "opened": "2026-08-28"
+    },
+    {
+     "number": 1668,
+     "state": "open",
+     "opened": "2026-08-25"
+    },
+    {
+     "number": 1478,
+     "state": "open",
+     "opened": "2026-07-25"
+    },
+    {
+     "number": 1469,
+     "state": "open",
+     "opened": "2026-07-24"
+    },
+    {
+     "number": 1390,
+     "state": "open",
+     "opened": "2026-07-04"
+    },
+    {
+     "number": 1383,
+     "state": "open",
+     "opened": "2026-07-03"
+    },
+    {
+     "number": 1362,
+     "state": "open",
+     "opened": "2026-06-27"
+    },
+    {
+     "number": 1304,
+     "state": "open",
+     "opened": "2026-06-10"
+    },
+    {
+     "number": 1271,
+     "state": "open",
+     "opened": "2026-06-06"
+    },
+    {
+     "number": 1252,
+     "state": "open",
+     "opened": "2026-06-02"
+    },
+    {
+     "number": 1221,
+     "state": "open",
+     "opened": "2026-05-30"
+    },
+    {
+     "number": 1200,
+     "state": "open",
+     "opened": "2026-05-25"
+    },
+    {
+     "number": 1199,
+     "state": "open",
+     "opened": "2026-05-25"
+    },
+    {
+     "number": 1167,
+     "state": "open",
+     "opened": "2026-05-19"
+    },
+    {
+     "number": 1154,
+     "state": "open",
+     "opened": "2026-05-17"
+    },
+    {
+     "number": 1149,
+     "state": "open",
+     "opened": "2026-05-16"
+    },
+    {
+     "number": 1120,
+     "state": "open",
+     "opened": "2026-05-10"
+    },
+    {
+     "number": 1061,
+     "state": "open",
+     "opened": "2026-04-28"
+    },
+    {
+     "number": 1025,
+     "state": "open",
+     "opened": "2026-04-24"
+    },
+    {
+     "number": 1024,
+     "state": "closed",
+     "opened": "2026-04-24"
+    },
+    {
+     "number": 954,
+     "state": "closed",
+     "opened": "2026-04-15"
+    },
+    {
+     "number": 886,
+     "state": "open",
+     "opened": "2026-04-08"
+    },
+    {
+     "number": 712,
+     "state": "open",
+     "opened": "2026-03-20"
+    },
+    {
+     "number": 574,
+     "state": "closed",
+     "opened": "2026-03-09"
+    },
+    {
+     "number": 470,
+     "state": "open",
+     "opened": "2026-02-25"
+    },
+    {
+     "number": 462,
+     "state": "open",
+     "opened": "2026-02-24"
+    },
+    {
+     "number": 406,
+     "state": "open",
+     "opened": "2026-02-17"
+    },
+    {
+     "number": 403,
+     "state": "open",
+     "opened": "2026-02-16"
+    },
+    {
+     "number": 394,
+     "state": "open",
+     "opened": "2026-02-14"
+    },
+    {
+     "number": 263,
+     "state": "open",
+     "opened": "2026-01-21"
+    },
+    {
+     "number": 262,
+     "state": "open",
+     "opened": "2026-01-21"
+    },
+    {
+     "number": 239,
+     "state": "open",
+     "opened": "2026-01-15"
+    },
+    {
+     "number": 205,
+     "state": "open",
+     "opened": "2026-01-04"
+    },
+    {
+     "number": 184,
+     "state": "closed",
+     "opened": "2025-12-29"
+    },
+    {
+     "number": 161,
+     "state": "closed",
+     "opened": "2025-12-20"
+    },
+    {
+     "number": 141,
+     "state": "open",
+     "opened": "2025-12-12"
+    },
+    {
+     "number": 62,
+     "state": "open",
+     "opened": "2025-10-24"
+    },
+    {
+     "number": 61,
+     "state": "open",
+     "opened": "2025-10-24"
+    },
+    {
+     "number": 37,
+     "state": "open",
+     "opened": "2025-10-19"
+    },
+    {
+     "number": 14,
+     "state": "open",
+     "opened": "2025-10-17"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/anthropics/skills?skill=frontend-design": [],
+    "github.com/anthropics/skills?skill=skill-creator": [
+     1827,
+     1692,
+     1686,
+     1478,
+     1383,
+     1271,
+     1221,
+     1200,
+     1199,
+     1149,
+     1061,
+     263,
+     239,
+     37
+    ],
+    "github.com/anthropics/skills?skill=pptx": [
+     2011,
+     1809,
+     1167,
+     886
+    ],
+    "github.com/anthropics/skills?skill=pdf": [
+     2145,
+     2000,
+     1469,
+     1025,
+     1024,
+     886,
+     462
+    ],
+    "github.com/anthropics/skills?skill=docx": [
+     1938,
+     712
+    ],
+    "github.com/anthropics/skills?skill=webapp-testing": [],
+    "github.com/anthropics/skills?skill=xlsx": [
+     1120
+    ],
+    "github.com/anthropics/skills?skill=mcp-builder": [
+     1668,
+     1390
+    ],
+    "github.com/anthropics/skills?skill=canvas-design": [],
+    "github.com/anthropics/skills?skill=web-artifacts-builder": [
+     1893,
+     1362,
+     141
+    ],
+    "github.com/anthropics/skills?skill=brand-guidelines": [],
+    "github.com/anthropics/skills?skill=theme-factory": [],
+    "github.com/anthropics/skills?skill=doc-coauthoring": [],
+    "github.com/anthropics/skills?skill=algorithmic-art": [],
+    "github.com/anthropics/skills?skill=internal-comms": [],
+    "github.com/anthropics/skills?skill=slack-gif-creator": [
+     1886
+    ],
+    "github.com/anthropics/skills?skill=claude-api": [],
+    "github.com/anthropics/skills?skill=discernment-nudge": [],
+    "github.com/anthropics/skills?skill=academy-guide": []
+   }
+  },
+  {
+   "repo": "apify/apify-mcp-server",
+   "status": "read",
+   "total": 63,
+   "open": 23,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 1830,
+     "state": "open",
+     "opened": "2026-11-05"
+    },
+    {
+     "number": 1829,
+     "state": "open",
+     "opened": "2026-11-05"
+    },
+    {
+     "number": 1828,
+     "state": "open",
+     "opened": "2026-11-05"
+    },
+    {
+     "number": 1826,
+     "state": "closed",
+     "opened": "2026-11-05"
+    },
+    {
+     "number": 1817,
+     "state": "open",
+     "opened": "2026-11-04"
+    },
+    {
+     "number": 1816,
+     "state": "closed",
+     "opened": "2026-11-04"
+    },
+    {
+     "number": 1792,
+     "state": "open",
+     "opened": "2026-11-03"
+    },
+    {
+     "number": 1791,
+     "state": "open",
+     "opened": "2026-11-02"
+    },
+    {
+     "number": 1768,
+     "state": "open",
+     "opened": "2026-10-30"
+    },
+    {
+     "number": 1731,
+     "state": "closed",
+     "opened": "2026-10-27"
+    },
+    {
+     "number": 1730,
+     "state": "closed",
+     "opened": "2026-10-27"
+    },
+    {
+     "number": 1727,
+     "state": "open",
+     "opened": "2026-10-27"
+    },
+    {
+     "number": 1698,
+     "state": "open",
+     "opened": "2026-10-26"
+    },
+    {
+     "number": 1692,
+     "state": "closed",
+     "opened": "2026-10-25"
+    },
+    {
+     "number": 1668,
+     "state": "open",
+     "opened": "2026-10-21"
+    },
+    {
+     "number": 1627,
+     "state": "open",
+     "opened": "2026-10-19"
+    },
+    {
+     "number": 1608,
+     "state": "closed",
+     "opened": "2026-10-16"
+    },
+    {
+     "number": 1603,
+     "state": "open",
+     "opened": "2026-10-15"
+    },
+    {
+     "number": 1597,
+     "state": "closed",
+     "opened": "2026-10-15"
+    },
+    {
+     "number": 1594,
+     "state": "open",
+     "opened": "2026-10-15"
+    },
+    {
+     "number": 1592,
+     "state": "open",
+     "opened": "2026-10-15"
+    },
+    {
+     "number": 1584,
+     "state": "open",
+     "opened": "2026-10-15"
+    },
+    {
+     "number": 1573,
+     "state": "open",
+     "opened": "2026-10-14"
+    },
+    {
+     "number": 1572,
+     "state": "open",
+     "opened": "2026-10-14"
+    },
+    {
+     "number": 1561,
+     "state": "closed",
+     "opened": "2026-10-13"
+    },
+    {
+     "number": 1551,
+     "state": "open",
+     "opened": "2026-10-13"
+    },
+    {
+     "number": 1526,
+     "state": "open",
+     "opened": "2026-10-12"
+    },
+    {
+     "number": 1510,
+     "state": "closed",
+     "opened": "2026-10-09"
+    },
+    {
+     "number": 1477,
+     "state": "open",
+     "opened": "2026-10-05"
+    },
+    {
+     "number": 1345,
+     "state": "closed",
+     "opened": "2026-09-07"
+    },
+    {
+     "number": 1290,
+     "state": "open",
+     "opened": "2026-08-20"
+    },
+    {
+     "number": 1249,
+     "state": "closed",
+     "opened": "2026-08-13"
+    },
+    {
+     "number": 1214,
+     "state": "closed",
+     "opened": "2026-08-07"
+    },
+    {
+     "number": 1193,
+     "state": "closed",
+     "opened": "2026-07-31"
+    },
+    {
+     "number": 1115,
+     "state": "closed",
+     "opened": "2026-07-20"
+    },
+    {
+     "number": 1104,
+     "state": "closed",
+     "opened": "2026-07-17"
+    },
+    {
+     "number": 1062,
+     "state": "closed",
+     "opened": "2026-07-08"
+    },
+    {
+     "number": 1052,
+     "state": "open",
+     "opened": "2026-07-02"
+    },
+    {
+     "number": 1011,
+     "state": "closed",
+     "opened": "2026-06-22"
+    },
+    {
+     "number": 994,
+     "state": "closed",
+     "opened": "2026-06-13"
+    },
+    {
+     "number": 887,
+     "state": "closed",
+     "opened": "2026-05-20"
+    },
+    {
+     "number": 844,
+     "state": "open",
+     "opened": "2026-05-14"
+    },
+    {
+     "number": 750,
+     "state": "closed",
+     "opened": "2026-04-26"
+    },
+    {
+     "number": 727,
+     "state": "closed",
+     "opened": "2026-04-20"
+    },
+    {
+     "number": 685,
+     "state": "closed",
+     "opened": "2026-04-16"
+    },
+    {
+     "number": 623,
+     "state": "closed",
+     "opened": "2026-03-30"
+    },
+    {
+     "number": 539,
+     "state": "closed",
+     "opened": "2026-03-06"
+    },
+    {
+     "number": 516,
+     "state": "closed",
+     "opened": "2026-03-02"
+    },
+    {
+     "number": 483,
+     "state": "closed",
+     "opened": "2026-02-21"
+    },
+    {
+     "number": 475,
+     "state": "closed",
+     "opened": "2026-02-20"
+    },
+    {
+     "number": 397,
+     "state": "closed",
+     "opened": "2026-01-21"
+    },
+    {
+     "number": 374,
+     "state": "closed",
+     "opened": "2025-12-22"
+    },
+    {
+     "number": 363,
+     "state": "closed",
+     "opened": "2025-12-15"
+    },
+    {
+     "number": 344,
+     "state": "closed",
+     "opened": "2025-12-01"
+    },
+    {
+     "number": 337,
+     "state": "closed",
+     "opened": "2025-11-19"
+    },
+    {
+     "number": 330,
+     "state": "closed",
+     "opened": "2025-11-10"
+    },
+    {
+     "number": 295,
+     "state": "closed",
+     "opened": "2025-09-29"
+    },
+    {
+     "number": 284,
+     "state": "closed",
+     "opened": "2025-09-23"
+    },
+    {
+     "number": 264,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 263,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 146,
+     "state": "closed",
+     "opened": "2025-06-16"
+    },
+    {
+     "number": 66,
+     "state": "closed",
+     "opened": "2025-04-10"
+    },
+    {
+     "number": 40,
+     "state": "closed",
+     "opened": "2025-03-13"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "atlassian/atlassian-mcp-server",
+   "status": "read",
+   "total": 32,
+   "open": 11,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 303,
+     "state": "open",
+     "opened": "2026-11-07"
+    },
+    {
+     "number": 294,
+     "state": "open",
+     "opened": "2026-11-01"
+    },
+    {
+     "number": 285,
+     "state": "open",
+     "opened": "2026-10-25"
+    },
+    {
+     "number": 283,
+     "state": "open",
+     "opened": "2026-10-22"
+    },
+    {
+     "number": 258,
+     "state": "open",
+     "opened": "2026-09-26"
+    },
+    {
+     "number": 257,
+     "state": "closed",
+     "opened": "2026-09-26"
+    },
+    {
+     "number": 246,
+     "state": "open",
+     "opened": "2026-09-18"
+    },
+    {
+     "number": 218,
+     "state": "open",
+     "opened": "2026-08-06"
+    },
+    {
+     "number": 193,
+     "state": "open",
+     "opened": "2026-06-30"
+    },
+    {
+     "number": 177,
+     "state": "open",
+     "opened": "2026-06-15"
+    },
+    {
+     "number": 156,
+     "state": "closed",
+     "opened": "2026-04-27"
+    },
+    {
+     "number": 137,
+     "state": "closed",
+     "opened": "2026-04-02"
+    },
+    {
+     "number": 118,
+     "state": "closed",
+     "opened": "2026-03-20"
+    },
+    {
+     "number": 116,
+     "state": "closed",
+     "opened": "2026-03-20"
+    },
+    {
+     "number": 111,
+     "state": "closed",
+     "opened": "2026-03-17"
+    },
+    {
+     "number": 108,
+     "state": "open",
+     "opened": "2026-03-16"
+    },
+    {
+     "number": 104,
+     "state": "closed",
+     "opened": "2026-03-11"
+    },
+    {
+     "number": 101,
+     "state": "closed",
+     "opened": "2026-03-10"
+    },
+    {
+     "number": 97,
+     "state": "closed",
+     "opened": "2026-03-08"
+    },
+    {
+     "number": 95,
+     "state": "closed",
+     "opened": "2026-03-07"
+    },
+    {
+     "number": 86,
+     "state": "closed",
+     "opened": "2026-02-27"
+    },
+    {
+     "number": 85,
+     "state": "open",
+     "opened": "2026-02-26"
+    },
+    {
+     "number": 74,
+     "state": "closed",
+     "opened": "2026-02-23"
+    },
+    {
+     "number": 57,
+     "state": "closed",
+     "opened": "2026-02-09"
+    },
+    {
+     "number": 56,
+     "state": "closed",
+     "opened": "2026-02-09"
+    },
+    {
+     "number": 55,
+     "state": "closed",
+     "opened": "2026-02-06"
+    },
+    {
+     "number": 46,
+     "state": "closed",
+     "opened": "2026-01-26"
+    },
+    {
+     "number": 42,
+     "state": "closed",
+     "opened": "2026-01-20"
+    },
+    {
+     "number": 41,
+     "state": "closed",
+     "opened": "2026-01-19"
+    },
+    {
+     "number": 31,
+     "state": "closed",
+     "opened": "2026-01-12"
+    },
+    {
+     "number": 28,
+     "state": "closed",
+     "opened": "2025-12-30"
+    },
+    {
+     "number": 10,
+     "state": "closed",
+     "opened": "2025-10-22"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "bankai-skills/superpowers",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {
+    "github.com/bankai-skills/superpowers?skill=ai-image-generation": [],
+    "github.com/bankai-skills/superpowers?skill=ai-avatar-video": [],
+    "github.com/bankai-skills/superpowers?skill=ai-video-generation": [],
+    "github.com/bankai-skills/superpowers?skill=twitter-automation": [],
+    "github.com/bankai-skills/superpowers?skill=agent-browser": [],
+    "github.com/bankai-skills/superpowers?skill=python-executor": [],
+    "github.com/bankai-skills/superpowers?skill=web-search": [],
+    "github.com/bankai-skills/superpowers?skill=infsh-cli": [],
+    "github.com/bankai-skills/superpowers?skill=agent-tools": [],
+    "github.com/bankai-skills/superpowers?skill=remotion-render": [],
+    "github.com/bankai-skills/superpowers?skill=app-store-screenshots": [],
+    "github.com/bankai-skills/superpowers?skill=video-ad-specs": [],
+    "github.com/bankai-skills/superpowers?skill=product-hunt-launch": [],
+    "github.com/bankai-skills/superpowers?skill=product-photography": [],
+    "github.com/bankai-skills/superpowers?skill=competitor-teardown": [],
+    "github.com/bankai-skills/superpowers?skill=character-design-sheet": [],
+    "github.com/bankai-skills/superpowers?skill=landing-page-design": [],
+    "github.com/bankai-skills/superpowers?skill=storyboard-creation": [],
+    "github.com/bankai-skills/superpowers?skill=youtube-thumbnail-design": [],
+    "github.com/bankai-skills/superpowers?skill=image-to-video": [],
+    "github.com/bankai-skills/superpowers?skill=happyhorse": [],
+    "github.com/bankai-skills/superpowers?skill=p-video-avatar": [],
+    "github.com/bankai-skills/superpowers?skill=gpt-image": [],
+    "github.com/bankai-skills/superpowers?skill=p-image": [],
+    "github.com/bankai-skills/superpowers?skill=p-video": [],
+    "github.com/bankai-skills/superpowers?skill=seedance": []
+   }
+  },
+  {
+   "repo": "browserbase/mcp-server-browserbase",
+   "status": "read",
+   "total": 7,
+   "open": 3,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 149,
+     "state": "open",
+     "opened": "2026-02-18"
+    },
+    {
+     "number": 77,
+     "state": "closed",
+     "opened": "2025-05-19"
+    },
+    {
+     "number": 56,
+     "state": "open",
+     "opened": "2025-05-03"
+    },
+    {
+     "number": 44,
+     "state": "closed",
+     "opened": "2025-04-16"
+    },
+    {
+     "number": 41,
+     "state": "open",
+     "opened": "2025-04-02"
+    },
+    {
+     "number": 34,
+     "state": "closed",
+     "opened": "2025-03-19"
+    },
+    {
+     "number": 16,
+     "state": "closed",
+     "opened": "2025-02-07"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "cloudflare/mcp-server-cloudflare",
+   "status": "read",
+   "total": 20,
+   "open": 3,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 470,
+     "state": "open",
+     "opened": "2026-09-05"
+    },
+    {
+     "number": 457,
+     "state": "closed",
+     "opened": "2026-08-20"
+    },
+    {
+     "number": 456,
+     "state": "open",
+     "opened": "2026-08-19"
+    },
+    {
+     "number": 440,
+     "state": "closed",
+     "opened": "2026-08-03"
+    },
+    {
+     "number": 435,
+     "state": "closed",
+     "opened": "2026-07-31"
+    },
+    {
+     "number": 428,
+     "state": "closed",
+     "opened": "2026-07-29"
+    },
+    {
+     "number": 402,
+     "state": "closed",
+     "opened": "2026-06-19"
+    },
+    {
+     "number": 377,
+     "state": "open",
+     "opened": "2026-05-25"
+    },
+    {
+     "number": 352,
+     "state": "closed",
+     "opened": "2026-04-17"
+    },
+    {
+     "number": 305,
+     "state": "closed",
+     "opened": "2026-03-05"
+    },
+    {
+     "number": 247,
+     "state": "closed",
+     "opened": "2025-11-01"
+    },
+    {
+     "number": 232,
+     "state": "closed",
+     "opened": "2025-10-07"
+    },
+    {
+     "number": 220,
+     "state": "closed",
+     "opened": "2025-08-20"
+    },
+    {
+     "number": 210,
+     "state": "closed",
+     "opened": "2025-07-28"
+    },
+    {
+     "number": 156,
+     "state": "closed",
+     "opened": "2025-05-12"
+    },
+    {
+     "number": 134,
+     "state": "closed",
+     "opened": "2025-05-01"
+    },
+    {
+     "number": 82,
+     "state": "closed",
+     "opened": "2025-04-27"
+    },
+    {
+     "number": 24,
+     "state": "closed",
+     "opened": "2025-03-25"
+    },
+    {
+     "number": 15,
+     "state": "closed",
+     "opened": "2025-03-06"
+    },
+    {
+     "number": 12,
+     "state": "closed",
+     "opened": "2025-02-23"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "cloudflare/skills",
+   "status": "read",
+   "total": 3,
+   "open": 3,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 279,
+     "state": "open",
+     "opened": "2026-11-09"
+    },
+    {
+     "number": 277,
+     "state": "open",
+     "opened": "2026-11-08"
+    },
+    {
+     "number": 86,
+     "state": "open",
+     "opened": "2026-07-23"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/cloudflare/skills?skill=cloudflare": [
+     277
+    ],
+    "github.com/cloudflare/skills?skill=wrangler": [],
+    "github.com/cloudflare/skills?skill=workers-best-practices": [],
+    "github.com/cloudflare/skills?skill=durable-objects": [],
+    "github.com/cloudflare/skills?skill=web-perf": [],
+    "github.com/cloudflare/skills?skill=agents-sdk": [
+     279
+    ],
+    "github.com/cloudflare/skills?skill=cloudflare-email-service": [
+     277
+    ],
+    "github.com/cloudflare/skills?skill=cloudflare-one": [],
+    "github.com/cloudflare/skills?skill=turnstile-spin": [
+     86
+    ],
+    "github.com/cloudflare/skills?skill=cloudflare-one-migrations": [],
+    "github.com/cloudflare/skills?skill=sandbox-stable": [],
+    "github.com/cloudflare/skills?skill=sandbox-next": [],
+    "github.com/cloudflare/skills?skill=sandbox-migrate-to-next": [],
+    "github.com/cloudflare/skills?skill=nextjs-on-cloudflare": [],
+    "github.com/cloudflare/skills?skill=k2": [],
+    "github.com/cloudflare/skills?skill=basin": [],
+    "github.com/cloudflare/skills?skill=workers-profiling": [],
+    "github.com/cloudflare/skills?skill=cf-cli": [],
+    "github.com/cloudflare/skills?skill=gateway-workers": []
+   }
+  },
+  {
+   "repo": "coreyhaines31/marketingskills",
+   "status": "read",
+   "total": 9,
+   "open": 2,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 948,
+     "state": "open",
+     "opened": "2026-11-09"
+    },
+    {
+     "number": 931,
+     "state": "open",
+     "opened": "2026-11-03"
+    },
+    {
+     "number": 924,
+     "state": "closed",
+     "opened": "2026-10-30"
+    },
+    {
+     "number": 594,
+     "state": "closed",
+     "opened": "2026-09-22"
+    },
+    {
+     "number": 592,
+     "state": "closed",
+     "opened": "2026-09-22"
+    },
+    {
+     "number": 277,
+     "state": "closed",
+     "opened": "2026-04-26"
+    },
+    {
+     "number": 270,
+     "state": "closed",
+     "opened": "2026-04-24"
+    },
+    {
+     "number": 243,
+     "state": "closed",
+     "opened": "2026-04-17"
+    },
+    {
+     "number": 95,
+     "state": "closed",
+     "opened": "2026-03-07"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/coreyhaines31/marketingskills?skill=seo-audit": [],
+    "github.com/coreyhaines31/marketingskills?skill=copywriting": [],
+    "github.com/coreyhaines31/marketingskills?skill=marketing-psychology": [],
+    "github.com/coreyhaines31/marketingskills?skill=content-strategy": [],
+    "github.com/coreyhaines31/marketingskills?skill=ai-seo": [],
+    "github.com/coreyhaines31/marketingskills?skill=programmatic-seo": [],
+    "github.com/coreyhaines31/marketingskills?skill=copy-editing": [],
+    "github.com/coreyhaines31/marketingskills?skill=marketing-ideas": [],
+    "github.com/coreyhaines31/marketingskills?skill=ad-creative": [
+     592
+    ],
+    "github.com/coreyhaines31/marketingskills?skill=cold-email": [],
+    "github.com/coreyhaines31/marketingskills?skill=site-architecture": [],
+    "github.com/coreyhaines31/marketingskills?skill=churn-prevention": [],
+    "github.com/coreyhaines31/marketingskills?skill=sales-enablement": [],
+    "github.com/coreyhaines31/marketingskills?skill=customer-research": [],
+    "github.com/coreyhaines31/marketingskills?skill=revops": [],
+    "github.com/coreyhaines31/marketingskills?skill=lead-magnets": [],
+    "github.com/coreyhaines31/marketingskills?skill=competitor-profiling": [],
+    "github.com/coreyhaines31/marketingskills?skill=cro": [],
+    "github.com/coreyhaines31/marketingskills?skill=community-marketing": [],
+    "github.com/coreyhaines31/marketingskills?skill=image": [
+     594
+    ],
+    "github.com/coreyhaines31/marketingskills?skill=video": [],
+    "github.com/coreyhaines31/marketingskills?skill=directory-submissions": [],
+    "github.com/coreyhaines31/marketingskills?skill=social": [],
+    "github.com/coreyhaines31/marketingskills?skill=product-marketing": [],
+    "github.com/coreyhaines31/marketingskills?skill=analytics": [],
+    "github.com/coreyhaines31/marketingskills?skill=ads": [
+     948
+    ],
+    "github.com/coreyhaines31/marketingskills?skill=co-marketing": [],
+    "github.com/coreyhaines31/marketingskills?skill=pricing": [],
+    "github.com/coreyhaines31/marketingskills?skill=competitors": [],
+    "github.com/coreyhaines31/marketingskills?skill=schema": [
+     270
+    ],
+    "github.com/coreyhaines31/marketingskills?skill=emails": [],
+    "github.com/coreyhaines31/marketingskills?skill=launch": [
+     948
+    ],
+    "github.com/coreyhaines31/marketingskills?skill=ab-testing": [],
+    "github.com/coreyhaines31/marketingskills?skill=aso": [],
+    "github.com/coreyhaines31/marketingskills?skill=free-tools": [],
+    "github.com/coreyhaines31/marketingskills?skill=onboarding": [],
+    "github.com/coreyhaines31/marketingskills?skill=referrals": [
+     948
+    ],
+    "github.com/coreyhaines31/marketingskills?skill=signup": [],
+    "github.com/coreyhaines31/marketingskills?skill=paywalls": [],
+    "github.com/coreyhaines31/marketingskills?skill=popups": [],
+    "github.com/coreyhaines31/marketingskills?skill=marketing-plan": [
+     948
+    ],
+    "github.com/coreyhaines31/marketingskills?skill=prospecting": [],
+    "github.com/coreyhaines31/marketingskills?skill=sms": [],
+    "github.com/coreyhaines31/marketingskills?skill=offers": [],
+    "github.com/coreyhaines31/marketingskills?skill=public-relations": [],
+    "github.com/coreyhaines31/marketingskills?skill=marketing-loops": [],
+    "github.com/coreyhaines31/marketingskills?skill=marketing-council": [],
+    "github.com/coreyhaines31/marketingskills?skill=attribution": [],
+    "github.com/coreyhaines31/marketingskills?skill=influencer-marketing": [],
+    "github.com/coreyhaines31/marketingskills?skill=events": [],
+    "github.com/coreyhaines31/marketingskills?skill=conversion-tracking": [
+     924
+    ],
+    "github.com/coreyhaines31/marketingskills?skill=link-building": []
+   }
+  },
+  {
+   "repo": "designed-by-ai/skills",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "emilkowalski/skills",
+   "status": "read",
+   "total": 1,
+   "open": 0,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 26,
+     "state": "closed",
+     "opened": "2026-08-14"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/emilkowalski/skills?skill=emil-design-eng": [
+     26
+    ],
+    "github.com/emilkowalski/skills?skill=review-animations": [],
+    "github.com/emilkowalski/skills?skill=apple-design": [],
+    "github.com/emilkowalski/skills?skill=animation-vocabulary": [],
+    "github.com/emilkowalski/skills?skill=improve-animations": [],
+    "github.com/emilkowalski/skills?skill=find-animation-opportunities": [],
+    "github.com/emilkowalski/skills?skill=pick-ui-library": [],
+    "github.com/emilkowalski/skills?skill=prototype": [],
+    "github.com/emilkowalski/skills?skill=animate": [],
+    "github.com/emilkowalski/skills?skill=ask-sonner": [
+     26
+    ],
+    "github.com/emilkowalski/skills?skill=animate-expo": [],
+    "github.com/emilkowalski/skills?skill=write-swift": [],
+    "github.com/emilkowalski/skills?skill=mobile-native": [],
+    "github.com/emilkowalski/skills?skill=break-ui": [],
+    "github.com/emilkowalski/skills?skill=animation-performance": [],
+    "github.com/emilkowalski/skills?skill=remove-animations": []
+   }
+  },
+  {
+   "repo": "figma/mcp-server-guide",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "firebase/agent-skills",
+   "status": "read",
+   "total": 2,
+   "open": 2,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 253,
+     "state": "open",
+     "opened": "2026-11-05"
+    },
+    {
+     "number": 148,
+     "state": "open",
+     "opened": "2026-07-09"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/firebase/agent-skills?skill=firebase-basics": [
+     148
+    ],
+    "github.com/firebase/agent-skills?skill=firebase-auth-basics": [],
+    "github.com/firebase/agent-skills?skill=firebase-hosting-basics": [],
+    "github.com/firebase/agent-skills?skill=firebase-app-hosting-basics": [],
+    "github.com/firebase/agent-skills?skill=firebase-security-rules-auditor": [],
+    "github.com/firebase/agent-skills?skill=firebase-ai-logic-basics": [],
+    "github.com/firebase/agent-skills?skill=firebase-firestore": [],
+    "github.com/firebase/agent-skills?skill=firebase-crashlytics": [],
+    "github.com/firebase/agent-skills?skill=xcode-project-setup": [],
+    "github.com/firebase/agent-skills?skill=firebase-remote-config-basics": [],
+    "github.com/firebase/agent-skills?skill=extension-to-functions-codebase": [],
+    "github.com/firebase/agent-skills?skill=firestore-rules-creation": []
+   }
+  },
+  {
+   "repo": "flowkit-labs/skills",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "gencraft-labs/skills",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {
+    "github.com/gencraft-labs/skills?skill=ai-music": [],
+    "github.com/gencraft-labs/skills?skill=video-edit": [],
+    "github.com/gencraft-labs/skills?skill=ai-video-generation": [],
+    "github.com/gencraft-labs/skills?skill=ai-image-generation": [],
+    "github.com/gencraft-labs/skills?skill=image-to-video": []
+   }
+  },
+  {
+   "repo": "google/agents-cli",
+   "status": "read",
+   "total": 13,
+   "open": 1,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 81,
+     "state": "closed",
+     "opened": "2026-08-16"
+    },
+    {
+     "number": 80,
+     "state": "closed",
+     "opened": "2026-08-14"
+    },
+    {
+     "number": 73,
+     "state": "closed",
+     "opened": "2026-08-13"
+    },
+    {
+     "number": 66,
+     "state": "closed",
+     "opened": "2026-08-13"
+    },
+    {
+     "number": 42,
+     "state": "closed",
+     "opened": "2026-06-22"
+    },
+    {
+     "number": 40,
+     "state": "closed",
+     "opened": "2026-06-21"
+    },
+    {
+     "number": 36,
+     "state": "closed",
+     "opened": "2026-06-17"
+    },
+    {
+     "number": 35,
+     "state": "closed",
+     "opened": "2026-06-17"
+    },
+    {
+     "number": 34,
+     "state": "closed",
+     "opened": "2026-06-17"
+    },
+    {
+     "number": 27,
+     "state": "closed",
+     "opened": "2026-06-02"
+    },
+    {
+     "number": 17,
+     "state": "closed",
+     "opened": "2026-05-17"
+    },
+    {
+     "number": 15,
+     "state": "closed",
+     "opened": "2026-05-10"
+    },
+    {
+     "number": 2,
+     "state": "open",
+     "opened": "2026-04-22"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/google/agents-cli?skill=google-agents-cli-adk-code": [],
+    "github.com/google/agents-cli?skill=google-agents-cli-deploy": [],
+    "github.com/google/agents-cli?skill=google-agents-cli-publish": [],
+    "github.com/google/agents-cli?skill=google-agents-cli-workflow": [],
+    "github.com/google/agents-cli?skill=google-agents-cli-eval": [],
+    "github.com/google/agents-cli?skill=google-agents-cli-scaffold": [],
+    "github.com/google/agents-cli?skill=google-agents-cli-observability": []
+   }
+  },
+  {
+   "repo": "grafana/mcp-grafana",
+   "status": "read",
+   "total": 42,
+   "open": 1,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 1486,
+     "state": "closed",
+     "opened": "2026-11-04"
+    },
+    {
+     "number": 1344,
+     "state": "closed",
+     "opened": "2026-10-16"
+    },
+    {
+     "number": 1322,
+     "state": "closed",
+     "opened": "2026-10-09"
+    },
+    {
+     "number": 1288,
+     "state": "closed",
+     "opened": "2026-10-04"
+    },
+    {
+     "number": 1286,
+     "state": "closed",
+     "opened": "2026-10-02"
+    },
+    {
+     "number": 1250,
+     "state": "closed",
+     "opened": "2026-09-26"
+    },
+    {
+     "number": 1237,
+     "state": "closed",
+     "opened": "2026-09-24"
+    },
+    {
+     "number": 1201,
+     "state": "closed",
+     "opened": "2026-09-17"
+    },
+    {
+     "number": 1164,
+     "state": "closed",
+     "opened": "2026-09-10"
+    },
+    {
+     "number": 1070,
+     "state": "closed",
+     "opened": "2026-08-17"
+    },
+    {
+     "number": 992,
+     "state": "open",
+     "opened": "2026-07-13"
+    },
+    {
+     "number": 988,
+     "state": "closed",
+     "opened": "2026-07-08"
+    },
+    {
+     "number": 833,
+     "state": "closed",
+     "opened": "2026-05-05"
+    },
+    {
+     "number": 830,
+     "state": "closed",
+     "opened": "2026-05-02"
+    },
+    {
+     "number": 802,
+     "state": "closed",
+     "opened": "2026-04-27"
+    },
+    {
+     "number": 792,
+     "state": "closed",
+     "opened": "2026-04-25"
+    },
+    {
+     "number": 766,
+     "state": "closed",
+     "opened": "2026-04-21"
+    },
+    {
+     "number": 760,
+     "state": "closed",
+     "opened": "2026-04-20"
+    },
+    {
+     "number": 749,
+     "state": "closed",
+     "opened": "2026-04-14"
+    },
+    {
+     "number": 745,
+     "state": "closed",
+     "opened": "2026-04-14"
+    },
+    {
+     "number": 660,
+     "state": "closed",
+     "opened": "2026-03-16"
+    },
+    {
+     "number": 635,
+     "state": "closed",
+     "opened": "2026-03-08"
+    },
+    {
+     "number": 632,
+     "state": "closed",
+     "opened": "2026-03-06"
+    },
+    {
+     "number": 577,
+     "state": "closed",
+     "opened": "2026-02-14"
+    },
+    {
+     "number": 504,
+     "state": "closed",
+     "opened": "2026-01-23"
+    },
+    {
+     "number": 478,
+     "state": "closed",
+     "opened": "2026-01-14"
+    },
+    {
+     "number": 467,
+     "state": "closed",
+     "opened": "2026-01-14"
+    },
+    {
+     "number": 398,
+     "state": "closed",
+     "opened": "2025-11-17"
+    },
+    {
+     "number": 285,
+     "state": "closed",
+     "opened": "2025-09-11"
+    },
+    {
+     "number": 276,
+     "state": "closed",
+     "opened": "2025-09-04"
+    },
+    {
+     "number": 252,
+     "state": "closed",
+     "opened": "2025-08-18"
+    },
+    {
+     "number": 245,
+     "state": "closed",
+     "opened": "2025-08-11"
+    },
+    {
+     "number": 211,
+     "state": "closed",
+     "opened": "2025-07-21"
+    },
+    {
+     "number": 200,
+     "state": "closed",
+     "opened": "2025-07-06"
+    },
+    {
+     "number": 197,
+     "state": "closed",
+     "opened": "2025-07-01"
+    },
+    {
+     "number": 147,
+     "state": "closed",
+     "opened": "2025-05-23"
+    },
+    {
+     "number": 123,
+     "state": "closed",
+     "opened": "2025-05-14"
+    },
+    {
+     "number": 103,
+     "state": "closed",
+     "opened": "2025-04-21"
+    },
+    {
+     "number": 86,
+     "state": "closed",
+     "opened": "2025-04-07"
+    },
+    {
+     "number": 63,
+     "state": "closed",
+     "opened": "2025-03-26"
+    },
+    {
+     "number": 47,
+     "state": "closed",
+     "opened": "2025-03-18"
+    },
+    {
+     "number": 45,
+     "state": "closed",
+     "opened": "2025-03-14"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "hashicorp/terraform-mcp-server",
+   "status": "read",
+   "total": 6,
+   "open": 1,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 629,
+     "state": "open",
+     "opened": "2026-10-31"
+    },
+    {
+     "number": 583,
+     "state": "closed",
+     "opened": "2026-10-21"
+    },
+    {
+     "number": 321,
+     "state": "closed",
+     "opened": "2026-04-03"
+    },
+    {
+     "number": 251,
+     "state": "closed",
+     "opened": "2026-01-08"
+    },
+    {
+     "number": 182,
+     "state": "closed",
+     "opened": "2025-09-25"
+    },
+    {
+     "number": 23,
+     "state": "closed",
+     "opened": "2025-05-03"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "heygen-com/hyperframes",
+   "status": "read",
+   "total": 71,
+   "open": 10,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 7451,
+     "state": "open",
+     "opened": "2026-11-09"
+    },
+    {
+     "number": 7429,
+     "state": "open",
+     "opened": "2026-11-09"
+    },
+    {
+     "number": 7417,
+     "state": "open",
+     "opened": "2026-11-08"
+    },
+    {
+     "number": 7408,
+     "state": "open",
+     "opened": "2026-11-08"
+    },
+    {
+     "number": 6995,
+     "state": "closed",
+     "opened": "2026-11-02"
+    },
+    {
+     "number": 6830,
+     "state": "closed",
+     "opened": "2026-10-30"
+    },
+    {
+     "number": 6606,
+     "state": "open",
+     "opened": "2026-10-28"
+    },
+    {
+     "number": 6584,
+     "state": "open",
+     "opened": "2026-10-27"
+    },
+    {
+     "number": 6578,
+     "state": "closed",
+     "opened": "2026-10-27"
+    },
+    {
+     "number": 6481,
+     "state": "open",
+     "opened": "2026-10-26"
+    },
+    {
+     "number": 6374,
+     "state": "closed",
+     "opened": "2026-10-26"
+    },
+    {
+     "number": 6334,
+     "state": "closed",
+     "opened": "2026-10-25"
+    },
+    {
+     "number": 6235,
+     "state": "closed",
+     "opened": "2026-10-24"
+    },
+    {
+     "number": 6084,
+     "state": "closed",
+     "opened": "2026-10-22"
+    },
+    {
+     "number": 6027,
+     "state": "closed",
+     "opened": "2026-10-21"
+    },
+    {
+     "number": 5863,
+     "state": "closed",
+     "opened": "2026-10-18"
+    },
+    {
+     "number": 5775,
+     "state": "closed",
+     "opened": "2026-10-17"
+    },
+    {
+     "number": 5717,
+     "state": "closed",
+     "opened": "2026-10-16"
+    },
+    {
+     "number": 5685,
+     "state": "closed",
+     "opened": "2026-10-16"
+    },
+    {
+     "number": 5624,
+     "state": "closed",
+     "opened": "2026-10-14"
+    },
+    {
+     "number": 5564,
+     "state": "open",
+     "opened": "2026-10-13"
+    },
+    {
+     "number": 5429,
+     "state": "closed",
+     "opened": "2026-10-10"
+    },
+    {
+     "number": 5424,
+     "state": "closed",
+     "opened": "2026-10-10"
+    },
+    {
+     "number": 5392,
+     "state": "closed",
+     "opened": "2026-10-10"
+    },
+    {
+     "number": 5378,
+     "state": "closed",
+     "opened": "2026-10-09"
+    },
+    {
+     "number": 5333,
+     "state": "closed",
+     "opened": "2026-10-09"
+    },
+    {
+     "number": 5260,
+     "state": "closed",
+     "opened": "2026-10-08"
+    },
+    {
+     "number": 5259,
+     "state": "closed",
+     "opened": "2026-10-08"
+    },
+    {
+     "number": 5185,
+     "state": "closed",
+     "opened": "2026-10-07"
+    },
+    {
+     "number": 5097,
+     "state": "closed",
+     "opened": "2026-10-06"
+    },
+    {
+     "number": 5074,
+     "state": "closed",
+     "opened": "2026-10-05"
+    },
+    {
+     "number": 5069,
+     "state": "closed",
+     "opened": "2026-10-05"
+    },
+    {
+     "number": 5025,
+     "state": "open",
+     "opened": "2026-10-04"
+    },
+    {
+     "number": 4294,
+     "state": "closed",
+     "opened": "2026-09-22"
+    },
+    {
+     "number": 4058,
+     "state": "open",
+     "opened": "2026-09-18"
+    },
+    {
+     "number": 4036,
+     "state": "closed",
+     "opened": "2026-09-17"
+    },
+    {
+     "number": 3957,
+     "state": "closed",
+     "opened": "2026-09-15"
+    },
+    {
+     "number": 3629,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3628,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3508,
+     "state": "closed",
+     "opened": "2026-08-26"
+    },
+    {
+     "number": 3501,
+     "state": "closed",
+     "opened": "2026-08-26"
+    },
+    {
+     "number": 3423,
+     "state": "closed",
+     "opened": "2026-08-22"
+    },
+    {
+     "number": 3403,
+     "state": "closed",
+     "opened": "2026-08-21"
+    },
+    {
+     "number": 3370,
+     "state": "closed",
+     "opened": "2026-08-20"
+    },
+    {
+     "number": 3060,
+     "state": "closed",
+     "opened": "2026-08-06"
+    },
+    {
+     "number": 3053,
+     "state": "closed",
+     "opened": "2026-08-05"
+    },
+    {
+     "number": 2965,
+     "state": "closed",
+     "opened": "2026-08-03"
+    },
+    {
+     "number": 2601,
+     "state": "closed",
+     "opened": "2026-07-17"
+    },
+    {
+     "number": 2139,
+     "state": "closed",
+     "opened": "2026-07-10"
+    },
+    {
+     "number": 2137,
+     "state": "closed",
+     "opened": "2026-07-10"
+    },
+    {
+     "number": 2039,
+     "state": "closed",
+     "opened": "2026-07-07"
+    },
+    {
+     "number": 1932,
+     "state": "closed",
+     "opened": "2026-07-04"
+    },
+    {
+     "number": 1786,
+     "state": "closed",
+     "opened": "2026-06-29"
+    },
+    {
+     "number": 1716,
+     "state": "closed",
+     "opened": "2026-06-25"
+    },
+    {
+     "number": 1687,
+     "state": "closed",
+     "opened": "2026-06-24"
+    },
+    {
+     "number": 1654,
+     "state": "closed",
+     "opened": "2026-06-22"
+    },
+    {
+     "number": 1625,
+     "state": "closed",
+     "opened": "2026-06-21"
+    },
+    {
+     "number": 1535,
+     "state": "closed",
+     "opened": "2026-06-17"
+    },
+    {
+     "number": 1534,
+     "state": "closed",
+     "opened": "2026-06-17"
+    },
+    {
+     "number": 1493,
+     "state": "closed",
+     "opened": "2026-06-16"
+    },
+    {
+     "number": 1080,
+     "state": "closed",
+     "opened": "2026-05-26"
+    },
+    {
+     "number": 1072,
+     "state": "closed",
+     "opened": "2026-05-25"
+    },
+    {
+     "number": 902,
+     "state": "closed",
+     "opened": "2026-05-16"
+    },
+    {
+     "number": 646,
+     "state": "closed",
+     "opened": "2026-05-06"
+    },
+    {
+     "number": 566,
+     "state": "closed",
+     "opened": "2026-04-29"
+    },
+    {
+     "number": 408,
+     "state": "closed",
+     "opened": "2026-04-22"
+    },
+    {
+     "number": 407,
+     "state": "closed",
+     "opened": "2026-04-22"
+    },
+    {
+     "number": 333,
+     "state": "closed",
+     "opened": "2026-04-19"
+    },
+    {
+     "number": 316,
+     "state": "closed",
+     "opened": "2026-04-18"
+    },
+    {
+     "number": 309,
+     "state": "closed",
+     "opened": "2026-04-17"
+    },
+    {
+     "number": 300,
+     "state": "closed",
+     "opened": "2026-04-17"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/heygen-com/hyperframes?skill=hyperframes-cli": [
+     7451
+    ],
+    "github.com/heygen-com/hyperframes?skill=hyperframes": [
+     7451,
+     1786,
+     1625,
+     309
+    ],
+    "github.com/heygen-com/hyperframes?skill=media-use": [
+     5564,
+     5333
+    ],
+    "github.com/heygen-com/hyperframes?skill=hyperframes-registry": [],
+    "github.com/heygen-com/hyperframes?skill=remotion-to-hyperframes": [],
+    "github.com/heygen-com/hyperframes?skill=slideshow": [],
+    "github.com/heygen-com/hyperframes?skill=figma": [],
+    "github.com/heygen-com/hyperframes?skill=frost-sequence-camera-orbit": [],
+    "github.com/heygen-com/hyperframes?skill=cuboid-carousel": [],
+    "github.com/heygen-com/hyperframes?skill=glass-shard-title": [],
+    "github.com/heygen-com/hyperframes?skill=code-slice-hero": [],
+    "github.com/heygen-com/hyperframes?skill=canopy-part-title": [],
+    "github.com/heygen-com/hyperframes?skill=wireframe-portal-title": [],
+    "github.com/heygen-com/hyperframes?skill=orbit-card": [],
+    "github.com/heygen-com/hyperframes?skill=motion-doctrine": [],
+    "github.com/heygen-com/hyperframes?skill=captions-overlay": [],
+    "github.com/heygen-com/hyperframes?skill=cut-the-curve": [],
+    "github.com/heygen-com/hyperframes?skill=seam-craft": [],
+    "github.com/heygen-com/hyperframes?skill=oversized-cursor": [],
+    "github.com/heygen-com/hyperframes?skill=changelog-video": []
+   }
+  },
+  {
+   "repo": "higgsfield-ai/skills",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {
+    "github.com/higgsfield-ai/skills?skill=higgsfield-generate": [],
+    "github.com/higgsfield-ai/skills?skill=higgsfield-product-photoshoot": [],
+    "github.com/higgsfield-ai/skills?skill=higgsfield-soul-id": [],
+    "github.com/higgsfield-ai/skills?skill=higgsfield-marketplace-cards": [],
+    "github.com/higgsfield-ai/skills?skill=higgsfield-websites": [],
+    "github.com/higgsfield-ai/skills?skill=higgsfield-video-explainer": [],
+    "github.com/higgsfield-ai/skills?skill=higgsfield-youtube-thumbnail": [],
+    "github.com/higgsfield-ai/skills?skill=higgsfield-brandkit": [],
+    "github.com/higgsfield-ai/skills?skill=higgsfield-faceless-video": []
+   }
+  },
+  {
+   "repo": "its-a-skill-issue/superpowers",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {
+    "github.com/its-a-skill-issue/superpowers?skill=ai-image-generation": [],
+    "github.com/its-a-skill-issue/superpowers?skill=twitter-automation": [],
+    "github.com/its-a-skill-issue/superpowers?skill=ai-avatar-video": [],
+    "github.com/its-a-skill-issue/superpowers?skill=ai-video-generation": [],
+    "github.com/its-a-skill-issue/superpowers?skill=agent-browser": [],
+    "github.com/its-a-skill-issue/superpowers?skill=remotion-render": [],
+    "github.com/its-a-skill-issue/superpowers?skill=web-search": [],
+    "github.com/its-a-skill-issue/superpowers?skill=agent-tools": [],
+    "github.com/its-a-skill-issue/superpowers?skill=python-executor": [],
+    "github.com/its-a-skill-issue/superpowers?skill=infsh-cli": [],
+    "github.com/its-a-skill-issue/superpowers?skill=product-photography": [],
+    "github.com/its-a-skill-issue/superpowers?skill=competitor-teardown": [],
+    "github.com/its-a-skill-issue/superpowers?skill=landing-page-design": [],
+    "github.com/its-a-skill-issue/superpowers?skill=youtube-thumbnail-design": [],
+    "github.com/its-a-skill-issue/superpowers?skill=storyboard-creation": [],
+    "github.com/its-a-skill-issue/superpowers?skill=character-design-sheet": [],
+    "github.com/its-a-skill-issue/superpowers?skill=video-ad-specs": [],
+    "github.com/its-a-skill-issue/superpowers?skill=image-to-video": [],
+    "github.com/its-a-skill-issue/superpowers?skill=product-hunt-launch": [],
+    "github.com/its-a-skill-issue/superpowers?skill=app-store-screenshots": [],
+    "github.com/its-a-skill-issue/superpowers?skill=happyhorse": [],
+    "github.com/its-a-skill-issue/superpowers?skill=p-image": [],
+    "github.com/its-a-skill-issue/superpowers?skill=p-video-avatar": [],
+    "github.com/its-a-skill-issue/superpowers?skill=seedance": [],
+    "github.com/its-a-skill-issue/superpowers?skill=p-video": [],
+    "github.com/its-a-skill-issue/superpowers?skill=gpt-image": []
+   }
+  },
+  {
+   "repo": "juliusbrussee/caveman",
+   "status": "read",
+   "total": 79,
+   "open": 2,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 1482,
+     "state": "open",
+     "opened": "2026-11-06"
+    },
+    {
+     "number": 1463,
+     "state": "closed",
+     "opened": "2026-11-04"
+    },
+    {
+     "number": 1448,
+     "state": "closed",
+     "opened": "2026-11-02"
+    },
+    {
+     "number": 1440,
+     "state": "closed",
+     "opened": "2026-11-01"
+    },
+    {
+     "number": 1399,
+     "state": "closed",
+     "opened": "2026-10-25"
+    },
+    {
+     "number": 1385,
+     "state": "closed",
+     "opened": "2026-10-24"
+    },
+    {
+     "number": 1361,
+     "state": "closed",
+     "opened": "2026-10-23"
+    },
+    {
+     "number": 1352,
+     "state": "closed",
+     "opened": "2026-10-22"
+    },
+    {
+     "number": 1353,
+     "state": "closed",
+     "opened": "2026-10-22"
+    },
+    {
+     "number": 1322,
+     "state": "closed",
+     "opened": "2026-10-18"
+    },
+    {
+     "number": 1264,
+     "state": "closed",
+     "opened": "2026-10-14"
+    },
+    {
+     "number": 1252,
+     "state": "closed",
+     "opened": "2026-10-13"
+    },
+    {
+     "number": 1246,
+     "state": "closed",
+     "opened": "2026-10-10"
+    },
+    {
+     "number": 1241,
+     "state": "closed",
+     "opened": "2026-10-09"
+    },
+    {
+     "number": 1236,
+     "state": "closed",
+     "opened": "2026-10-09"
+    },
+    {
+     "number": 1206,
+     "state": "closed",
+     "opened": "2026-10-07"
+    },
+    {
+     "number": 1152,
+     "state": "closed",
+     "opened": "2026-10-01"
+    },
+    {
+     "number": 1101,
+     "state": "closed",
+     "opened": "2026-09-21"
+    },
+    {
+     "number": 1092,
+     "state": "closed",
+     "opened": "2026-09-19"
+    },
+    {
+     "number": 1090,
+     "state": "open",
+     "opened": "2026-09-18"
+    },
+    {
+     "number": 1040,
+     "state": "closed",
+     "opened": "2026-09-13"
+    },
+    {
+     "number": 909,
+     "state": "closed",
+     "opened": "2026-08-24"
+    },
+    {
+     "number": 897,
+     "state": "closed",
+     "opened": "2026-08-23"
+    },
+    {
+     "number": 884,
+     "state": "closed",
+     "opened": "2026-08-19"
+    },
+    {
+     "number": 882,
+     "state": "closed",
+     "opened": "2026-08-19"
+    },
+    {
+     "number": 860,
+     "state": "closed",
+     "opened": "2026-08-18"
+    },
+    {
+     "number": 853,
+     "state": "closed",
+     "opened": "2026-08-16"
+    },
+    {
+     "number": 848,
+     "state": "closed",
+     "opened": "2026-08-15"
+    },
+    {
+     "number": 825,
+     "state": "closed",
+     "opened": "2026-08-12"
+    },
+    {
+     "number": 820,
+     "state": "closed",
+     "opened": "2026-08-11"
+    },
+    {
+     "number": 808,
+     "state": "closed",
+     "opened": "2026-08-07"
+    },
+    {
+     "number": 766,
+     "state": "closed",
+     "opened": "2026-07-30"
+    },
+    {
+     "number": 712,
+     "state": "closed",
+     "opened": "2026-07-17"
+    },
+    {
+     "number": 705,
+     "state": "closed",
+     "opened": "2026-07-14"
+    },
+    {
+     "number": 698,
+     "state": "closed",
+     "opened": "2026-07-11"
+    },
+    {
+     "number": 687,
+     "state": "closed",
+     "opened": "2026-07-10"
+    },
+    {
+     "number": 686,
+     "state": "closed",
+     "opened": "2026-07-10"
+    },
+    {
+     "number": 655,
+     "state": "closed",
+     "opened": "2026-07-05"
+    },
+    {
+     "number": 603,
+     "state": "closed",
+     "opened": "2026-07-02"
+    },
+    {
+     "number": 597,
+     "state": "closed",
+     "opened": "2026-07-02"
+    },
+    {
+     "number": 546,
+     "state": "closed",
+     "opened": "2026-06-21"
+    },
+    {
+     "number": 538,
+     "state": "closed",
+     "opened": "2026-06-18"
+    },
+    {
+     "number": 533,
+     "state": "closed",
+     "opened": "2026-06-16"
+    },
+    {
+     "number": 494,
+     "state": "closed",
+     "opened": "2026-06-04"
+    },
+    {
+     "number": 488,
+     "state": "closed",
+     "opened": "2026-06-03"
+    },
+    {
+     "number": 487,
+     "state": "closed",
+     "opened": "2026-06-03"
+    },
+    {
+     "number": 474,
+     "state": "closed",
+     "opened": "2026-05-31"
+    },
+    {
+     "number": 473,
+     "state": "closed",
+     "opened": "2026-05-29"
+    },
+    {
+     "number": 461,
+     "state": "closed",
+     "opened": "2026-05-28"
+    },
+    {
+     "number": 456,
+     "state": "closed",
+     "opened": "2026-05-27"
+    },
+    {
+     "number": 451,
+     "state": "closed",
+     "opened": "2026-05-27"
+    },
+    {
+     "number": 439,
+     "state": "closed",
+     "opened": "2026-05-26"
+    },
+    {
+     "number": 426,
+     "state": "closed",
+     "opened": "2026-05-22"
+    },
+    {
+     "number": 403,
+     "state": "closed",
+     "opened": "2026-05-17"
+    },
+    {
+     "number": 397,
+     "state": "closed",
+     "opened": "2026-05-16"
+    },
+    {
+     "number": 391,
+     "state": "closed",
+     "opened": "2026-05-14"
+    },
+    {
+     "number": 373,
+     "state": "closed",
+     "opened": "2026-05-12"
+    },
+    {
+     "number": 368,
+     "state": "closed",
+     "opened": "2026-05-11"
+    },
+    {
+     "number": 367,
+     "state": "closed",
+     "opened": "2026-05-10"
+    },
+    {
+     "number": 366,
+     "state": "closed",
+     "opened": "2026-05-10"
+    },
+    {
+     "number": 364,
+     "state": "closed",
+     "opened": "2026-05-10"
+    },
+    {
+     "number": 353,
+     "state": "closed",
+     "opened": "2026-05-09"
+    },
+    {
+     "number": 339,
+     "state": "closed",
+     "opened": "2026-05-06"
+    },
+    {
+     "number": 328,
+     "state": "closed",
+     "opened": "2026-05-02"
+    },
+    {
+     "number": 325,
+     "state": "closed",
+     "opened": "2026-05-01"
+    },
+    {
+     "number": 313,
+     "state": "closed",
+     "opened": "2026-04-29"
+    },
+    {
+     "number": 265,
+     "state": "closed",
+     "opened": "2026-04-22"
+    },
+    {
+     "number": 249,
+     "state": "closed",
+     "opened": "2026-04-21"
+    },
+    {
+     "number": 242,
+     "state": "closed",
+     "opened": "2026-04-20"
+    },
+    {
+     "number": 202,
+     "state": "closed",
+     "opened": "2026-04-16"
+    },
+    {
+     "number": 199,
+     "state": "closed",
+     "opened": "2026-04-16"
+    },
+    {
+     "number": 196,
+     "state": "closed",
+     "opened": "2026-04-16"
+    },
+    {
+     "number": 168,
+     "state": "closed",
+     "opened": "2026-04-15"
+    },
+    {
+     "number": 152,
+     "state": "closed",
+     "opened": "2026-04-14"
+    },
+    {
+     "number": 150,
+     "state": "closed",
+     "opened": "2026-04-14"
+    },
+    {
+     "number": 115,
+     "state": "closed",
+     "opened": "2026-04-12"
+    },
+    {
+     "number": 92,
+     "state": "closed",
+     "opened": "2026-04-11"
+    },
+    {
+     "number": 78,
+     "state": "closed",
+     "opened": "2026-04-10"
+    },
+    {
+     "number": 72,
+     "state": "closed",
+     "opened": "2026-04-10"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/juliusbrussee/caveman?skill=caveman-commit": [],
+    "github.com/juliusbrussee/caveman?skill=caveman-review": [],
+    "github.com/juliusbrussee/caveman?skill=caveman-help": [],
+    "github.com/juliusbrussee/caveman?skill=caveman-explore": [],
+    "github.com/juliusbrussee/caveman?skill=caveman-learn": [],
+    "github.com/juliusbrussee/caveman?skill=safe-refactor": [],
+    "github.com/juliusbrussee/caveman?skill=caveman-optimize": [],
+    "github.com/juliusbrussee/caveman?skill=investigate-first": [],
+    "github.com/juliusbrussee/caveman?skill=verify-and-stop": [],
+    "github.com/juliusbrussee/caveman?skill=surgical-patch": [],
+    "github.com/juliusbrussee/caveman?skill=lean-build": [],
+    "github.com/juliusbrussee/caveman?skill=caveman-evidence-review": [],
+    "github.com/juliusbrussee/caveman?skill=caveman-discover": [],
+    "github.com/juliusbrussee/caveman?skill=caveman-manage": [],
+    "github.com/juliusbrussee/caveman?skill=migration": [],
+    "github.com/juliusbrussee/caveman?skill=caveman-setup": [],
+    "github.com/juliusbrussee/caveman?skill=caveman": [
+     1399,
+     1361,
+     1352,
+     1353,
+     1252,
+     1241,
+     1090,
+     848,
+     820,
+     808,
+     766,
+     687,
+     686,
+     655,
+     603,
+     597,
+     538,
+     533,
+     488,
+     487,
+     474,
+     451,
+     426,
+     403,
+     391,
+     367,
+     242,
+     152
+    ],
+    "github.com/juliusbrussee/caveman?skill=caveman-compress": [
+     1352,
+     1353,
+     820,
+     808,
+     766,
+     686,
+     655,
+     533,
+     488,
+     451,
+     426,
+     391,
+     367,
+     152
+    ],
+    "github.com/juliusbrussee/caveman?skill=cavecrew": [
+     494,
+     473,
+     456
+    ],
+    "github.com/juliusbrussee/caveman?skill=ultracave": [],
+    "github.com/juliusbrussee/caveman?skill=megacave": []
+   }
+  },
+  {
+   "repo": "larksuite/cli",
+   "status": "read",
+   "total": 41,
+   "open": 17,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 2903,
+     "state": "open",
+     "opened": "2026-11-08"
+    },
+    {
+     "number": 2873,
+     "state": "open",
+     "opened": "2026-10-30"
+    },
+    {
+     "number": 2871,
+     "state": "open",
+     "opened": "2026-10-30"
+    },
+    {
+     "number": 2835,
+     "state": "open",
+     "opened": "2026-10-20"
+    },
+    {
+     "number": 2818,
+     "state": "open",
+     "opened": "2026-10-15"
+    },
+    {
+     "number": 2753,
+     "state": "open",
+     "opened": "2026-09-17"
+    },
+    {
+     "number": 2724,
+     "state": "open",
+     "opened": "2026-09-14"
+    },
+    {
+     "number": 2507,
+     "state": "open",
+     "opened": "2026-08-26"
+    },
+    {
+     "number": 2480,
+     "state": "closed",
+     "opened": "2026-08-24"
+    },
+    {
+     "number": 2413,
+     "state": "open",
+     "opened": "2026-08-19"
+    },
+    {
+     "number": 2371,
+     "state": "open",
+     "opened": "2026-08-18"
+    },
+    {
+     "number": 2368,
+     "state": "closed",
+     "opened": "2026-08-17"
+    },
+    {
+     "number": 2359,
+     "state": "open",
+     "opened": "2026-08-15"
+    },
+    {
+     "number": 1932,
+     "state": "open",
+     "opened": "2026-07-17"
+    },
+    {
+     "number": 1925,
+     "state": "closed",
+     "opened": "2026-07-17"
+    },
+    {
+     "number": 1846,
+     "state": "open",
+     "opened": "2026-07-09"
+    },
+    {
+     "number": 1636,
+     "state": "closed",
+     "opened": "2026-06-29"
+    },
+    {
+     "number": 1470,
+     "state": "closed",
+     "opened": "2026-06-15"
+    },
+    {
+     "number": 1247,
+     "state": "closed",
+     "opened": "2026-06-03"
+    },
+    {
+     "number": 1147,
+     "state": "open",
+     "opened": "2026-05-28"
+    },
+    {
+     "number": 1141,
+     "state": "closed",
+     "opened": "2026-05-27"
+    },
+    {
+     "number": 1038,
+     "state": "closed",
+     "opened": "2026-05-22"
+    },
+    {
+     "number": 913,
+     "state": "open",
+     "opened": "2026-05-15"
+    },
+    {
+     "number": 829,
+     "state": "closed",
+     "opened": "2026-05-11"
+    },
+    {
+     "number": 780,
+     "state": "open",
+     "opened": "2026-05-08"
+    },
+    {
+     "number": 758,
+     "state": "closed",
+     "opened": "2026-05-06"
+    },
+    {
+     "number": 705,
+     "state": "closed",
+     "opened": "2026-04-29"
+    },
+    {
+     "number": 603,
+     "state": "closed",
+     "opened": "2026-04-22"
+    },
+    {
+     "number": 566,
+     "state": "closed",
+     "opened": "2026-04-20"
+    },
+    {
+     "number": 509,
+     "state": "closed",
+     "opened": "2026-04-16"
+    },
+    {
+     "number": 420,
+     "state": "closed",
+     "opened": "2026-04-11"
+    },
+    {
+     "number": 248,
+     "state": "closed",
+     "opened": "2026-04-03"
+    },
+    {
+     "number": 215,
+     "state": "closed",
+     "opened": "2026-04-02"
+    },
+    {
+     "number": 201,
+     "state": "closed",
+     "opened": "2026-04-01"
+    },
+    {
+     "number": 165,
+     "state": "open",
+     "opened": "2026-03-31"
+    },
+    {
+     "number": 123,
+     "state": "closed",
+     "opened": "2026-03-31"
+    },
+    {
+     "number": 122,
+     "state": "closed",
+     "opened": "2026-03-31"
+    },
+    {
+     "number": 110,
+     "state": "closed",
+     "opened": "2026-03-30"
+    },
+    {
+     "number": 98,
+     "state": "closed",
+     "opened": "2026-03-30"
+    },
+    {
+     "number": 64,
+     "state": "closed",
+     "opened": "2026-03-29"
+    },
+    {
+     "number": 62,
+     "state": "closed",
+     "opened": "2026-03-29"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/larksuite/cli?skill=lark-doc": [],
+    "github.com/larksuite/cli?skill=lark-base": [],
+    "github.com/larksuite/cli?skill=lark-shared": [],
+    "github.com/larksuite/cli?skill=lark-im": [
+     2371
+    ],
+    "github.com/larksuite/cli?skill=lark-drive": [],
+    "github.com/larksuite/cli?skill=lark-sheets": [],
+    "github.com/larksuite/cli?skill=lark-wiki": [],
+    "github.com/larksuite/cli?skill=lark-whiteboard": [],
+    "github.com/larksuite/cli?skill=lark-task": [],
+    "github.com/larksuite/cli?skill=lark-calendar": [],
+    "github.com/larksuite/cli?skill=lark-mail": [],
+    "github.com/larksuite/cli?skill=lark-minutes": [],
+    "github.com/larksuite/cli?skill=lark-vc": [],
+    "github.com/larksuite/cli?skill=lark-event": [],
+    "github.com/larksuite/cli?skill=lark-contact": [],
+    "github.com/larksuite/cli?skill=lark-workflow-meeting-summary": [],
+    "github.com/larksuite/cli?skill=lark-workflow-standup-report": [],
+    "github.com/larksuite/cli?skill=lark-openapi-explorer": [],
+    "github.com/larksuite/cli?skill=lark-skill-maker": [],
+    "github.com/larksuite/cli?skill=lark-approval": [],
+    "github.com/larksuite/cli?skill=lark-slides": [],
+    "github.com/larksuite/cli?skill=lark-attendance": [],
+    "github.com/larksuite/cli?skill=lark-okr": [],
+    "github.com/larksuite/cli?skill=lark-markdown": [],
+    "github.com/larksuite/cli?skill=lark-vc-agent": [],
+    "github.com/larksuite/cli?skill=lark-apps": [],
+    "github.com/larksuite/cli?skill=lark-note": [],
+    "github.com/larksuite/cli?skill=lark-meeting": []
+   }
+  },
+  {
+   "repo": "leonxlnx/taste-skill",
+   "status": "read",
+   "total": 3,
+   "open": 0,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 156,
+     "state": "closed",
+     "opened": "2026-10-20"
+    },
+    {
+     "number": 34,
+     "state": "closed",
+     "opened": "2026-05-27"
+    },
+    {
+     "number": 28,
+     "state": "closed",
+     "opened": "2026-05-06"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "lllllllama/rigorpilot-skills",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {
+    "github.com/lllllllama/rigorpilot-skills?skill=paper-context-resolver": [],
+    "github.com/lllllllama/rigorpilot-skills?skill=repo-intake-and-plan": [],
+    "github.com/lllllllama/rigorpilot-skills?skill=minimal-run-and-audit": [],
+    "github.com/lllllllama/rigorpilot-skills?skill=env-and-assets-bootstrap": [],
+    "github.com/lllllllama/rigorpilot-skills?skill=ai-research-explore": [],
+    "github.com/lllllllama/rigorpilot-skills?skill=analyze-project": [],
+    "github.com/lllllllama/rigorpilot-skills?skill=ai-research-reproduction": [],
+    "github.com/lllllllama/rigorpilot-skills?skill=safe-debug": [],
+    "github.com/lllllllama/rigorpilot-skills?skill=explore-code": [],
+    "github.com/lllllllama/rigorpilot-skills?skill=run-train": [],
+    "github.com/lllllllama/rigorpilot-skills?skill=explore-run": []
+   }
+  },
+  {
+   "repo": "magentosh/superpowers",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {
+    "github.com/magentosh/superpowers?skill=ai-image-generation": [],
+    "github.com/magentosh/superpowers?skill=ai-video-generation": [],
+    "github.com/magentosh/superpowers?skill=ai-avatar-video": [],
+    "github.com/magentosh/superpowers?skill=twitter-automation": [],
+    "github.com/magentosh/superpowers?skill=agent-browser": [],
+    "github.com/magentosh/superpowers?skill=web-search": [],
+    "github.com/magentosh/superpowers?skill=agent-tools": [],
+    "github.com/magentosh/superpowers?skill=remotion-render": [],
+    "github.com/magentosh/superpowers?skill=python-executor": [],
+    "github.com/magentosh/superpowers?skill=infsh-cli": [],
+    "github.com/magentosh/superpowers?skill=youtube-thumbnail-design": [],
+    "github.com/magentosh/superpowers?skill=landing-page-design": [],
+    "github.com/magentosh/superpowers?skill=image-to-video": [],
+    "github.com/magentosh/superpowers?skill=product-photography": [],
+    "github.com/magentosh/superpowers?skill=app-store-screenshots": [],
+    "github.com/magentosh/superpowers?skill=competitor-teardown": [],
+    "github.com/magentosh/superpowers?skill=product-hunt-launch": [],
+    "github.com/magentosh/superpowers?skill=video-ad-specs": [],
+    "github.com/magentosh/superpowers?skill=character-design-sheet": [],
+    "github.com/magentosh/superpowers?skill=storyboard-creation": [],
+    "github.com/magentosh/superpowers?skill=p-video-avatar": [],
+    "github.com/magentosh/superpowers?skill=gpt-image": [],
+    "github.com/magentosh/superpowers?skill=seedance": [],
+    "github.com/magentosh/superpowers?skill=p-image": [],
+    "github.com/magentosh/superpowers?skill=happyhorse": [],
+    "github.com/magentosh/superpowers?skill=p-video": []
+   }
+  },
+  {
+   "repo": "makenotion/notion-mcp-server",
+   "status": "read",
+   "total": 44,
+   "open": 22,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 382,
+     "state": "open",
+     "opened": "2026-11-09"
+    },
+    {
+     "number": 298,
+     "state": "open",
+     "opened": "2026-06-08"
+    },
+    {
+     "number": 296,
+     "state": "open",
+     "opened": "2026-06-05"
+    },
+    {
+     "number": 283,
+     "state": "open",
+     "opened": "2026-05-08"
+    },
+    {
+     "number": 269,
+     "state": "open",
+     "opened": "2026-04-16"
+    },
+    {
+     "number": 249,
+     "state": "open",
+     "opened": "2026-04-03"
+    },
+    {
+     "number": 233,
+     "state": "open",
+     "opened": "2026-03-17"
+    },
+    {
+     "number": 217,
+     "state": "closed",
+     "opened": "2026-02-24"
+    },
+    {
+     "number": 216,
+     "state": "open",
+     "opened": "2026-02-24"
+    },
+    {
+     "number": 208,
+     "state": "closed",
+     "opened": "2026-02-15"
+    },
+    {
+     "number": 194,
+     "state": "closed",
+     "opened": "2026-01-30"
+    },
+    {
+     "number": 185,
+     "state": "closed",
+     "opened": "2026-01-19"
+    },
+    {
+     "number": 181,
+     "state": "open",
+     "opened": "2026-01-15"
+    },
+    {
+     "number": 179,
+     "state": "closed",
+     "opened": "2026-01-12"
+    },
+    {
+     "number": 167,
+     "state": "closed",
+     "opened": "2025-12-21"
+    },
+    {
+     "number": 164,
+     "state": "closed",
+     "opened": "2025-12-16"
+    },
+    {
+     "number": 153,
+     "state": "closed",
+     "opened": "2025-11-26"
+    },
+    {
+     "number": 148,
+     "state": "closed",
+     "opened": "2025-11-12"
+    },
+    {
+     "number": 131,
+     "state": "closed",
+     "opened": "2025-09-26"
+    },
+    {
+     "number": 130,
+     "state": "open",
+     "opened": "2025-09-24"
+    },
+    {
+     "number": 112,
+     "state": "open",
+     "opened": "2025-08-29"
+    },
+    {
+     "number": 108,
+     "state": "open",
+     "opened": "2025-08-16"
+    },
+    {
+     "number": 101,
+     "state": "closed",
+     "opened": "2025-08-04"
+    },
+    {
+     "number": 100,
+     "state": "open",
+     "opened": "2025-08-04"
+    },
+    {
+     "number": 99,
+     "state": "open",
+     "opened": "2025-08-03"
+    },
+    {
+     "number": 88,
+     "state": "closed",
+     "opened": "2025-07-20"
+    },
+    {
+     "number": 81,
+     "state": "open",
+     "opened": "2025-07-13"
+    },
+    {
+     "number": 78,
+     "state": "open",
+     "opened": "2025-07-07"
+    },
+    {
+     "number": 69,
+     "state": "open",
+     "opened": "2025-06-26"
+    },
+    {
+     "number": 61,
+     "state": "closed",
+     "opened": "2025-06-05"
+    },
+    {
+     "number": 54,
+     "state": "closed",
+     "opened": "2025-05-30"
+    },
+    {
+     "number": 42,
+     "state": "closed",
+     "opened": "2025-05-08"
+    },
+    {
+     "number": 34,
+     "state": "open",
+     "opened": "2025-04-27"
+    },
+    {
+     "number": 32,
+     "state": "closed",
+     "opened": "2025-04-25"
+    },
+    {
+     "number": 30,
+     "state": "closed",
+     "opened": "2025-04-24"
+    },
+    {
+     "number": 29,
+     "state": "closed",
+     "opened": "2025-04-22"
+    },
+    {
+     "number": 28,
+     "state": "closed",
+     "opened": "2025-04-22"
+    },
+    {
+     "number": 20,
+     "state": "open",
+     "opened": "2025-04-14"
+    },
+    {
+     "number": 18,
+     "state": "open",
+     "opened": "2025-04-12"
+    },
+    {
+     "number": 17,
+     "state": "closed",
+     "opened": "2025-04-12"
+    },
+    {
+     "number": 15,
+     "state": "open",
+     "opened": "2025-04-11"
+    },
+    {
+     "number": 13,
+     "state": "open",
+     "opened": "2025-04-11"
+    },
+    {
+     "number": 7,
+     "state": "closed",
+     "opened": "2025-04-10"
+    },
+    {
+     "number": 4,
+     "state": "closed",
+     "opened": "2025-04-09"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "mattpocock/skills",
+   "status": "read",
+   "total": 28,
+   "open": 11,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 1394,
+     "state": "open",
+     "opened": "2026-11-07"
+    },
+    {
+     "number": 1379,
+     "state": "open",
+     "opened": "2026-11-03"
+    },
+    {
+     "number": 1374,
+     "state": "closed",
+     "opened": "2026-11-02"
+    },
+    {
+     "number": 1373,
+     "state": "open",
+     "opened": "2026-11-02"
+    },
+    {
+     "number": 1346,
+     "state": "open",
+     "opened": "2026-10-30"
+    },
+    {
+     "number": 1319,
+     "state": "open",
+     "opened": "2026-10-22"
+    },
+    {
+     "number": 1298,
+     "state": "open",
+     "opened": "2026-10-18"
+    },
+    {
+     "number": 1293,
+     "state": "closed",
+     "opened": "2026-10-17"
+    },
+    {
+     "number": 1256,
+     "state": "open",
+     "opened": "2026-10-11"
+    },
+    {
+     "number": 1087,
+     "state": "closed",
+     "opened": "2026-09-16"
+    },
+    {
+     "number": 1056,
+     "state": "closed",
+     "opened": "2026-09-08"
+    },
+    {
+     "number": 1034,
+     "state": "closed",
+     "opened": "2026-09-03"
+    },
+    {
+     "number": 963,
+     "state": "open",
+     "opened": "2026-08-26"
+    },
+    {
+     "number": 955,
+     "state": "closed",
+     "opened": "2026-08-25"
+    },
+    {
+     "number": 898,
+     "state": "closed",
+     "opened": "2026-08-18"
+    },
+    {
+     "number": 888,
+     "state": "open",
+     "opened": "2026-08-16"
+    },
+    {
+     "number": 728,
+     "state": "open",
+     "opened": "2026-08-03"
+    },
+    {
+     "number": 669,
+     "state": "closed",
+     "opened": "2026-07-26"
+    },
+    {
+     "number": 552,
+     "state": "closed",
+     "opened": "2026-07-13"
+    },
+    {
+     "number": 512,
+     "state": "closed",
+     "opened": "2026-07-10"
+    },
+    {
+     "number": 476,
+     "state": "open",
+     "opened": "2026-07-08"
+    },
+    {
+     "number": 359,
+     "state": "closed",
+     "opened": "2026-06-20"
+    },
+    {
+     "number": 343,
+     "state": "closed",
+     "opened": "2026-06-15"
+    },
+    {
+     "number": 321,
+     "state": "closed",
+     "opened": "2026-06-10"
+    },
+    {
+     "number": 318,
+     "state": "closed",
+     "opened": "2026-06-10"
+    },
+    {
+     "number": 160,
+     "state": "closed",
+     "opened": "2026-05-09"
+    },
+    {
+     "number": 97,
+     "state": "closed",
+     "opened": "2026-04-29"
+    },
+    {
+     "number": 73,
+     "state": "closed",
+     "opened": "2026-04-28"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/mattpocock/skills?skill=grill-me": [
+     1319
+    ],
+    "github.com/mattpocock/skills?skill=grill-with-docs": [
+     669
+    ],
+    "github.com/mattpocock/skills?skill=improve-codebase-architecture": [
+     1394
+    ],
+    "github.com/mattpocock/skills?skill=tdd": [],
+    "github.com/mattpocock/skills?skill=setup-matt-pocock-skills": [
+     1346
+    ],
+    "github.com/mattpocock/skills?skill=handoff": [],
+    "github.com/mattpocock/skills?skill=triage": [],
+    "github.com/mattpocock/skills?skill=grilling": [
+     1087,
+     669
+    ],
+    "github.com/mattpocock/skills?skill=prototype": [],
+    "github.com/mattpocock/skills?skill=domain-modeling": [],
+    "github.com/mattpocock/skills?skill=teach": [],
+    "github.com/mattpocock/skills?skill=codebase-design": [],
+    "github.com/mattpocock/skills?skill=diagnosing-bugs": [
+     955
+    ],
+    "github.com/mattpocock/skills?skill=code-review": [],
+    "github.com/mattpocock/skills?skill=implement": [],
+    "github.com/mattpocock/skills?skill=ask-matt": [],
+    "github.com/mattpocock/skills?skill=wayfinder": [
+     888,
+     476
+    ],
+    "github.com/mattpocock/skills?skill=to-spec": [],
+    "github.com/mattpocock/skills?skill=to-tickets": [],
+    "github.com/mattpocock/skills?skill=research": [],
+    "github.com/mattpocock/skills?skill=wizard": [
+     963
+    ],
+    "github.com/mattpocock/skills?skill=to-questionnaire": [],
+    "github.com/mattpocock/skills?skill=git-guardrails-claude-code": [
+     898
+    ],
+    "github.com/mattpocock/skills?skill=setup-pre-commit": [],
+    "github.com/mattpocock/skills?skill=writing-beats": [],
+    "github.com/mattpocock/skills?skill=writing-shape": [],
+    "github.com/mattpocock/skills?skill=writing-fragments": [],
+    "github.com/mattpocock/skills?skill=scaffold-exercises": [],
+    "github.com/mattpocock/skills?skill=migrate-to-shoehorn": [],
+    "github.com/mattpocock/skills?skill=writing-for-agents": [],
+    "github.com/mattpocock/skills?skill=wait-what": [],
+    "github.com/mattpocock/skills?skill=loop-me": [],
+    "github.com/mattpocock/skills?skill=claude-handoff": [],
+    "github.com/mattpocock/skills?skill=setup-ts-deep-modules": [],
+    "github.com/mattpocock/skills?skill=implement-spec": [],
+    "github.com/mattpocock/skills?skill=retro": [
+     1379
+    ],
+    "github.com/mattpocock/skills?skill=pr": [],
+    "github.com/mattpocock/skills?skill=chief-of-staff": []
+   }
+  },
+  {
+   "repo": "microsoft/azure-skills",
+   "status": "read",
+   "total": 4,
+   "open": 1,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 163,
+     "state": "closed",
+     "opened": "2026-07-20"
+    },
+    {
+     "number": 150,
+     "state": "closed",
+     "opened": "2026-07-01"
+    },
+    {
+     "number": 124,
+     "state": "open",
+     "opened": "2026-05-19"
+    },
+    {
+     "number": 26,
+     "state": "closed",
+     "opened": "2026-03-11"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/microsoft/azure-skills?skill=azure-kusto-irql": [],
+    "github.com/microsoft/azure-skills?skill=azure-kusto-graph": [],
+    "github.com/microsoft/azure-skills?skill=azure-kusto-irql-graph": [],
+    "github.com/microsoft/azure-skills?skill=microsoft-foundry": [],
+    "github.com/microsoft/azure-skills?skill=azure-diagnostics": [],
+    "github.com/microsoft/azure-skills?skill=azure-prepare": [],
+    "github.com/microsoft/azure-skills?skill=azure-ai": [],
+    "github.com/microsoft/azure-skills?skill=azure-deploy": [],
+    "github.com/microsoft/azure-skills?skill=azure-validate": [],
+    "github.com/microsoft/azure-skills?skill=azure-storage": [],
+    "github.com/microsoft/azure-skills?skill=azure-compliance": [],
+    "github.com/microsoft/azure-skills?skill=appinsights-instrumentation": [],
+    "github.com/microsoft/azure-skills?skill=azure-resource-lookup": [],
+    "github.com/microsoft/azure-skills?skill=azure-resource-visualizer": [],
+    "github.com/microsoft/azure-skills?skill=entra-app-registration": [],
+    "github.com/microsoft/azure-skills?skill=azure-kusto": [],
+    "github.com/microsoft/azure-skills?skill=azure-aigateway": [],
+    "github.com/microsoft/azure-skills?skill=azure-messaging": [],
+    "github.com/microsoft/azure-skills?skill=azure-compute": [],
+    "github.com/microsoft/azure-skills?skill=azure-cloud-migrate": [],
+    "github.com/microsoft/azure-skills?skill=azure-quotas": [],
+    "github.com/microsoft/azure-skills?skill=azure-upgrade": [],
+    "github.com/microsoft/azure-skills?skill=azure-enterprise-infra-planner": [],
+    "github.com/microsoft/azure-skills?skill=azure-kubernetes": [],
+    "github.com/microsoft/azure-skills?skill=airunway-aks-setup": [],
+    "github.com/microsoft/azure-skills?skill=entra-agent-id": [],
+    "github.com/microsoft/azure-skills?skill=azure-reliability": [],
+    "github.com/microsoft/azure-skills?skill=python-appservice-deploy": [],
+    "github.com/microsoft/azure-skills?skill=azure-app-onboard": [],
+    "github.com/microsoft/azure-skills?skill=azure-app-onboard-prereq": [],
+    "github.com/microsoft/azure-skills?skill=discover-azure-skills": []
+   }
+  },
+  {
+   "repo": "microsoft/mcp",
+   "status": "read",
+   "total": 115,
+   "open": 14,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 4091,
+     "state": "open",
+     "opened": "2026-11-02"
+    },
+    {
+     "number": 4069,
+     "state": "open",
+     "opened": "2026-10-30"
+    },
+    {
+     "number": 4054,
+     "state": "open",
+     "opened": "2026-10-28"
+    },
+    {
+     "number": 4038,
+     "state": "open",
+     "opened": "2026-10-26"
+    },
+    {
+     "number": 4031,
+     "state": "closed",
+     "opened": "2026-10-26"
+    },
+    {
+     "number": 3976,
+     "state": "open",
+     "opened": "2026-10-17"
+    },
+    {
+     "number": 3963,
+     "state": "open",
+     "opened": "2026-10-15"
+    },
+    {
+     "number": 3881,
+     "state": "closed",
+     "opened": "2026-10-08"
+    },
+    {
+     "number": 3775,
+     "state": "closed",
+     "opened": "2026-09-24"
+    },
+    {
+     "number": 3634,
+     "state": "closed",
+     "opened": "2026-09-11"
+    },
+    {
+     "number": 3599,
+     "state": "closed",
+     "opened": "2026-09-07"
+    },
+    {
+     "number": 3563,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3562,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3560,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3559,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3558,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3557,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3555,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3554,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3553,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3549,
+     "state": "open",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3546,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3544,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 3505,
+     "state": "closed",
+     "opened": "2026-09-02"
+    },
+    {
+     "number": 3394,
+     "state": "open",
+     "opened": "2026-08-27"
+    },
+    {
+     "number": 3312,
+     "state": "closed",
+     "opened": "2026-08-18"
+    },
+    {
+     "number": 3252,
+     "state": "closed",
+     "opened": "2026-08-11"
+    },
+    {
+     "number": 3250,
+     "state": "closed",
+     "opened": "2026-08-11"
+    },
+    {
+     "number": 3203,
+     "state": "closed",
+     "opened": "2026-08-04"
+    },
+    {
+     "number": 3116,
+     "state": "closed",
+     "opened": "2026-07-21"
+    },
+    {
+     "number": 3094,
+     "state": "closed",
+     "opened": "2026-07-17"
+    },
+    {
+     "number": 3040,
+     "state": "closed",
+     "opened": "2026-07-14"
+    },
+    {
+     "number": 3032,
+     "state": "open",
+     "opened": "2026-07-14"
+    },
+    {
+     "number": 3030,
+     "state": "closed",
+     "opened": "2026-07-14"
+    },
+    {
+     "number": 2818,
+     "state": "closed",
+     "opened": "2026-06-05"
+    },
+    {
+     "number": 2769,
+     "state": "closed",
+     "opened": "2026-05-29"
+    },
+    {
+     "number": 2767,
+     "state": "closed",
+     "opened": "2026-05-29"
+    },
+    {
+     "number": 2647,
+     "state": "closed",
+     "opened": "2026-05-16"
+    },
+    {
+     "number": 2629,
+     "state": "closed",
+     "opened": "2026-05-11"
+    },
+    {
+     "number": 2439,
+     "state": "open",
+     "opened": "2026-04-19"
+    },
+    {
+     "number": 2315,
+     "state": "closed",
+     "opened": "2026-04-01"
+    },
+    {
+     "number": 2290,
+     "state": "closed",
+     "opened": "2026-03-30"
+    },
+    {
+     "number": 2289,
+     "state": "closed",
+     "opened": "2026-03-30"
+    },
+    {
+     "number": 2277,
+     "state": "closed",
+     "opened": "2026-03-30"
+    },
+    {
+     "number": 2276,
+     "state": "closed",
+     "opened": "2026-03-30"
+    },
+    {
+     "number": 2275,
+     "state": "closed",
+     "opened": "2026-03-30"
+    },
+    {
+     "number": 2247,
+     "state": "closed",
+     "opened": "2026-03-27"
+    },
+    {
+     "number": 2141,
+     "state": "closed",
+     "opened": "2026-03-20"
+    },
+    {
+     "number": 2000,
+     "state": "closed",
+     "opened": "2026-03-10"
+    },
+    {
+     "number": 1996,
+     "state": "closed",
+     "opened": "2026-03-10"
+    },
+    {
+     "number": 1949,
+     "state": "open",
+     "opened": "2026-03-05"
+    },
+    {
+     "number": 1892,
+     "state": "closed",
+     "opened": "2026-02-28"
+    },
+    {
+     "number": 1720,
+     "state": "closed",
+     "opened": "2026-02-12"
+    },
+    {
+     "number": 1688,
+     "state": "closed",
+     "opened": "2026-02-10"
+    },
+    {
+     "number": 1624,
+     "state": "closed",
+     "opened": "2026-02-02"
+    },
+    {
+     "number": 1463,
+     "state": "closed",
+     "opened": "2026-01-09"
+    },
+    {
+     "number": 1462,
+     "state": "closed",
+     "opened": "2026-01-09"
+    },
+    {
+     "number": 1379,
+     "state": "closed",
+     "opened": "2025-12-16"
+    },
+    {
+     "number": 1341,
+     "state": "closed",
+     "opened": "2025-12-09"
+    },
+    {
+     "number": 1182,
+     "state": "closed",
+     "opened": "2025-11-14"
+    },
+    {
+     "number": 1170,
+     "state": "closed",
+     "opened": "2025-11-13"
+    },
+    {
+     "number": 1165,
+     "state": "closed",
+     "opened": "2025-11-13"
+    },
+    {
+     "number": 1143,
+     "state": "open",
+     "opened": "2025-11-11"
+    },
+    {
+     "number": 1120,
+     "state": "closed",
+     "opened": "2025-11-10"
+    },
+    {
+     "number": 1061,
+     "state": "open",
+     "opened": "2025-11-05"
+    },
+    {
+     "number": 1045,
+     "state": "closed",
+     "opened": "2025-11-04"
+    },
+    {
+     "number": 1025,
+     "state": "closed",
+     "opened": "2025-10-31"
+    },
+    {
+     "number": 1003,
+     "state": "closed",
+     "opened": "2025-10-29"
+    },
+    {
+     "number": 963,
+     "state": "closed",
+     "opened": "2025-10-27"
+    },
+    {
+     "number": 919,
+     "state": "closed",
+     "opened": "2025-10-22"
+    },
+    {
+     "number": 886,
+     "state": "closed",
+     "opened": "2025-10-20"
+    },
+    {
+     "number": 877,
+     "state": "closed",
+     "opened": "2025-10-18"
+    },
+    {
+     "number": 863,
+     "state": "closed",
+     "opened": "2025-10-17"
+    },
+    {
+     "number": 858,
+     "state": "closed",
+     "opened": "2025-10-17"
+    },
+    {
+     "number": 710,
+     "state": "closed",
+     "opened": "2025-10-06"
+    },
+    {
+     "number": 696,
+     "state": "closed",
+     "opened": "2025-10-03"
+    },
+    {
+     "number": 674,
+     "state": "closed",
+     "opened": "2025-10-02"
+    },
+    {
+     "number": 621,
+     "state": "closed",
+     "opened": "2025-09-30"
+    },
+    {
+     "number": 620,
+     "state": "closed",
+     "opened": "2025-09-30"
+    },
+    {
+     "number": 618,
+     "state": "closed",
+     "opened": "2025-09-30"
+    },
+    {
+     "number": 615,
+     "state": "closed",
+     "opened": "2025-09-30"
+    },
+    {
+     "number": 549,
+     "state": "closed",
+     "opened": "2025-09-23"
+    },
+    {
+     "number": 475,
+     "state": "closed",
+     "opened": "2025-09-17"
+    },
+    {
+     "number": 460,
+     "state": "closed",
+     "opened": "2025-09-16"
+    },
+    {
+     "number": 443,
+     "state": "closed",
+     "opened": "2025-09-15"
+    },
+    {
+     "number": 421,
+     "state": "closed",
+     "opened": "2025-09-12"
+    },
+    {
+     "number": 355,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 339,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 338,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 337,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 336,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 335,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 334,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 333,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 332,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 331,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 330,
+     "state": "closed",
+     "opened": "2025-09-05"
+    },
+    {
+     "number": 307,
+     "state": "closed",
+     "opened": "2025-09-03"
+    },
+    {
+     "number": 304,
+     "state": "closed",
+     "opened": "2025-09-03"
+    },
+    {
+     "number": 303,
+     "state": "closed",
+     "opened": "2025-09-03"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "mobbin/mobbin-mcp-server",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "mondaycom/mcp",
+   "status": "read",
+   "total": 8,
+   "open": 6,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 496,
+     "state": "open",
+     "opened": "2026-09-27"
+    },
+    {
+     "number": 313,
+     "state": "closed",
+     "opened": "2026-04-18"
+    },
+    {
+     "number": 230,
+     "state": "open",
+     "opened": "2026-03-15"
+    },
+    {
+     "number": 192,
+     "state": "open",
+     "opened": "2026-02-09"
+    },
+    {
+     "number": 149,
+     "state": "open",
+     "opened": "2025-11-19"
+    },
+    {
+     "number": 92,
+     "state": "open",
+     "opened": "2025-09-23"
+    },
+    {
+     "number": 91,
+     "state": "closed",
+     "opened": "2025-09-23"
+    },
+    {
+     "number": 50,
+     "state": "open",
+     "opened": "2025-07-20"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "neondatabase/mcp-server-neon",
+   "status": "read",
+   "total": 9,
+   "open": 3,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 366,
+     "state": "open",
+     "opened": "2026-09-26"
+    },
+    {
+     "number": 333,
+     "state": "closed",
+     "opened": "2026-08-29"
+    },
+    {
+     "number": 201,
+     "state": "open",
+     "opened": "2026-02-24"
+    },
+    {
+     "number": 183,
+     "state": "closed",
+     "opened": "2026-01-25"
+    },
+    {
+     "number": 159,
+     "state": "open",
+     "opened": "2025-12-27"
+    },
+    {
+     "number": 126,
+     "state": "closed",
+     "opened": "2025-10-27"
+    },
+    {
+     "number": 57,
+     "state": "closed",
+     "opened": "2025-05-12"
+    },
+    {
+     "number": 49,
+     "state": "closed",
+     "opened": "2025-04-30"
+    },
+    {
+     "number": 8,
+     "state": "closed",
+     "opened": "2024-12-27"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "obra/superpowers",
+   "status": "read",
+   "total": 99,
+   "open": 7,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 2642,
+     "state": "open",
+     "opened": "2026-10-29"
+    },
+    {
+     "number": 2630,
+     "state": "open",
+     "opened": "2026-10-26"
+    },
+    {
+     "number": 2583,
+     "state": "closed",
+     "opened": "2026-10-22"
+    },
+    {
+     "number": 2524,
+     "state": "closed",
+     "opened": "2026-10-15"
+    },
+    {
+     "number": 2503,
+     "state": "closed",
+     "opened": "2026-10-12"
+    },
+    {
+     "number": 2496,
+     "state": "closed",
+     "opened": "2026-10-10"
+    },
+    {
+     "number": 2452,
+     "state": "closed",
+     "opened": "2026-10-03"
+    },
+    {
+     "number": 2342,
+     "state": "open",
+     "opened": "2026-09-19"
+    },
+    {
+     "number": 2310,
+     "state": "closed",
+     "opened": "2026-09-17"
+    },
+    {
+     "number": 2305,
+     "state": "closed",
+     "opened": "2026-09-16"
+    },
+    {
+     "number": 2247,
+     "state": "closed",
+     "opened": "2026-09-02"
+    },
+    {
+     "number": 2245,
+     "state": "open",
+     "opened": "2026-09-02"
+    },
+    {
+     "number": 2242,
+     "state": "closed",
+     "opened": "2026-09-02"
+    },
+    {
+     "number": 2145,
+     "state": "open",
+     "opened": "2026-08-13"
+    },
+    {
+     "number": 2105,
+     "state": "closed",
+     "opened": "2026-08-07"
+    },
+    {
+     "number": 2092,
+     "state": "open",
+     "opened": "2026-08-05"
+    },
+    {
+     "number": 2091,
+     "state": "closed",
+     "opened": "2026-08-05"
+    },
+    {
+     "number": 2018,
+     "state": "closed",
+     "opened": "2026-07-22"
+    },
+    {
+     "number": 1965,
+     "state": "closed",
+     "opened": "2026-07-11"
+    },
+    {
+     "number": 1918,
+     "state": "closed",
+     "opened": "2026-07-04"
+    },
+    {
+     "number": 1873,
+     "state": "closed",
+     "opened": "2026-06-30"
+    },
+    {
+     "number": 1867,
+     "state": "closed",
+     "opened": "2026-06-30"
+    },
+    {
+     "number": 1778,
+     "state": "closed",
+     "opened": "2026-06-17"
+    },
+    {
+     "number": 1774,
+     "state": "closed",
+     "opened": "2026-06-16"
+    },
+    {
+     "number": 1751,
+     "state": "closed",
+     "opened": "2026-06-13"
+    },
+    {
+     "number": 1736,
+     "state": "closed",
+     "opened": "2026-06-11"
+    },
+    {
+     "number": 1693,
+     "state": "closed",
+     "opened": "2026-06-05"
+    },
+    {
+     "number": 1645,
+     "state": "closed",
+     "opened": "2026-05-29"
+    },
+    {
+     "number": 1577,
+     "state": "closed",
+     "opened": "2026-05-18"
+    },
+    {
+     "number": 1554,
+     "state": "closed",
+     "opened": "2026-05-15"
+    },
+    {
+     "number": 1518,
+     "state": "closed",
+     "opened": "2026-05-11"
+    },
+    {
+     "number": 1492,
+     "state": "closed",
+     "opened": "2026-05-07"
+    },
+    {
+     "number": 1453,
+     "state": "closed",
+     "opened": "2026-05-01"
+    },
+    {
+     "number": 1225,
+     "state": "closed",
+     "opened": "2026-04-20"
+    },
+    {
+     "number": 1142,
+     "state": "closed",
+     "opened": "2026-04-12"
+    },
+    {
+     "number": 1077,
+     "state": "closed",
+     "opened": "2026-04-07"
+    },
+    {
+     "number": 1068,
+     "state": "closed",
+     "opened": "2026-04-06"
+    },
+    {
+     "number": 1064,
+     "state": "closed",
+     "opened": "2026-04-05"
+    },
+    {
+     "number": 1048,
+     "state": "closed",
+     "opened": "2026-04-04"
+    },
+    {
+     "number": 1042,
+     "state": "closed",
+     "opened": "2026-04-03"
+    },
+    {
+     "number": 1026,
+     "state": "closed",
+     "opened": "2026-04-01"
+    },
+    {
+     "number": 1002,
+     "state": "closed",
+     "opened": "2026-03-30"
+    },
+    {
+     "number": 999,
+     "state": "closed",
+     "opened": "2026-03-30"
+    },
+    {
+     "number": 912,
+     "state": "closed",
+     "opened": "2026-03-24"
+    },
+    {
+     "number": 835,
+     "state": "closed",
+     "opened": "2026-03-19"
+    },
+    {
+     "number": 809,
+     "state": "open",
+     "opened": "2026-03-18"
+    },
+    {
+     "number": 783,
+     "state": "closed",
+     "opened": "2026-03-17"
+    },
+    {
+     "number": 780,
+     "state": "closed",
+     "opened": "2026-03-17"
+    },
+    {
+     "number": 774,
+     "state": "closed",
+     "opened": "2026-03-17"
+    },
+    {
+     "number": 770,
+     "state": "closed",
+     "opened": "2026-03-17"
+    },
+    {
+     "number": 742,
+     "state": "closed",
+     "opened": "2026-03-15"
+    },
+    {
+     "number": 737,
+     "state": "closed",
+     "opened": "2026-03-14"
+    },
+    {
+     "number": 692,
+     "state": "closed",
+     "opened": "2026-03-11"
+    },
+    {
+     "number": 644,
+     "state": "closed",
+     "opened": "2026-03-06"
+    },
+    {
+     "number": 619,
+     "state": "closed",
+     "opened": "2026-03-05"
+    },
+    {
+     "number": 612,
+     "state": "closed",
+     "opened": "2026-03-04"
+    },
+    {
+     "number": 605,
+     "state": "closed",
+     "opened": "2026-03-03"
+    },
+    {
+     "number": 577,
+     "state": "closed",
+     "opened": "2026-02-28"
+    },
+    {
+     "number": 518,
+     "state": "closed",
+     "opened": "2026-02-20"
+    },
+    {
+     "number": 504,
+     "state": "closed",
+     "opened": "2026-02-18"
+    },
+    {
+     "number": 491,
+     "state": "closed",
+     "opened": "2026-02-16"
+    },
+    {
+     "number": 487,
+     "state": "closed",
+     "opened": "2026-02-16"
+    },
+    {
+     "number": 440,
+     "state": "closed",
+     "opened": "2026-02-08"
+    },
+    {
+     "number": 431,
+     "state": "closed",
+     "opened": "2026-02-06"
+    },
+    {
+     "number": 420,
+     "state": "closed",
+     "opened": "2026-02-04"
+    },
+    {
+     "number": 418,
+     "state": "closed",
+     "opened": "2026-02-04"
+    },
+    {
+     "number": 417,
+     "state": "closed",
+     "opened": "2026-02-04"
+    },
+    {
+     "number": 412,
+     "state": "closed",
+     "opened": "2026-02-04"
+    },
+    {
+     "number": 408,
+     "state": "closed",
+     "opened": "2026-02-04"
+    },
+    {
+     "number": 399,
+     "state": "closed",
+     "opened": "2026-02-01"
+    },
+    {
+     "number": 393,
+     "state": "closed",
+     "opened": "2026-01-31"
+    },
+    {
+     "number": 389,
+     "state": "closed",
+     "opened": "2026-01-30"
+    },
+    {
+     "number": 383,
+     "state": "closed",
+     "opened": "2026-01-30"
+    },
+    {
+     "number": 369,
+     "state": "closed",
+     "opened": "2026-01-27"
+    },
+    {
+     "number": 341,
+     "state": "closed",
+     "opened": "2026-01-23"
+    },
+    {
+     "number": 317,
+     "state": "closed",
+     "opened": "2026-01-21"
+    },
+    {
+     "number": 313,
+     "state": "closed",
+     "opened": "2026-01-20"
+    },
+    {
+     "number": 275,
+     "state": "closed",
+     "opened": "2026-01-16"
+    },
+    {
+     "number": 260,
+     "state": "closed",
+     "opened": "2026-01-14"
+    },
+    {
+     "number": 238,
+     "state": "closed",
+     "opened": "2026-01-08"
+    },
+    {
+     "number": 234,
+     "state": "closed",
+     "opened": "2026-01-06"
+    },
+    {
+     "number": 225,
+     "state": "closed",
+     "opened": "2026-01-03"
+    },
+    {
+     "number": 222,
+     "state": "closed",
+     "opened": "2026-01-02"
+    },
+    {
+     "number": 189,
+     "state": "closed",
+     "opened": "2025-12-27"
+    },
+    {
+     "number": 177,
+     "state": "closed",
+     "opened": "2025-12-19"
+    },
+    {
+     "number": 173,
+     "state": "closed",
+     "opened": "2025-12-17"
+    },
+    {
+     "number": 167,
+     "state": "closed",
+     "opened": "2025-12-14"
+    },
+    {
+     "number": 142,
+     "state": "closed",
+     "opened": "2025-12-05"
+    },
+    {
+     "number": 141,
+     "state": "closed",
+     "opened": "2025-12-03"
+    },
+    {
+     "number": 104,
+     "state": "closed",
+     "opened": "2025-11-12"
+    },
+    {
+     "number": 51,
+     "state": "closed",
+     "opened": "2025-10-20"
+    },
+    {
+     "number": 49,
+     "state": "closed",
+     "opened": "2025-10-19"
+    },
+    {
+     "number": 46,
+     "state": "closed",
+     "opened": "2025-10-18"
+    },
+    {
+     "number": 29,
+     "state": "closed",
+     "opened": "2025-10-15"
+    },
+    {
+     "number": 26,
+     "state": "closed",
+     "opened": "2025-10-14"
+    },
+    {
+     "number": 19,
+     "state": "closed",
+     "opened": "2025-10-13"
+    },
+    {
+     "number": 17,
+     "state": "closed",
+     "opened": "2025-10-13"
+    },
+    {
+     "number": 16,
+     "state": "closed",
+     "opened": "2025-10-13"
+    },
+    {
+     "number": 8,
+     "state": "closed",
+     "opened": "2025-10-12"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/obra/superpowers?skill=brainstorming": [
+     2524,
+     783,
+     770
+    ],
+    "github.com/obra/superpowers?skill=systematic-debugging": [],
+    "github.com/obra/superpowers?skill=writing-plans": [
+     2452,
+     1042,
+     1026
+    ],
+    "github.com/obra/superpowers?skill=using-superpowers": [
+     2247,
+     2105,
+     1002
+    ],
+    "github.com/obra/superpowers?skill=requesting-code-review": [
+     1077
+    ],
+    "github.com/obra/superpowers?skill=test-driven-development": [
+     2452,
+     2092
+    ],
+    "github.com/obra/superpowers?skill=verification-before-completion": [],
+    "github.com/obra/superpowers?skill=executing-plans": [
+     2642,
+     2342
+    ],
+    "github.com/obra/superpowers?skill=subagent-driven-development": [
+     2630,
+     1077
+    ],
+    "github.com/obra/superpowers?skill=receiving-code-review": [],
+    "github.com/obra/superpowers?skill=dispatching-parallel-agents": [],
+    "github.com/obra/superpowers?skill=writing-skills": [],
+    "github.com/obra/superpowers?skill=using-git-worktrees": [],
+    "github.com/obra/superpowers?skill=finishing-a-development-branch": [
+     999,
+     167
+    ],
+    "github.com/obra/superpowers?skill=diagnosing-superpowers": []
+   }
+  },
+  {
+   "repo": "paypal/paypal-mcp-server",
+   "status": "read",
+   "total": 1,
+   "open": 1,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 6,
+     "state": "open",
+     "opened": "2026-07-26"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "pbakaus/impeccable",
+   "status": "read",
+   "total": 57,
+   "open": 1,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 1359,
+     "state": "open",
+     "opened": "2026-11-09"
+    },
+    {
+     "number": 1341,
+     "state": "closed",
+     "opened": "2026-11-08"
+    },
+    {
+     "number": 1340,
+     "state": "closed",
+     "opened": "2026-11-08"
+    },
+    {
+     "number": 1298,
+     "state": "closed",
+     "opened": "2026-11-04"
+    },
+    {
+     "number": 1283,
+     "state": "closed",
+     "opened": "2026-11-02"
+    },
+    {
+     "number": 1268,
+     "state": "closed",
+     "opened": "2026-10-31"
+    },
+    {
+     "number": 1251,
+     "state": "closed",
+     "opened": "2026-10-31"
+    },
+    {
+     "number": 1250,
+     "state": "closed",
+     "opened": "2026-10-31"
+    },
+    {
+     "number": 1249,
+     "state": "closed",
+     "opened": "2026-10-31"
+    },
+    {
+     "number": 1223,
+     "state": "closed",
+     "opened": "2026-10-29"
+    },
+    {
+     "number": 1162,
+     "state": "closed",
+     "opened": "2026-10-24"
+    },
+    {
+     "number": 1138,
+     "state": "closed",
+     "opened": "2026-10-22"
+    },
+    {
+     "number": 1115,
+     "state": "closed",
+     "opened": "2026-10-22"
+    },
+    {
+     "number": 1112,
+     "state": "closed",
+     "opened": "2026-10-22"
+    },
+    {
+     "number": 1081,
+     "state": "closed",
+     "opened": "2026-10-19"
+    },
+    {
+     "number": 1055,
+     "state": "closed",
+     "opened": "2026-10-16"
+    },
+    {
+     "number": 905,
+     "state": "closed",
+     "opened": "2026-10-01"
+    },
+    {
+     "number": 874,
+     "state": "closed",
+     "opened": "2026-09-27"
+    },
+    {
+     "number": 871,
+     "state": "closed",
+     "opened": "2026-09-27"
+    },
+    {
+     "number": 866,
+     "state": "closed",
+     "opened": "2026-09-26"
+    },
+    {
+     "number": 857,
+     "state": "closed",
+     "opened": "2026-09-25"
+    },
+    {
+     "number": 848,
+     "state": "closed",
+     "opened": "2026-09-23"
+    },
+    {
+     "number": 815,
+     "state": "closed",
+     "opened": "2026-09-12"
+    },
+    {
+     "number": 805,
+     "state": "closed",
+     "opened": "2026-09-10"
+    },
+    {
+     "number": 771,
+     "state": "closed",
+     "opened": "2026-09-07"
+    },
+    {
+     "number": 770,
+     "state": "closed",
+     "opened": "2026-09-07"
+    },
+    {
+     "number": 768,
+     "state": "closed",
+     "opened": "2026-09-07"
+    },
+    {
+     "number": 766,
+     "state": "closed",
+     "opened": "2026-09-07"
+    },
+    {
+     "number": 765,
+     "state": "closed",
+     "opened": "2026-09-07"
+    },
+    {
+     "number": 764,
+     "state": "closed",
+     "opened": "2026-09-07"
+    },
+    {
+     "number": 763,
+     "state": "closed",
+     "opened": "2026-09-07"
+    },
+    {
+     "number": 760,
+     "state": "closed",
+     "opened": "2026-09-07"
+    },
+    {
+     "number": 715,
+     "state": "closed",
+     "opened": "2026-09-03"
+    },
+    {
+     "number": 704,
+     "state": "closed",
+     "opened": "2026-09-02"
+    },
+    {
+     "number": 701,
+     "state": "closed",
+     "opened": "2026-09-01"
+    },
+    {
+     "number": 691,
+     "state": "closed",
+     "opened": "2026-09-01"
+    },
+    {
+     "number": 589,
+     "state": "closed",
+     "opened": "2026-08-14"
+    },
+    {
+     "number": 580,
+     "state": "closed",
+     "opened": "2026-08-14"
+    },
+    {
+     "number": 524,
+     "state": "closed",
+     "opened": "2026-08-06"
+    },
+    {
+     "number": 513,
+     "state": "closed",
+     "opened": "2026-08-05"
+    },
+    {
+     "number": 503,
+     "state": "closed",
+     "opened": "2026-08-04"
+    },
+    {
+     "number": 500,
+     "state": "closed",
+     "opened": "2026-08-03"
+    },
+    {
+     "number": 486,
+     "state": "closed",
+     "opened": "2026-08-03"
+    },
+    {
+     "number": 445,
+     "state": "closed",
+     "opened": "2026-07-29"
+    },
+    {
+     "number": 410,
+     "state": "closed",
+     "opened": "2026-07-25"
+    },
+    {
+     "number": 407,
+     "state": "closed",
+     "opened": "2026-07-24"
+    },
+    {
+     "number": 403,
+     "state": "closed",
+     "opened": "2026-07-23"
+    },
+    {
+     "number": 384,
+     "state": "closed",
+     "opened": "2026-07-18"
+    },
+    {
+     "number": 362,
+     "state": "closed",
+     "opened": "2026-07-09"
+    },
+    {
+     "number": 340,
+     "state": "closed",
+     "opened": "2026-07-05"
+    },
+    {
+     "number": 267,
+     "state": "closed",
+     "opened": "2026-06-18"
+    },
+    {
+     "number": 255,
+     "state": "closed",
+     "opened": "2026-06-16"
+    },
+    {
+     "number": 246,
+     "state": "closed",
+     "opened": "2026-06-14"
+    },
+    {
+     "number": 164,
+     "state": "closed",
+     "opened": "2026-05-23"
+    },
+    {
+     "number": 140,
+     "state": "closed",
+     "opened": "2026-05-05"
+    },
+    {
+     "number": 95,
+     "state": "closed",
+     "opened": "2026-04-10"
+    },
+    {
+     "number": 17,
+     "state": "closed",
+     "opened": "2026-03-08"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "postmanlabs/postman-mcp-server",
+   "status": "read",
+   "total": 5,
+   "open": 0,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 112,
+     "state": "closed",
+     "opened": "2026-02-20"
+    },
+    {
+     "number": 107,
+     "state": "closed",
+     "opened": "2026-02-06"
+    },
+    {
+     "number": 106,
+     "state": "closed",
+     "opened": "2026-02-06"
+    },
+    {
+     "number": 12,
+     "state": "closed",
+     "opened": "2025-07-07"
+    },
+    {
+     "number": 11,
+     "state": "closed",
+     "opened": "2025-07-03"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "prime-skills/runcomfy-agent-skills",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {
+    "github.com/prime-skills/runcomfy-agent-skills?skill=video-edit": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=image-to-video": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=nano-banana-2": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=image-edit": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=nano-banana-edit": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=flux-kontext": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=wan-2-7": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=seedance-v2": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=gpt-image-edit": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=happyhorse-1-0": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=flux-2-klein": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=kling-3-0": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=codex-pet": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=ai-image-generation": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=ai-video-generation": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=runcomfy-cli": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=ai-avatar-video": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=face-swap": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=video-inpainting": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=image-inpainting": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=controlnet-pose": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=lipsync": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=video-extend": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=elevenlabs-music-generation": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=image-outpainting": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=relight": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=video-outpainting": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=ai-music": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=ace-step": [],
+    "github.com/prime-skills/runcomfy-agent-skills?skill=gpt-image-2": []
+   }
+  },
+  {
+   "repo": "prisma/mcp",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "prisma/skills",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {
+    "github.com/prisma/skills?skill=prisma-client-api": [],
+    "github.com/prisma/skills?skill=prisma-database-setup": [],
+    "github.com/prisma/skills?skill=prisma-cli": [],
+    "github.com/prisma/skills?skill=prisma-postgres": [],
+    "github.com/prisma/skills?skill=prisma-driver-adapter-implementation": [],
+    "github.com/prisma/skills?skill=prisma-postgres-setup": [],
+    "github.com/prisma/skills?skill=prisma-upgrade-v7": [],
+    "github.com/prisma/skills?skill=prisma-compute": [],
+    "github.com/prisma/skills?skill=prisma-mongodb-upgrade": [],
+    "github.com/prisma/skills?skill=prisma-orm-setup": []
+   }
+  },
+  {
+   "repo": "qu-skills/superpowers",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {
+    "github.com/qu-skills/superpowers?skill=ai-avatar-video": [],
+    "github.com/qu-skills/superpowers?skill=twitter-automation": [],
+    "github.com/qu-skills/superpowers?skill=ai-video-generation": [],
+    "github.com/qu-skills/superpowers?skill=ai-image-generation": [],
+    "github.com/qu-skills/superpowers?skill=agent-browser": [],
+    "github.com/qu-skills/superpowers?skill=infsh-cli": [],
+    "github.com/qu-skills/superpowers?skill=agent-tools": [],
+    "github.com/qu-skills/superpowers?skill=remotion-render": [],
+    "github.com/qu-skills/superpowers?skill=web-search": [],
+    "github.com/qu-skills/superpowers?skill=python-executor": [],
+    "github.com/qu-skills/superpowers?skill=product-photography": [],
+    "github.com/qu-skills/superpowers?skill=character-design-sheet": [],
+    "github.com/qu-skills/superpowers?skill=storyboard-creation": [],
+    "github.com/qu-skills/superpowers?skill=competitor-teardown": [],
+    "github.com/qu-skills/superpowers?skill=youtube-thumbnail-design": [],
+    "github.com/qu-skills/superpowers?skill=product-hunt-launch": [],
+    "github.com/qu-skills/superpowers?skill=app-store-screenshots": [],
+    "github.com/qu-skills/superpowers?skill=landing-page-design": [],
+    "github.com/qu-skills/superpowers?skill=image-to-video": [],
+    "github.com/qu-skills/superpowers?skill=video-ad-specs": [],
+    "github.com/qu-skills/superpowers?skill=seedance": [],
+    "github.com/qu-skills/superpowers?skill=p-video-avatar": [],
+    "github.com/qu-skills/superpowers?skill=gpt-image": [],
+    "github.com/qu-skills/superpowers?skill=happyhorse": [],
+    "github.com/qu-skills/superpowers?skill=p-video": [],
+    "github.com/qu-skills/superpowers?skill=p-image": []
+   }
+  },
+  {
+   "repo": "remotion-dev/skills",
+   "status": "read",
+   "total": 2,
+   "open": 1,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 20,
+     "state": "open",
+     "opened": "2026-07-02"
+    },
+    {
+     "number": 4,
+     "state": "closed",
+     "opened": "2026-03-10"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/remotion-dev/skills?skill=remotion-best-practices": [
+     20
+    ],
+    "github.com/remotion-dev/skills?skill=remotion-render": [],
+    "github.com/remotion-dev/skills?skill=remotion-create": [],
+    "github.com/remotion-dev/skills?skill=remotion-captions": [],
+    "github.com/remotion-dev/skills?skill=remotion-markup": [],
+    "github.com/remotion-dev/skills?skill=remotion-interactivity": [],
+    "github.com/remotion-dev/skills?skill=remotion-saas": [],
+    "github.com/remotion-dev/skills?skill=remotion-docs": [],
+    "github.com/remotion-dev/skills?skill=remotion-upgrade": [],
+    "github.com/remotion-dev/skills?skill=remotion-multimedia": [],
+    "github.com/remotion-dev/skills?skill=remotion-maps": [],
+    "github.com/remotion-dev/skills?skill=remotion-studio": []
+   }
+  },
+  {
+   "repo": "skills-shell/superpowers",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {
+    "github.com/skills-shell/superpowers?skill=ai-video-generation": [],
+    "github.com/skills-shell/superpowers?skill=ai-image-generation": [],
+    "github.com/skills-shell/superpowers?skill=twitter-automation": [],
+    "github.com/skills-shell/superpowers?skill=ai-avatar-video": [],
+    "github.com/skills-shell/superpowers?skill=agent-browser": [],
+    "github.com/skills-shell/superpowers?skill=python-executor": [],
+    "github.com/skills-shell/superpowers?skill=remotion-render": [],
+    "github.com/skills-shell/superpowers?skill=infsh-cli": [],
+    "github.com/skills-shell/superpowers?skill=agent-tools": [],
+    "github.com/skills-shell/superpowers?skill=web-search": [],
+    "github.com/skills-shell/superpowers?skill=storyboard-creation": [],
+    "github.com/skills-shell/superpowers?skill=video-ad-specs": [],
+    "github.com/skills-shell/superpowers?skill=landing-page-design": [],
+    "github.com/skills-shell/superpowers?skill=youtube-thumbnail-design": [],
+    "github.com/skills-shell/superpowers?skill=image-to-video": [],
+    "github.com/skills-shell/superpowers?skill=competitor-teardown": [],
+    "github.com/skills-shell/superpowers?skill=product-photography": [],
+    "github.com/skills-shell/superpowers?skill=product-hunt-launch": [],
+    "github.com/skills-shell/superpowers?skill=character-design-sheet": [],
+    "github.com/skills-shell/superpowers?skill=app-store-screenshots": [],
+    "github.com/skills-shell/superpowers?skill=p-video": [],
+    "github.com/skills-shell/superpowers?skill=p-video-avatar": [],
+    "github.com/skills-shell/superpowers?skill=gpt-image": [],
+    "github.com/skills-shell/superpowers?skill=p-image": [],
+    "github.com/skills-shell/superpowers?skill=happyhorse": [],
+    "github.com/skills-shell/superpowers?skill=seedance": []
+   }
+  },
+  {
+   "repo": "snyk/saw-mcp",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "sonarsource/sonarqube-mcp-server",
+   "status": "read",
+   "total": 2,
+   "open": 1,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 551,
+     "state": "open",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 462,
+     "state": "closed",
+     "opened": "2026-06-24"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "stripe/agent-toolkit",
+   "status": "unread",
+   "why": "HTTP 422"
+  },
+  {
+   "repo": "supabase/mcp",
+   "status": "read",
+   "total": 24,
+   "open": 14,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 540,
+     "state": "open",
+     "opened": "2026-11-10"
+    },
+    {
+     "number": 527,
+     "state": "closed",
+     "opened": "2026-11-06"
+    },
+    {
+     "number": 392,
+     "state": "closed",
+     "opened": "2026-08-28"
+    },
+    {
+     "number": 263,
+     "state": "closed",
+     "opened": "2026-04-30"
+    },
+    {
+     "number": 257,
+     "state": "open",
+     "opened": "2026-04-20"
+    },
+    {
+     "number": 206,
+     "state": "open",
+     "opened": "2026-01-07"
+    },
+    {
+     "number": 186,
+     "state": "closed",
+     "opened": "2025-11-25"
+    },
+    {
+     "number": 183,
+     "state": "closed",
+     "opened": "2025-11-19"
+    },
+    {
+     "number": 159,
+     "state": "open",
+     "opened": "2025-10-11"
+    },
+    {
+     "number": 134,
+     "state": "open",
+     "opened": "2025-08-30"
+    },
+    {
+     "number": 133,
+     "state": "open",
+     "opened": "2025-08-28"
+    },
+    {
+     "number": 116,
+     "state": "open",
+     "opened": "2025-07-23"
+    },
+    {
+     "number": 115,
+     "state": "open",
+     "opened": "2025-07-22"
+    },
+    {
+     "number": 105,
+     "state": "open",
+     "opened": "2025-06-27"
+    },
+    {
+     "number": 104,
+     "state": "open",
+     "opened": "2025-06-26"
+    },
+    {
+     "number": 102,
+     "state": "open",
+     "opened": "2025-06-22"
+    },
+    {
+     "number": 80,
+     "state": "open",
+     "opened": "2025-05-28"
+    },
+    {
+     "number": 68,
+     "state": "closed",
+     "opened": "2025-04-28"
+    },
+    {
+     "number": 66,
+     "state": "closed",
+     "opened": "2025-04-26"
+    },
+    {
+     "number": 41,
+     "state": "open",
+     "opened": "2025-04-08"
+    },
+    {
+     "number": 30,
+     "state": "closed",
+     "opened": "2025-04-06"
+    },
+    {
+     "number": 29,
+     "state": "closed",
+     "opened": "2025-04-05"
+    },
+    {
+     "number": 26,
+     "state": "open",
+     "opened": "2025-04-05"
+    },
+    {
+     "number": 24,
+     "state": "closed",
+     "opened": "2025-04-05"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "vercel-labs/agent-browser",
+   "status": "read",
+   "total": 148,
+   "open": 26,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 2511,
+     "state": "open",
+     "opened": "2026-11-09"
+    },
+    {
+     "number": 2405,
+     "state": "open",
+     "opened": "2026-11-04"
+    },
+    {
+     "number": 2369,
+     "state": "open",
+     "opened": "2026-11-03"
+    },
+    {
+     "number": 2289,
+     "state": "open",
+     "opened": "2026-10-31"
+    },
+    {
+     "number": 2279,
+     "state": "open",
+     "opened": "2026-10-30"
+    },
+    {
+     "number": 2225,
+     "state": "closed",
+     "opened": "2026-10-26"
+    },
+    {
+     "number": 2185,
+     "state": "closed",
+     "opened": "2026-10-21"
+    },
+    {
+     "number": 2134,
+     "state": "closed",
+     "opened": "2026-10-16"
+    },
+    {
+     "number": 2120,
+     "state": "open",
+     "opened": "2026-10-15"
+    },
+    {
+     "number": 2118,
+     "state": "closed",
+     "opened": "2026-10-15"
+    },
+    {
+     "number": 2074,
+     "state": "open",
+     "opened": "2026-10-08"
+    },
+    {
+     "number": 2071,
+     "state": "open",
+     "opened": "2026-10-08"
+    },
+    {
+     "number": 2070,
+     "state": "closed",
+     "opened": "2026-10-08"
+    },
+    {
+     "number": 2031,
+     "state": "closed",
+     "opened": "2026-09-30"
+    },
+    {
+     "number": 2011,
+     "state": "open",
+     "opened": "2026-09-28"
+    },
+    {
+     "number": 2010,
+     "state": "closed",
+     "opened": "2026-09-27"
+    },
+    {
+     "number": 1984,
+     "state": "closed",
+     "opened": "2026-09-23"
+    },
+    {
+     "number": 1981,
+     "state": "closed",
+     "opened": "2026-09-23"
+    },
+    {
+     "number": 1970,
+     "state": "open",
+     "opened": "2026-09-21"
+    },
+    {
+     "number": 1962,
+     "state": "closed",
+     "opened": "2026-09-19"
+    },
+    {
+     "number": 1956,
+     "state": "closed",
+     "opened": "2026-09-19"
+    },
+    {
+     "number": 1948,
+     "state": "closed",
+     "opened": "2026-09-18"
+    },
+    {
+     "number": 1889,
+     "state": "closed",
+     "opened": "2026-09-18"
+    },
+    {
+     "number": 1840,
+     "state": "open",
+     "opened": "2026-09-11"
+    },
+    {
+     "number": 1837,
+     "state": "closed",
+     "opened": "2026-09-11"
+    },
+    {
+     "number": 1791,
+     "state": "closed",
+     "opened": "2026-09-04"
+    },
+    {
+     "number": 1774,
+     "state": "open",
+     "opened": "2026-09-03"
+    },
+    {
+     "number": 1767,
+     "state": "open",
+     "opened": "2026-09-03"
+    },
+    {
+     "number": 1743,
+     "state": "open",
+     "opened": "2026-08-31"
+    },
+    {
+     "number": 1734,
+     "state": "closed",
+     "opened": "2026-08-28"
+    },
+    {
+     "number": 1733,
+     "state": "open",
+     "opened": "2026-08-28"
+    },
+    {
+     "number": 1711,
+     "state": "closed",
+     "opened": "2026-08-23"
+    },
+    {
+     "number": 1710,
+     "state": "open",
+     "opened": "2026-08-23"
+    },
+    {
+     "number": 1692,
+     "state": "open",
+     "opened": "2026-08-15"
+    },
+    {
+     "number": 1651,
+     "state": "open",
+     "opened": "2026-08-05"
+    },
+    {
+     "number": 1650,
+     "state": "closed",
+     "opened": "2026-08-05"
+    },
+    {
+     "number": 1645,
+     "state": "closed",
+     "opened": "2026-08-04"
+    },
+    {
+     "number": 1621,
+     "state": "closed",
+     "opened": "2026-07-29"
+    },
+    {
+     "number": 1514,
+     "state": "closed",
+     "opened": "2026-07-08"
+    },
+    {
+     "number": 1504,
+     "state": "open",
+     "opened": "2026-07-04"
+    },
+    {
+     "number": 1477,
+     "state": "open",
+     "opened": "2026-06-23"
+    },
+    {
+     "number": 1473,
+     "state": "closed",
+     "opened": "2026-06-22"
+    },
+    {
+     "number": 1433,
+     "state": "closed",
+     "opened": "2026-06-10"
+    },
+    {
+     "number": 1406,
+     "state": "open",
+     "opened": "2026-06-01"
+    },
+    {
+     "number": 1401,
+     "state": "closed",
+     "opened": "2026-06-01"
+    },
+    {
+     "number": 1378,
+     "state": "closed",
+     "opened": "2026-05-21"
+    },
+    {
+     "number": 1367,
+     "state": "closed",
+     "opened": "2026-05-15"
+    },
+    {
+     "number": 1365,
+     "state": "closed",
+     "opened": "2026-05-15"
+    },
+    {
+     "number": 1359,
+     "state": "closed",
+     "opened": "2026-05-14"
+    },
+    {
+     "number": 1339,
+     "state": "closed",
+     "opened": "2026-05-08"
+    },
+    {
+     "number": 1329,
+     "state": "closed",
+     "opened": "2026-05-06"
+    },
+    {
+     "number": 1325,
+     "state": "closed",
+     "opened": "2026-05-05"
+    },
+    {
+     "number": 1322,
+     "state": "closed",
+     "opened": "2026-05-03"
+    },
+    {
+     "number": 1321,
+     "state": "closed",
+     "opened": "2026-05-03"
+    },
+    {
+     "number": 1303,
+     "state": "closed",
+     "opened": "2026-04-29"
+    },
+    {
+     "number": 1291,
+     "state": "closed",
+     "opened": "2026-04-24"
+    },
+    {
+     "number": 1272,
+     "state": "closed",
+     "opened": "2026-04-19"
+    },
+    {
+     "number": 1260,
+     "state": "closed",
+     "opened": "2026-04-17"
+    },
+    {
+     "number": 1229,
+     "state": "closed",
+     "opened": "2026-04-13"
+    },
+    {
+     "number": 1191,
+     "state": "closed",
+     "opened": "2026-04-08"
+    },
+    {
+     "number": 1172,
+     "state": "closed",
+     "opened": "2026-04-06"
+    },
+    {
+     "number": 1162,
+     "state": "closed",
+     "opened": "2026-04-06"
+    },
+    {
+     "number": 1124,
+     "state": "closed",
+     "opened": "2026-04-03"
+    },
+    {
+     "number": 1115,
+     "state": "closed",
+     "opened": "2026-04-02"
+    },
+    {
+     "number": 1105,
+     "state": "open",
+     "opened": "2026-03-31"
+    },
+    {
+     "number": 1091,
+     "state": "closed",
+     "opened": "2026-03-30"
+    },
+    {
+     "number": 1061,
+     "state": "closed",
+     "opened": "2026-03-28"
+    },
+    {
+     "number": 1049,
+     "state": "open",
+     "opened": "2026-03-27"
+    },
+    {
+     "number": 1044,
+     "state": "closed",
+     "opened": "2026-03-27"
+    },
+    {
+     "number": 1043,
+     "state": "closed",
+     "opened": "2026-03-27"
+    },
+    {
+     "number": 1035,
+     "state": "closed",
+     "opened": "2026-03-26"
+    },
+    {
+     "number": 1017,
+     "state": "closed",
+     "opened": "2026-03-25"
+    },
+    {
+     "number": 1003,
+     "state": "open",
+     "opened": "2026-03-24"
+    },
+    {
+     "number": 990,
+     "state": "closed",
+     "opened": "2026-03-24"
+    },
+    {
+     "number": 989,
+     "state": "closed",
+     "opened": "2026-03-24"
+    },
+    {
+     "number": 978,
+     "state": "closed",
+     "opened": "2026-03-23"
+    },
+    {
+     "number": 953,
+     "state": "closed",
+     "opened": "2026-03-21"
+    },
+    {
+     "number": 906,
+     "state": "closed",
+     "opened": "2026-03-18"
+    },
+    {
+     "number": 900,
+     "state": "closed",
+     "opened": "2026-03-18"
+    },
+    {
+     "number": 878,
+     "state": "closed",
+     "opened": "2026-03-17"
+    },
+    {
+     "number": 868,
+     "state": "open",
+     "opened": "2026-03-17"
+    },
+    {
+     "number": 835,
+     "state": "closed",
+     "opened": "2026-03-15"
+    },
+    {
+     "number": 820,
+     "state": "closed",
+     "opened": "2026-03-15"
+    },
+    {
+     "number": 805,
+     "state": "closed",
+     "opened": "2026-03-15"
+    },
+    {
+     "number": 799,
+     "state": "closed",
+     "opened": "2026-03-14"
+    },
+    {
+     "number": 780,
+     "state": "closed",
+     "opened": "2026-03-14"
+    },
+    {
+     "number": 778,
+     "state": "closed",
+     "opened": "2026-03-14"
+    },
+    {
+     "number": 773,
+     "state": "closed",
+     "opened": "2026-03-14"
+    },
+    {
+     "number": 705,
+     "state": "closed",
+     "opened": "2026-03-10"
+    },
+    {
+     "number": 681,
+     "state": "closed",
+     "opened": "2026-03-08"
+    },
+    {
+     "number": 645,
+     "state": "closed",
+     "opened": "2026-03-06"
+    },
+    {
+     "number": 635,
+     "state": "closed",
+     "opened": "2026-03-06"
+    },
+    {
+     "number": 629,
+     "state": "closed",
+     "opened": "2026-03-05"
+    },
+    {
+     "number": 628,
+     "state": "closed",
+     "opened": "2026-03-05"
+    },
+    {
+     "number": 579,
+     "state": "closed",
+     "opened": "2026-03-02"
+    },
+    {
+     "number": 578,
+     "state": "closed",
+     "opened": "2026-03-02"
+    },
+    {
+     "number": 574,
+     "state": "closed",
+     "opened": "2026-03-01"
+    },
+    {
+     "number": 556,
+     "state": "closed",
+     "opened": "2026-02-27"
+    },
+    {
+     "number": 553,
+     "state": "closed",
+     "opened": "2026-02-27"
+    },
+    {
+     "number": 552,
+     "state": "closed",
+     "opened": "2026-02-27"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "vercel-labs/agent-skills",
+   "status": "read",
+   "total": 7,
+   "open": 5,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 339,
+     "state": "open",
+     "opened": "2026-10-05"
+    },
+    {
+     "number": 254,
+     "state": "open",
+     "opened": "2026-05-10"
+    },
+    {
+     "number": 214,
+     "state": "open",
+     "opened": "2026-04-03"
+    },
+    {
+     "number": 152,
+     "state": "closed",
+     "opened": "2026-02-27"
+    },
+    {
+     "number": 104,
+     "state": "open",
+     "opened": "2026-01-27"
+    },
+    {
+     "number": 99,
+     "state": "closed",
+     "opened": "2026-01-25"
+    },
+    {
+     "number": 41,
+     "state": "open",
+     "opened": "2026-01-16"
+    }
+   ],
+   "skillsNamed": {
+    "github.com/vercel-labs/agent-skills?skill=web-design-guidelines": [],
+    "github.com/vercel-labs/agent-skills?skill=deploy-to-vercel": [],
+    "github.com/vercel-labs/agent-skills?skill=vercel-cli-with-tokens": [],
+    "github.com/vercel-labs/agent-skills?skill=vercel-optimize": [
+     339
+    ],
+    "github.com/vercel-labs/agent-skills?skill=writing-guidelines": []
+   }
+  },
+  {
+   "repo": "vercel-labs/skills",
+   "status": "read",
+   "total": 50,
+   "open": 14,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 2613,
+     "state": "closed",
+     "opened": "2026-10-28"
+    },
+    {
+     "number": 2533,
+     "state": "closed",
+     "opened": "2026-10-18"
+    },
+    {
+     "number": 2505,
+     "state": "closed",
+     "opened": "2026-10-15"
+    },
+    {
+     "number": 2479,
+     "state": "open",
+     "opened": "2026-10-13"
+    },
+    {
+     "number": 2392,
+     "state": "open",
+     "opened": "2026-10-05"
+    },
+    {
+     "number": 2286,
+     "state": "open",
+     "opened": "2026-09-23"
+    },
+    {
+     "number": 1734,
+     "state": "closed",
+     "opened": "2026-07-20"
+    },
+    {
+     "number": 1672,
+     "state": "closed",
+     "opened": "2026-07-13"
+    },
+    {
+     "number": 1530,
+     "state": "closed",
+     "opened": "2026-06-27"
+    },
+    {
+     "number": 1525,
+     "state": "closed",
+     "opened": "2026-06-26"
+    },
+    {
+     "number": 1457,
+     "state": "closed",
+     "opened": "2026-06-18"
+    },
+    {
+     "number": 1441,
+     "state": "closed",
+     "opened": "2026-06-14"
+    },
+    {
+     "number": 1431,
+     "state": "open",
+     "opened": "2026-06-13"
+    },
+    {
+     "number": 1424,
+     "state": "closed",
+     "opened": "2026-06-12"
+    },
+    {
+     "number": 1417,
+     "state": "open",
+     "opened": "2026-06-11"
+    },
+    {
+     "number": 1376,
+     "state": "closed",
+     "opened": "2026-06-05"
+    },
+    {
+     "number": 1374,
+     "state": "closed",
+     "opened": "2026-06-04"
+    },
+    {
+     "number": 1331,
+     "state": "closed",
+     "opened": "2026-06-02"
+    },
+    {
+     "number": 1318,
+     "state": "closed",
+     "opened": "2026-06-01"
+    },
+    {
+     "number": 1282,
+     "state": "closed",
+     "opened": "2026-05-27"
+    },
+    {
+     "number": 1246,
+     "state": "open",
+     "opened": "2026-05-25"
+    },
+    {
+     "number": 1227,
+     "state": "closed",
+     "opened": "2026-05-23"
+    },
+    {
+     "number": 1220,
+     "state": "open",
+     "opened": "2026-05-22"
+    },
+    {
+     "number": 1187,
+     "state": "closed",
+     "opened": "2026-05-19"
+    },
+    {
+     "number": 1119,
+     "state": "closed",
+     "opened": "2026-05-11"
+    },
+    {
+     "number": 1058,
+     "state": "closed",
+     "opened": "2026-05-03"
+    },
+    {
+     "number": 997,
+     "state": "closed",
+     "opened": "2026-04-23"
+    },
+    {
+     "number": 983,
+     "state": "closed",
+     "opened": "2026-04-22"
+    },
+    {
+     "number": 941,
+     "state": "closed",
+     "opened": "2026-04-15"
+    },
+    {
+     "number": 840,
+     "state": "closed",
+     "opened": "2026-04-01"
+    },
+    {
+     "number": 809,
+     "state": "closed",
+     "opened": "2026-03-31"
+    },
+    {
+     "number": 753,
+     "state": "closed",
+     "opened": "2026-03-25"
+    },
+    {
+     "number": 553,
+     "state": "open",
+     "opened": "2026-03-09"
+    },
+    {
+     "number": 530,
+     "state": "closed",
+     "opened": "2026-03-06"
+    },
+    {
+     "number": 522,
+     "state": "open",
+     "opened": "2026-03-06"
+    },
+    {
+     "number": 490,
+     "state": "open",
+     "opened": "2026-03-04"
+    },
+    {
+     "number": 484,
+     "state": "closed",
+     "opened": "2026-03-04"
+    },
+    {
+     "number": 477,
+     "state": "closed",
+     "opened": "2026-03-03"
+    },
+    {
+     "number": 474,
+     "state": "open",
+     "opened": "2026-03-03"
+    },
+    {
+     "number": 459,
+     "state": "closed",
+     "opened": "2026-03-01"
+    },
+    {
+     "number": 452,
+     "state": "open",
+     "opened": "2026-02-28"
+    },
+    {
+     "number": 445,
+     "state": "open",
+     "opened": "2026-02-27"
+    },
+    {
+     "number": 385,
+     "state": "closed",
+     "opened": "2026-02-17"
+    },
+    {
+     "number": 371,
+     "state": "closed",
+     "opened": "2026-02-15"
+    },
+    {
+     "number": 362,
+     "state": "closed",
+     "opened": "2026-02-13"
+    },
+    {
+     "number": 293,
+     "state": "closed",
+     "opened": "2026-02-05"
+    },
+    {
+     "number": 260,
+     "state": "closed",
+     "opened": "2026-02-02"
+    },
+    {
+     "number": 224,
+     "state": "open",
+     "opened": "2026-01-30"
+    },
+    {
+     "number": 198,
+     "state": "closed",
+     "opened": "2026-01-29"
+    },
+    {
+     "number": 92,
+     "state": "closed",
+     "opened": "2026-01-23"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "webflow/mcp-server",
+   "status": "read",
+   "total": 6,
+   "open": 3,
+   "incomplete": false,
+   "read": [
+    {
+     "number": 146,
+     "state": "open",
+     "opened": "2026-08-23"
+    },
+    {
+     "number": 144,
+     "state": "open",
+     "opened": "2026-07-22"
+    },
+    {
+     "number": 117,
+     "state": "closed",
+     "opened": "2026-04-13"
+    },
+    {
+     "number": 110,
+     "state": "closed",
+     "opened": "2026-04-07"
+    },
+    {
+     "number": 108,
+     "state": "open",
+     "opened": "2026-04-06"
+    },
+    {
+     "number": 73,
+     "state": "closed",
+     "opened": "2025-12-18"
+    }
+   ],
+   "skillsNamed": {}
+  },
+  {
+   "repo": "zapier/zapier-mcp",
+   "status": "read",
+   "total": 0,
+   "open": 0,
+   "incomplete": false,
+   "read": [],
+   "skillsNamed": {}
+  }
+ ]
+}
