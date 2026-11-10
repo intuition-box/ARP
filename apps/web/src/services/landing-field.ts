@@ -14,6 +14,7 @@ import {stringToHex, type Address, type Hex} from "viem";
 
 import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
 import {truncateMiddle} from "./trust-format";
+import {outcomeLabel} from "../lib/outcome-words";
 
 /**
  * What the landing's claim field draws: one real tool, its real claims, its latest line, and what
@@ -108,7 +109,7 @@ function agentName(agent: {atomId: string; label: string | null}): {label: strin
 }
 
 function outcomeWord(outcome: string, reasons: readonly string[]): string {
-    return outcome === "failed" && reasons.length > 0 ? `failed: ${reasons[0]}` : outcome;
+    return outcomeLabel(outcome, reasons.slice(0, 1));
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;

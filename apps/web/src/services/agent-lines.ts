@@ -5,6 +5,7 @@ import {
     type PulseUsageConfig,
 } from "@arp-protocol/core";
 
+import {outcomeLabel} from "../lib/outcome-words";
 import type {ClaimView, EdgeRow, GroupView} from "./atom-standing-view";
 import type {LineVocabulary} from "./landing-field";
 import {truncateMiddle} from "./trust-format";
@@ -48,15 +49,11 @@ function nameOf(atom: {atomId: string; label: string | null}): {name: string; na
         : {name: truncateMiddle(atom.atomId, 6, 4), nameIsId: true};
 }
 
-function outcomeWord(outcome: string, reasons: readonly string[]): string {
-    return outcome === "failed" && reasons.length > 0 ? `failed: ${reasons.join(", ")}` : outcome;
-}
-
 /** One declaration's domains and outcomes, as the declarer wrote them. A domain with no outcome stays. */
 function partsOf(declaration: PulseDeclaration): AgentLinePart[] {
     const parts: AgentLinePart[] = declaration.lines.map((line) => ({
         domain: line.domain,
-        outcome: outcomeWord(line.outcome, line.reasons),
+        outcome: outcomeLabel(line.outcome, line.reasons),
     }));
     for (const domain of declaration.domains) {
         if (!parts.some((part) => part.domain === domain)) parts.push({domain, outcome: null});
@@ -123,7 +120,7 @@ export function buildAgentLinesView(
     return {usedBy, used, contexts, truncated: lines.truncated};
 }
 
-/** What the loupe's card prints under the figure: `presentation · worked`, several joined. */
+/** What the loupe's card prints under the figure: `presentation · task done`, several joined. */
 export function lineText(parts: readonly AgentLinePart[]): string | null {
     const words = parts
         .map((part) =>

@@ -111,7 +111,7 @@ describe("buildLandingField", () => {
             agent: "13579:a",
             tool: "transcribe",
             context: "research",
-            outcome: "worked",
+            outcome: "task done",
         });
         expect(field.readings.map((reading) => reading.kind)).toEqual([
             "useful",

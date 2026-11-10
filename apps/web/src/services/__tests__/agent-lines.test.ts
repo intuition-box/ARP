@@ -99,7 +99,7 @@ describe("buildAgentLinesView", () => {
             new Set(),
         );
         expect(view.used).toHaveLength(1);
-        expect(lineText(view.used[0]?.parts ?? [])).toBe("presentation · worked");
+        expect(lineText(view.used[0]?.parts ?? [])).toBe("presentation · task done");
     });
 
     it("says an outcome written with no domain as the outcome alone", () => {

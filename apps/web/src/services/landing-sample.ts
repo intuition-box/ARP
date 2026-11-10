@@ -74,7 +74,7 @@ export const SAMPLE_FIELD: LandingField = {
             name: "has outcome",
             total: 3,
             claims: [
-                outcome("worked", 4),
+                outcome("task done", 4),
                 outcome("failed: missing-key", 1),
                 {
                     key: "paid:paid service",
@@ -91,8 +91,8 @@ export const SAMPLE_FIELD: LandingField = {
         agentIsId: false,
         tool: "hyperframes",
         context: "video",
-        outcome: "worked",
-        keys: {agent: "agent:agent 1", context: "context:video", outcome: "outcome:worked"},
+        outcome: "task done",
+        keys: {agent: "agent:agent 1", context: "context:video", outcome: "outcome:task done"},
     },
     agents: 5,
     readings: [

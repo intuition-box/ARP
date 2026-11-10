@@ -341,7 +341,7 @@ function SceneWritten({read}: {read: LandingFieldRead}) {
                             ) : null}
                             {showOutcome ? (
                                 <li className="arp-gx-grow">
-                                    <em>outcome</em>how it went
+                                    <em>outcome</em>did the task get done
                                 </li>
                             ) : null}
                         </ol>

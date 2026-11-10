@@ -3,6 +3,7 @@ import {Link} from "react-router-dom";
 
 import {cssVars} from "../../lib/css-vars";
 import {Hint} from "../brand/Hint";
+import {TASK_DONE_HINT} from "../../lib/outcome-words";
 import {LIST_CAP} from "../brand/row-motion";
 
 import type {EdgeRow, GroupView} from "../../services/atom-standing-view";
@@ -293,6 +294,9 @@ export function ClaimField({
                     reading ADR `0042` exists to prevent. `ui.md` forbids the explanatory sentence
                     and names the remedy. Outside the `aria-hidden` key, because a `Hint` inside it
                     would be off the keyboard path and so not a `Hint` at all. */}
+                {/* The card's line says « task done », and the chain says `worked`: one sentence
+                    on what it claims, where the line is shown (ADR `0164`). */}
+                {reserveLine ? <Hint label="What task done means">{TASK_DONE_HINT}</Hint> : null}
                 {SIZE_BY_POSITIONS ? (
                     <Hint label="What a dot's size means">
                         A dot&rsquo;s size is how many accounts support it, never how much they put

@@ -34,7 +34,7 @@ This sentence is on testnet 13579 (`data/measurements/pulse-walk-2026-11-05.json
 
 **A line can stop at any level**, and each level costs one more fee. With no domain, the outcome is about T1.
 
-**Closed words.** A domain is a category that already exists under `tool`. An outcome is `worked` or `failed`. A reason follows only a failure:
+**Closed words.** A domain is a category that already exists under `tool`. An outcome is `worked` or `failed`. **`worked` means the agent used the tool for what it is for, and its task finished with it** — not that the result is right: no agent can say that of its own work, and ARP gives no verdict on a tool. The site shows it as « task done » (ADR `0164`). A reason follows only a failure:
 
 | Reason | Says |
 | --- | --- |

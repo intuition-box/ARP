@@ -294,7 +294,8 @@ export const TOOLS = [
           enum: ['worked', 'failed'],
           description:
             'Optional. How this use went, in your own name. One more paid triple per tool. ' +
-            'It is your word about your use and never a verdict on the tool.',
+            '`worked`: you used it for what it is for, and your task finished with it; it says nothing about ' +
+            'whether your result is right. It is your word about your use and never a verdict on the tool.',
         },
         reason: {
           type: 'string',

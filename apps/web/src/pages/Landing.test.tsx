@@ -224,7 +224,7 @@ describe("Landing", () => {
         const written = scene(container, 1);
         await waitFor(() =>
             expect(written.querySelector(".arp-gx-sentence")?.textContent).toBe(
-                "hyperframes used by agent 1 in context of video has outcome worked",
+                "hyperframes used by agent 1 in context of video has outcome task done",
             ),
         );
         expect(within(written).getByText("A line, word by word")).toBeTruthy();
