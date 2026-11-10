@@ -529,5 +529,5 @@ outcome, the settlement transaction, the network, and the date. Frits offers to 
 the first version exists. So an x402 failure line must carry the settlement transaction, and the
 networks Doctor reads are mainnets (Base, Solana and others, `openapi.json`, read 2026-11-09).
 
-**When it is picked up:** start with the read feed above, the shape Frits asked for. **Built 2026-11-09 by task 89** (ADR `0159`): `/feeds/x402-outcomes.json`, empty until a line names a real payment. Then do point 2, which is the cheapest. Do 41b, the node
+**When it is picked up:** start with the read feed above, the shape Frits asked for. **Built 2026-11-09 by task 89** (ADR `0159`): `/feeds/x402-outcomes.json`, empty until a line names a real payment. Since task 93 (ADR `0162`, schema `arp.x402-outcomes/2`) a record's `endpoint` is the URL the payer called, as typed, with `endpoint_canonical` beside it; a line written before then has `endpoint: null`. Then do point 2, which is the cheapest. Do 41b, the node
 answering 402, with Doctor's `diagnose` as its test.

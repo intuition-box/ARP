@@ -6,7 +6,7 @@ When an agent pays an x402 endpoint and gets nothing back, it can say so in a pu
 
 `/feeds/x402-outcomes.json` on this site. It is a dated snapshot: rebuilt by `scripts/build/build-x402-feed.ts`, which says when in `generated_at`. Any origin can read it.
 
-Today it holds **no record**: no line with a payment has been written yet.
+It reads Base by default, where no line has named a payment yet, so today it holds **no record**.
 
 ## What a line with a payment is
 
@@ -17,17 +17,19 @@ T1 = (agent, uses, https://api.example.com/x402/weather)
 T2 = (T1, in context of, domain)          optional
 T3 = (T2, has outcome, failed)
 T4 = (T3, because, no-delivery)
-T5 = (T3, paid with, eip155:8453/tx/0x…)
+T5 = (T3, paid with, eip155:8453/tx/0x… http://www.api.example.com/x402/weather/)
 ```
 
-Only the network (CAIP-2) and the transaction hash are written. The payer, the recipient, the amount and the asset are read from the transaction itself, so there is one copy of each.
+T5's object is the network (CAIP-2), the transaction hash, one space, and the URL exactly as the payer called it. The payer, the recipient, the amount and the asset are read from the transaction itself, so there is one copy of each.
+
+T1 names the tool in one canonical spelling, so every line about it lands on one atom: `https`, no `www.`, no trailing `/`, the query sorted. T5 keeps the spelling that was paid, because a checker matches on that. The two must agree: the exact URL must reduce to T1's, or the line is refused and the feed leaves it out.
 
 `no-delivery` means "paid, got nothing back". It is one of the closed reasons.
 
-From the CLI:
+From the CLI, with `--tool` the URL you paid, exactly as you called it:
 
 ```
-arp line --tool https://api.example.com/x402/weather --outcome failed --reason no-delivery \
+arp line --tool http://www.api.example.com/x402/weather/ --outcome failed --reason no-delivery \
   --payment-tx 0x… --network eip155:8453
 ```
 
@@ -37,7 +39,8 @@ arp line --tool https://api.example.com/x402/weather --outcome failed --reason n
 
 ```json
 {
-  "endpoint": "https://api.example.com/x402/weather",
+  "endpoint": "http://www.api.example.com/x402/weather/",
+  "endpoint_canonical": "https://api.example.com/x402/weather",
   "outcome": "failed",
   "reason": "no-delivery",
   "domain": null,
@@ -54,7 +57,7 @@ arp line --tool https://api.example.com/x402/weather --outcome failed --reason n
 }
 ```
 
-`amount` is in the asset's smallest unit: 20000 is 0.02 USDC. `line_id` is T5's id on Intuition testnet 13579. Beside the records: `by_endpoint` (records, worked, failed, no-delivery and distinct payers per endpoint), `skipped` (lines left out, by why), and `truncated`.
+`endpoint` is the URL the payer called. A line written before 2026-11-10 did not name it, so its `endpoint` is `null`: unknown, not guessed. `endpoint_canonical` is always there. `amount` is in the asset's smallest unit: 20000 is 0.02 USDC. `line_id` is T5's id on Intuition testnet 13579. Beside the records: `by_endpoint` (records, worked, failed, no-delivery and distinct payers per `endpoint_canonical`), `skipped` (lines left out, by why), and `truncated`. The schema is `arp.x402-outcomes/2`; version 1 had no `endpoint_canonical` and put the canonical URL in `endpoint`.
 
 ## When a line becomes a record
 
@@ -63,6 +66,7 @@ All of these, checked when the file is built:
 - the transaction exists on its network and succeeded;
 - it holds exactly one transfer of an accepted asset (USDC on Base today) from the line's writer, or from the `agentWallet` of an ERC-8004 agent that writer holds. The payer is read from the token's `Transfer` log, never from the transaction's sender, which for x402 is the facilitator;
 - the transfer pays someone other than the payer, and more than nothing;
+- the exact URL, when the line names one, reduces to the tool's URL;
 - the line was written after the payment;
 - no other line whose payment also checks names the same payment;
 - a wallet other than ARP's own stands behind every level of the line.
@@ -90,7 +94,7 @@ The line, on Intuition testnet 13579 (replace the id):
 
 ```
 curl -s https://testnet.intuition.sh/v1/graphql -H 'content-type: application/json' \
-  -d '{"query":"query($id:String!){triples(where:{term_id:{_eq:$id}}){subject_id creator_id created_at object{label} positions(where:{shares:{_gt:\"0\"}}){account_id}}}","variables":{"id":"<line_id>"}}'
+  -d '{"query":"query($id:String!){triples(where:{term_id:{_eq:$id}}){subject_id creator_id created_at object{data} positions(where:{shares:{_gt:\"0\"}}){account_id}}}","variables":{"id":"<line_id>"}}'
 ```
 
-`object.label` is the payment as written, `subject_id` is the outcome it is attached to, and `positions` lists the wallets that stand behind it.
+`object.data` is the payment and the exact URL as written (`label` is cut at 256 characters), `subject_id` is the outcome it is attached to, and `positions` lists the wallets that stand behind it.

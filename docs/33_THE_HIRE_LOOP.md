@@ -78,7 +78,7 @@ sequenceDiagram
 | 3 | Check before paying | client | ARP shows declared lines; a preflight is Fizzl's, not ours |
 | 4 | Pay | client under the delegation | native tTRUST to a node yes (`apps/node/src/task.ts`, `verifyPayment`); x402 **no**, deferred to mainnet (ADR `0102`) |
 | 5 | Deliver and sign a receipt | provider's node | yes, hire receipt v2 (ADR `0098`, `0101`) |
-| 6 | Declare the outcome, with the proof | client | the line yes (form B, `arp line`); the proof attached as a receipt yes (`agent-pulse.ts`); the settlement tx as one more level, `(outcome, paid with, eip155:<chain>/tx/<hash>)`, yes since task 89 (ADR `0159`), not in 8004's `proofOfPayment` shape |
+| 6 | Declare the outcome, with the proof | client | the line yes (form B, `arp line`); the proof attached as a receipt yes (`agent-pulse.ts`); the settlement tx as one more level, `(outcome, paid with, eip155:<chain>/tx/<hash>)`, yes since task 89 (ADR `0159`), with the exact URL paid after it since task 93 (ADR `0162`), not in 8004's `proofOfPayment` shape |
 | 7 | Read it on the next search | anyone | the score yes (`pulse-score.ts`); a dated feed for readers outside ARP, `/feeds/x402-outcomes.json`, yes since task 89, with no record yet and no reader wired (Fizzl offered) |
 
 ## 4. Where it sits on the ladder
