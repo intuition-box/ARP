@@ -19,6 +19,8 @@ flowchart LR
     T3 --> O["failed"]
     T3 --> T4(("T4<br/>because"))
     T4 --> R["missing-key"]
+    T4 --> T5(("T5<br/>needs"))
+    T5 --> N["OPENAI_API_KEY"]
 ```
 
 A round is a triple, a rectangle is an atom. An arrow from a round to a round means that the second is about the first.
@@ -28,9 +30,10 @@ T1 = (agent 6, uses, cut-silences)
 T2 = (T1, in context of, video)
 T3 = (T2, has outcome, failed)
 T4 = (T3, because, missing-key)
+T5 = (T4, needs, OPENAI_API_KEY)
 ```
 
-This sentence is on testnet 13579 (`data/measurements/pulse-walk-2026-11-05.jsonl`, form B).
+Four levels of this sentence are on testnet 13579 (`data/measurements/pulse-walk-2026-11-05.jsonl`, form B).
 
 **A line can stop at any level**, and each level costs one more fee. With no domain, the outcome is about T1.
 
@@ -44,7 +47,9 @@ This sentence is on testnet 13579 (`data/measurements/pulse-walk-2026-11-05.json
 | `not-the-right-tool` | It does not do this job |
 | `no-delivery` | It was paid and gave nothing back (ADR `0159`). About an x402 endpoint, usually with a fifth level, `(T3, paid with, eip155:<chain>/tx/<hash>)`, since task 93 followed by a space and the exact URL paid (ADR `0162`) |
 
-**Writing one from the plugin:** `arp line --tool <url> --outcome failed --reason missing-key [--domain video]` (a domain the tree lacks takes `--parent <category> --why <text>`, ADR `0146`), through the local sponsoring service, testnet 13579 only (ADR `0144`). It takes no proof of use, and the service pays. The service's own wallet says nothing by paying.
+**What was missing, and what made it work** (task 97, ADR `0166`). After `missing-program` or `missing-key`, a fifth level names it: `(T4, needs, ffmpeg)`, `(T4, needs, OPENAI_API_KEY)`. On a worked line, the agent can name what it had to add: `(T3, with, ffmpeg)`. A name is a program (`^[a-z0-9][a-z0-9._+-]{0,39}$`) or an environment variable's name, never its value (`^[A-Z][A-Z0-9_]{2,63}$`), and it is written **only when the skill's own SKILL.md names it**: the hook keeps it only then, and the sponsoring service reads the SKILL.md again before it writes. So the word is one the skill already published, never one from the person's command, output or machine (ADR `0155`). Otherwise the line stops at the reason. Each costs one more triple, 0.002000000002 tTRUST written on 13579, and a name nobody wrote before one more atom, 0.002000000001 (`scripts/measure/need-level-cost.ts`, 2026-11-10). `arp_pulse` shows them as `needs` and `with` on a line, and counts them in `by_need` and `by_with`; they move no score.
+
+**Writing one from the plugin:** `arp line --tool <url> --outcome failed --reason missing-key [--domain video] [--needs OPENAI_API_KEY]` (a domain the tree lacks takes `--parent <category> --why <text>`, ADR `0146`), through the local sponsoring service, testnet 13579 only (ADR `0144`). It takes no proof of use, and the service pays. The service's own wallet says nothing by paying.
 
 **A wallet declares a use by writing T1, or by holding a position on it and standing behind a domain or a result on it.** A position alone is support, not a declaration. One T1 can have several declarers, each with its own lines. **A level counts for a declarer who stands behind it**, by creating it or holding a position, and behind each level below it too. Anybody else's goes to `byOthers`, shown and not counted. A wallet that did not create the edge stops counting when it withdraws. One that created it keeps its place, and can take its deposit back. This reading is not tested on chain.
 
@@ -96,5 +101,5 @@ False wallets cost a plain count about 12 points (77.8% to 65.7%). This table pr
 
 - **When a proof can weigh more.** A self-hire passes every check (`docs/tasks/65`), so its weight stays 1 until two independent parties can be told from one.
 - **Do real skills look like `good-need`?** That decides what the reason is worth, and it can be measured without agents.
-- **`has outcome` and `because`** are ARP's words. Nobody else reads them unless they are published.
+- **`has outcome`, `because`, `needs` and `with`** are ARP's words. Nobody else reads them unless they are published.
 - **A mainnet port** stays blocked until a writer's control of the agent is proven (ADR `0135`), and until the price of a line held on deposits is answered (ADR `0138`).

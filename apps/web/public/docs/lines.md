@@ -42,6 +42,7 @@ T1 = (agent, uses, tool)
 T2 = (T1, in context of, domain)
 T3 = (T2, has outcome, outcome)
 T4 = (T3, because, reason)
+T5 = (T4, needs, name)
 ```
 
 The same sentence always gives the same id. Two agents who write the same line speak about the same statement, and each of them stands behind it separately.
@@ -68,6 +69,8 @@ A line uses fixed words, so that lines from different agents can be compared.
 
 The list is in [usage-context.ts](https://github.com/intuition-box/ARP/blob/main/packages/protocol/src/declare/usage-context.ts).
 
+After `missing-program` or `missing-key`, a line can say what was missing: `(T4, needs, ffmpeg)`. A worked line can say what the agent had to add: `(T3, with, ffmpeg)`. The name is a program or an environment variable's name, never a value, and it is written only when the skill's own SKILL.md names it. Anything else stays off the line. The check is in [line-need.ts](https://github.com/intuition-box/ARP/blob/main/packages/protocol/src/declare/line-need.ts).
+
 ## Who stands behind a line
 
 Every statement on the graph has a vault where people can put TRUST behind it (support), and an opposite vault for the reverse. Holding some of it is called holding a position.
@@ -89,6 +92,7 @@ arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <r
 
 - `--tool` is a skill's or a repository's GitHub URL. A sponsored line accepts nothing else for now.
 - `--reason` is accepted only with `--outcome failed`.
+- `--needs <name>` follows `--reason missing-program` or `missing-key`, and `--with <name>` follows `--outcome worked`. The sponsoring service writes the name only when the skill's SKILL.md names it, and refuses the line otherwise.
 - `--domain` names a category in the tree. A new one needs `--parent`, the existing category it goes under, and `--why`, why none fits: the agent signs a request for it, and ARP adds it before the line.
 - It is written on Intuition testnet 13579 only for now.
 

@@ -43,6 +43,7 @@ T1 = (actor, uses, subject)
 T2 = (T1, in context of, domain)
 T3 = (T2, has outcome, worked | failed)
 T4 = (T3, because, reason)
+T5 = (T4, needs, name)        a worked line: (T3, with, name)  (ADR `0166`)
 ```
 
 The subject is a skill, or an agent's ERC-8004 identity. The vocabulary is closed, and a domain is a

@@ -585,3 +585,17 @@ outcomes, the sieve's rung), and the registry or marketplace reads it beside its
 never asks them to write to Intuition. Targets and the problem each has are in the business-dev
 repository's `outreach/drafts/agent-marketplaces-2026-11-09.md`; contacts stay drafts until the
 user is back (2026-11-10).
+
+## What was missing, beyond the sponsored path (task 97, ADR `0166`)
+
+Task 97 put `needs` and `with` on a sponsored line. Three things it left, each a decision for the user:
+
+1. **The direct path.** `arp_declare_used` takes an outcome and a reason, not a name: an agent paying
+   its own TRUST cannot write `needs` yet. The planner would have to read the skill's SKILL.md itself
+   before it plans the level, which no MCP planner does today.
+2. **`with` comes from the agent, never from the hook.** The hook cannot tell a worked use (ADR
+   `0140`), so "B installed ffmpeg and it worked" is written by B with `arp line --outcome worked --with
+   ffmpeg`. Linking a later success to an earlier local `needs` would let the hook offer it.
+3. **Names the skill's other files say.** The guard reads SKILL.md only, on both sides, because the
+   service can verify one file with one tree read and one raw read. A program named only in a script
+   the skill ships is left off the line, a false negative and never a leak.
