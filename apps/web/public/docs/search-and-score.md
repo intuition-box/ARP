@@ -91,12 +91,12 @@ The code is [pulse-score.ts](https://github.com/intuition-box/ARP/blob/main/pack
 
 ## An example
 
-A skill with a prior of 0.5, and lines saying `failed` in `video` because of `missing-key`:
+A skill with a prior of 0.5, and lines saying `failed` in `video` because of `missing-program`:
 
 | Who searches in `video` | One wallet says it | 3 wallets say it |
 | --- | --- | --- |
-| Says it can supply a key (`can_provide: ["key"]`) | 0.50 | 0.50 |
-| Says nothing, or has no key | 0.50, and the line is shown | 0.125 |
+| Says it can supply the program (`can_provide: ["program"]`) | 0.50 | 0.50 |
+| Says nothing, or cannot supply it | 0.50, and the line is shown | 0.125 |
 
 With 3 wallets: `(0.5 + 0) / (1 + 0 + 3) = 0.125`.
 
@@ -108,7 +108,7 @@ With 3 wallets: `(0.5 + 0) / (1 + 0 + 3) = 0.125`.
 | The domain, against the one searched | A second line from the same wallet |
 | What the person can supply | A wallet that only paid for a line |
 
-A bigger deposit buys no rank in `arp_pulse`. Several wallets can still write several lines, and nothing here proves a wallet controls the agent it writes about. `arp_find_tools`, a different tool in the full set from `arp init`, can order by what people hold.
+Several wallets can still write several lines, and nothing here proves a wallet controls the agent it writes about. `arp_find_tools`, a different tool in the full set from `arp init`, can order by what people hold.
 
 ## What each result says about lines
 

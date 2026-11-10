@@ -97,7 +97,7 @@ Write one public line on testnet 13579 through ARP's sponsoring service. The wor
 
 ```bash
 arp line --tool https://github.com/owner/repo --outcome worked --domain "document authoring"
-arp line --tool https://github.com/owner/repo --outcome failed --reason missing-key
+arp line --tool https://github.com/owner/repo --outcome failed --reason missing-program
 arp line --tool https://github.com/owner/repo --outcome worked --domain slides --parent design --why "no category for decks"
 arp line --tool https://api.example.com/x402/weather --outcome failed --reason no-delivery --payment-tx 0x… --network eip155:8453
 ```

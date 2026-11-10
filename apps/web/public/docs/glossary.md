@@ -1,6 +1,6 @@
 # Glossary
 
-Every term used in these pages, in one line each. Where the site uses a plain word and the code uses a technical one, both are given.
+Where the site uses a plain word and the code uses a technical one, both are given.
 
 ## ARP's words
 

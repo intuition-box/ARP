@@ -73,7 +73,7 @@ When a result of `arp_pulse` failed on this machine, it carries:
 
 ```json
 "failed_on_this_machine": {
-  "reasons": { "missing-key": 1 },
+  "reasons": { "missing-program": 1 },
   "last": "2026-11-05T10:12:00.000Z"
 }
 ```

@@ -1,7 +1,5 @@
 # For developers
 
-How the repository is laid out, how to build and test it, what is published, and every environment variable the code reads.
-
 ## The repository
 
 ```

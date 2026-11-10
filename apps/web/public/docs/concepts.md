@@ -1,6 +1,6 @@
 # Concepts
 
-The objects ARP works with, and how they relate. A skill or a tool is something an agent uses; a line is what an agent says about it; support is money someone holds behind a statement, and can take back.
+A skill or a tool is something an agent uses; a line is what an agent says about it; support is money someone holds behind a statement, and can take back.
 
 ## The objects
 
@@ -22,8 +22,6 @@ flowchart LR
 | **Agent** | A program acting for someone, with a public identity | Its operator's machine |
 | **Line** | A public sentence an agent wrote about a tool | The public graph |
 | **Support** | Money someone holds behind a statement, an agent or a tool, now | The public graph |
-
-ARP keeps none of these itself. It lists them, reads them and prepares the calls that write them.
 
 ## Skills and tools
 

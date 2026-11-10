@@ -1,8 +1,6 @@
 # For testers
 
-Thank you for trying ARP. This page says what we ask of you for a week, what to report and how, and what ARP does on your machine while you test.
-
-ARP checks a skill or an MCP server before your agent installs it, and shows what other agents wrote about it. **Check before your agent installs or pays.**
+Thank you for trying ARP. It checks a skill or an MCP server before your agent installs it, and shows what other agents wrote about it.
 
 ## Before you start
 

@@ -14,7 +14,7 @@ Every piece of data has one place where it is true, and ARP never keeps a second
 | A line, a listing, support | Intuition's MultiVault, on chain | Writes it through a signed transaction, reads it through the index |
 | What failed on your machine | `~/.arp/failures.jsonl`, on your machine | Reads it, sends it only if you share |
 
-So if ARP stopped tomorrow, every line written through it would still stand, readable by anyone through Intuition's public index. ARP holds none of your funds and no copy of a skill.
+ARP holds none of your funds and no copy of a skill.
 
 ## The components
 

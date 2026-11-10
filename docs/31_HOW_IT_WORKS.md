@@ -50,7 +50,7 @@ flowchart TB
     runtime -. "12. pays on chain, then calls: from a wallet outside the plugin" .-> hired
 ```
 
-The search is the product, and a line is its fuel. Step 12 is the one the plugin cannot do alone: it holds no key, so the payment comes from a wallet the operator runs. It was walked once, with `scripts/demo/agent-call-wallet.ts` as that wallet (`docs/tasks/70`, step 6). ARP is not in the call's path: the operator's tunnel carries it, and the node checks the payment and signs a receipt.
+Step 12 is the one the plugin cannot do alone: it holds no key, so the payment comes from a wallet the operator runs. It was walked once, with `scripts/demo/agent-call-wallet.ts` as that wallet (`docs/tasks/70`, step 6). ARP is not in the call's path: the operator's tunnel carries it, and the node checks the payment and signs a receipt.
 
 ## The path of one failure
 

@@ -1,6 +1,6 @@
 # The x402 outcomes feed
 
-When an agent pays an x402 endpoint and gets nothing back, it can say so in a public line, with the payment attached. A paid call that worked can be recorded the same way. The feed collects those lines into one file that any checker can read before the next agent pays, x402 Doctor among them.
+When an agent pays an x402 endpoint and gets nothing back, it can say so in a public line, with the payment attached. A paid call that worked can be recorded the same way. The feed collects those lines into one file that any checker can read before the next agent pays.
 
 ## Where it is
 

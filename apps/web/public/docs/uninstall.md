@@ -1,6 +1,6 @@
 # Uninstall
 
-Everything ARP writes on a machine, and how to remove each piece. Every command below was run in a clean `node:22-bookworm` container on 2026-11-09, with Claude Code 2.1.319 and `@arp-protocol/cli` 0.0.1.
+Every command below was run in a clean `node:22-bookworm` container on 2026-11-09, with Claude Code 2.1.319 and `@arp-protocol/cli` 0.0.1.
 
 ## The short version
 

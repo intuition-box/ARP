@@ -1,6 +1,6 @@
 # Networks and contracts
 
-ARP runs on Intuition, a public network with two chains: a testnet, 13579, where everything in ARP works today, and a mainnet, 1155, where real value is at stake. This page lists the endpoints and addresses, and says which of ARP's own contracts are live.
+ARP runs on Intuition, a public network with two chains: a testnet, 13579, where everything in ARP works today, and a mainnet, 1155, where real value is at stake.
 
 ## The two chains
 
@@ -71,7 +71,7 @@ The MetaMask Delegation Framework, version 1.3.0, is deployed at the same addres
 
 ## Costs are read from the chain
 
-Every cost and threshold that Intuition's governance can change is read from the MultiVault at the moment it is needed, never from a copy in ARP's files: the cost of creating an atom, the cost of creating a triple, the minimum deposit, and the default curve. A copy could be out of date the day a value changes.
+Every cost and threshold that Intuition's governance can change is read from the MultiVault at the moment it is needed, never from a copy in ARP's files: the cost of creating an atom, the cost of creating a triple, the minimum deposit, and the default curve.
 
 Read on 2026-11-09:
 

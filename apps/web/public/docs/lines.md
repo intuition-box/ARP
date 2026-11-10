@@ -119,10 +119,9 @@ Any wallet can create the same atoms and triples on Intuition's MultiVault and p
 
 Each level that does not exist yet is a new triple, and creating a triple costs a fee set by the Intuition protocol. A position adds a deposit, which stays yours and can be withdrawn. Both amounts are read from the chain at call time, never from a copy. [Networks and contracts](/docs/networks) gives both chains' costs, read on a stated date.
 
-The fee buys the right to write a public line. It does not make the line true, and in the search the amount deposited is never read.
+In the search, the amount deposited is never read.
 
 ## What a line is not
 
-- Not a proof of use. Nothing on the graph shows the use happened.
 - Not a rating. There is no score on a line; there is an outcome and a reason.
 - Not erasable. A line stays on the graph. A wallet that only holds a position can withdraw it, and then it stops counting for that wallet.
