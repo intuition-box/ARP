@@ -42,6 +42,10 @@ Refresh: `bun run scripts/build/build-skill-lines-feed.ts`; for the sieve, rerun
 
 ### 2. Listings, prepared
 
+> **Amended 2026-11-10 by task 105** (ADR `0175`): the name is `io.github.Wieedze/arp`, not
+> `io.github.intuition-box/arp` below — the user is a member, not an owner, of `intuition-box`. `mcpName` is
+> set and `server.json` names 0.0.3. The release steps are in `docs/tasks/105-cli-0.0.3.md`.
+
 Each one: the file, then the user's steps in order. Read 2026-11-10.
 
 **a. The official MCP Registry** — `server.json` at the repository root (schema

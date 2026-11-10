@@ -162,7 +162,9 @@ When the key may have been seen, or on a schedule:
 
 The plugin, `arp line` and `arp share send` reach the sponsor at `ARP_SPONSOR`, and default to
 `http://127.0.0.1:3200`. Until a release changes that default, a tester sets
-`ARP_SPONSOR=https://<SPONSOR_PUBLIC_HOST>`.
+`ARP_SPONSOR=https://<SPONSOR_PUBLIC_HOST>`. A release changes it with
+`npm pkg set config.sponsorDefault=https://<SPONSOR_PUBLIC_HOST> --prefix apps/cli`, then
+`bun run --cwd apps/cli packages` (task 105, ADR `0175`).
 
 ## The MCP endpoint
 

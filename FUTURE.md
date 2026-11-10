@@ -592,9 +592,10 @@ user is back (2026-11-10).
 
 Task 97 put `needs` and `with` on a sponsored line. Three things it left, each a decision for the user:
 
-1. **The direct path.** `arp_declare_used` takes an outcome and a reason, not a name: an agent paying
+1. ~~**The direct path.** `arp_declare_used` takes an outcome and a reason, not a name: an agent paying
    its own TRUST cannot write `needs` yet. The planner would have to read the skill's SKILL.md itself
-   before it plans the level, which no MCP planner does today.
+   before it plans the level, which no MCP planner does today.~~ Done in task 105: `needs` and `with`,
+   one skill per call, its SKILL.md read from GitHub at `HEAD` by the planner (`apps/mcp/src/handlers/declare-need.ts`).
 2. ~~**`with` comes from the agent, never from the hook.**~~ Done in task 100 (ADR `0169`): on `Stop` the
    hook asks the model once per skill whether it did its job, and a `worked` answer after an earlier local
    `needs` record of that skill carries the name as `with`, still only when the SKILL.md names it.

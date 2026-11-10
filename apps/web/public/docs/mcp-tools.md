@@ -141,7 +141,7 @@ Each returns unsigned calls in the order to send them. ARP holds no key here and
 
 ### arp_declare_used
 
-Plan the public declaration that an agent used a set of tools, attached to its ERC-8004 identity and worded with the shared `uses` term. A `domain`, an `outcome` and a `reason` each add one more paid level per tool (see [Lines](/docs/lines)).
+Plan the public declaration that an agent used a set of tools, attached to its ERC-8004 identity and worded with the shared `uses` term. A `domain`, an `outcome`, a `reason` and a `needs` or `with` name each add one more paid level per tool (see [Lines](/docs/lines)).
 
 | Input | Type | Description |
 | --- | --- | --- |
@@ -152,6 +152,8 @@ Plan the public declaration that an agent used a set of tools, attached to its E
 | `domain` | string | An existing category, such as `video`, or a word for one, such as `slides`. An unknown word is refused with the closest categories. Never the text of a request |
 | `outcome` | `worked` \| `failed` | How this use went, in your own name. Never a verdict on the tool |
 | `reason` | `missing-key` \| `missing-program` \| `missing-file` \| `not-the-right-tool` \| `no-delivery` | With `outcome: failed` only |
+| `needs` | string | After `missing-program` or `missing-key`, with one skill in `tools`: the program or the variable's name that was missing. Planned only if the skill's SKILL.md names it |
+| `with` | string | After `outcome: worked`, with one skill in `tools`: the program or the variable's name you had to add. Planned only if the skill's SKILL.md names it |
 | `budget_wei` | string | What you have left to spend. A plan costing more is refused, with its total |
 | `declarer` | string | The address that will sign. With a domain or outcome, a level somebody already wrote gets a small deposit from you, so it counts as your word |
 
