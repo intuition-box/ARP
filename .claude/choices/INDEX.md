@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-170 decisions. Newest last. `choices/README.md` says when to write one.
+171 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -213,3 +213,4 @@ Read these before relying on them.
 | [0171](0171-feeds-a-registry-reads-beside-its-listing.md) | 2026-11-10 | Accepted | Feeds a registry reads beside its listing, and listings prepared, not sent |
 | [0172](0172-the-sweep.md) | 2026-11-10 | Accepted | The sweep: every open task is closed, excluded, or folded into a live one |
 | [0173](0173-arp-mints-when-it-has-to.md) | 2026-11-10 (the user's decision of 2026-11-03, recorded) | Accepted | ARP mints into the ERC-8004 registry when it has to |
+| [0175](0175-cli-sponsor-default-and-registry-namespace.md) | 2026-11-10 | Accepted | The CLI's sponsor default is a committed build setting; the registry name is the user's namespace |
