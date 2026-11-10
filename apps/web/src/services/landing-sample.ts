@@ -7,8 +7,9 @@ import type {LandingField} from "./landing-field";
  * ARP's own hidden test identities, so the page showed an empty field and no dot, and « on peut
  * faire des mock data, c'est pas grave ». So when a read **answers** with nothing, scenes 0 to 2
  * show this, unmarked since 2026-11-10, when the user removed every « Sample » label (ADR `0152`
- * §6 amended). A read that **failed** still says it failed; a sample never stands in for a failure. The moment the chain has a real line, it
- * replaces the sample, panel by panel, and a panel never mixes the two.
+ * §6 amended). A read that **failed** still says it failed; a sample never stands in for a
+ * failure. The moment the chain has a real line, it replaces the sample, panel by panel, and a
+ * panel never mixes the two.
  *
  * The shape is the design reference's sample (`docs/design/landing-galaxy/`), with its counts and
  * `hyperframes`, a real catalogue entry, as the tool. **Its agent ids are not kept**: `8453:3107`,

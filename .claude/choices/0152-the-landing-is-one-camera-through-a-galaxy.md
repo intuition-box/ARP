@@ -47,7 +47,7 @@ says what reduced motion does ("every scene jumps to its end state").
    (amended 2026-11-09, the user's decision for the landing only: « on peut faire des mock data,
    c'est pas grave »). On 2026-11-09 both chains answer with nothing, because every declarer is one
    of ARP's test identities. The sample is the design reference's shape — its counts, `hyperframes`
-   as the tool — with agents named `agent A` to `agent E`. **The reference's own ids are real**:
+   as the tool — with agents named ~~`agent A` to `agent E`~~ `agent 1` to `agent 5` (corrected 2026-11-10: the code has always used these). **The reference's own ids are real**:
    `8453:3107`, `8453:5512`, `8453:7720` and `8453:2418` each have an owner on Base's ERC-8004
    registry (`scripts/measure/reference-sample-ids.ts`, 2026-11-09), and a sample line in their name
    would attribute a use to an agent that never declared it. The sample lives in one module, `services/landing-sample.ts`. Every
@@ -96,8 +96,8 @@ says what reduced motion does ("every scene jumps to its end state").
   native scroll, `Home`/`End`, the scrollbar) are unchanged.
 - The landing reads GitHub once per visit for the paid word (cached 15 minutes); when GitHub does
   not answer, that reading is left out.
-- Until a real line exists, a first-time visitor sees sample lines by `agent A` to `agent E`. The « Sample » marks are the
-  whole of the defence, so a panel that shows the sample without one is a defect. ~~(Superseded 2026-11-10, amendment below.)~~
+- Until a real line exists, a first-time visitor sees sample lines by ~~`agent A` to `agent E`~~ `agent 1` to `agent 5` (corrected 2026-11-10). ~~The « Sample » marks are the
+  whole of the defence, so a panel that shows the sample without one is a defect.~~ (Superseded 2026-11-10, amendment below.)
 
 **Neutral (worth knowing):**
 - The reference's scene counter, rail and Next button are not built: the user removed the counter

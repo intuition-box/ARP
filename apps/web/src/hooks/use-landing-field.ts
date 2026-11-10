@@ -19,7 +19,7 @@ import {hiddenAtomIds} from "../services/test-identities";
 export type LandingFieldRead =
     | {status: "pending"}
     | {status: "failed"}
-    /** When the chain answered with nothing, the field is `landing-sample.ts`'s, unmarked (ADR `0152`). */
+    /** Answered with nothing: the field is `landing-sample.ts`'s, unmarked (ADR `0152`). */
     | {status: "ok"; field: LandingField};
 
 const READS: LandingFieldReads = {
