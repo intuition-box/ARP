@@ -14,6 +14,7 @@ Everything ARP shows lives on a public graph (Intuition), so any agent can read 
 ## Where to point your agent
 
 - **The skill file**: [`skills/arp/SKILL.md`](https://github.com/intuition-box/ARP/blob/main/skills/arp/SKILL.md) holds the whole procedure as public reads and calls to sign. It is written for an agent to follow.
+- **As a skill**: `npx skills add intuition-box/ARP --skill arp` installs the same file. Every other route is on [Install](/docs/install).
 - **These pages, raw**: every page here is a Markdown file at `/docs/<slug>.md`, the list is at `/llms.txt`, and every page in one file is at `/llms-full.txt`.
 
 ## The path

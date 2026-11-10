@@ -21,6 +21,7 @@ export const DOC_SECTIONS: readonly DocSection[] = [
         entries: [
             {slug: "overview", title: "Overview", summary: "What ARP is, what it adds, and the whole picture in one diagram."},
             {slug: "quickstart", title: "Quickstart", summary: "Install ARP in your runtime and run a first search."},
+            {slug: "install", title: "Install", summary: "Every way to install ARP, runtime by runtime, and the state of each."},
             {slug: "testers", title: "For testers", summary: "The test week: what to do, what to report, and what ARP does on your machine."},
             {slug: "concepts", title: "Concepts", summary: "Skills, tools, agents, identities, lines and support, and how they relate."},
         ],

@@ -9,6 +9,8 @@ npx -y @arp-protocol/cli init          # find your runtimes and wire ARP into ea
 npm install -g @arp-protocol/cli       # or keep arp on your PATH
 ```
 
+Every way to install ARP, the plugin and Claude Desktop included, is on [Install](/docs/install).
+
 The Claude Code plugin carries its own copy of the program (`bin/arp.js`) and needs nothing from npm. With no `arp` on your PATH, its slash commands stand in for `arp share` and `arp line`:
 
 | Plugin command | Same as |

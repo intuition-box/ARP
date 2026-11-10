@@ -12,6 +12,10 @@ file and a line.
 terminal (ADR `0120`); this document predates it and does not cover it. And `@arp-protocol/cli` is
 on npm since 2026-11-06 as `0.0.1`, so the `npx @arp-protocol/cli` lines below can be run.
 
+**The install routes as they stand** (2026-11-10, task 114) are listed in one place,
+[`apps/web/public/docs/install.md`](../apps/web/public/docs/install.md), with the state of each. This
+document stays the research behind them, and §5 below is the plan, not the state.
+
 **A third, 2026-11-06:** the Claude Code plugin carries the CLI as `bin/arp.js` and runs it with `node`, so it needs no npm release and is no longer a thin manifest (ADR `0145`, amendment, with the measurements). §5's "thin manifest" still describes the others.
 
 ---

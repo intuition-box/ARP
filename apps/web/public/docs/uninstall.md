@@ -2,6 +2,8 @@
 
 Every command below was run in a clean `node:22-bookworm` container on 2026-11-09, with Claude Code 2.1.319 and `@arp-protocol/cli` 0.0.1.
 
+How each piece got there is on [Install](/docs/install).
+
 ## The short version
 
 If you installed the Claude Code plugin:

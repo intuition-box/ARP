@@ -21,6 +21,9 @@ All three run on your machine, and none of them signs a transaction.
 - **What the hook records**, and what it never records, is
   [ADR `0090`](https://github.com/intuition-box/ARP/blob/main/.claude/choices/0090-what-the-hook-records.md).
 
+Every way to install ARP, and the state of each, is in one place:
+[Install](https://github.com/intuition-box/ARP/blob/main/apps/web/public/docs/install.md).
+
 ## The Claude Code plugin
 
 The plugin carries this program as one file, `bin/arp.js`, so it needs Node 22 and nothing from npm:

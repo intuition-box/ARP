@@ -5,17 +5,10 @@ Thank you for trying ARP. It checks a skill or an MCP server before your agent i
 ## Before you start
 
 - **It runs on Intuition testnet 13579.** Everything uses test money, `tTRUST`, which has no value. Nothing you do here spends real money.
-- **Install in Claude Code**, with Node 22 or later:
+- **Install in Claude Code**, with Node 22 or later: `claude plugin marketplace add intuition-box/ARP`, then `claude plugin install arp@arp`, then a new session. `claude mcp list` should show `plugin:arp:arp … ✔ Connected`. Every other route, and its state, is on [Install](/docs/install).
 
-  ```bash
-  claude plugin marketplace add intuition-box/ARP
-  claude plugin install arp@arp
-  ```
-
-  Start a new session afterwards. `claude mcp list` should show `plugin:arp:arp … ✔ Connected`.
-
-  In another runtime (Cursor, Gemini CLI, Codex, Copilot), run `npx -y @arp-protocol/cli init` instead. That install serves more tools, including ones that plan a transaction for you to sign. You do not need them to test. In those runtimes `arp init` adds no hook, so nothing that fails is recorded on your machine and step 3 below does not apply.
-- **Claude Desktop** is not part of this round: its extension file is not available for download yet.
+  In another runtime (Cursor, Gemini CLI, Codex, Copilot), `npx -y @arp-protocol/cli init` works too. It serves more tools, including ones that plan a transaction for you to sign; you do not need them to test. It adds no hook there, so nothing that fails is recorded on your machine and step 3 below does not apply.
+- **Claude Desktop** is not part of this round. ARP can be added there by hand as an MCP entry ([Install](/docs/install#claude-desktop-today-an-mcp-entry-by-hand)), but Desktop runs no hooks and has no `/arp:share`, so steps 3 and 4 below would have nothing to show.
 - **Install one or the other, not both.** With the plugin and `arp init` together, every call is recorded twice.
 
 ## Name ARP in your request

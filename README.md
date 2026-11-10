@@ -56,18 +56,18 @@ own test agents, so this part shows how it works, not what anyone else found.
 
 ## Get started
 
-The CLI is on npm as [`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-protocol/cli): `npx -y @arp-protocol/cli init`. The Claude Code plugin carries its own copy.
+In Claude Code, with Node 22: `claude plugin marketplace add intuition-box/ARP`, then
+`claude plugin install arp@arp`. The plugin carries its own copy of the CLI, which is also on npm as
+[`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-protocol/cli) 0.0.3 and in the official MCP
+Registry as `io.github.Wieedze/arp`.
+
+**Every other route, and the state of each** (Claude Desktop by hand, the hosted connector and the
+`.mcpb` extension that are not live yet, `arp init` for Cursor, Gemini CLI, Codex and Copilot,
+`arp init --sponsored`, nothing installed, a Docker test) is in one place:
+[Install](apps/web/public/docs/install.md). Install one ARP per runtime, not two.
 
 **Name ARP when you ask.** The agent reaches for ARP when you name it: "find me a skill for X with ARP".
 Asked only for a task, it may do the task without ARP.
-
-| where you work        | how                                                              | what you get                                                                                  |
-| --------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| **Claude Desktop**    | an extension, one `.mcpb` file: **not published yet**, so no download exists | sponsored on testnet, you sign nothing. `arp_pulse` reads results you pass it and runs no search |
-| **Claude Code**       | `claude plugin marketplace add intuition-box/ARP`, then `claude plugin install arp@arp`. Needs Node 22: ARP's program comes inside the plugin | `arp_pulse`, `arp_agent_endpoints`, `arp_tool_reputation`, and a local memory of what failed. `/arp:share` shows what would be public; sharing is off by default, and `/arp:share-send` needs a sponsoring service you run yourself for now |
-| Cursor, Gemini, Codex | `arp init` detects your runtime and wires it up                  | the full tool set: a line with a domain and a result comes back as calls you sign             |
-| sponsored setup       | `arp init --sponsored`                                           | the same as Claude Desktop                                                                    |
-| nothing installed     | point your agent at [`skills/arp/SKILL.md`](skills/arp/SKILL.md) | the procedure, as public reads and calls you sign                                             |
 
 Checking a tool or an agent needs nothing at all: no wallet, no account.
 

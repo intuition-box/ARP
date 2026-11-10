@@ -4,11 +4,11 @@ The ARP MCP server gives any MCP client (Claude Code, Claude Desktop, Cursor, Ge
 
 ## Which tools you get
 
-The server serves a different set depending on the `ARP_TOOLS` environment variable, which your install sets for you.
+The server serves a different set depending on the `ARP_TOOLS` environment variable, which your install sets for you. Every install and the set it gets: [Install](/docs/install).
 
 | Set | `ARP_TOOLS` | Set by | Tools |
 | --- | --- | --- | --- |
-| Plugin | `read` | The Claude Code plugin, the Gemini extension | `arp_pulse`, `arp_agent_endpoints`, `arp_tool_reputation` |
+| Plugin | `read` | The Claude Code plugin, the Gemini extension, the MCP Registry entry, a Claude Desktop entry by hand | `arp_pulse`, `arp_agent_endpoints`, `arp_tool_reputation` |
 | Sponsored | `desktop` or `sponsored` | The Claude Desktop extension (`desktop`), `arp init --sponsored` (`sponsored`) | `arp_find_tools`, `arp_find_agents`, `arp_pulse`, `arp_tool_reputation`, `arp_agent_endpoints`, `arp_get_skill`, and a sponsored `arp_declare_used` |
 | Full | unset | `arp init`, or running `arp mcp` yourself | all thirteen tools in the table below |
 
