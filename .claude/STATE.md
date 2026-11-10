@@ -1,6 +1,6 @@
 # Project state
 
-**Updated** 2026-11-10 (task 103, the sweep: ADRs `0172`, `0173`). Before that
+**Updated** 2026-11-10 (task 107, small leftovers). Before that **updated** 2026-11-10 (task 103, the sweep: ADRs `0172`, `0173`). Before that
 **updated** 2026-11-03 (task 62, one door: ADR `0125`; before it task 60, ADRs `0116`-`0119`).
 Hand-maintained — a task does not close without updating this file (`workflow.md`, task-close
 protocol). It holds **current facts only**; history lives in the ADRs and in git, the treatment
@@ -47,6 +47,7 @@ The user's decisions, 2026-11-03:
 
    | task | branch | where it stands | what is left |
    | ---- | ------ | --------------- | ------------ |
+   | 107 | worktree `agent-ae7f87f7e12a1240e` (2026-11-10) | small leftovers. `scripts/measure/atom-data-max-length.ts`: `atomDataMaxLength` 1,000 on 13579 and on 1155 (`data/measurements/atom-data-max-length-2026-11-10.json`), ADR `0162` amended. The plugin's icon, 1024 px from the Source mark (`apps/cli/scripts/plugin-icon.ts`, `packaging/claude/arp/.claude-plugin/icon.png`). Three stale defect rows closed | merge |
    | 103 | `chore/103-the-sweep`, worktree `../ARP-103` (2026-11-10) | verified, `learning/92`. The sweep: every open task closed, excluded or folded into 98–102 (ADR `0172`); ARP mints when it has to (ADR `0173`). Task 67 excluded by the user | merge after 98–102 (STATE.md conflicts) |
    | 74 | `main`, with 72 and 73 (2026-11-09) | verified, `learning/65`. The public site: ARP's test identities hidden by a public list (`apps/web/src/data/arp-test-identities.json`, `/test-identities`), honest empty states, testnet only, self-hosted fonts, onboarding with the real commands and « with ARP », 404, footer, French legal pages with a release guard, robots and sitemap, `apps/web/Dockerfile` and `DEPLOY.md` for Coolify. CLI: `arp line` validates before a key, `--help` everywhere, no npm logs, one tool set listed and served. Repo: `intuition-box/ARP` everywhere, MIT `LICENSE`, NOTICE files, stale docs amended; ARP's skill tagged under `intuition-box/ARP` on 13579 | the user gives the legal details (name or host, e-mail, host), then Coolify; the sponsor's hosting; a new npm version of the CLI |
    | 73 | `main`, with 72 and 74 (2026-11-09) | verified, `learning/64`, ADR `0146`. The domain tree grows from agents: a new category only from a registered agent's signed request (per-address cap 3/day, global 10/day), asked inside `arp_declare_used` (`domain_parent`, `domain_reason`, `declarer`, then `arp_propose_category`), with `arp_file_category` in the sponsored mode, or with `arp line --parent --why` (task 75); the web files under existing categories only | — |
@@ -451,12 +452,9 @@ Ethereum, IPFS, Claude, Obsidian and Bitcoin.
 | `apps/web/vitest.config.ts` is in neither tsconfig project | task 21 | measured at zero errors to add; same shape as task 18, missed by it |
 | `bun run format:check` fails on about 286 tracked files. **Deliberately not formatted**: a repo-wide format would conflict with other sessions' open branches. both generated `INDEX.md` files are among them, re-dirtied by every `build-claude-index.ts` run | task 60 | a gate that always fails is not a gate; citing it green would be a `claims.md` check-4 error. Run `bun run format:check` for today's count |
 | `.claude/worktrees/` — a registered worktree of `feat/41-x402` plus agent worktrees — is gitignored but not removed (598 MB at the audit; `du -sh .claude/worktrees` read 2.0 GB on 2026-11-03) | task 60 | disk only; **the user decides** |
-| `Landing.tsx` (1,019 lines) is not split | task 60, task 53 | deferred while task 53 is open on it |
 | The node-serve body-cap test timed out on one machine and not another | hardened in `bd2a23a` | **reproduced 2026-11-03** (`packages/protocol` full suite, 5000 ms timeout, during task 58's verification); still open |
 | **Usage on `/tools` counts every deposit from the sponsor's address, not only proof-gated ones.** That address is also ARP's deployer on 13579. On 2026-11-03, of 13 deposits: 6 proof-gated, 4 edge creations the service paid for, 3 the deployer wrote before the service existed (all of `Agent 13579:2`'s) | `scripts/measure/sponsor-deposit-provenance.ts`, task 58 §4, ADR `0094` correction | live on testnet; closing it needs a key used by the service alone |
 | DNS rebinding stays open for the probe in a browser | `arp_probe_endpoint`, task 60 | open |
-| The sponsor's `/list-tool` (ADR `0123`, task 53c) | arp-c4's | merged into `dev` with PR #54 |
-| `@arp-protocol/cli` was not on npm until 2026-11-06 (`0.0.1`), so `/start/agent`'s first step can only say it runs from a local build | task 53, path B | open — a distribution task, not built |
 | the rig's testnet writes are permanent — 3 mints plus 1 `setAgentURI` | ADR `0037` | a wrong fixture costs an id; one was wrong when minted and corrected in place. Document hashes in `data/deployments/13579.json` make repo-vs-chain drift detectable |
 | `verify-cohort.ts` builds a document-hash map, logs it, and **never reads it** | task 21 | its header claimed caching that does not happen; the claim is corrected, the map is not wired. A Base run was observed loading a testnet file before the out path was keyed by target |
 | `ensureAtomForURI` mints an atom for any `ipfs://` string without validating it is a CID; 18 permanent atoms with fabricated CIDs exist on testnet | task 20 appendix | unrecoverable per occurrence |
@@ -470,6 +468,7 @@ Ethereum, IPFS, Claude, Obsidian and Bitcoin.
 
 One line each; the ADR or the commit holds the story.
 
+- Three stale rows left the defects table — 2026-11-10, task 107. `Landing.tsx` is 584 lines (`wc -l`) and task 53 is done; the sponsor's `/list-tool` was a merge note, not a defect; `@arp-protocol/cli` is on npm (`npm view @arp-protocol/cli versions`: `0.0.1`) and `/start/agent` runs `npx -y @arp-protocol/cli` (`apps/web/src/services/start-steps.ts:41`).
 - Two sponsor ledgers (`~/.arp` and the repo's `.arp/`) — merged into `~/.arp/sponsor-ledger.jsonl` on 2026-11-05, the user's call: 31 deposit keys, none in both files. Copies beside it, `.bak-before-merge-2026-11-05` and `repo-copy-2026-11-05`. Rows are concatenated, not sorted; `SponsorLedger` indexes by key.
 - `/tools` did not move under testnet writes — closed 2026-11-05, ADR `0143`: **Signals** counts only what the sponsor deposited for an agent, proof or not (ADR `0144`), with **Wallets** beside it; it is the page's order (**Most signals**) and Declared is gone; a repository missing from `repo-facts.json` no longer sinks; mainnet offers installs or stars until it has a sponsor. `VITE_ARP_SPONSOR_ADDRESS` goes in `apps/web/.env`, not committed.
 - Two ARP enforcers on mainnet 1155 while three files said none — closed, ADR `0065` (re-checked 2026-10-30).
