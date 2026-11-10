@@ -7,7 +7,7 @@ for the free read path (see 45e).
 **Rules:** `code.md`, `security.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
 
-**Closed 2026-11-10 by task 103 (ADR `0172`):** folded into task 102 (be read where agents already are), after §45c. Its dependence on task 41 is moot.
+**Closed 2026-11-10 by task 103 (ADR `0172`):** closed into task 102 (ADR `0171`) after §45c: the feeds `/feeds/skill-lines.json` and `/feeds/agent-sieve.json`, `server.json` for the MCP Registry, and the listing steps. Its dependence on task 41 is moot.
 
 ---
 

@@ -6,7 +6,7 @@
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `task-verifier`.
 
-**Closed 2026-11-10 by task 103 (ADR `0172`):** folded into task 100 (the model judges at task end whether a skill did the job), the same question. Its harness on `feat/54-result-eval` stays available.
+**Closed 2026-11-10 by task 103 (ADR `0172`):** closed into task 100: the outcome of each skill used is now asked of the model at task end (ADR `0169`), on every session rather than on 14 fixed needs. Its three-arm comparison (Claude alone, with ARP, a manual pick) is not run; the harness on `feat/54-result-eval` stays available.
 
 ---
 

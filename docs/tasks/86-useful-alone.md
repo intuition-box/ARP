@@ -4,7 +4,7 @@
 **ADR:** none needed unless the landing's scene order changes (a redesign is the user's decision, `docs/30`).
 **Rules:** `code.md`, `ui.md`, `workflow.md`, `claims.md`.
 
-**Closed 2026-11-10 by task 103 (ADR `0172`):** folded into task 98 (the check before install runs by itself on `skills add`).
+**Closed 2026-11-10 by task 103 (ADR `0172`):** closed into task 98, which runs the check by itself before `npx skills add` (ADR `0167`) and exports `skillInstallOf` and `skillInstallReport` from `@arp-protocol/core` for an `arp check`. Not built: `arp check` itself, the `SessionStart` line, the hero field and the onboarding example (deliverables 1, 4, 5, 6); `FUTURE.md`, "Left by the sweep".
 
 ## Why
 

@@ -612,5 +612,8 @@ Closed or excluded tasks that leave something a later task may want. Each task f
   deciding what a version is beyond the pin.
 - **Task 68, phase 5: a shorter `arp_pulse` answer** by default. It was to follow task 67's results,
   which do not exist yet.
+- **Task 86's surfaces**: `arp check <skill>` in the terminal (task 98 exports `skillInstallOf` and
+  `skillInstallReport` for it), a `SessionStart` line, the site's hero field and the onboarding
+  example. Task 98 covers the install itself.
 - **Task 67, the demonstration.** Excluded by the user on 2026-11-10. Its list is frozen and its runs
   were never made; a demonstration, when one is needed, starts from its file.

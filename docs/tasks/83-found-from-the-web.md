@@ -4,7 +4,7 @@
 **ADR:** `0154` (proposed).
 **Rules:** `code.md`, `ui.md` (copy), `portability.md`, `workflow.md`, `claims.md`, `security.md` (part B).
 
-**Closed 2026-11-10 by task 103 (ADR `0172`):** folded into task 102 (be read where agents already are).
+**Closed 2026-11-10 by task 103 (ADR `0172`):** closed into task 102 (ADR `0171`): what others read of ARP is its feeds and its registry listing, dated and static, not a live page.
 
 ## Why
 
