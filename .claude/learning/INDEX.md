@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-103 entries, one per completed task. Written by `task-verifier` on a pass.
+104 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -108,4 +108,5 @@
 | [94](94-cli-0.0.3.md) | `docs/tasks/105-cli-0.0.3.md` | PASS | Prepare `@arp-protocol/cli` 0.0.3 |
 | [96](96-small-leftovers.md) | `docs/tasks/107-small-leftovers.md` | PASS (first pass) | Small leftovers: the atom size limit, the plugin's icon, stale defect rows |
 | [97](97-live-hook-defects.md) | `docs/tasks/108-live-hook-defects.md` | PASS (second pass; the first failed on one stale site, `docs/22:107`) | Two defects the live test found in the hook |
+| [98](98-ask-during-the-task.md) | `docs/tasks/109-ask-during-the-task.md` | PASS | Ask whether a skill worked during the task, not at Stop |
 | [99](99-two-defects-from-108.md) | `docs/tasks/110-two-defects-from-108.md` | PASS | Two defects task 108's live run found |

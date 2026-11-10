@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-171 decisions. Newest last. `choices/README.md` says when to write one.
+172 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -38,6 +38,7 @@ Read these before relying on them.
 - **0154** (Proposed) — Public read pages are dated static snapshots, not a live endpoint
 - **0155** (Accepted. Amended by ADR `0161` (2026-11-10): ARP's hosted read-only MCP endpoint receives the words of a caller who chooses it, and keeps none; point 3 holds for everything a person installs.) — A word names a node through a local alias table; the words never leave the machine
 - **0164** (Accepted (the user saw both versions, 2026-11-10; on `feat/95-agent-lines`)) — The agent page leads with lines, and shows no payment yet
+- **0169** (Accepted. **Amended by ADR `0179`** (2026-11-10): asked when the skill loads, read at `Stop`, never continuing the turn; points 1, 2, the loop guard and the token cost below are superseded there.) — The model says whether a skill worked, at the end of a turn, once per skill
 
 ## All
 
@@ -208,9 +209,10 @@ Read these before relying on them.
 | [0166](0166-a-line-names-what-was-missing-and-what-made-it-work.md) | 2026-11-10 | Accepted | A line names what was missing, and what made it work, when the skill already says it |
 | [0167](0167-the-hook-reads-a-skill-before-a-skills-install.md) | 2026-11-10 | Accepted | The hook reads a skill before `npx skills add` runs, and so makes a network call |
 | [0168](0168-the-hook-answers-a-skill-failure-with-its-lines.md) | 2026-11-10 | Accepted | The hook answers a skill's failure with that skill's lines, read live |
-| [0169](0169-the-model-says-whether-a-skill-worked-at-the-end-of-a-turn.md) | 2026-11-10 | Accepted | The model says whether a skill worked, at the end of a turn, once per skill |
+| [0169](0169-the-model-says-whether-a-skill-worked-at-the-end-of-a-turn.md) | 2026-11-10 | Accepted. **Amended by ADR `0179`** (2026-11-10): asked when the skill loads, read at `Stop`, never continuing the turn; points 1, 2, the loop guard and the token cost below are superseded there. | The model says whether a skill worked, at the end of a turn, once per skill |
 | [0170](0170-outside-signals-are-dated-sourced-facts.md) | 2026-11-10 | Accepted | Outside signals are dated, sourced facts, never ARP's figure and never in an order |
 | [0171](0171-feeds-a-registry-reads-beside-its-listing.md) | 2026-11-10 | Accepted | Feeds a registry reads beside its listing, and listings prepared, not sent |
 | [0172](0172-the-sweep.md) | 2026-11-10 | Accepted | The sweep: every open task is closed, excluded, or folded into a live one |
 | [0173](0173-arp-mints-when-it-has-to.md) | 2026-11-10 (the user's decision of 2026-11-03, recorded) | Accepted | ARP mints into the ERC-8004 registry when it has to |
 | [0175](0175-cli-sponsor-default-and-registry-namespace.md) | 2026-11-10 | Accepted | The CLI's sponsor default is a committed build setting; the registry name is the user's namespace |
+| [0179](0179-ask-whether-a-skill-worked-during-the-task.md) | 2026-11-10 | Accepted | Ask whether a skill worked during the task, not at Stop |

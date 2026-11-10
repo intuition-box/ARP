@@ -1,6 +1,6 @@
 # Task 109 — Ask whether a skill worked during the task, not at Stop
 
-**Status:** in progress.
+**Status:** verified 2026-11-10, `task-verifier` PASS (round 1), commits `ce31d64`..`d3cb884`, post-mortem `.claude/learning/98-ask-during-the-task.md`. Not pushed.
 **ADR:** `0179` (amends `0169`).
 **Rules:** `code.md`, `claims.md`, `workflow.md`. The hook's gates: `apps/cli` test, `check:node`, `packages --check`.
 **Required skills:** `arp-contributing`. No atom or triple is written, so no `intuition-integrator`.
