@@ -25,6 +25,7 @@ over `README.md`'s Get started table, `docs/23`, the site's `quickstart`, `teste
    `quickstart.md` (its four install sections replaced by the picker and a link), `testers.md`,
    `cli.md`, `mcp-tools.md`, `no-install.md`, `uninstall.md`, `apps/cli/README.md`, `docs/23` (header),
    `docs/31` (an amendment on the stale 0.0.1 line).
+4. `scripts/build/build-claude-index.ts` read only two-digit post-mortems (`^\d{2}-`), so 103, the first with three digits, was left out of `.claude/learning/INDEX.md`; it now reads two or three and sorts by number.
 
 ## Checks run, 2026-11-10
 

@@ -70,10 +70,11 @@ function readPostMortems(): {
     verdict: string | null;
   }[] = [];
   const unparsed: string[] = [];
-  for (const file of readdirSync(LEARNING).sort()) {
-    if (!/^\d{2}-.*\.md$/.test(file)) continue;
+  // Numbered from 01; three digits from 100 on, so the sort is numeric, not by character.
+  const numbered = readdirSync(LEARNING).filter((name) => /^\d{2,3}-.*\.md$/.test(name));
+  for (const file of numbered.sort((a, b) => parseInt(a, 10) - parseInt(b, 10))) {
     const body = readFileSync(join(LEARNING, file), 'utf8');
-    const heading = /^#\s*(?:\d{2}\s*—\s*)?(.+)$/m.exec(body);
+    const heading = /^#\s*(?:\d{2,3}\s*—\s*)?(.+)$/m.exec(body);
     if (!heading) {
       unparsed.push(`${file} — no H1`);
       continue;
@@ -81,7 +82,7 @@ function readPostMortems(): {
     const task = /^\*\*Task:\*\*\s*(.+)$/m.exec(body);
     const verdict = /^\*\*Verifier verdict:\*\*\s*(.+)$/m.exec(body);
     rows.push({
-      n: file.slice(0, 2),
+      n: file.slice(0, file.indexOf('-')),
       file,
       title: heading[1].trim(),
       task: task ? task[1].trim() : null,

@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-104 entries, one per completed task. Written by `task-verifier` on a pass.
+105 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -34,8 +34,8 @@
 | [26](26-one-installer-33c.md) | `docs/tasks/33-one-installer.md` §4 33c | PASS, on the second pass | One installer, 33c: `arp init`, `arp uninstall`, `arp doctor` |
 | [27](27-one-installer-33i-capture.md) | `docs/tasks/33-one-installer.md` §4 33i. Capture tooling only. Per-runtime adapters wait on real captures from the user. | PASS, on the second pass | One installer, 33i (first half): `arp hook --capture` and `arp init --capture` |
 | [28](28-one-installer-33d-claude-gemini.md) | `docs/tasks/33-one-installer.md` §33d (first part; Codex deferred) | PASS (third pass) | One installer, 33d first part: Claude Code plugin and Gemini extension |
-| [29](29-coherence-audit-28d.md) | `docs/tasks/28-coherence-audit.md` (entry 43) | PASS (second pass; the first draft's check did not print what the entry said) | Coherence audit, entry 43: `/agent` step 5 pointed at a deleted script |
 | [29](29-proven-and-declared.md) | `docs/tasks/42-proven-and-declared.md` | PASS (second pass) | Proven and declared: two figures, read from the sender of each deposit |
+| [29](29-coherence-audit-28d.md) | `docs/tasks/28-coherence-audit.md` (entry 43) | PASS (second pass; the first draft's check did not print what the entry said) | Coherence audit, entry 43: `/agent` step 5 pointed at a deleted script |
 | [30](30-the-activity-bar-verified.md) | `docs/tasks/36-the-activity-bar.md` (the "Review of `f5d1c84` and `79ad7ea`" section) | PASS | The activity bar, review of f5d1c84 and 79ad7ea (36v) |
 | [31](31-the-receipt-enforcer.md) | `docs/tasks/43-the-receipt-enforcer.md` | PASS | The receipt enforcer: "no signed receipt, no deposit", held by a contract |
 | [32](32-the-install-handshake.md) | `docs/tasks/39-the-install-handshake.md` | PASS (second pass; the first failed on ADR `0095` §7's griefing costs) | The install handshake: a rented tunnel, and the node bound to its ERC-8004 token |
@@ -67,8 +67,8 @@
 | [56](56-the-pulse.md) | `docs/tasks/63-the-pulse.md` | PASS (fourth pass; the fourth checked only the third pass's three edits and the gates they touch) | The pulse: what a skill implies, and what agents wrote about it |
 | [57](57-the-delegation-register.md) | `docs/tasks/37-the-delegation-register.md` (sub-task 37c only) | PASS | The delegation register, 37c turned on |
 | [57](57-the-signal.md) | `docs/tasks/66-the-signal.md` | PASS (third pass; the second and third checked only the changed sites) | The signal: what a line on chain is worth to the next search |
-| [58](58-the-positioning.md) | `docs/tasks/69-the-positioning.md` | part 1, PASS on the fourth pass, which checked only the two edits the third pass asked for | The positioning, parts 1 and 2: what ARP says in public |
 | [58](58-usage-columns.md) | `docs/tasks/58-usage-columns.md` | PASS (second round; round 1 FAIL | /tools' Usage column filled, and a repository's skills shown on its row |
+| [58](58-the-positioning.md) | `docs/tasks/69-the-positioning.md` | part 1, PASS on the fourth pass, which checked only the two edits the third pass asked for | The positioning, parts 1 and 2: what ARP says in public |
 | [59](59-the-field-memory.md) | `docs/tasks/68-the-field-memory.md`, phases 1 to 4. Phases 5 and 6 are not started and are out of this close. | PASS on the fourth pass | The field memory: a failure the hook sees, read back at the next search |
 | [60](60-the-agent-pulse.md) | `docs/tasks/65-the-agent-pulse.md` | PASS (second pass; the first failed on seven items, all closed), and PASS again on §§8 and 9 and the two merges of `feat/pulse` | The agent pulse: the same walk for agents, with a second party |
 | [60](60-tools-page-sponsor-filter.md) | no task file; the spec is `.claude/choices/0143-tools-page-unknown-is-not-dead-and-most-used.md` | PASS, after earlier FAILs | /tools counts only what the sponsor deposited for an agent |
@@ -110,3 +110,4 @@
 | [97](97-live-hook-defects.md) | `docs/tasks/108-live-hook-defects.md` | PASS (second pass; the first failed on one stale site, `docs/22:107`) | Two defects the live test found in the hook |
 | [98](98-ask-during-the-task.md) | `docs/tasks/109-ask-during-the-task.md` | PASS | Ask whether a skill worked during the task, not at Stop |
 | [99](99-two-defects-from-108.md) | `docs/tasks/110-two-defects-from-108.md` | PASS | Two defects task 108's live run found |
+| [103](103-every-install-route.md) | `docs/tasks/114-every-install-route.md` | PASS | Every way to install ARP, listed in one place |
