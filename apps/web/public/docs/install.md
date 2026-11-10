@@ -1,6 +1,6 @@
 # Install
 
-Every way to install ARP, and the state of each on 2026-11-10. This page is the one list: other pages point here instead of repeating it. Every route plans against Intuition testnet 13579, and checking a skill needs no wallet, no key and no account.
+Every way to install ARP, and the state of each on 2026-11-10. This page is the one list: other pages point here instead of repeating it. Every install plans against Intuition testnet 13579 (the skill file reads either chain), and checking a skill needs no wallet, no key and no account.
 
 | where your agent runs | route | state, 2026-11-10 | what you get |
 | --- | --- | --- | --- |
@@ -9,7 +9,7 @@ Every way to install ARP, and the state of each on 2026-11-10. This page is the 
 | Claude Desktop, claude.ai | [a custom connector to ARP's hosted endpoint](#claude-desktop-and-claude-ai-a-hosted-connector) | **not live**: the endpoint is not deployed | three read tools, no hook, your words reach ARP's server |
 | Claude Desktop | [the extension, one `.mcpb` file](#claude-desktop-the-extension) | **not published** | sponsored tools, nothing to sign |
 | Cursor, Gemini CLI, Codex, Copilot, Grok Build | [`arp init`](#other-runtimes-arp-init) | works | the full tool set; the hook in Claude Code and Grok Build only |
-| Claude Code, sponsored | [`arp init --sponsored`](#arp-init---sponsored) | works; sending waits for a hosted sponsor | tools that sign nothing for you |
+| the runtimes `arp init` finds, sponsored | [`arp init --sponsored`](#arp-init---sponsored) | works; sending waits for a hosted sponsor | tools that sign nothing for you |
 | any MCP client | [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry) | published, 0.0.3 | what the client's entry starts |
 | nothing installed | [the skill file](#nothing-installed-the-skill-file) | works | the procedure, as public reads and calls you sign |
 | a throwaway machine | [a Docker container](#an-isolated-test-in-docker) | works | the plugin, away from your own files |

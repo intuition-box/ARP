@@ -1,6 +1,6 @@
 # Task 114 — Every way to install ARP, listed in one place
 
-**Status:** built 2026-11-10, awaiting `task-verifier`.
+**Status:** verified 2026-11-10, `task-verifier` PASS, post-mortem `.claude/learning/103-every-install-route.md`. On `worktree-agent-aac5087771a466695`, not pushed.
 **ADR:** none (a docs page and pointers; no decision beyond the user's request).
 **Rules:** `workflow.md`, `claims.md`; `ui.md` does not apply (Markdown only, plus one manifest entry).
 **Required skills:** `arp-contributing`.
@@ -37,6 +37,14 @@ over `README.md`'s Get started table, `docs/23`, the site's `quickstart`, `teste
 | the skill | `npx skills add intuition-box/ARP --list` | 5 skills found, `arp` among them |
 | skills.sh | `curl -s 'https://skills.sh/api/search?q=intuition-box'` | one other skill of the org; ARP's not listed |
 | `init --print` | `npx -y @arp-protocol/cli@0.0.3 init --print` | an `sh -c` entry with `ARP_TARGET=testnet` only, the full tool set; not used for Desktop |
+
+The stdio check sent these three lines, one per line, then read the replies:
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"t","version":"0"}}}
+{"jsonrpc":"2.0","method":"notifications/initialized"}
+{"jsonrpc":"2.0","id":2,"method":"tools/list"}
+```
 
 Not run: the Desktop entry inside Claude Desktop (macOS, Windows), the interactive Docker session, the
 hosted connector (not deployed), `arp init` in Cursor, Gemini CLI, Codex or Copilot.
