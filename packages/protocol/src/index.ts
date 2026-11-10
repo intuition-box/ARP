@@ -769,6 +769,16 @@ export {
     type SkillContents,
     type SkippedFile,
 } from "./skill-contents.js";
+/** A skills install recognised in a shell command and read before it runs (task 98). */
+export {
+    MAX_SKILLS_READ,
+    readSkillInstall,
+    skillInstallOf,
+    skillInstallReport,
+    type InstallRead,
+    type InstallReading,
+    type SkillInstall,
+} from "./skill-install.js";
 export {readAgentContents, type AgentContents, type AgentEndpointFact, type SieveReadingRow} from "./agent-contents.js";
 
 export {
