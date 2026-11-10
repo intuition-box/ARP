@@ -118,6 +118,22 @@ test("the plugin's commands run only when a person types them, and name their ex
   expect(readFileSync(join(PLUGIN, 'commands', 'share-send.md'), 'utf8')).toContain('" share send`');
 });
 
+test('the skill shipped beside the server sends the agent to its tools and holds no query to run itself (task 113)', () => {
+  const GEMINI = join(import.meta.dir, '..', '..', '..', 'packaging', 'gemini', 'arp');
+  const published = readFileSync(join(import.meta.dir, '..', '..', '..', 'skills', 'arp', 'SKILL.md'), 'utf8');
+  for (const text of [readFileSync(join(PLUGIN, 'skills', 'arp', 'SKILL.md'), 'utf8'), readFileSync(join(GEMINI, 'ARP.md'), 'utf8')]) {
+    expect(text).toMatch(/^---\nname: arp\n/);
+    expect(text).not.toContain('```graphql');
+    expect(text).not.toMatch(/\bquery\s*\(|triples\s*\(|atoms\s*\(/);
+    expect(text).not.toContain('intuition.sh/v1/graphql');
+    expect(text).not.toContain('rpc.intuition.systems');
+    for (const tool of ['arp_pulse', 'arp_tool_reputation', 'arp_agent_endpoints']) expect(text).toContain(tool);
+    expect(text).toContain('Never query');
+  }
+  // The skill published for an agent with nothing installed keeps the raw procedure (ADR `0052`).
+  expect(published).toContain('```graphql');
+});
+
 test('packaging/ is what `bun run packages` writes from this build: nothing stale is committed', () => {
   const proc = Bun.spawnSync([
     'bun',

@@ -60,9 +60,14 @@ one:
 
 |                       | what it is                                              | when you want it                                                                                                                 |
 | --------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **this skill**        | the whole procedure, as public reads and calls you sign | always. It is the source of truth and it replaces the other two                                                                  |
+| **this skill**        | the whole procedure, as public reads and calls you sign | when nothing is installed. It is the source of truth for the procedure                                                           |
 | **the MCP connector** | a server that _prepares_ the same calls for you         | when you would rather not encode calldata. It holds **no key** and sends nothing — it hands you unsigned calls and you sign them |
 | **the node**          | an inbound endpoint other agents reach you at           | only for [being hired](#be-reachable). It is irrelevant to reading, declaring or registering                                     |
+
+**If ARP's MCP server is connected** — you have tools named `arp_pulse`, `arp_tool_reputation`,
+`arp_agent_endpoints` — use them, and do not run the queries below yourself: the tools read the same
+sources, and a query you write runs in the person's terminal. The queries are for an agent with
+nothing installed.
 
 **Using** ARP needs nothing installed; **being used** needs an endpoint. Nothing in ARP sits in the
 path of your requests — unplug its servers and every read, every declaration and every stake above

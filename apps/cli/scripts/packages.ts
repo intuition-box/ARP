@@ -20,6 +20,9 @@
  * | `packaging/claude/arp/` | the Claude Code plugin, which Grok Build reads unchanged: MCP server, hook, skill, commands |
  * | `packaging/gemini/arp/` | the Gemini CLI extension: MCP server and the skill as its context file |
  *
+ * The skill in both is `assets/plugin-skill.md`, which sends the agent to the server's tools; the published
+ * `skills/arp/SKILL.md` keeps the raw procedure for an agent with nothing installed (ADR `0183`).
+ *
  * The plugin's icon is copied from `assets/icon.png`, which `scripts/plugin-icon.ts` renders from the
  * Source mark (task 107). The marketplace entry has no icon field: `claude plugin validate --strict`
  * flags one as unknown, tried 2026-11-10.
@@ -171,10 +174,23 @@ function commandFile(command: (typeof PLUGIN_COMMANDS)[number]): string {
   ].join('\n');
 }
 
+/**
+ * The skill a package ships beside the MCP server (task 113, ADR `0183`). It is `assets/plugin-skill.md`, not
+ * `skills/arp/SKILL.md`: that one is the procedure for an agent with nothing installed (ADR `0052`), raw GraphQL
+ * included, and an agent that had the server's tools ran those queries in the person's terminal instead. This one
+ * names the tools and says never to query a source itself. Refused here if a GraphQL document creeps back in.
+ */
+function pluginSkill(text = readFileSync(join(CLI, 'assets', 'plugin-skill.md'), 'utf8')): string {
+  if (/```graphql|\bquery\s*[({]|\btriples\s*\(|\batoms\s*\(/.test(text)) {
+    throw new Error('assets/plugin-skill.md holds a GraphQL query: the packaged skill must send the agent to the tools');
+  }
+  return text;
+}
+
 function files(source: Source, cli: string): Files {
   const out: Files = new Map();
   const hook = readFileSync(join(CLI, 'dist', 'hook.js'), 'utf8');
-  const skill = readFileSync(join(ROOT, 'skills', 'arp', 'SKILL.md'), 'utf8');
+  const skill = pluginSkill();
   const meta = {
     description:
       `${FIND} Name ARP in your request for the agent to use it. A search reads skills.sh, GitHub and the npm registry, ` +
