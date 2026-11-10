@@ -879,6 +879,19 @@ export {
     type ToolListingPlan,
 } from "./sponsor/list-tool.js";
 export {
+    isA2aCard,
+    isMcpAnswer,
+    isMcpSseAnswer,
+    isX402Answer,
+    manifestForm,
+    MAX_MANIFEST_READS,
+    MCP_REGISTRY_SCHEMA_PREFIX,
+    repositoryForms,
+    type HeaderLookup,
+    type ToolForm,
+    type ToolRefusalRule,
+} from "./sponsor/tool-forms.js";
+export {
     LINE_MAX_DOMAIN_LENGTH,
     LINE_MAX_TTL_SECONDS,
     LINE_REQUEST_TYPES,
