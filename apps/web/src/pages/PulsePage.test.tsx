@@ -2,6 +2,8 @@ import {render, screen} from "@testing-library/react";
 import {MemoryRouter, Route, Routes} from "react-router-dom";
 import {beforeEach, describe, expect, it, vi} from "vitest";
 
+import {readSkillContents} from "@arp-protocol/core";
+
 import type {PulseRead} from "../hooks/use-pulse";
 import type {PulseView} from "../services/pulse";
 import {PulsePage} from "./PulsePage";
@@ -31,6 +33,7 @@ const pulse: PulseView["pulse"] = {
     runsAbsentFiles: ["scripts/transcribe-elevenlabs.mjs"],
     keysInScriptsItRuns: [],
     requires: {cli: [], runs: ["ffmpeg"], login: null, description: null},
+    contains: readSkillContents([]),
 };
 
 const open = () =>

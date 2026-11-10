@@ -52,20 +52,27 @@ function gatewayUrl(uri: string): string {
 }
 
 /**
+ * The registration document itself, parsed: what `readAgentEndpoints` reads its endpoints from, and
+ * what `agent-contents.ts` reads its payment and auth declarations from (task 96). One read, one
+ * set of failure reasons.
+ */
+export type DocumentRead =
+    | {status: "none"}
+    | {status: "unreadable"; url: string; href: string | null; detail: string}
+    | {status: "read"; url: string; document: unknown};
+
+/**
  * Fetch and parse one agent's registration document.
  *
  * @param registrationFile the `tokenURI`, or `null` when the agent registered without one.
  */
-export async function readAgentEndpoints(
+export async function readRegistrationDocument(
     registrationFile: string | null,
     fetchImpl: typeof fetch = fetch,
-): Promise<EndpointRead> {
-    if (registrationFile === null || registrationFile.trim() === "") {
-        return {status: "none", reason: "no-registration-file"};
-    }
+): Promise<DocumentRead> {
+    if (registrationFile === null || registrationFile.trim() === "") return {status: "none"};
 
     const url = registrationFile.trim();
-    let document: unknown;
 
     if (url.startsWith("data:")) {
         // Inline, and the common shape for an agent that wanted no hosting dependency. No request
@@ -76,7 +83,7 @@ export async function readAgentEndpoints(
             const text = url.slice(0, comma).includes(";base64")
                 ? atob(payload)
                 : decodeURIComponent(payload);
-            document = JSON.parse(text);
+            return {status: "read", url, document: JSON.parse(text)};
         } catch (caught) {
             return {
                 status: "unreadable",
@@ -85,38 +92,51 @@ export async function readAgentEndpoints(
                 detail: `the inline document did not parse: ${caught instanceof Error ? caught.message : String(caught)}`,
             };
         }
-    } else {
-        try {
-            const response = await fetchImpl(gatewayUrl(url), {
-                headers: {accept: "application/json"},
-            });
-            if (!response.ok) {
-                return {
-                    status: "unreadable",
-                    url,
-                    href: safeHttpUrl(gatewayUrl(url)),
-                    detail: `the host answered ${response.status}`,
-                };
-            }
-            document = await response.json();
-        } catch (caught) {
-            // Almost always CORS, which a browser reports as an opaque network failure rather than
-            // as a refusal — so the detail says what we can say and not more.
+    }
+    try {
+        const response = await fetchImpl(gatewayUrl(url), {
+            headers: {accept: "application/json"},
+        });
+        if (!response.ok) {
             return {
                 status: "unreadable",
                 url,
                 href: safeHttpUrl(gatewayUrl(url)),
-                detail: `could not be read from a browser: ${caught instanceof Error ? caught.message : String(caught)}`,
+                detail: `the host answered ${response.status}`,
             };
         }
+        return {status: "read", url, document: await response.json()};
+    } catch (caught) {
+        // Almost always CORS, which a browser reports as an opaque network failure rather than
+        // as a refusal — so the detail says what we can say and not more.
+        return {
+            status: "unreadable",
+            url,
+            href: safeHttpUrl(gatewayUrl(url)),
+            detail: `could not be read from a browser: ${caught instanceof Error ? caught.message : String(caught)}`,
+        };
     }
+}
 
-    const endpoints = readDeclaredEndpoints(document);
+/**
+ * Fetch and parse one agent's registration document, and read its endpoints.
+ *
+ * @param registrationFile the `tokenURI`, or `null` when the agent registered without one.
+ */
+export async function readAgentEndpoints(
+    registrationFile: string | null,
+    fetchImpl: typeof fetch = fetch,
+): Promise<EndpointRead> {
+    const read = await readRegistrationDocument(registrationFile, fetchImpl);
+    if (read.status === "none") return {status: "none", reason: "no-registration-file"};
+    if (read.status === "unreadable") return read;
+
+    const endpoints = readDeclaredEndpoints(read.document);
     if (endpoints.length === 0) return {status: "none", reason: "no-endpoints-declared"};
 
     // Split rather than merged, because the package insists on it: a caller writing its own filter
     // is where the classification's discipline erodes. 22 of 68 parsed documents in the 2026-10-16
     // sample declared no endpoint at all, which is itself common and not a defect.
     const {probeable, notCheckable} = partitionByCheckability(endpoints);
-    return {status: "read", url, probeable, notCheckable};
+    return {status: "read", url: read.url, probeable, notCheckable};
 }

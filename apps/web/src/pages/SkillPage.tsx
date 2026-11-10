@@ -11,6 +11,7 @@ import {AtomMarket} from "../components/market/AtomMarket";
 import {DeclareUse} from "../components/usage/DeclareUse";
 import {useAtomStanding} from "../hooks/use-atom-standing";
 import {useDomainTree} from "../hooks/use-domain-tree";
+import {useSkillContents} from "../hooks/use-skill-contents";
 import {useSkillFacts} from "../hooks/use-skill-facts";
 import {useSkillMd, type SkillMdRead} from "../hooks/use-skill-md";
 import {useChainChoice} from "../lib/chain-choice";
@@ -25,6 +26,7 @@ import {
 } from "../services/atom-standing-view";
 import {splitFirstSentence} from "../services/skill-md";
 import {intuitionPortalUrl, truncateMiddle} from "../services/trust-format";
+import {SkillContains} from "../components/atom/SkillContains";
 import {ToolWallets} from "../components/atom/ToolWallets";
 import {Block, ClsRow, Install, Panel, RecordRow, Signal} from "../components/atom/AtomPageParts";
 import {formatDay, githubApiUrlOf, LABEL} from "../lib/atom-page";
@@ -59,6 +61,7 @@ export function SkillPage({
     const skill = parsed?.kind === "skill" ? parsed.skill : view.title;
     const source = view.claims.find((claim) => claim.predicate === "source") ?? null;
     const md = useSkillMd(view.label);
+    const contents = useSkillContents(view.label);
     // Tools, then the repository the skill ships in, which has its own page. The domain is not a
     // step: it is read from the attestor's claims further down, and a skill may have none.
     useNavTrail(
@@ -127,6 +130,7 @@ export function SkillPage({
                     </div>
                     <div className="grid gap-4 max-lg:[grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
                         <Classification view={view} source={source} />
+                        <SkillContains read={contents} repo={repo} />
                         <ExternalSignals view={view} source={source} />
                     </div>
                 </div>
