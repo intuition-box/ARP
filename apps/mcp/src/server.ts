@@ -54,7 +54,9 @@ import {
   MULTI_VAULT,
   DESKTOP,
   READ_ONLY,
+  HOSTED,
 } from './config.js';
+import { loggable, publicHost } from './hosted.js';
 import { type JsonRpcId, type Rpc, result, fail } from './rpc.js';
 import { toolReputation } from './handlers/reputation.js';
 import { declareUsed, declareSession } from './handlers/declare.js';
@@ -211,8 +213,10 @@ async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefin
   } catch (error) {
     // Redacted, not a stack: a caller gets enough to retry or report, and a viem error's RPC URL,
     // which can carry an API key, is cut to its host (ADR `0116`). stderr keeps the same line.
+    // Hosted, the line names the tool and the error's class only: a message can carry the caller's
+    // arguments, and none is kept (ADR `0161`). The caller still gets the message below.
     const message = redactUrls(String(error)).slice(0, 300);
-    process.stderr.write(`${String(name)} failed: ${message}\n`);
+    process.stderr.write(`${String(name)} failed: ${loggable(error, message)}\n`);
     return fail(id, -32603, `${String(name)} failed: ${message}`);
   }
 }
@@ -298,9 +302,12 @@ export const handler = {
           capabilities: { tools: {} },
           serverInfo: { name: 'ARP', version: '0.2.0' },
           // The plugin (read mode, not Desktop, which has its own setting) asks once about sharing (task 88).
+          // Hosted, no sharing question: sharing is about the caller's own machine, which this is not.
           instructions: DESKTOP
             ? DESKTOP_INSTRUCTIONS
-            : READ_ONLY
+            : HOSTED
+              ? READ_INSTRUCTIONS
+              : READ_ONLY
               ? [READ_INSTRUCTIONS, shareAskInstructions(arpHome())].filter((part) => part !== null).join('\n\n')
               : SERVER_INSTRUCTIONS,
         });
@@ -338,6 +345,13 @@ export function httpPolicy(env: Readonly<Record<string, string | undefined>> = p
     if (entry.trim() !== '') hosts.push(entry.trim());
   }
   const origins = hosts.map((host) => `http://${host}`);
+  // Hosted (ADR `0161`): one more name, the `Host` the proxy forwards, and that name's own https origin.
+  // `config.ts` has already refused a public name on a server that is not hosted.
+  const name = publicHost(env);
+  if (name !== null) {
+    hosts.push(name);
+    origins.push(`https://${name}`);
+  }
   return { hosts, origins };
 }
 
@@ -406,6 +420,10 @@ export async function main(
   const stdio = argv.includes('--stdio') || process.env.ARP_TRANSPORT === 'stdio';
   // stderr in both modes: the banner is a diagnostic, and on stdio stdout belongs to the protocol.
   const log = (line: string) => process.stderr.write(`${line}\n`);
+  if (HOSTED && stdio) {
+    log('ARP_HOSTED=1 serves HTTP; stdio is for a client on the same machine.');
+    process.exit(1);
+  }
 
   log(`ARP MCP server — ${stdio ? 'stdio' : `http://localhost:${PORT}`}`);
   log(`  chain:      ${chainId} (${record.chain?.name ?? 'unknown'}) via ARP_TARGET=${targetName}`);
@@ -439,16 +457,21 @@ export async function main(
     `  tools:      ${SERVED_TOOLS.map((t) => t.name).join(', ')}${READ_ONLY ? ' (ARP_TOOLS=read)' : ''}`,
   );
   log(`  content:    GET /content/:atomId`);
+  if (HOSTED) {
+    log(`  hosted:     answers ${publicHost() ?? '?'}; read-only, no key, no tool argument logged (ADR 0161)`);
+  }
   log(
     `  receipts:   ${
-      RECEIPT_SIGNER === null ? 'none — ARP_NO_RECEIPTS=1' : `signed by ${RECEIPT_SIGNER.address}`
+      RECEIPT_SIGNER === null
+        ? `none — ${HOSTED ? 'hosted, no key' : 'ARP_NO_RECEIPTS=1'}`
+        : `signed by ${RECEIPT_SIGNER.address}`
     }`,
   );
   // This read "signs nothing, sends nothing" until 2026-10-29, and the first half stopped being
   // true the moment the content route landed. The half that matters is unchanged and is the one
   // worth printing: no plan is ever signed here, so this process cannot spend an operator's TRUST.
   log(`\nsends nothing — the planners return calls for your own key, signed by you.`);
-  log(`The receipt key signs receipts and cannot move value (ADR 0080).`);
+  if (RECEIPT_SIGNER !== null) log(`The receipt key signs receipts and cannot move value (ADR 0080).`);
 }
 
 if (import.meta.main) await main();

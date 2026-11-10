@@ -15,6 +15,17 @@ import { catalogueFor, receiptSigner } from './content.js';
 import { DEPLOYMENTS } from './data.js';
 
 import { isAddress } from './rpc.js';
+import { hostedRefusal, isHosted } from './hosted.js';
+
+/** Checked before anything below runs: a refused hosted setting must not generate a key (ADR `0161`). */
+const refusedHosting = hostedRefusal(process.env);
+if (refusedHosting !== null) {
+  console.error(refusedHosting);
+  process.exit(1);
+}
+
+/** Run by ARP behind a public name, read-only, keeping no argument (task 92, ADR `0161`). */
+export const HOSTED = isHosted(process.env);
 
 export const PORT = Number(process.env.PORT ?? 3002);
 
@@ -28,6 +39,8 @@ export const PORT = Number(process.env.PORT ?? 3002);
  * key left in `<cwd>/.arp/` by an older version stops the server with the `mv` to run (ADR `0116`).
  */
 export const RECEIPT_SIGNER = (() => {
+  // Hosted, no key at all: not generated, not read (ADR `0161` condition 3). The content route still serves.
+  if (HOSTED) return null;
   try {
     return receiptSigner();
   } catch (error) {

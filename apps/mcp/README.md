@@ -55,7 +55,9 @@ approval. The fees are paid by the [sponsoring service](../sponsor).
   on your machine, with no secret in its environment, and sends your words to skills.sh. Results
   decide which public GitHub repositories it reads. `ARP_PULSE_SEARCH=off` stops the package, and
   `desktop` and `sponsored` never run it. See `docs/22_RUNNING_THE_NODE.md`.
-- It listens on `127.0.0.1` only.
+- It listens on `127.0.0.1` only. `ARP_HOSTED=1` is ARP's own hosted endpoint (`Dockerfile`, ADR
+  `0161`): read tools on testnet, no key, a public name in `ARP_PUBLIC_HOST`, and no tool argument
+  logged. It refuses to start any other way.
 
 Every file it writes, every variable it reads and every connection it opens is listed in
 [Running the node](../../docs/22_RUNNING_THE_NODE.md).

@@ -1,0 +1,32 @@
+# Read by BuildKit for apps/mcp/Dockerfile, with the repository root as the context.
+# An allowlist: nothing enters the image unless it is named here, so no key, `.env`, `.dev.vars`,
+# `.wrangler` or local state can, whatever sits untracked in the checkout.
+*
+
+# The workspace's manifests: `bun install --frozen-lockfile` resolves every workspace from the lockfile.
+!package.json
+!bun.lock
+!apps/*/package.json
+!contracts/package.json
+
+# What the server runs and builds.
+!apps/mcp
+!packages/protocol
+!packages/graphql
+
+# The records it reads: deployments and the catalogue.
+!data/deployments
+!data/catalogue
+
+# Dropped again inside what was allowed.
+**/node_modules
+**/dist
+**/test
+**/*.test.ts
+**/.env
+**/.env.*
+**/.dev.vars*
+**/.wrangler
+**/*.key
+**/*.jsonl
+**/.arp

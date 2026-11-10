@@ -38,6 +38,7 @@ import { arpHome } from '@arp-protocol/core/node';
 import { stringToHex } from 'viem';
 
 import { domainWords } from '../domain-words.js';
+import { loggable } from '../hosted.js';
 import { diskListingCache } from '../pulse-cache.js';
 import { readWindow } from '../pulse-window.js';
 import { openCall, runSearch, withoutPaths } from '../search-run.js';
@@ -549,7 +550,7 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
     await within(readRecord(), left() - budget.agentsMs - budget.filesMs, stop);
   } catch (error) {
     usageRead = false;
-    console.error(`arp_pulse: usage not read: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`arp_pulse: usage not read: ${loggable(error, error instanceof Error ? error.message : String(error))}`);
   }
   const { domain, atomByUri, usage } = draft;
   const near = new Set(draft.near);
