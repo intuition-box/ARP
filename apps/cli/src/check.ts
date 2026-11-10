@@ -9,10 +9,10 @@
  *    after a failure);
  * 3. **checked on this machine**: what those lines say the skill needed when it failed, and the programs
  *    and variables its own files name — a program on `PATH`, an environment variable set or not. A
- *    variable's value is never read; only whether it is non-empty.
+ *    variable's value is only compared with the empty string, never printed or returned.
  *
  * What leaves the machine: the repository and skill name, to GitHub (the requests an install makes),
- * and the skill's atom URI and four vocabulary words, to Intuition's index. Nothing about the machine:
+ * with `GITHUB_TOKEN` (or `GH_TOKEN`) when set, sent to GitHub only, as the hook does; and the skill's atom URI and four vocabulary words, to Intuition's index. Nothing about the machine:
  * the `PATH` and environment checks are local and their answers are only printed.
  *
  * Imports are by path, as in the hook: `failure-lines.ts` exports a `skillUrlOf` that the core index

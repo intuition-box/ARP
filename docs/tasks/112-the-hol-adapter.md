@@ -36,7 +36,7 @@ Task 86's deliverable 1, reduced to a skill (no "need in words" form):
 - Read-only, no wallet, no key, nothing written. Prints what the skill's files mention
   (`skillInstallReport`, already exported), the lines about it with their outcomes, and **what others
   needed** (`by_need`) checked against this machine: a program on `PATH`, an environment variable **set
-  or not** (its value is never read). One line each: `ffmpeg: missing here`, `OPENAI_API_KEY: set`.
+  or not** (its value is never printed or returned). One line each: `ffmpeg: missing here`, `OPENAI_API_KEY: set`.
 - Nothing about the machine leaves it (`feedback_never_collect_user_text`).
 - Tests: a fixture skill whose lines need a program absent from a fake `PATH`, and one present.
 
@@ -62,7 +62,7 @@ The hol-guard issue and the message from the business-dev draft, with the A feed
   index; `scripts/build/build-arp-usage-feed.ts` reads the skill lines feed file, no network; output
   `apps/web/public/feeds/arp-usage.json`, schema `arp.usage/1`. Built once from the skill lines snapshot of
   2026-11-10T10:44:54Z: 10 skills, **0 with a score**, because all 10 lines are ARP's own tests
-  (`arp_test`), which the rule drops. `packages/protocol/test/arp-usage.test.ts`, 10 tests.
+  (`arp_test`), which the rule drops. `packages/protocol/test/arp-usage.test.ts`, 11 tests (a need counted by distinct wallets added after the first verification).
 - **B.** `apps/cli/src/check.ts`, `arp check` in `cli.ts`. Beyond the plan, one addition inside the same
   read: the programs and variables **the skill's own files name** (`contains.programs`,
   `contains.settings`) are checked too, so the block says something before any line exists. Live,

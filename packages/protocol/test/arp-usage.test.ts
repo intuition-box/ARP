@@ -121,6 +121,12 @@ describe("buildArpUsageFeed", () => {
         expect(record.score).toBeNull();
     });
 
+    it("counts a need by distinct wallets", () => {
+        const failed = {outcome: "failed" as const, reasons: ["missing-program"], needs: ["ffmpeg"]};
+        const record = only([line("0x1", failed), line("0x1", failed), line("0x2", failed)]);
+        expect(record.needs).toEqual({ffmpeg: 2});
+    });
+
     it("keeps test lines' needs out of the metadata", () => {
         const record = only([line("0x1", {arp_test: true, outcome: "failed", reasons: ["missing-program"], needs: ["ffmpeg"]})]);
         expect(record.needs).toEqual({});

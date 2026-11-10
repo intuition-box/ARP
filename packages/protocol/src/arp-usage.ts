@@ -55,7 +55,7 @@ export type ArpUsageRecord = {
     needs_only: number;
     /** `null` with the score. */
     confidence: number | null;
-    /** Names a failure needed, by wallets outside ARP's tests: metadata, never scored. */
+    /** Names a failure needed, and how many distinct wallets outside ARP's tests wrote each: metadata, never scored. */
     needs: Record<string, number>;
 };
 
@@ -103,11 +103,12 @@ export function buildArpUsageFeed(lines: SkillLinesFeed, generatedAt: string): A
             else if (line.reasons.some((reason) => NEED_REASONS.has(reason))) needsOnly += 1;
             else failed += 1;
         }
-        const needs: Record<string, number> = {};
+        const needers = new Map<string, Set<string>>();
         for (const line of entry.lines) {
             if (line.arp_test) continue;
-            for (const name of line.needs) needs[name] = (needs[name] ?? 0) + 1;
+            for (const name of line.needs) needers.set(name, (needers.get(name) ?? new Set()).add(line.writer.toLowerCase()));
         }
+        const needs = Object.fromEntries([...needers].map(([name, wallets]) => [name, wallets.size]));
         const scored = arpUsageScore(worked, failed);
         return {
             url: entry.url,

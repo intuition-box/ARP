@@ -82,6 +82,7 @@ test('hereLines says set or missing, and never prints a value', () => {
 });
 
 test('checkSkill says each read that fails, and never throws', async () => {
+  // A stub of the one call shape githubPulseSource and readSkillLines make: (url, init) => Response.
   const down = (async () => new Response('', { status: 503 })) as unknown as typeof fetch;
   const machine: Machine = { hasProgram: () => false, hasVariable: () => false };
   const text = await checkSkill({ repo: 'a/b', skill: 'c' }, { env: {}, machine, fetch: down, budgetMs: 500 });
