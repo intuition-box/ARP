@@ -9,8 +9,6 @@
 
 <p align="center"><i>Check before your agent installs or pays.</i></p>
 
-<p align="center">Early: it runs on Intuition testnet, and no third party has reported a result on a skill yet.</p>
-
 ---
 
 ## The problem
