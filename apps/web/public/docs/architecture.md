@@ -126,7 +126,7 @@ flowchart LR
 | --- | --- |
 | [`apps/web`](https://github.com/intuition-box/ARP/tree/main/apps/web) | This web app. React, Vite, Tailwind, wagmi. Testnet 13579 by default; a toggle switches Intuition reads and support to mainnet 1155. ARP's own contracts stay on 13579 |
 | [`apps/mcp`](https://github.com/intuition-box/ARP/tree/main/apps/mcp) | The MCP server, over stdio or HTTP. It signs no transaction |
-| [`apps/hook`](https://github.com/intuition-box/ARP/tree/main/apps/hook) | The runtime hook, wired on `PostToolUse`, `PostToolUseFailure` and `Stop` |
+| [`apps/hook`](https://github.com/intuition-box/ARP/tree/main/apps/hook) | The runtime hook, wired on `PreToolUse`, `PostToolUse`, `PostToolUseFailure` and `Stop` |
 | [`apps/node`](https://github.com/intuition-box/ARP/tree/main/apps/node) | The agent node: listens, checks a payment, signs a receipt |
 | [`apps/cli`](https://github.com/intuition-box/ARP/tree/main/apps/cli) | `@arp-protocol/cli`: the MCP server, the hook and the node in one binary, plus `init`, `line`, `share`. It also generates the Claude Code and Gemini packages |
 | [`apps/sponsor`](https://github.com/intuition-box/ARP/tree/main/apps/sponsor) | The sponsoring service, testnet 13579 only |
