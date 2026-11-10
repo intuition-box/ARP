@@ -31,7 +31,7 @@ export function BeforeSection({
                 </h2>
                 {aside}
             </div>
-            <p className="mt-2.5 min-h-[1.5em] font-mono text-[15px] leading-[1.5] text-[color:var(--color-fg)] [overflow-wrap:anywhere]">
+            <p className="mt-2.5 min-h-[1.5em] max-sm:min-h-[3em] font-mono text-[15px] leading-[1.5] text-[color:var(--color-fg)] [overflow-wrap:anywhere]">
                 {summary ?? <span className={steel}>…</span>}
             </p>
             {children === undefined ? null : <dl className="m-0 mt-3">{children}</dl>}

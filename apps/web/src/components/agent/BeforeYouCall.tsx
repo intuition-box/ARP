@@ -114,7 +114,9 @@ function Rows({contents, registrationFile}: {contents: AgentContents; registrati
                 <span className={contents.x402 === "declared" ? undefined : steel}>
                     {contents.x402 === "declared" ? "x402 asked" : "none declared"}
                 </span>
-                <TrustIndexVerdicts registrationFile={registrationFile} />
+                {/* Only where it asks for a payment: x402 Doctor reads x402 endpoints, and the
+                    row's height is settled once the document is, which is when this renders. */}
+                {contents.x402 === "declared" ? <TrustIndexVerdicts registrationFile={registrationFile} /> : null}
             </QuestionRow>
             <QuestionRow term="Auth">
                 {contents.auth.length === 0 ? <span className={steel}>none named</span> : contents.auth.join(", ")}

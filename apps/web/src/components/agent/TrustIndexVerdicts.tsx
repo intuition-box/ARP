@@ -42,11 +42,11 @@ export function TrustIndexVerdicts({registrationFile}: {registrationFile: string
     return (
         // The Hint sits beside the summary, not in it: a button inside `summary` would also toggle it.
         <div className="mt-1 flex items-start gap-2">
-            <details>
+            <details className="min-w-0">
                 <summary
                     className={`cursor-pointer ${steel} hover:text-[color:var(--color-silver)]`}
                 >
-                    {`x402 Trust Index${day === null ? "" : `, ${formatDay(day)}`}: ${rows.length} ${rows.length === 1 ? "endpoint" : "endpoints"} read`}
+                    {`x402 Trust Index: ${rows.length} ${rows.length === 1 ? "endpoint" : "endpoints"} read`}
                 </summary>
                 <ul className="m-0 mt-1.5 flex list-none flex-col p-0">
                     {rows.map((row) => (
@@ -59,7 +59,7 @@ export function TrustIndexVerdicts({registrationFile}: {registrationFile: string
                     rel="noreferrer"
                     className={`text-[length:var(--text-label)] text-[color:var(--color-steel)]! ${linkClass}`}
                 >
-                    {`${TRUST_INDEX_CREDIT} · ${TRUST_INDEX_LICENCE} ↗`}
+                    {`${day === null ? "" : `${formatDay(day)} · `}${TRUST_INDEX_CREDIT} · ${TRUST_INDEX_LICENCE} ↗`}
                 </a>
             </details>
             <WhatItIs />
