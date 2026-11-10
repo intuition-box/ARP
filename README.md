@@ -75,8 +75,10 @@ Checking a tool or an agent needs nothing at all: no wallet, no account.
 
 A search reads skills.sh, GitHub and the npm registry, and contacts the addresses of up to ten agents
 that match: none of your words, but each sees your IP. The hook records each skill and MCP call in
-`.arp/session.jsonl` in the project, and a skill's failures in `~/.arp/failures.jsonl`. It sends
-nothing; sharing failures is off until you run `arp share on`. `~/.arp/` also holds the keys ARP makes
+`.arp/session.jsonl` in the project, and a skill's failures in `~/.arp/failures.jsonl`. At the end of
+a turn that used a skill not yet asked about, it asks the model once whether the skill did its job,
+and keeps the closed answer in `~/.arp/outcomes.jsonl` (what it asked: `~/.arp/asked.jsonl`). It sends
+nothing; sharing failures and worked answers is off until you run `arp share on`. `~/.arp/` also holds the keys ARP makes
 and the search package's cache. Every file, and every connection, is in
 [Running the node](docs/22_RUNNING_THE_NODE.md). Testing ARP for us: [for testers](apps/web/public/docs/testers.md).
 
@@ -85,7 +87,7 @@ To remove it:
 ```bash
 claude plugin uninstall arp@arp && claude plugin marketplace remove arp   # the plugin
 npx -y @arp-protocol/cli uninstall      # what `init` added (or `arp uninstall` if installed globally)
-rm -rf ~/.arp                           # keys, failures, cache: neither command removes them
+rm -rf ~/.arp                           # keys, failures, answers, cache: neither command removes them
 rm -rf .arp                             # the hook's log, in each project
 ```
 

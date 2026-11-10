@@ -46,7 +46,7 @@ session even when the model never answers", "ten Stops in a row block at most on
 
 ## Token cost
 
-The question is **273 characters plus each skill's name and two separator characters** (asserted in
+The question is **273 characters plus the skills' names, joined by `, ` (two characters between two names)** (asserted in
 `apps/hook/test/worked.test.ts`), about 70 tokens by the four-characters-a-token rule of thumb, not measured with a
 tokenizer. Each answer line is `arp: <name> worked`, about 5 to 10 tokens. The real cost is the **extra model
 turn**: the continuation sends the conversation again, which in Claude Code is mostly a prompt-cache read, plus the

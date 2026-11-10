@@ -13,6 +13,7 @@ Every piece of data has one place where it is true, and ARP never keeps a second
 | An agent's identity | An ERC-8004 registry (an NFT contract for agent identities) | Reads it |
 | A line, a listing, support | Intuition's MultiVault, on chain | Writes it through a signed transaction, reads it through the index |
 | What failed on your machine | `~/.arp/failures.jsonl`, on your machine | Reads it, sends it only if you share |
+| Whether a skill did its job, in the model's word | `~/.arp/outcomes.jsonl`, on your machine | Reads it, sends a `worked` answer only if you share |
 
 ARP holds none of your funds and no copy of a skill.
 
