@@ -19,6 +19,19 @@ export const PULSE_USES_QUERY = `query PulseUses($tools: [String!]!, $uses: Stri
 }`;
 
 /**
+ * What one agent declared it used: its `uses` edges as the subject (task 95). The lines on them are read
+ * with `PULSE_USES_QUERY` keyed on each object, so one set of rules decides what counts.
+ */
+export const PULSE_SUBJECT_USES_QUERY = `query PulseSubjectUses($subject: String!, $uses: String!, $limit: Int!) {
+    triples(where: {subject_id: {_eq: $subject}, predicate_id: {_eq: $uses}}, limit: $limit) {
+        object {
+            term_id
+            label
+        }
+    }
+}`;
+
+/**
  * `positions` asks only for the declarers: the index caps a nested list at 100 with no order and no sign
  * of the cut (`intuition-integrator`, task 66), so asking for all of them could miss the one that matters.
  */

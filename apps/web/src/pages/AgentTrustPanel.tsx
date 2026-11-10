@@ -18,6 +18,8 @@ import {identityRegistryFor} from "../lib/deployments";
 import {AgentClaims, AgentDeclareCard} from "../components/agent/AgentClaims";
 import {SectionTabs} from "../components/agent/SectionTabs";
 import {AgentEndpoints} from "../components/agent/AgentEndpoints";
+import {AgentLines} from "../components/agent/AgentLines";
+import {useAgentLines} from "../hooks/use-agent-lines";
 import {actionCardClass} from "../lib/surface-class";
 import {useAgentProfile} from "../hooks/use-agent-profile";
 import {isHiddenAgent} from "../services/test-identities";
@@ -159,6 +161,9 @@ function AgentTrustPanelBody() {
     // Checked, not asserted: `atomTermId` comes off a source handle typed `string`, and a malformed
     // term id would become the address a deposit is sent to.
     const backingAtomId = asStakeTermId(view?.atomTermId ?? null);
+    const linesQuery = useAgentLines(view?.found === true ? (view.atomTermId ?? null) : null);
+    const lines = linesQuery.data;
+    const linesCount = lines === undefined ? null : lines.usedBy.length + lines.used.length;
 
     /**
      * The sections, as tabs.
@@ -166,17 +171,21 @@ function AgentTrustPanelBody() {
      * Built from the view rather than fixed: "Not read" is offered only when something actually
      * failed — an always-present "nothing failed" tab is a row of reassurance, which is not
      * information. Declarations are not a tab: they are the Relations block below the market.
+     *
+     * **Lines first, Ratings last** (task 95, the user, 2026-11-10): what agents wrote about using
+     * this one, and what it used, is what the page is for. A provider's score comes after.
      */
     const sectionTabs = [
+        {slug: "lines", label: "Lines", count: linesCount},
         {slug: "capabilities", label: "Capabilities", count: view?.capabilityCount ?? null},
-        {slug: "ratings", label: "Ratings", count: view?.rows.length ?? null},
         {slug: "endpoints", label: "Endpoints"},
+        {slug: "ratings", label: "Ratings", count: view?.rows.length ?? null},
         ...((view?.sourceErrors.length ?? 0) > 0 || (view?.conflicts.length ?? 0) > 0
             ? [{slug: "unread", label: "Not read"}]
             : []),
     ];
     const requestedSection = searchParams.get(SECTION_PARAM);
-    const selectedSection = initialSectionOf(sectionTabs, requestedSection) ?? "capabilities";
+    const selectedSection = initialSectionOf(sectionTabs, requestedSection) ?? "lines";
     /**
      * Whether the connected wallet holds a position here, for the sigil's core.
      *
@@ -301,6 +310,23 @@ function AgentTrustPanelBody() {
                                 <AgentAvatar src={view.image} name={view.name ?? view.tokenId} />
                             ) : null}
                         </div>
+                        {/* The domains its lines name, under the name: what it is used for, at a
+                            glance (task 95). Absent until a line names one. */}
+                        {lines !== undefined && lines.contexts.length > 0 ? (
+                            <ul
+                                aria-label="Contexts its lines name"
+                                className="mt-5 flex flex-wrap gap-2 font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-silver)]"
+                            >
+                                {lines.contexts.map((context) => (
+                                    <li
+                                        key={context}
+                                        className="rounded-[var(--radius-tag)] border border-[color:var(--color-rule-strong)] px-[7px] py-[2px]"
+                                    >
+                                        {context}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : null}
                     </header>
 
                     {/* **Description, Identity, tabs, in that DOM order** (user, 2026-11-02): stacked
@@ -348,6 +374,19 @@ function AgentTrustPanelBody() {
                                     tabIndex={0}
                                     className="mt-8"
                                 >
+                                    {selectedSection === "lines" ? (
+                                        <AgentLines
+                                            read={
+                                                view.atomTermId === null
+                                                    ? {status: "no-atom"}
+                                                    : linesQuery.isPending
+                                                      ? {status: "pending"}
+                                                      : lines === undefined
+                                                        ? {status: "failed"}
+                                                        : {status: "ok", view: lines}
+                                            }
+                                        />
+                                    ) : null}
                                     {selectedSection === "endpoints" ? (
                                         <AgentEndpoints registrationFile={view.registrationFile} />
                                     ) : null}

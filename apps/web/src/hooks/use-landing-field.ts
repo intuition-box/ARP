@@ -3,7 +3,7 @@ import {useQuery} from "@tanstack/react-query";
 import {getPulseUsage, listTools} from "@arp-protocol/core";
 
 import {useChainChoice} from "../lib/chain-choice";
-import {deployments} from "../lib/deployments";
+import {LINE_VOCABULARY} from "../lib/line-vocabulary";
 import {
     buildLandingField,
     loadLandingField,
@@ -11,7 +11,6 @@ import {
     readVocabularyIds,
     type LandingField,
     type LandingFieldReads,
-    type LineVocabulary,
 } from "../services/landing-field";
 import {fieldOrSample} from "../services/landing-sample";
 import {hiddenAtomIds} from "../services/test-identities";
@@ -29,15 +28,6 @@ const READS: LandingFieldReads = {
     vocabularyIds: readVocabularyIds,
 };
 
-/** ARP's line words and the wallets that pay for lines and say nothing by it (ADR `0144`). */
-const VOCABULARY: LineVocabulary = {
-    rpcUrl: deployments.chain.rpcUrl,
-    chainId: deployments.chain.chainId,
-    multiVault: deployments.intuition.multiVault,
-    inContextOf: deployments.arp.endpointBinding.inContextOf,
-    payers: [...new Set([deployments.arp.deployer, deployments.arp.sponsor])],
-};
-
 export function landingFieldQueryOptions(
     chain: {chainId: number; graphqlUrl: string},
     reads: LandingFieldReads = READS,
@@ -45,7 +35,7 @@ export function landingFieldQueryOptions(
     return {
         // The chain leads the key: the most declared tool is a fact about one chain.
         queryKey: ["intuition", chain.chainId, "landing-field"] as const,
-        queryFn: () => loadLandingField(chain, VOCABULARY, reads),
+        queryFn: () => loadLandingField(chain, LINE_VOCABULARY, reads),
         staleTime: 120_000,
         retry: 0,
     };

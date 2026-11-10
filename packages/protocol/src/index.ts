@@ -659,6 +659,7 @@ export {
     type PulseUsage,
     type PulseUsageConfig,
 } from "./pulse-usage.js";
+export {getAgentLines, type AgentLines, type AgentUsedLine} from "./agent-lines.js";
 export {
     atomIsCanonicalFor,
     findAgentsInDomains,
