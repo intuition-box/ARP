@@ -75,7 +75,14 @@ export function inProject(path: string, projectDir: string | undefined = process
 export const SKILLS_DIR = process.env['ARP_SKILLS_DIR'] === undefined ? undefined : inProject(process.env['ARP_SKILLS_DIR']);
 export const READ_ONLY = process.env['ARP_TOOLS'] === 'read' || DESKTOP;
 export const CONTENT_URL = process.env['ARP_CONTENT'] ?? 'http://127.0.0.1:3002';
-export const SPONSOR_URL = process.env['ARP_SPONSOR'] ?? 'http://127.0.0.1:3200';
+/**
+ * The sponsoring service when `ARP_SPONSOR` is unset (task 105, ADR `0175`). `apps/cli`'s builds inline
+ * `ARP_SPONSOR_DEFAULT` from its `package.json` `config.sponsorDefault`, so a release names the hosted service
+ * without a code edit; empty, the bundle keeps the loopback. Dot access on purpose: bun inlines
+ * `process.env.X`, not `process.env['X']`. Run from source, it is an ordinary variable.
+ */
+const SPONSOR_DEFAULT = process.env.ARP_SPONSOR_DEFAULT || 'http://127.0.0.1:3200';
+export const SPONSOR_URL = process.env['ARP_SPONSOR'] ?? SPONSOR_DEFAULT;
 
 /** Where the hook writes, and where the fetch records what it fetched. Both overridable. */
 export const SESSION_LOG = inProject(process.env['ARP_SESSION_LOG'] ?? '.arp/session.jsonl');

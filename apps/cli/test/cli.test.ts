@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -146,4 +146,15 @@ test('line makes no agent key when the sponsor does not answer', () => {
   expect(code).toBe(1);
   expect(err).toContain('did not answer');
   expect(existsSync(join(dir, '.arp', 'agent-key'))).toBe(false);
+});
+
+test("the sponsoring service's default is fixed when the bundle is built, never read at run time (task 105)", () => {
+  const chunks = join(import.meta.dir, '..', 'dist', 'chunks');
+  const bundle = [CLI, ...readdirSync(chunks).map((file) => join(chunks, file))]
+    .map((file) => readFileSync(file, 'utf8'))
+    .join('\n');
+  expect(bundle).not.toContain('ARP_SPONSOR_DEFAULT');
+  // `config.sponsorDefault`, else the loopback (ADR `0175`).
+  const expected = pkg.config.sponsorDefault || 'http://127.0.0.1:3200';
+  expect(bundle).toContain(`SPONSOR_DEFAULT = ${JSON.stringify(expected)}`);
 });

@@ -47,6 +47,7 @@ const pkg = JSON.parse(readFileSync(join(CLI, 'package.json'), 'utf8')) as {
   version: string;
   description: string;
   license: string;
+  config?: { sponsorDefault?: string };
 };
 
 /** Text, or the icon's bytes. */
@@ -93,6 +94,9 @@ async function bundledCli(): Promise<string> {
     format: 'esm',
     external: ['./hook.js', '@metamask/smart-accounts-kit'],
     banner: '#!/usr/bin/env node',
+    // The sponsoring service's default, from `package.json`'s `config.sponsorDefault` as its build inlines it
+    // (task 105, ADR `0175`). Always defined, empty for the loopback, so the bundle never reads it at run time.
+    define: { 'process.env.ARP_SPONSOR_DEFAULT': JSON.stringify(pkg.config?.sponsorDefault ?? '') },
   });
   const [only, ...others] = built.outputs;
   if (only === undefined || others.length > 0) {
