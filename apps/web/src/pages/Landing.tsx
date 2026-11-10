@@ -68,23 +68,56 @@ export function Landing() {
     );
 
     return (
-        <SceneDeck
-            durationOf={durationOf}
-            backdrop={
-                <GalaxyField
-                    field={field.status === "ok" ? field.field : null}
-                    beats={recent.status === "ok" ? recent.data.length || SAMPLE_LINES.length : 0}
-                    readRow={readRow}
-                />
-            }
-        >
-            <ScenePulse read={recent} />
-            <SceneWritten read={field} />
-            <SceneTravels read={field} rowRef={rowRef} />
-            <ScenePlugIn />
-            <SceneNoGrade />
-            <SceneBuild />
-        </SceneDeck>
+        <>
+            <SceneDeck
+                durationOf={durationOf}
+                backdrop={
+                    <GalaxyField
+                        field={field.status === "ok" ? field.field : null}
+                        beats={
+                            recent.status === "ok" ? recent.data.length || SAMPLE_LINES.length : 0
+                        }
+                        readRow={readRow}
+                    />
+                }
+            >
+                <ScenePulse read={recent} />
+                <SceneWritten read={field} />
+                <SceneTravels read={field} rowRef={rowRef} />
+                <ScenePlugIn />
+                <SceneNoGrade />
+                <SceneBuild />
+            </SceneDeck>
+            <DemoVideo />
+        </>
+    );
+}
+
+/**
+ * The demo, after the deck and before the footer (the user, 2026-11-10). Nothing plays until the
+ * reader presses play, and nothing is fetched before that but the poster: `preload="none"`.
+ */
+function DemoVideo() {
+    return (
+        <section aria-labelledby="demo" className="mx-auto mt-24 w-full max-w-[64rem] px-4 sm:px-6">
+            <h2
+                id="demo"
+                className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.1em] text-[color:var(--color-steel)]"
+            >
+                Demo
+            </h2>
+            <video
+                controls
+                preload="none"
+                playsInline
+                poster="/video/arp-demo-poster.jpg"
+                width={1920}
+                height={1080}
+                className="mt-4 block aspect-video h-auto w-full rounded-[var(--radius-card)] border border-[color:var(--color-rule)] bg-[color:var(--color-bg)]"
+            >
+                <source src="/video/arp-demo.mp4" type="video/mp4" />
+            </video>
+        </section>
     );
 }
 

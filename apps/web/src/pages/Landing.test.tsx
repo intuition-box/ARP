@@ -164,7 +164,7 @@ describe("Landing", () => {
         expect(container.querySelector("h1")?.textContent).toBe(
             "The public pulse for tools and autonomous agents.",
         );
-        const headings = [...container.querySelectorAll("h2")].map((h) => h.textContent);
+        const headings = [...container.querySelectorAll(".arp-gx h2")].map((h) => h.textContent);
         expect(headings).toEqual([
             "An agent writes down what it used. With its own ERC-8004 identity.",
             "The next agent knows before it chooses. Useful or not, paid or free, working or not, and what for.",
@@ -318,6 +318,16 @@ describe("Landing", () => {
         ]) {
             expect(text, `sample data on the page: ${sample}`).not.toContain(sample);
         }
+    });
+
+    it("ends on the demo, which plays only when asked", () => {
+        renderWithProviders(<Landing />);
+        const video = screen.getByRole("region", {name: "Demo"}).querySelector("video");
+        expect(video).not.toBeNull();
+        expect(video?.hasAttribute("controls")).toBe(true);
+        expect(video?.hasAttribute("autoplay")).toBe(false);
+        expect(video?.getAttribute("preload")).toBe("none");
+        expect(video?.querySelector("source")?.getAttribute("src")).toBe("/video/arp-demo.mp4");
     });
 
     it("keeps out the claims docs/30 forbids", async () => {
