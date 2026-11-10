@@ -55,10 +55,10 @@ export function Layout({children}: {children: ReactNode}) {
            a fragment, so the footer sat directly under whatever the page rendered — on a short
            page or a loading one it rode up the screen and then jumped back down when the content
            arrived (user, 2026-10-27). */
-        /* `pb-9` is the collapsed activity bar's height, so the fixed bar never sits on the footer. */
+        /* The footer's `pb-16` holds the collapsed activity bar's height on its own solid ground, so the fixed bar never sits on the links and no star shows under it (2026-11-10). */
         <NavTrailProvider>
             {pathname === "/" ? null : <SideGalaxy />}
-            <div className="arp-page flex min-h-screen flex-col pb-9">
+            <div className="arp-page flex min-h-screen flex-col">
                 {/* Agents, Tools, Activity, Search, Docs: `/` is the landing and the coin leads to
                     it. Get started opens the onboarding panel, the one door for putting an agent
                     or a tool into ARP (task 62, ADR `0125`), and is lit on the `/start/<profile>`
@@ -80,7 +80,7 @@ export function Layout({children}: {children: ReactNode}) {
 
                 {/* Solid ground, edge to edge, so the side galaxy never shows through it (the
                     user, 2026-11-10). */}
-                <footer className="mt-24 border-t border-[color:var(--color-rule)] bg-[color:var(--color-ground)] px-6 py-7">
+                <footer className="mt-24 border-t border-[color:var(--color-rule)] bg-[color:var(--color-ground)] px-6 pt-7 pb-16">
                     <div className="mx-auto w-full max-w-[1320px] flex flex-wrap items-center justify-between gap-3 text-[length:var(--text-label)] uppercase tracking-wider text-[color:var(--color-steel)]">
                         <span>
                             Agent Reputation Protocol —{" "}
