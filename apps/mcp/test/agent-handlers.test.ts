@@ -29,6 +29,12 @@ vi.mock('@arp-protocol/core', async (original) => ({
 
 vi.mock('../src/host-guard.js', () => ({ hostGuard: () => ({ allowPrivate: true }) }));
 
+// The two predicates come from the graph since task 113; the chain read the tests used to mock is gone.
+vi.mock('../src/line-words.js', async (original) => ({
+  ...(await original<typeof import('../src/line-words.js')>()),
+  lineWordAtomIds: async () => ({ hasOutcome: ATOM, because: ATOM }),
+}));
+
 vi.mock('../src/config.js', async (original) => ({
   ...(await original<typeof import('../src/config.js')>()),
   chainId: 13579,

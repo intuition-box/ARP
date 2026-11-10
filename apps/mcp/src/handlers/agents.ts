@@ -1,6 +1,5 @@
 import {
   type AgentListOrder,
-  BECAUSE_LABEL,
   atomIsCanonicalFor,
   findAgents as findAgentsByCapability,
   findAgentsInDomains,
@@ -10,7 +9,6 @@ import {
   getPulseUsage,
   type FetchLike,
   guardedFetchText,
-  HAS_OUTCOME_LABEL,
   listAgents,
   parseCaip19,
   partitionByCheckability,
@@ -29,13 +27,15 @@ import {
   RUNG_NAMES,
   type Rung,
 } from '@arp-protocol/core';
-import { createPublicClient, getAddress, http, parseAbi, stringToHex } from 'viem';
+import { createPublicClient, getAddress, http, parseAbi } from 'viem';
 
 import { chainId, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, RPC, directory, domainWalk, reads, record } from '../config.js';
 import sieveReading from '../../../../data/catalogue/agent-sieve-13579.json';
 import { hostGuard, type HostGuard } from '../host-guard.js';
 import { endpointOutside, OUTSIDE_NOTE } from '../outside.js';
 import { readRegistrationDocument, type RegistrationDocument } from '../registration-document.js';
+import { bindingChain } from '../binding-chain.js';
+import { lineWordAtomIds } from '../line-words.js';
 import { type JsonRpcId, fail, text, isAddress } from '../rpc.js';
 
 /**
@@ -235,19 +235,16 @@ export async function readNode(
 
 const MAX_OFFERS_READ = 10;
 
+/** The two predicates an agent's lines are read with, from the graph, kept once both exist (task 113). */
+const lineWordPair = () => lineWordAtomIds(GRAPHQL);
+
 function signedEndpoints(hasEndpoint: string, agentRegistry: string, agentId: string, agentAtom: string) {
-  const client = chainClient();
   return getAgentEndpoints(
     { agentRegistry, agentId, agentAtom },
     {
       graphqlUrl: GRAPHQL,
       predicates: { hasEndpoint, inContextOf: IN_CONTEXT_OF },
-      chain: {
-        ownerOf: ({ registry: at, agentId: token }) =>
-          client.readContract({ address: at, abi: REGISTRY_ABI, functionName: 'ownerOf', args: [token] }),
-        verifyMessage: ({ address, message, signature }) =>
-          client.verifyMessage({ address, message, signature }),
-      },
+      chain: bindingChain(chainClient()),
     },
   );
 }
@@ -377,8 +374,7 @@ async function agentPulse(agentChainId: number, tokenId: string, registry: `0x${
       await getPulseUsage([agentAtom], {
         graphqlUrl: GRAPHQL,
         inContextOf: IN_CONTEXT_OF,
-        hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
-        because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
+        ...(await lineWordPair()),
         payers: LINE_PAYERS,
       })
     ).get(agentAtom.toLowerCase());
@@ -753,8 +749,7 @@ export async function agentsForDomain(domain: string): Promise<Record<string, un
     {
       graphqlUrl: GRAPHQL,
       inContextOf: IN_CONTEXT_OF,
-      hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
-      because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
+      ...(await lineWordPair()),
       payers: LINE_PAYERS,
     },
   );

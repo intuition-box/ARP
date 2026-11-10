@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { ListedFile, ListingCache, RepositoryListing } from '@arp-protocol/core';
+import type { FileCache, ListedFile, ListingCache, RepositoryListing } from '@arp-protocol/core';
 
 const DAY_MS = 86_400_000;
 /** A list longer than this is a monorepo: keeping it would cost more than asking again. */
@@ -77,3 +77,31 @@ export function diskListingCache(directory: string, now: () => number = Date.now
     },
   };
 }
+
+const FILE_TTL_MS = 10 * 60_000;
+const MAX_FILES_KEPT = 2_000;
+
+/**
+ * Files read from GitHub at `HEAD`, kept in this process for ten minutes (task 113): four phrasings of one need,
+ * asked one after the other, read the same `SKILL.md` once. Memory only, never written to disk.
+ */
+export function memoryFileCache(now: () => number = Date.now): FileCache {
+  const kept = new Map<string, { at: number; text: string | null }>();
+  return {
+    get(key) {
+      const entry = kept.get(key);
+      if (entry === undefined) return undefined;
+      if (now() - entry.at >= FILE_TTL_MS) {
+        kept.delete(key);
+        return undefined;
+      }
+      return entry.text;
+    },
+    set(key, text) {
+      if (kept.size >= MAX_FILES_KEPT) kept.delete(kept.keys().next().value ?? key);
+      kept.set(key, { at: now(), text });
+    },
+  };
+}
+
+export const processFileCache = memoryFileCache();

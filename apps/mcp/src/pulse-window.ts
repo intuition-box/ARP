@@ -31,6 +31,8 @@ export async function readWindow(
     setAside: (pulse: SkillPulse) => boolean;
     /** Past this no further result is read, so a caller's time limit holds however many are left. */
     signal?: AbortSignal;
+    /** A result already read and dated, which costs no request (task 113). */
+    dated?: (result: SkillSearchResult) => SkillPulse | null;
   },
 ): Promise<SkillPulse[]> {
   const window = results.slice(0, Math.min(options.limit * 3, 30));
@@ -40,8 +42,10 @@ export async function readWindow(
     const batch = window.slice(at, at + size);
     pulses.push(
       ...(await Promise.all(
-        batch.map((result) =>
-          readPulse(result, source).catch((): SkillPulse => ({ ...result, status: 'repository_unreachable' })),
+        batch.map(
+          (result) =>
+            options.dated?.(result) ??
+            readPulse(result, source).catch((): SkillPulse => ({ ...result, status: 'repository_unreachable' })),
         ),
       )),
     );

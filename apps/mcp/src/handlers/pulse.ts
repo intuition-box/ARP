@@ -11,13 +11,9 @@ import {
   getPulseUsage,
   githubPulseSource,
   groupByContent,
-  BECAUSE_LABEL,
-  NEEDS_LABEL,
-  WITH_LABEL,
   entersList,
   unconfirmedNote,
   type Capability,
-  HAS_OUTCOME_LABEL,
   type LocalFailure,
   parseLocalFailures,
   parseSkillsFind,
@@ -38,15 +34,16 @@ import {
   yourFailures,
 } from '@arp-protocol/core';
 import { arpHome } from '@arp-protocol/core/node';
-import { stringToHex } from 'viem';
 
 import { domainWords } from '../domain-words.js';
 import { loggable } from '../hosted.js';
 import { OUTSIDE_NOTE, skillOutside } from '../outside.js';
-import { diskListingCache } from '../pulse-cache.js';
 import { readWindow } from '../pulse-window.js';
 import { openCall, runSearch, withoutPaths } from '../search-run.js';
-import { DESKTOP, DOMAIN_ROOT, domainWalk, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, READ_ONLY, reads } from '../config.js';
+import { DESKTOP, DOMAIN_ROOT, domainWalk, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, READ_ONLY } from '../config.js';
+import { LINE_WORDS, lineWordIds } from '../line-words.js';
+import { datedPulse } from '../pulse-readings.js';
+import { diskListingCache, processFileCache } from '../pulse-cache.js';
 import { agentsForDomain, offersForNeed } from './agents.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 
@@ -369,6 +366,9 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
     content_id: pulse.contentId,
     path: pulse.path,
     ...(pulse.listingReadAt === undefined ? {} : { file_list_read_at: pulse.listingReadAt }),
+    ...(pulse.datedReading === undefined
+      ? {}
+      : { dated_reading: { read_at: pulse.datedReading.readAt, by: pulse.datedReading.by, not_read_now: 'a file changed since is not seen' } }),
     size: { files: pulse.files, bytes: pulse.bytes, scripts: pulse.scripts },
     contains: contentsLines(pulse.contains, CONTAINS_PER_LIST),
     its_file_mentions: {
@@ -549,18 +549,15 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
       }
       draft.results = [...searched, ...added];
     }
-    draft.atomByUri = await findToolAtoms(
-      draft.results.map((row) => toolUriOf(row.source, row.skill)).filter((uri): uri is string => uri !== null),
-      { graphqlUrl: GRAPHQL },
-    );
+    // The four words in the same query as the results' atoms, by their data, as `failure-lines.ts` does: an
+    // atom's id hashes its data, so no chain read is needed (task 113: they were five RPC requests a search).
+    const uris = draft.results.map((row) => toolUriOf(row.source, row.skill)).filter((uri): uri is string => uri !== null);
+    const found = await findToolAtoms([...uris, ...LINE_WORDS], { graphqlUrl: GRAPHQL });
+    draft.atomByUri = new Map([...found].filter(([uri]) => !LINE_WORDS.includes(uri)));
     draft.usage = await getPulseUsage([...draft.atomByUri.values()], {
       graphqlUrl: GRAPHQL,
       inContextOf: IN_CONTEXT_OF,
-      hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
-      because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
-      // What a failure said was missing, and what a worked line said was added (ADR `0166`).
-      needs: await reads.atomId(stringToHex(NEEDS_LABEL)),
-      with: await reads.atomId(stringToHex(WITH_LABEL)),
+      ...lineWordIds(found),
       payers: LINE_PAYERS,
     });
   };
@@ -635,12 +632,14 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
     ...(token === undefined ? { withRepository: false } : { token }),
     signal: filesStop,
     cache: diskListingCache(join(arpHome(process.env, homedir()), 'pulse-listings')),
+    files: processFileCache,
   });
   const pulses = await readWindow(ordered, source, {
     limit,
     hasToken: token !== undefined,
     setAside: (row) => setAsideBecause(row, constraints).length > 0,
     signal: filesStop,
+    dated: (row) => datedPulse(row),
   });
   const quota = source.quota?.();
 
