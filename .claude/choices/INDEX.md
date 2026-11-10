@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-167 decisions. Newest last. `choices/README.md` says when to write one.
+168 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -31,6 +31,7 @@ Read these before relying on them.
 - **0113** (Deferred (mainnet port). The user's decision, 2026-11-02: « intéressant mais inutile en) — Who may speak for an agent's identity: trusted writers, the market, then ambiguity
 - **0137** (Accepted. Its design is open.) — ARP will compute a score
 - **0138** (Accepted. Amended by ADR `0159`, 2026-11-09: a fifth reason, `no-delivery`.) — A line is written in form B, has a closed reason, and money does not weigh in the score
+- **0140** (Accepted; its "writes `worked` never" superseded by `0169` (2026-11-10)) — The hook records a skill's failure, in one file, and writes `worked` never
 - **0144** (Accepted. Amended by ADR `0159`, 2026-11-09: a line about an endpoint is sponsored when it names a payment the agent made.) — A sponsored line asks no proof of use, and its key stays out of the plugin's server
 - **0145** (Accepted. Amended 2026-11-06 for the Claude Code plugin, at the end: it no longer goes through `npx`.) — The published CLI carries viem and has no dependency
 - **0148** (Accepted (design; nothing built)) — The hire loop reuses x402, ERC-8183 and ERC-8004, and checks the payment at read time
@@ -178,7 +179,7 @@ Read these before relying on them.
 | [0137](0137-arp-will-compute-a-score.md) | 2026-11-05 | Accepted. Its design is open. | ARP will compute a score |
 | [0138](0138-a-line-is-form-b-and-money-does-not-weigh.md) | 2026-11-05 | Accepted. Amended by ADR `0159`, 2026-11-09: a fifth reason, `no-delivery`. | A line is written in form B, has a closed reason, and money does not weigh in the score |
 | [0139](0139-one-search-two-kinds-of-result.md) | 2026-11-05 | Accepted | One search, two kinds of result, and four uses for an agent you can call |
-| [0140](0140-the-hook-records-a-skills-failure-and-only-that.md) | 2026-11-05 | Accepted | The hook records a skill's failure, in one file, and writes `worked` never |
+| [0140](0140-the-hook-records-a-skills-failure-and-only-that.md) | 2026-11-05 | Accepted; its "writes `worked` never" superseded by `0169` (2026-11-10) | The hook records a skill's failure, in one file, and writes `worked` never |
 | [0141](0141-an-agent-line-carries-the-receipt-of-the-hire.md) | 2026-11-05 | Accepted | An agent's line carries the receipt of the hire, and is read from the index first |
 | [0142](0142-the-message-is-not-the-argument.md) | 2026-11-05 | Accepted | The public message is not the internal argument |
 | [0143](0143-the-ranking-moves-from-three-wallets.md) | 2026-11-05 | Accepted | The ranking moves from three wallets, and a line below that is only shown |
@@ -207,5 +208,6 @@ Read these before relying on them.
 | [0166](0166-a-line-names-what-was-missing-and-what-made-it-work.md) | 2026-11-10 | Accepted | A line names what was missing, and what made it work, when the skill already says it |
 | [0167](0167-the-hook-reads-a-skill-before-a-skills-install.md) | 2026-11-10 | Accepted | The hook reads a skill before `npx skills add` runs, and so makes a network call |
 | [0168](0168-the-hook-answers-a-skill-failure-with-its-lines.md) | 2026-11-10 | Accepted | The hook answers a skill's failure with that skill's lines, read live |
+| [0169](0169-the-model-says-whether-a-skill-worked-at-the-end-of-a-turn.md) | 2026-11-10 | Accepted | The model says whether a skill worked, at the end of a turn, once per skill |
 | [0170](0170-outside-signals-are-dated-sourced-facts.md) | 2026-11-10 | Accepted | Outside signals are dated, sourced facts, never ARP's figure and never in an order |
 | [0171](0171-feeds-a-registry-reads-beside-its-listing.md) | 2026-11-10 | Accepted | Feeds a registry reads beside its listing, and listings prepared, not sent |

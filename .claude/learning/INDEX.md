@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-96 entries, one per completed task. Written by `task-verifier` on a pass.
+97 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -100,5 +100,6 @@
 | [86](86-a-line-names-what-was-missing.md) | `docs/tasks/97-a-line-names-what-was-missing.md` | PASS (first pass) | A line names what was missing, and what made it work |
 | [87](87-a-check-before-a-skill-is-installed.md) | `docs/tasks/98-a-check-before-a-skill-is-installed.md` | PASS | a check before a skill is installed |
 | [88](88-the-map-answers-at-failure-time.md) | `docs/tasks/99-the-map-answers-at-failure-time.md` | PASS (round 2; round 1 failed on two claims errors) | The map answers at failure time |
+| [89](89-the-model-says-it-worked.md) | `docs/tasks/100-the-model-says-it-worked.md` | PASS (second run; the first failed on two stale inventories and one ADR wording) | The model says whether a skill worked |
 | [90](90-outside-signals.md) | `docs/tasks/101-outside-signals.md` | PASS | Outside signals as dated, sourced facts |
 | [91](91-be-read-where-agents-are.md) | `docs/tasks/102-be-read-where-agents-are.md` | PASS (first pass) | Be read where agents already are |
