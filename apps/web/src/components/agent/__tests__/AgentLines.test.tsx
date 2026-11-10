@@ -46,6 +46,16 @@ describe("AgentLines", () => {
         expect(screen.getByText(/No line names this agent yet/)).toBeTruthy();
     });
 
+    it("gives a cut read's counts as a floor", () => {
+        show({status: "ok", view: {...view, truncated: true}});
+        expect(screen.getAllByText("1+")).toHaveLength(2);
+    });
+
+    it("says how a line appears when the agent has no atom yet", () => {
+        show({status: "no-atom"});
+        expect(screen.getByText(/No line names this agent yet/)).toBeTruthy();
+    });
+
     it("says the read failed rather than that there is nothing", () => {
         show({status: "failed"});
         expect(screen.getByText(/did not answer/)).toBeTruthy();

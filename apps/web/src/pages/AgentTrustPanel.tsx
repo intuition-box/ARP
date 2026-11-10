@@ -163,7 +163,9 @@ function AgentTrustPanelBody() {
     const backingAtomId = asStakeTermId(view?.atomTermId ?? null);
     const linesQuery = useAgentLines(view?.found === true ? (view.atomTermId ?? null) : null);
     const lines = linesQuery.data;
-    const linesCount = lines === undefined ? null : lines.usedBy.length + lines.used.length;
+    // The strip takes an exact number, so a cut read gives none there; the group heads say `N+`.
+    const linesCount =
+        lines === undefined || lines.truncated ? null : lines.usedBy.length + lines.used.length;
 
     /**
      * The sections, as tabs.

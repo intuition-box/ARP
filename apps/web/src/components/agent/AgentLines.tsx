@@ -46,25 +46,29 @@ export function AgentLines({
     return (
         <>
             <h2 className="sr-only">Lines</h2>
-            <LineGroup title="Used by" rows={view.usedBy} />
-            <LineGroup title="Used" rows={view.used} />
-            {view.truncated ? (
-                <p className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
-                    The read stopped at its limit
-                </p>
-            ) : null}
+            <LineGroup title="Used by" rows={view.usedBy} truncated={view.truncated} />
+            <LineGroup title="Used" rows={view.used} truncated={view.truncated} />
         </>
     );
 }
 
-function LineGroup({title, rows}: {title: string; rows: AgentLineRow[]}) {
+/** A read cut at its limit gives a floor, so the count says `N+` (as `ClaimField` does). */
+function LineGroup({
+    title,
+    rows,
+    truncated,
+}: {
+    title: string;
+    rows: AgentLineRow[];
+    truncated: boolean;
+}) {
     if (rows.length === 0) return null;
     return (
         <section className="mb-12">
             <div className="flex items-baseline justify-between gap-6 border-b border-[color:var(--color-rule-strong)] pb-2">
                 <h3 className="font-medium">{title}</h3>
                 <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-[color:var(--color-steel)]">
-                    {rows.length}
+                    {truncated ? `${rows.length}+` : rows.length}
                 </span>
             </div>
             <ul>
@@ -83,8 +87,10 @@ function LineGroup({title, rows}: {title: string; rows: AgentLineRow[]}) {
                             {row.parts.length === 0 ? (
                                 <span className="text-[color:var(--color-steel)]">no context</span>
                             ) : (
-                                row.parts.map((part) => (
-                                    <span key={`${part.domain ?? ""}:${part.outcome ?? ""}`}>
+                                row.parts.map((part, index) => (
+                                    <span
+                                        key={`${index}:${part.domain ?? ""}:${part.outcome ?? ""}`}
+                                    >
                                         <span className="text-[color:var(--color-silver)]">
                                             {part.domain ?? "any context"}
                                         </span>
