@@ -1,6 +1,6 @@
 # Task 112 — The HOL adapter: a usage score HOL can read, and "will it work here"
 
-**Status:** plan, 2026-11-10. Nothing built. Run by this session (the user: « un plan pour HOL c'est toi »).
+**Status:** A and B built 2026-11-10 (below, "What was built"); C, D, E after the user's return. Run by this session (the user: « un plan pour HOL c'est toi »).
 **ADR:** one for deliverable C (a new level on a line), not before. A and B need none if they stay inside
 the shapes below.
 **Rules:** `code.md`, `workflow.md`, `claims.md`, `portability.md`. `feedback_hook_cli_gates`: touching the
@@ -55,6 +55,26 @@ ask first.
 
 The hol-guard issue and the message from the business-dev draft, with the A feed's URL and a recorded
 `arp check` run. The user posts; nothing is posted from here.
+
+## What was built, 2026-11-10
+
+- **A.** `packages/protocol/src/arp-usage.ts` (`buildArpUsageFeed`, `arpUsageScore`), exported from the core
+  index; `scripts/build/build-arp-usage-feed.ts` reads the skill lines feed file, no network; output
+  `apps/web/public/feeds/arp-usage.json`, schema `arp.usage/1`. Built once from the skill lines snapshot of
+  2026-11-10T10:44:54Z: 10 skills, **0 with a score**, because all 10 lines are ARP's own tests
+  (`arp_test`), which the rule drops. `packages/protocol/test/arp-usage.test.ts`, 10 tests.
+- **B.** `apps/cli/src/check.ts`, `arp check` in `cli.ts`. Beyond the plan, one addition inside the same
+  read: the programs and variables **the skill's own files name** (`contains.programs`,
+  `contains.settings`) are checked too, so the block says something before any line exists. Live,
+  2026-11-10, with `GITHUB_TOKEN`: `anthropics/skills/pptx` → `markitdown: missing here`,
+  `pdftoppm: found on PATH`, both named in its files, one `worked` line; `softaworks/agent-toolkit/
+  web-to-markdown` → `web2md: missing here`, one `failed · missing-program` line, which names no program.
+  Without a token, GitHub's hourly limit was hit and the block said so. `apps/cli/test/check.test.ts`,
+  5 tests. `packaging/claude/arp/bin/arp.js` regenerated (`bun run packages`).
+
+**Gates, 2026-11-10:** `packages/protocol` `bun run test` 1364 passed, 4 skipped; `tsc` clean;
+`check:scripts` exit 0 (`scripts/**/*.ts`); `apps/cli` `bun test` 79 passed after `bun run packages`,
+`lint` (tsc) clean; `check:node` PASS.
 
 ## Do not do in this task
 

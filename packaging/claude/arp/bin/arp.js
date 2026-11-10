@@ -42019,6 +42019,1606 @@ var init_server = __esm(async () => {
     ;
 });
 
+// ../../packages/protocol/src/content-path.ts
+function directoryOf2(path) {
+  const parts = path.split("/");
+  return parts.length < 2 ? "" : parts[parts.length - 2] ?? "";
+}
+function skillFilesIn2(listing2) {
+  return listing2.filter((file) => (file.path.split("/").pop() ?? "").toLowerCase() === "skill.md");
+}
+
+// ../../packages/protocol/src/declare/line-need.ts
+function needKindOf3(name) {
+  if (PROGRAM_NAME3.test(name))
+    return "program";
+  if (KEY_NAME4.test(name))
+    return "key";
+  return null;
+}
+function needKindOfReason3(reason) {
+  if (reason === "missing-program")
+    return "program";
+  if (reason === "missing-key")
+    return "key";
+  return null;
+}
+var NEEDS_LABEL3 = "needs", WITH_LABEL3 = "with", PROGRAM_NAME3, KEY_NAME4;
+var init_line_need2 = __esm(() => {
+  PROGRAM_NAME3 = /^[a-z0-9][a-z0-9._+-]{0,39}$/;
+  KEY_NAME4 = /^[A-Z][A-Z0-9_]{2,63}$/;
+});
+
+// ../../packages/protocol/src/declare/thing-cid.ts
+function thingDocument2(thing) {
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Thing",
+    description: thing.description,
+    image: thing.image,
+    name: thing.name,
+    url: thing.url
+  });
+}
+function base322(bytes) {
+  const alphabet = "abcdefghijklmnopqrstuvwxyz234567";
+  let bits = 0;
+  let value = 0;
+  let out = "";
+  for (const byte of bytes) {
+    value = value << 8 | byte;
+    bits += 8;
+    while (bits >= 5) {
+      out += alphabet[value >>> bits - 5 & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0)
+    out += alphabet[value << 5 - bits & 31];
+  return out;
+}
+function thingUriOfDigest2(digest) {
+  const cid = new Uint8Array(4 + digest.length);
+  cid.set([1, 85, 18, 32]);
+  cid.set(digest, 4);
+  return `ipfs://b${base322(cid)}`;
+}
+
+// ../../packages/protocol/src/declare/tool-thing.ts
+function normaliseToolUrl2(input) {
+  const trimmed = input.trim();
+  if (trimmed.length === 0)
+    throw new InvalidToolUrlError2(input, "empty");
+  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  let url;
+  try {
+    url = new URL(withScheme);
+  } catch {
+    throw new InvalidToolUrlError2(input, "not parseable as a URL");
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new InvalidToolUrlError2(input, `scheme ${url.protocol} is not http or https`);
+  }
+  if (url.hostname.length === 0)
+    throw new InvalidToolUrlError2(input, "no host");
+  const host = url.hostname.replace(/\.+$/, "").replace(/^(?:www\.)+/, "");
+  const path = url.pathname.replace(/(?:\.git|\/)+$/, "");
+  const params = [...new URLSearchParams(url.search).entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
+  const query = params.length === 0 ? "" : `?${new URLSearchParams(params).toString()}`;
+  const port = url.port === "" || url.port === "80" || url.port === "443" ? "" : `:${url.port}`;
+  return `https://${host}${port}${path}${query}`;
+}
+function toolThing2(url) {
+  const normalised = normaliseToolUrl2(url);
+  return {
+    name: normalised.slice("https://".length),
+    description: TOOL_THING_DESCRIPTION2,
+    image: "",
+    url: normalised
+  };
+}
+var InvalidToolUrlError2, TOOL_THING_DESCRIPTION2 = "A tool identified by its URL, so every declaration of its use lands on one atom.";
+var init_tool_thing2 = __esm(() => {
+  InvalidToolUrlError2 = class InvalidToolUrlError2 extends Error {
+    input;
+    constructor(input, why) {
+      super(`${JSON.stringify(input)} is not a usable tool URL: ${why}`);
+      this.name = "InvalidToolUrlError";
+      this.input = input;
+    }
+  };
+});
+
+// ../../packages/protocol/src/declare/usage-words.ts
+var USAGE_OUTCOMES3, HAS_OUTCOME_LABEL3 = "has outcome", USAGE_REASONS3, BECAUSE_LABEL3 = "because";
+var init_usage_words2 = __esm(() => {
+  USAGE_OUTCOMES3 = ["worked", "failed"];
+  USAGE_REASONS3 = ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"];
+});
+
+// ../../packages/protocol/src/sources/intuition/terms.ts
+var USES2 = "0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800";
+var init_terms2 = () => {};
+
+// ../../packages/protocol/src/pulse-usage.ts
+async function findToolAtoms2(uris, config) {
+  const out = new Map;
+  if (uris.length === 0)
+    return out;
+  const transport = config.transport ?? createGraphqlTransport({
+    url: config.graphqlUrl,
+    fetch: config.fetch ?? defaultFetch(),
+    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  });
+  const data = await transport.request(PULSE_ATOMS_QUERY, { uris: [...uris], limit: uris.length });
+  const rows = Array.isArray(data["atoms"]) ? data["atoms"].filter(isRecord) : [];
+  for (const row of rows) {
+    const id = readString(row, "term_id");
+    const uri = readString(row, "data");
+    if (id !== null && uri !== null)
+      out.set(uri, id);
+  }
+  return out;
+}
+async function getPulseUsage2(toolAtomIds, config) {
+  const transport = config.transport ?? createGraphqlTransport({
+    url: config.graphqlUrl,
+    fetch: config.fetch ?? defaultFetch(),
+    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  });
+  const limit = Math.min(config.limit ?? DEFAULT_LIMIT4, DEFAULT_LIMIT4);
+  const key = (id) => id.toLowerCase();
+  const empty = () => ({
+    declarations: [],
+    agents: 0,
+    wallets: 0,
+    byDomain: {},
+    byOutcome: {},
+    byReason: {},
+    byNeed: {},
+    byWith: {},
+    byOthers: [],
+    truncated: false
+  });
+  const out = new Map(toolAtomIds.map((id) => [key(id), empty()]));
+  if (toolAtomIds.length === 0)
+    return out;
+  const edgeRows = rowsOf3(await transport.request(PULSE_USES_QUERY, { tools: [...toolAtomIds], uses: USES2, limit }));
+  const edges = new Map;
+  const NESTED_CAP = 100;
+  let truncated = edgeRows.length >= limit;
+  for (const row of edgeRows) {
+    const tripleId = readString(row, "term_id");
+    const tool = readString(row, "object_id");
+    const writer = readString(row, "creator_id");
+    const subject = readRecord(row, "subject");
+    const atomId = subject === null ? null : readString(subject, "term_id");
+    if (tripleId === null || tool === null || writer === null || subject === null || atomId === null)
+      continue;
+    const edgeHolders = (Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : []).map((holder) => readString(holder, "account_id")).filter((account) => account !== null);
+    const declaration = (wallet, declaredAt) => ({
+      tripleId,
+      agent: { atomId, label: readString(subject, "label") },
+      writer: wallet,
+      holders: edgeHolders,
+      declaredAt,
+      domains: [],
+      outcomes: [],
+      lines: []
+    });
+    const declarers = new Map([[key(writer), declaration(writer, readString(row, "created_at"))]]);
+    const holders = Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : [];
+    if (holders.length >= NESTED_CAP)
+      truncated = true;
+    for (const holder of holders) {
+      const wallet = readString(holder, "account_id");
+      if (wallet !== null && !declarers.has(key(wallet)))
+        declarers.set(key(wallet), declaration(wallet, null));
+    }
+    edges.set(key(tripleId), { tool: key(tool), declarers });
+  }
+  const payers = new Set(config.payers.map(key));
+  const writers = [...new Set([...edges.values()].flatMap((edge) => [...edge.declarers.values()].map((row) => row.writer)))];
+  const qualifiers = async (subjects, predicates) => subjects.length === 0 ? [] : rowsOf3(await transport.request(PULSE_QUALIFIERS_QUERY, { edges: subjects, predicates, writers, limit }));
+  const pass = (rows) => {
+    truncated = truncated || rows.length >= limit;
+    return rows;
+  };
+  const standing = (row, edge, below) => {
+    const holders = Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : [];
+    if (holders.length >= NESTED_CAP)
+      truncated = true;
+    const wallets = [readString(row, "creator_id"), ...holders.map((holder) => readString(holder, "account_id"))];
+    return new Set(wallets.filter((wallet) => wallet !== null).map(key).filter((wallet) => edge.declarers.has(wallet) && !payers.has(wallet) && (below === undefined || below.has(wallet))));
+  };
+  const parts = (row) => {
+    const object = readRecord(row, "object");
+    return {
+      termId: readString(row, "term_id"),
+      subjectId: readString(row, "subject_id"),
+      predicateId: readString(row, "predicate_id"),
+      writer: readString(row, "creator_id"),
+      value: object === null ? null : readString(object, "label")
+    };
+  };
+  const isOutcome = (value) => USAGE_OUTCOMES3.some((word) => word === value);
+  const isReason = (value) => USAGE_REASONS3.some((word) => word === value);
+  const contexts = new Map;
+  const outcomes = new Map;
+  const others = (edge, row, predicate) => out.get(edge.tool)?.byOthers.push({
+    tripleId: row.termId ?? "",
+    writer: row.writer ?? "",
+    predicate,
+    value: row.value ?? ""
+  });
+  const onEdge = pass(await qualifiers([...edges.keys()], [config.inContextOf, config.hasOutcome]));
+  for (const row of onEdge) {
+    const line = parts(row);
+    const edge = line.subjectId === null ? undefined : edges.get(key(line.subjectId));
+    if (edge === undefined || line.predicateId === null || line.writer === null || line.value === null || line.termId === null)
+      continue;
+    const isOutcomeLine = key(line.predicateId) === key(config.hasOutcome);
+    if (isOutcomeLine && !isOutcome(line.value))
+      continue;
+    const wallets = standing(row, edge);
+    if (wallets.size === 0) {
+      others(edge, line, isOutcomeLine ? "outcome" : "context");
+    } else if (isOutcomeLine && isOutcome(line.value)) {
+      outcomes.set(key(line.termId), { edge, domain: null, form: "sibling", outcome: line.value, wallets, reasons: new Map, named: new Map });
+    } else {
+      contexts.set(key(line.termId), { edge, domain: line.value, wallets });
+    }
+  }
+  const onContext = pass(await qualifiers([...contexts.keys()], [config.hasOutcome]));
+  for (const row of onContext) {
+    const line = parts(row);
+    const context = line.subjectId === null ? undefined : contexts.get(key(line.subjectId));
+    if (context === undefined || line.value === null || line.termId === null || !isOutcome(line.value))
+      continue;
+    const wallets = standing(row, context.edge, context.wallets);
+    if (wallets.size === 0) {
+      others(context.edge, line, "outcome");
+    } else {
+      outcomes.set(key(line.termId), { edge: context.edge, domain: context.domain, form: "nested", outcome: line.value, wallets, reasons: new Map, named: new Map });
+    }
+  }
+  const reading = (predicate) => predicate !== undefined;
+  const failures = [...outcomes.entries()].filter(([, found2]) => found2.outcome === "failed").map(([id]) => id);
+  const worked = [...outcomes.entries()].filter(([, found2]) => found2.outcome === "worked").map(([id]) => id);
+  const withId = config.with;
+  const onOutcome = pass(await qualifiers(reading(withId) ? [...failures, ...worked] : failures, [config.because, ...reading(withId) ? [withId] : []]));
+  const reasonTerms = new Map;
+  const addName = (found2, wallets, name) => {
+    for (const wallet of wallets) {
+      const given = found2.named.get(wallet) ?? [];
+      if (!given.includes(name))
+        given.push(name);
+      found2.named.set(wallet, given);
+    }
+  };
+  for (const row of onOutcome) {
+    const line = parts(row);
+    const found2 = line.subjectId === null ? undefined : outcomes.get(key(line.subjectId));
+    if (found2 === undefined || line.value === null || line.predicateId === null)
+      continue;
+    if (withId !== undefined && key(line.predicateId) === key(withId)) {
+      if (found2.outcome !== "worked" || needKindOf3(line.value) === null)
+        continue;
+      const wallets2 = standing(row, found2.edge, found2.wallets);
+      if (wallets2.size === 0)
+        others(found2.edge, line, "with");
+      addName(found2, wallets2, line.value);
+      continue;
+    }
+    if (found2.outcome !== "failed" || !isReason(line.value))
+      continue;
+    const wallets = standing(row, found2.edge, found2.wallets);
+    if (wallets.size === 0)
+      others(found2.edge, line, "reason");
+    for (const wallet of wallets) {
+      const given = found2.reasons.get(wallet) ?? [];
+      if (!given.includes(line.value))
+        given.push(line.value);
+      found2.reasons.set(wallet, given);
+    }
+    if (line.termId !== null && wallets.size > 0 && needKindOfReason3(line.value) !== null) {
+      reasonTerms.set(key(line.termId), { found: found2, reason: line.value, wallets });
+    }
+  }
+  const needsId = config.needs;
+  if (reading(needsId)) {
+    const onReason = pass(await qualifiers([...reasonTerms.keys()], [needsId]));
+    for (const row of onReason) {
+      const line = parts(row);
+      const reason = line.subjectId === null ? undefined : reasonTerms.get(key(line.subjectId));
+      if (reason === undefined || line.value === null)
+        continue;
+      const kind = needKindOf3(line.value);
+      if (kind === null || kind !== needKindOfReason3(reason.reason))
+        continue;
+      const wallets = standing(row, reason.found.edge, reason.wallets);
+      if (wallets.size === 0)
+        others(reason.found.edge, line, "needs");
+      addName(reason.found, wallets, line.value);
+    }
+  }
+  for (const { edge, domain, wallets } of contexts.values()) {
+    for (const wallet of wallets)
+      edge.declarers.get(wallet)?.domains.push(domain);
+  }
+  const ordered = [...outcomes.values()].sort((a, b) => Number(b.form === "nested") - Number(a.form === "nested"));
+  for (const found2 of ordered) {
+    for (const wallet of found2.wallets) {
+      const declaration = found2.edge.declarers.get(wallet);
+      if (declaration === undefined)
+        continue;
+      const reasons = found2.reasons.get(wallet) ?? [];
+      const named = found2.named.get(wallet) ?? [];
+      const field = found2.outcome === "failed" ? "needs" : "with";
+      if (!declaration.outcomes.includes(found2.outcome))
+        declaration.outcomes.push(found2.outcome);
+      const domains = found2.form === "nested" ? [found2.domain] : declaration.domains.length > 0 ? declaration.domains : [null];
+      for (const domain of domains) {
+        const same2 = declaration.lines.find((line) => line.domain === domain && line.outcome === found2.outcome);
+        if (same2 === undefined) {
+          declaration.lines.push({ domain, outcome: found2.outcome, reasons, form: found2.form, ...named.length === 0 ? {} : { [field]: named } });
+        } else {
+          same2.reasons = [...new Set([...same2.reasons, ...reasons])];
+          if (named.length > 0)
+            same2[field] = [...new Set([...same2[field] ?? [], ...named])];
+        }
+      }
+    }
+  }
+  for (const { tool, declarers } of edges.values()) {
+    const rows = [...declarers.values()].filter((row, at) => at === 0 || row.domains.length > 0 || row.lines.length > 0);
+    out.get(tool)?.declarations.push(...rows);
+  }
+  for (const usage of out.values()) {
+    usage.truncated = truncated;
+    usage.agents = new Set(usage.declarations.map((declaration) => key(declaration.agent.atomId))).size;
+    usage.wallets = new Set(usage.declarations.map((declaration) => key(declaration.writer)).filter((wallet) => !payers.has(wallet))).size;
+    for (const declaration of usage.declarations) {
+      for (const domain of declaration.domains)
+        usage.byDomain[domain] = (usage.byDomain[domain] ?? 0) + 1;
+      for (const outcome of declaration.outcomes)
+        usage.byOutcome[outcome] = (usage.byOutcome[outcome] ?? 0) + 1;
+      for (const reason of new Set(declaration.lines.flatMap((line) => line.reasons))) {
+        usage.byReason[reason] = (usage.byReason[reason] ?? 0) + 1;
+      }
+      const byNeed = usage.byNeed ??= {};
+      for (const name of new Set(declaration.lines.flatMap((line) => line.needs ?? [])))
+        byNeed[name] = (byNeed[name] ?? 0) + 1;
+      const byWith = usage.byWith ??= {};
+      for (const name of new Set(declaration.lines.flatMap((line) => line.with ?? [])))
+        byWith[name] = (byWith[name] ?? 0) + 1;
+    }
+  }
+  return out;
+}
+var DEFAULT_LIMIT4 = 250, rowsOf3 = (data) => Array.isArray(data["triples"]) ? data["triples"].filter(isRecord) : [];
+var init_pulse_usage2 = __esm(() => {
+  init_dist();
+  init_line_need2();
+  init_usage_words2();
+  init_terms2();
+});
+
+// ../../packages/protocol/src/failure-lines.ts
+function skillAtom(url, sha2565) {
+  const thing = toolThing2(url);
+  return { uri: thingUriOfDigest2(sha2565(thingDocument2(thing))), label: thing.name };
+}
+async function readSkillLines(atomUri, config) {
+  const words = [HAS_OUTCOME_LABEL3, BECAUSE_LABEL3, NEEDS_LABEL3, WITH_LABEL3];
+  const atoms = await findToolAtoms2([atomUri, ...words], config);
+  const tool = atoms.get(atomUri);
+  const hasOutcome = atoms.get(HAS_OUTCOME_LABEL3);
+  const because = atoms.get(BECAUSE_LABEL3);
+  if (tool === undefined || hasOutcome === undefined || because === undefined)
+    return null;
+  const needs = atoms.get(NEEDS_LABEL3);
+  const withId = atoms.get(WITH_LABEL3);
+  const usage = await getPulseUsage2([tool], {
+    ...config,
+    hasOutcome,
+    because,
+    ...needs === undefined ? {} : { needs },
+    ...withId === undefined ? {} : { with: withId }
+  });
+  return usage.get(tool.toLowerCase()) ?? null;
+}
+function counted(counts) {
+  return [...counts.entries()].sort(([a, x], [b, y]) => y.size - x.size || a.localeCompare(b)).map(([name, wallets]) => `${name} (${wallets.size})`).join(", ");
+}
+function linesSentence(usage, label, where) {
+  if (usage === null)
+    return null;
+  const parts = [];
+  for (const outcome of ["failed", "worked"]) {
+    const wallets = new Set;
+    const because = new Map;
+    const named = new Map;
+    const add = (to, name, wallet) => to.set(name, (to.get(name) ?? new Set).add(wallet));
+    for (const row of usage.declarations) {
+      const wallet = row.writer.toLowerCase();
+      for (const line of row.lines) {
+        if (line.outcome !== outcome)
+          continue;
+        wallets.add(wallet);
+        for (const reason of line.reasons)
+          add(because, reason, wallet);
+        for (const name of (outcome === "failed" ? line.needs : line.with) ?? [])
+          add(named, name, wallet);
+      }
+    }
+    if (wallets.size === 0)
+      continue;
+    const detail = [
+      ...because.size === 0 ? [] : [`because ${counted(because)}`],
+      ...named.size === 0 ? [] : [`${outcome === "failed" ? "needs" : "with"} ${counted(named)}`]
+    ];
+    parts.push([`${usage.truncated ? "at least " : ""}${plural2(wallets.size)} wrote ${outcome}`, ...detail].join(" · "));
+  }
+  if (parts.length === 0)
+    return null;
+  return `ARP, lines agents wrote on ${label} (${where}): ${parts.join("; ")}.`;
+}
+var plural2 = (n) => `${n} wallet${n === 1 ? "" : "s"}`;
+var init_failure_lines = __esm(() => {
+  init_line_need2();
+  init_tool_thing2();
+  init_usage_words2();
+  init_pulse_usage2();
+});
+
+// ../../packages/protocol/src/skill-requires.ts
+function frontmatter2(markdown) {
+  const lines = markdown.split(`
+`);
+  if (lines[0]?.trim() !== "---")
+    return { lines: [], bodyStart: 0 };
+  const end = lines.findIndex((line, index2) => index2 > 0 && line.trim() === "---");
+  return end === -1 ? { lines: [], bodyStart: 0 } : { lines: lines.slice(1, end), bodyStart: end + 1 };
+}
+function unquote2(value) {
+  return value.trim().replace(/^["']|["']$/g, "");
+}
+function declaredBins2(lines) {
+  const at = lines.findIndex((line) => /^\s*bins\s*:/.test(line));
+  if (at === -1)
+    return [];
+  const inline = lines[at]?.split(":").slice(1).join(":").trim() ?? "";
+  if (inline.startsWith("[")) {
+    return inline.replace(/^\[|\]$/g, "").split(",").map(unquote2).filter((name) => name.length > 0);
+  }
+  const out = [];
+  for (const line of lines.slice(at + 1)) {
+    const item = /^\s*-\s*(.+)$/.exec(line);
+    if (item === null)
+      break;
+    out.push(unquote2(item[1] ?? ""));
+  }
+  return out.filter((name) => name.length > 0);
+}
+function bashTools2(lines) {
+  const line = lines.find((candidate) => /^\s*allowed-tools\s*:/.test(candidate));
+  if (line === undefined)
+    return [];
+  return [...line.matchAll(/Bash\(\s*([A-Za-z0-9._-]+)/g)].map((match) => match[1] ?? "").filter((name) => name.length > 0);
+}
+function declaredDescription2(lines) {
+  const at = lines.findIndex((line) => /^description\s*:/.test(line));
+  if (at === -1)
+    return null;
+  const inline = lines[at]?.split(":").slice(1).join(":").trim() ?? "";
+  if (inline !== "" && !/^[>|][-+]?$/.test(inline))
+    return unquote2(inline) || null;
+  const block = [];
+  for (const line of lines.slice(at + 1)) {
+    if (!/^\s+\S/.test(line))
+      break;
+    block.push(line.trim());
+  }
+  return block.length === 0 ? null : block.join(" ");
+}
+function shellSegments2(line) {
+  const segments = [];
+  let current = "";
+  let quote = null;
+  for (let index2 = 0;index2 < line.length; index2 += 1) {
+    const char = line[index2] ?? "";
+    if (char === "\\" && quote !== "'") {
+      current += char + (line[index2 + 1] ?? "");
+      index2 += 1;
+      continue;
+    }
+    if (quote !== null) {
+      if (char === quote)
+        quote = null;
+      current += char;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      current += char;
+      continue;
+    }
+    if (char === "#" && (index2 === 0 || /\s/.test(line[index2 - 1] ?? "")))
+      break;
+    if (char === "|" || char === ";" || char === "&" && line[index2 + 1] === "&") {
+      segments.push(current);
+      current = "";
+      if (line[index2 + 1] === char)
+        index2 += 1;
+      continue;
+    }
+    current += char;
+  }
+  segments.push(current);
+  return segments;
+}
+function commandsIn2(shell, explicitOnly) {
+  const found2 = [];
+  for (const segment of shellSegments2(shell)) {
+    const line = segment.trim().replace(/^\$\s+/, "");
+    if (line === "" || line.startsWith("#"))
+      continue;
+    const named = INSTALL2.exec(line)?.[1] ?? PROBE2.exec(line)?.[1];
+    if (named !== undefined) {
+      found2.push(named);
+      continue;
+    }
+    if (explicitOnly)
+      continue;
+    const words = line.split(/\s+/).filter((word) => !/^[A-Za-z_][A-Za-z0-9_]*=/.test(word));
+    const first = words[0] === "sudo" ? words[1] : words[0];
+    if (first === undefined || !COMMAND2.test(first))
+      continue;
+    found2.push(first);
+  }
+  return found2;
+}
+function shellLinesRun2(lines) {
+  const run = [];
+  let heredocEnd = null;
+  let quote = null;
+  let continued = false;
+  for (const line of lines) {
+    if (heredocEnd !== null) {
+      if (line.trim() === heredocEnd)
+        heredocEnd = null;
+      continue;
+    }
+    if (quote === null && !continued)
+      run.push(line);
+    continued = line.trimEnd().endsWith("\\");
+    heredocEnd = /<<-?\s*['"]?([A-Za-z_]+)/.exec(line)?.[1] ?? null;
+    for (const char of quote === null ? shellSegments2(line).join(";") : line) {
+      if (quote === null && (char === '"' || char === "'"))
+        quote = char;
+      else if (char === quote)
+        quote = null;
+    }
+  }
+  return run;
+}
+function commandsRun2(body, declared) {
+  const found2 = [];
+  let fence = null;
+  let fenced = [];
+  for (const line of body) {
+    const marker = /^\s*(?:```|~~~)\s*([\w-]*)/.exec(line);
+    if (marker !== null) {
+      if (fence === "shell") {
+        for (const run of shellLinesRun2(fenced))
+          found2.push(...commandsIn2(run, false));
+      }
+      fenced = [];
+      fence = fence !== null ? null : SHELL_FENCE2.test(marker[1] ?? "") ? "shell" : "other";
+      continue;
+    }
+    if (fence !== null) {
+      fenced.push(line);
+      continue;
+    }
+    for (const inline of line.matchAll(/`([^`]+)`/g))
+      found2.push(...commandsIn2(inline[1] ?? "", true));
+  }
+  return [...new Set(found2)].filter((name) => !COMMON2.has(name) && !declared.includes(name));
+}
+function requiresLine2(lines) {
+  const name = lines.map((line) => /^\s*requires\s*:\s*(\S+)\s*$/.exec(line)?.[1]).find(Boolean);
+  return name === undefined ? [] : [unquote2(name)];
+}
+function readRequires2(markdown) {
+  const { lines, bodyStart } = frontmatter2(markdown);
+  const cli = [...new Set([...declaredBins2(lines), ...bashTools2(lines), ...requiresLine2(lines)])];
+  const description = declaredDescription2(lines);
+  const body = markdown.split(`
+`);
+  const runs = commandsRun2(body.slice(bodyStart), cli);
+  for (let index2 = bodyStart;index2 < body.length; index2 += 1) {
+    const text2 = body[index2] ?? "";
+    if (LOGIN2.test(text2)) {
+      return { cli, runs, login: { line: index2 + 1, text: text2.trim().slice(0, 160) }, description };
+    }
+  }
+  return { cli, runs, login: null, description };
+}
+var LOGIN2, COMMON2, INSTALL2, PROBE2, COMMAND2, SHELL_FENCE2;
+var init_skill_requires3 = __esm(() => {
+  LOGIN2 = /\b(auth login|log ?in|sign ?up|api[ _-]?key|access token)\b/i;
+  COMMON2 = new Set(("awk bash break bun case cat cd chmod command continue cp curl cut date diff do done echo else end env " + "esac exit export false fi find for function git grep head if kill ln local ls mkdir mv node npm npx open pip pip3 pnpm printf pwd " + "python python3 read return rm sed set sh shift sleep sort source sudo tail tar tee test then time " + "touch tr true uniq unset unzip wait wc wget which while xargs yarn zip").split(" "));
+  INSTALL2 = /\b(?:npm\s+(?:i|install)\s+(?:-g|--global)|pnpm\s+add\s+-g|yarn\s+global\s+add|brew\s+install|pipx\s+install|pip3?\s+install|cargo\s+install)\s+([@a-z0-9][@\w./-]*)/i;
+  PROBE2 = /\b(?:command\s+-v|which)\s+([a-z][\w-]*)/i;
+  COMMAND2 = /^[a-z][a-z0-9_-]*$/;
+  SHELL_FENCE2 = /^(sh|bash|shell|zsh|console|terminal)$/i;
+});
+
+// ../../packages/protocol/src/skill-contents.ts
+function cap2(text2) {
+  const flat = text2.replace(/\s+/g, " ").trim();
+  return flat.length > CONTENTS_LIMITS2.lineChars ? `${flat.slice(0, CONTENTS_LIMITS2.lineChars - 1)}…` : flat;
+}
+function compare2(a, b) {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+function interpreterOf2(firstLine) {
+  const match = /^#!\s*(\S+)(?:\s+(?:-\S+\s+)*(\S+))?/.exec(firstLine);
+  if (match === null)
+    return null;
+  const binary = match[1]?.split("/").pop() ?? "";
+  const name = binary === "env" ? match[2] ?? "" : binary;
+  return /^[a-z][\w.-]*$/i.test(name) && !BASE_SHELLS2.has(name) ? name : null;
+}
+function programsInScriptLine2(line, shell) {
+  if (COMMENT_LINE2.test(line))
+    return [];
+  const matches = shell ? [...line.matchAll(SCRIPT_PROBE2), ...line.matchAll(SYSTEM_INSTALL2)] : [...line.matchAll(PYTHON_PROBE2)];
+  return matches.map((match) => match[1] ?? "").filter((name) => name !== "");
+}
+function packagesIn2(line) {
+  const out = [];
+  for (const match of line.matchAll(PACKAGE_INSTALL2)) {
+    const manager = (match[1] ?? "").replace(/\s+/g, " ").toLowerCase();
+    for (const raw2 of (match[2] ?? "").trim().split(/\s+/)) {
+      const word = raw2.replace(/^["']|["']$/g, "");
+      if (word === "" || word.startsWith("-") || word.startsWith(".") || /[:\\<>{}$]/.test(word))
+        continue;
+      if (/\.(txt|toml|json|cfg|lock|whl|tgz|tar\.gz|zip)$/i.test(word))
+        continue;
+      const name = word.replace(/[=<>!~[].*$/, "");
+      if (/^(@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*(@[\w.^~-]+)?$/i.test(name))
+        out.push({ manager, name });
+    }
+  }
+  return out;
+}
+function requirementsIn2(text2) {
+  return text2.split(`
+`).map((line) => line.replace(/#.*/, "").trim()).filter((line) => line !== "" && !line.startsWith("-") && !/^(https?|git\+)/.test(line)).map((line) => /^[A-Za-z0-9][\w.-]*/.exec(line)?.[0] ?? "").filter((name) => name !== "");
+}
+function shellReads2(lines) {
+  const assigned = new Set;
+  for (const line of lines) {
+    const name = SHELL_ASSIGN2.exec(line)?.[1];
+    if (name !== undefined)
+      assigned.add(name);
+    for (const loop2 of line.matchAll(SHELL_LOOP2))
+      assigned.add(loop2[1] ?? "");
+  }
+  return lines.flatMap((line) => [...line.matchAll(SHELL_READ2)].map((match) => match[1] ?? "")).filter((name) => !assigned.has(name));
+}
+function isShell2(path, text2) {
+  return /\.(sh|bash|zsh)$/i.test(path) || /^#!\s*\S*\/(?:env\s+)?(?:ba|z|da)?sh\b/.test(text2);
+}
+function settingsIn2(path, text2, code) {
+  const found2 = new Set;
+  for (const pattern of READS_IN_CODE2) {
+    for (const match of text2.matchAll(pattern))
+      found2.add((match[1] ?? "").toUpperCase());
+  }
+  if (MARKDOWN2.test(path)) {
+    for (const match of text2.matchAll(EXPORT_IN_PROSE2))
+      found2.add(match[1] ?? "");
+    for (const match of text2.matchAll(KEY_NAMED2))
+      found2.add(match[1] ?? "");
+  } else if (isShell2(path, text2)) {
+    for (const name of shellReads2(code))
+      found2.add(name);
+  }
+  return [...found2].filter((name) => name.length > 0 && !SHELL_VARIABLES2.has(name));
+}
+function codeOf2(path, text2, isScript) {
+  const lines = text2.split(`
+`);
+  if (isScript)
+    return lines;
+  if (!MARKDOWN2.test(path))
+    return [];
+  const out = [];
+  let fenced = false;
+  for (const line of lines) {
+    if (FENCE2.test(line)) {
+      fenced = !fenced;
+      continue;
+    }
+    if (fenced)
+      out.push(line);
+    else
+      for (const inline of line.matchAll(/`([^`]+)`/g))
+        out.push(inline[1] ?? "");
+  }
+  return out;
+}
+function domainsIn2(text2) {
+  const out = [];
+  for (const match of text2.matchAll(URL_HOST2)) {
+    const host = (match[1] ?? "").toLowerCase();
+    if (!/\.[a-z]{2,}$/.test(host) && !/^\d+\.\d+\.\d+\.\d+$/.test(host))
+      continue;
+    if (PLACEHOLDER_HOST2.test(host) || FILE_LIKE_HOST2.test(host))
+      continue;
+    out.push(host);
+  }
+  return out;
+}
+function codePoint2(point) {
+  return `U+${point.toString(16).toUpperCase().padStart(4, "0")}`;
+}
+function invisibleIn2(line, lineIndex) {
+  const counts = new Map;
+  const spelled = [];
+  for (const match of line.matchAll(INVISIBLE2)) {
+    const char = match[0];
+    const at = match.index;
+    if (lineIndex === 0 && at === 0 && char === "\uFEFF")
+      continue;
+    if (char === "‍") {
+      const before = [...line.slice(0, at)].at(-1) ?? "";
+      const after = [...line.slice(at + 1)][0] ?? "";
+      if (PICTOGRAPH2.test(before) && PICTOGRAPH2.test(after))
+        continue;
+    }
+    const point = char.codePointAt(0) ?? 0;
+    if (point >= 917536 && point <= 917630)
+      spelled.push(String.fromCharCode(point - 917504));
+    const name = point >= 917504 && point <= 917631 ? "Unicode tag" : codePoint2(point);
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  if (counts.size === 0)
+    return null;
+  const listed = [...counts.entries()].map(([name, n]) => `${n} × ${name}`).join(", ");
+  return spelled.length === 0 ? listed : `${listed}, spelling "${cap2(spelled.join(""))}"`;
+}
+function encodedIn2(line) {
+  const out = [];
+  const withoutUris = line.replace(DATA_URI2, (_whole, type, body) => {
+    out.push(`data URI${type === undefined ? "" : ` ${type}`}, ${body.length} characters of base64`);
+    return " ";
+  });
+  for (const match of withoutUris.replace(URL_TEXT2, " ").matchAll(BASE64_RUN2)) {
+    const run = match[0];
+    if (/[A-Z]/.test(run) && /[a-z]/.test(run) && /[0-9]/.test(run))
+      out.push(`${run.length} characters of base64`);
+  }
+  return out;
+}
+function unquoted2(line) {
+  return line.replace(/"[^"]*"|\u201C[^\u201D]*\u201D|\u300C[^\u300D]*\u300D|`[^`]*`/g, " ");
+}
+function hiddenInMarkdown2(path, text2) {
+  const out = [];
+  const push = (kind, line, value) => out.push({ kind, file: path, line, text: value });
+  let fenced = false;
+  let comment = null;
+  for (const [index2, line] of text2.split(`
+`).entries()) {
+    const invisible = invisibleIn2(line, index2);
+    if (invisible !== null)
+      push("hidden characters", index2 + 1, invisible);
+    for (const encoded of encodedIn2(line))
+      push("encoded block", index2 + 1, encoded);
+    const visible = line.replace(INVISIBLE2, "");
+    if (IGNORE_INSTRUCTIONS2.test(unquoted2(visible)))
+      push("says to ignore instructions", index2 + 1, cap2(visible));
+    if (KEEP_FROM_PERSON2.test(unquoted2(visible)))
+      push("says not to tell the person", index2 + 1, cap2(visible));
+    if (comment === null && FENCE2.test(line)) {
+      fenced = !fenced;
+      continue;
+    }
+    if (fenced)
+      continue;
+    let rest = visible;
+    while (rest.length > 0) {
+      if (comment === null) {
+        const open2 = rest.indexOf("<!--");
+        if (open2 === -1)
+          break;
+        comment = { start: index2 + 1, text: [] };
+        rest = rest.slice(open2 + 4);
+      }
+      const close = rest.indexOf("-->");
+      if (close === -1) {
+        comment.text.push(rest);
+        break;
+      }
+      comment.text.push(rest.slice(0, close));
+      const inner = comment.text.join(" ").replace(/\s+/g, " ").trim();
+      if (inner.split(" ").filter((word) => /[\p{L}\p{N}]/u.test(word)).length >= COMMENT_WORDS2) {
+        push("HTML comment", comment.start, cap2(inner));
+      }
+      comment = null;
+      rest = rest.slice(close + 3);
+    }
+  }
+  if (comment !== null)
+    push("HTML comment", comment.start, cap2(`(never closed) ${comment.text.join(" ")}`));
+  return out;
+}
+function bounded3(name, items, cut) {
+  if (items.length <= CONTENTS_LIMITS2.items)
+    return [...items];
+  cut.push(name);
+  return items.slice(0, CONTENTS_LIMITS2.items);
+}
+function escapeRegExp2(text2) {
+  return text2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function namesFile2(markdown, path) {
+  const base2 = path.slice(path.lastIndexOf("/") + 1);
+  return markdown.includes(path) || new RegExp(`(^|[\\s/\`'"(])${escapeRegExp2(base2)}($|[\\s\`'")]|[.,:;](\\s|$))`, "m").test(markdown);
+}
+function readSkillContents2(input) {
+  const sorted = [...input].sort((a, b) => compare2(a.path, b.path));
+  const skipped = [];
+  const files = [];
+  for (const file of sorted) {
+    if (files.length >= CONTENTS_LIMITS2.files)
+      skipped.push({ path: file.path, why: "over the file limit" });
+    else if (file.text === null)
+      skipped.push({ path: file.path, why: file.notFetched === true ? "not fetched" : "binary" });
+    else if (file.text.length > CONTENTS_LIMITS2.fileChars)
+      skipped.push({ path: file.path, why: "too large" });
+    else
+      files.push({ path: file.path, text: file.text.replace(/\r\n?/g, `
+`) });
+  }
+  const skillMd = files.find((file) => file.path === "SKILL.md")?.text ?? "";
+  const programs = new Map;
+  const add = (name, from14) => {
+    if (!programs.has(name))
+      programs.set(name, from14);
+  };
+  const requires = readRequires2(skillMd);
+  for (const name of requires.cli)
+    add(name, "declared");
+  for (const name of requires.runs)
+    add(name, "runs");
+  const packages = new Map;
+  const settings = new Set;
+  const domains = new Set;
+  const fetchAndRun = [];
+  const hidden = [];
+  const scripts = skipped.filter((file) => file.why === "not fetched" && SCRIPT3.test(file.path)).map((file) => ({ path: file.path, namedInSkillMd: namesFile2(skillMd, file.path) }));
+  for (const file of files) {
+    const lines = file.text.split(`
+`);
+    const isScript = SCRIPT3.test(file.path) || lines[0]?.startsWith("#!") === true;
+    const code = codeOf2(file.path, file.text, isScript);
+    const shell = isShell2(file.path, file.text);
+    for (const line of code) {
+      const installed = packagesIn2(line);
+      for (const pkg of installed)
+        packages.set(`${pkg.manager} ${pkg.name}`, pkg);
+      if (!isScript)
+        continue;
+      for (const name of programsInScriptLine2(line, shell)) {
+        if (!installed.some((pkg) => pkg.name === name))
+          add(name, "script");
+      }
+    }
+    if (isScript) {
+      scripts.push({ path: file.path, namedInSkillMd: namesFile2(skillMd, file.path) });
+      const interpreter = interpreterOf2(lines[0] ?? "");
+      if (interpreter !== null)
+        add(interpreter, "interpreter");
+    }
+    if (/(^|\/)requirements[\w.-]*\.txt$/i.test(file.path)) {
+      for (const name of requirementsIn2(file.text))
+        packages.set(`pip ${name}`, { manager: "pip", name });
+    }
+    for (const setting of settingsIn2(file.path, file.text, code))
+      settings.add(setting);
+    for (const host of domainsIn2(file.text))
+      domains.add(host);
+    for (const [index2, line] of lines.entries()) {
+      const run = FETCH_AND_RUN2.find(({ pattern }) => pattern.test(line));
+      if (run !== undefined)
+        fetchAndRun.push({ kind: run.kind, file: file.path, line: index2 + 1, text: cap2(line) });
+    }
+    if (MARKDOWN2.test(file.path))
+      hidden.push(...hiddenInMarkdown2(file.path, file.text));
+  }
+  const packageNames = new Set([...packages.values()].map((pkg) => pkg.name));
+  for (const [name, from14] of programs)
+    if (from14 !== "declared" && packageNames.has(name))
+      programs.delete(name);
+  const cut = [];
+  return {
+    programs: bounded3("programs", [...programs.entries()].map(([name, from14]) => ({ name, from: from14 })).sort((a, b) => compare2(a.name, b.name)), cut),
+    packages: bounded3("packages", [...packages.values()].sort((a, b) => compare2(`${a.manager} ${a.name}`, `${b.manager} ${b.name}`)), cut),
+    settings: bounded3("settings", [...settings].sort(compare2), cut),
+    scripts: bounded3("scripts", scripts.sort((a, b) => compare2(a.path, b.path)), cut),
+    fetchAndRun: bounded3("fetchAndRun", fetchAndRun, cut),
+    domains: bounded3("domains", [...domains].sort(compare2), cut),
+    hidden: bounded3("hidden", hidden, cut),
+    read: {
+      files: files.length,
+      bytes: files.reduce((sum, file) => sum + new TextEncoder().encode(file.text).byteLength, 0),
+      skipped
+    },
+    cut
+  };
+}
+function contentsLines2(contents, perList = 6) {
+  const list = (items, cut) => items.length === 0 ? "none found" : `${items.slice(0, perList).join(", ")}${items.length > perList || cut ? `, and ${Math.max(0, items.length - perList)}${cut ? "+" : ""} more` : ""}`;
+  const at = (rows, name) => list(rows.map((row) => `${row.kind} at ${row.file}:${row.line} "${row.text}"`), contents.cut.includes(name));
+  return [
+    `Programs: ${list(contents.programs.map((p) => `${p.name} (${p.from})`), contents.cut.includes("programs"))}`,
+    ...contents.packages.length === 0 ? [] : [`Packages: ${list(contents.packages.map((p) => `${p.manager} ${p.name}`), contents.cut.includes("packages"))}`],
+    `Keys and settings it reads: ${list(contents.settings, contents.cut.includes("settings"))}`,
+    `Scripts: ${list(contents.scripts.map((s) => s.namedInSkillMd ? `${s.path} (named in SKILL.md)` : s.path), contents.cut.includes("scripts"))}`,
+    `Fetches and runs code: ${at(contents.fetchAndRun, "fetchAndRun")}`,
+    `Domains named: ${list(contents.domains, contents.cut.includes("domains"))}`,
+    `Hidden or encoded text: ${at(contents.hidden, "hidden")}`,
+    ...contents.read.skipped.length === 0 ? [] : [`Not read: ${list(contents.read.skipped.map((s) => `${s.path} (${s.why})`), false)}`]
+  ];
+}
+var CONTENTS_LIMITS2, SCRIPT3, MARKDOWN2, FENCE2, BASE_SHELLS2, SCRIPT_PROBE2, SYSTEM_INSTALL2, COMMENT_LINE2, PYTHON_PROBE2, PACKAGE_INSTALL2, SHELL_VARIABLES2, READS_IN_CODE2, SHELL_READ2, SHELL_ASSIGN2, SHELL_LOOP2, EXPORT_IN_PROSE2, KEY_NAMED2, FETCH_AND_RUN2, URL_HOST2, PLACEHOLDER_HOST2, FILE_LIKE_HOST2, INVISIBLE2, PICTOGRAPH2, BASE64_RUN2, DATA_URI2, URL_TEXT2, IGNORE_INSTRUCTIONS2, KEEP_FROM_PERSON2, COMMENT_WORDS2 = 4;
+var init_skill_contents2 = __esm(() => {
+  init_skill_requires3();
+  CONTENTS_LIMITS2 = {
+    files: 200,
+    fileChars: 512 * 1024,
+    items: 40,
+    lineChars: 160
+  };
+  SCRIPT3 = /\.(sh|bash|zsh|py|js|mjs|cjs|ts|rb|pl|ps1|php|lua)$/i;
+  MARKDOWN2 = /\.(md|mdx|markdown)$/i;
+  FENCE2 = /^\s*(?:```|~~~)/;
+  BASE_SHELLS2 = new Set(["sh", "bash", "zsh", "dash"]);
+  SCRIPT_PROBE2 = /(?:^|[;&|(!{]|\bif|\bthen|\$\()\s*(?:!\s*)?(?:command\s+-v|which|type\s+-p|hash)\s+([a-z][\w.+-]*)/g;
+  SYSTEM_INSTALL2 = /\b(?:brew|apt-get|apt|dnf|yum|apk|pacman|choco|winget|scoop|port)\s+(?:install|add|-S)\s+(?:-\S+\s+)*([a-z][\w.+-]*)/g;
+  COMMENT_LINE2 = /^\s*(?:#|\/\/|\*|--|;|rem\s)/i;
+  PYTHON_PROBE2 = /\bshutil\.which\(\s*["']([a-z][\w.+-]*)["']/g;
+  PACKAGE_INSTALL2 = /\b(pip3?|pipx|uv\s+pip|uv\s+add|poetry\s+add|npm|pnpm|yarn|bun|gem|cargo)\s+(?:install|add|i)\b([^\n|;&#`)]*)/gi;
+  SHELL_VARIABLES2 = new Set(("HOME PATH PWD OLDPWD USER LOGNAME SHELL TERM LANG LC_ALL TMPDIR TMP TEMP HOSTNAME IFS PS1 PS2 " + "RANDOM SECONDS LINENO BASH_SOURCE BASH_VERSION FUNCNAME PIPESTATUS OPTARG OPTIND EUID UID PPID " + "REPLY EDITOR VISUAL PAGER DISPLAY XDG_CONFIG_HOME XDG_DATA_HOME XDG_CACHE_HOME CI NODE_ENV DEBUG").split(" "));
+  READS_IN_CODE2 = [
+    /\bprocess\.env\.([A-Z][A-Z0-9_]+)/g,
+    /\bprocess\.env\[\s*["']([A-Z][A-Z0-9_]+)["']\s*\]/g,
+    /\bBun\.env\.([A-Z][A-Z0-9_]+)/g,
+    /\bDeno\.env\.get\(\s*["']([A-Z][A-Z0-9_]+)["']/g,
+    /\bimport\.meta\.env\.([A-Z][A-Z0-9_]+)/g,
+    /\bos\.environ\[\s*["']([A-Z][A-Z0-9_]+)["']\s*\]/g,
+    /\b(?:os\.environ\.get|os\.getenv|getenv|environ\.get)\(\s*["']([A-Z][A-Z0-9_]+)["']/g,
+    /\bENV(?:\.fetch\(|\[)\s*["']([A-Z][A-Z0-9_]+)["']/g,
+    /\$env:([A-Za-z][A-Za-z0-9_]+)/g
+  ];
+  SHELL_READ2 = /\$\{?([A-Z][A-Z0-9_]{2,})\b/g;
+  SHELL_ASSIGN2 = /^\s*(?:export\s+|local\s+|readonly\s+|declare\s+(?:-\w+\s+)?)?([A-Z][A-Z0-9_]*)=/;
+  SHELL_LOOP2 = /\b(?:for|read(?:\s+-\w+)*)\s+([A-Z][A-Z0-9_]*)\b/g;
+  EXPORT_IN_PROSE2 = /\bexport\s+([A-Z][A-Z0-9_]{2,})=/g;
+  KEY_NAMED2 = /\b([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_(?:API_KEY|APIKEY|KEY|TOKEN|SECRET|PASSWORD))\b/g;
+  FETCH_AND_RUN2 = [
+    {
+      kind: "pipe to a shell",
+      pattern: /\b(?:curl|wget|iwr|irm|Invoke-WebRequest|Invoke-RestMethod)\b[^|\n]*\|\s*(?:sudo\s+(?:-\S+\s+)*)?(?:sh|bash|zsh|dash|python3?|node|perl|ruby|iex|Invoke-Expression)\b/i
+    },
+    {
+      kind: "runs a downloaded script",
+      pattern: /\b(?:sh|bash|zsh|source)\s+<\(\s*(?:curl|wget)\b|\b(?:sh|bash|zsh)\s+-c\s+["']?\$\(\s*(?:curl|wget)\b|\b(?:iex|Invoke-Expression)\b[^\n]*\b(?:irm|iwr|Invoke-WebRequest|Invoke-RestMethod|DownloadString)\b|\bdeno\s+run\b[^\n]*\bhttps?:\/\//i
+    },
+    {
+      kind: "installs from a URL",
+      pattern: /\b(?:pip3?|pipx|uv\s+pip|npm|pnpm|yarn|bun|gem)\s+(?:install|add|i)\b[^\n|;&]*\s(?:https?:\/\/|git\+|github:)/i
+    },
+    {
+      kind: "runs a package fetched at run time",
+      pattern: /\bnpx\s+(?:-y|--yes)\b|\b(?:pnpm|yarn)\s+dlx\s+\S|\buvx\s+[a-z]|\bpipx\s+run\s+[a-z]/i
+    }
+  ];
+  URL_HOST2 = /\bhttps?:\/\/([a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+)/gi;
+  PLACEHOLDER_HOST2 = /(^|\.)(example\.(com|org|net)|localhost|local|test|invalid|example|internal)$|^(127\.\d+\.\d+\.\d+|0\.0\.0\.0)$|^(www\.)?(your|my)-?(domain|site|server|host|app|api|company|website)\./;
+  FILE_LIKE_HOST2 = /\.(jpe?g|png|gif|webp|svg|mp[34]|wav|mov|webm|pdf|md|json|txt|html?|js|ts|py|sh)$/;
+  INVISIBLE2 = /[​-‍⁠-⁤﻿᠎‪-‮⁦-⁩]|\uDB40[\uDC00-\uDDEF]/g;
+  PICTOGRAPH2 = /\p{Extended_Pictographic}/u;
+  BASE64_RUN2 = /[A-Za-z0-9+/]{100,}={0,2}/g;
+  DATA_URI2 = /data:([\w.+-]+\/[\w.+-]+)?(?:;[\w=-]+)*;base64,([A-Za-z0-9+/]{100,}={0,2})/g;
+  URL_TEXT2 = /\bhttps?:\/\/\S+/g;
+  IGNORE_INSTRUCTIONS2 = /\b(?:ignore|disregard|forget|override)\b[^.\n]{0,40}?\b(?:previous|prior|above|earlier|preceding|all|any|other|system|your)\b[^.\n]{0,25}?\b(?:instructions?|prompts?|rules|guidelines|directions)\b/i;
+  KEEP_FROM_PERSON2 = /\b(?:do not|don't|never)\s+(?:tell|inform|notify|alert|(?:mention|reveal)(?:\s+(?:this|it))?\s+to)\s+(?:the\s+)?(?:user|human|person|operator)\b|\bwithout\s+(?:telling|informing|notifying|alerting)\s+(?:the\s+)?(?:user|human|person|operator)\b/i;
+});
+
+// ../../packages/protocol/src/pulse.ts
+function installerRank2(path) {
+  let best = null;
+  INSTALLER_ORDER2.forEach((prefix, rank) => {
+    if (best !== null || !path.startsWith(prefix))
+      return;
+    const depth = path.slice(prefix.length).split("/").length;
+    if (prefix === "" ? depth <= 2 : depth <= 4)
+      best = rank;
+  });
+  return best;
+}
+function normaliseName3(name) {
+  return name.trim().toLowerCase().replace(/[\s_]+/g, "-");
+}
+function frontmatterName2(markdown) {
+  const lines = markdown.split(`
+`);
+  if (lines[0]?.trim() !== "---")
+    return null;
+  for (const line of lines.slice(1)) {
+    if (line.trim() === "---")
+      return null;
+    const match = /^name\s*:\s*(.+?)\s*$/.exec(line);
+    if (match !== null)
+      return (match[1] ?? "").replace(/^["']|["']$/g, "");
+  }
+  return null;
+}
+function filesItRuns2(markdown, repositoryFiles) {
+  const named = [...markdown.matchAll(RUNS_FILE2)].map((match) => match[1] ?? "");
+  const found2 = new Set;
+  for (const name of named) {
+    if (name.startsWith("/") || name.startsWith("~") || PLACEHOLDER2.test(name))
+      continue;
+    const tail = name.replace(/^(\.{1,2}\/)+/, "");
+    const hit = repositoryFiles.find((file) => file.path === tail || file.path.endsWith(`/${tail}`));
+    if (hit !== undefined)
+      found2.add(hit.path);
+  }
+  return [...found2];
+}
+function absentFiles2(markdown, repositoryFiles) {
+  const named = [...markdown.matchAll(RUNS_FILE2)].map((match) => match[1] ?? "");
+  return [...new Set(named)].filter((name) => {
+    if (name.startsWith("/") || name.startsWith("~") || PLACEHOLDER2.test(name))
+      return false;
+    const tail = name.replace(/^(\.{1,2}\/)+/, "");
+    return !repositoryFiles.some((file) => file.path === tail || file.path.endsWith(`/${tail}`));
+  });
+}
+function readSkillFacts2(markdown, filesInDirectory, repositoryFiles = filesInDirectory) {
+  const hosts = [...markdown.matchAll(HOST2)].map((match) => (match[1] ?? "").toLowerCase()).filter((host) => !NOT_A_SERVICE2.test(host) && !LOOKS_LIKE_A_FILE2.test(host));
+  return {
+    files: filesInDirectory.length,
+    bytes: filesInDirectory.reduce((total, file) => total + file.size, 0),
+    scripts: filesInDirectory.filter((file) => SCRIPT4.test(file.path)).length,
+    keys: [...new Set(markdown.match(KEY_NAME5) ?? [])],
+    paidWords: [...new Set((markdown.match(PAID_WORD2) ?? []).map((word) => word.toLowerCase()))],
+    hosts: [...new Set(hosts)],
+    runsAbsentFiles: absentFiles2(markdown, repositoryFiles),
+    keysInScriptsItRuns: [],
+    requires: readRequires2(markdown),
+    contains: readSkillContents2([{ path: "SKILL.md", text: markdown }])
+  };
+}
+function parentOf2(path) {
+  const at = path.lastIndexOf("/");
+  return at === -1 ? "" : path.slice(0, at);
+}
+async function locate2(source, repo, skill, listing2) {
+  const wanted = normaliseName3(skill);
+  const candidates = listing2.files.filter((file) => skillFilesIn2([file]).length === 1);
+  const guessed = candidates.filter((file) => normaliseName3(directoryOf2(file.path)) === wanted);
+  const others = candidates.filter((file) => !guessed.includes(file));
+  const read2 = async (files) => (await Promise.all(files.map(async (file) => ({ file, markdown: await source.file(repo, file.path) })))).filter((entry) => entry.markdown !== null && normaliseName3(frontmatterName2(entry.markdown) ?? "") === wanted);
+  let named = await read2(guessed);
+  if (named.length === 0) {
+    if (others.length > MAX_SKILL_FILES_READ2) {
+      return { status: "incomplete", reason: "too_many_skill_files" };
+    }
+    for (let at = 0;at < others.length && named.length === 0; at += 20) {
+      named = await read2(others.slice(at, at + 20));
+    }
+    if (named.length > 0) {
+      const last = others.findIndex((file) => file === named.at(-1)?.file);
+      named = [...named, ...await read2(others.slice(last + 1))];
+    }
+  }
+  if (named.length === 0) {
+    if (listing2.truncated)
+      return { status: "incomplete", reason: "truncated_listing" };
+    return { status: "absent", skillFiles: candidates.length };
+  }
+  const ranked = named.map((entry) => ({ ...entry, rank: installerRank2(entry.file.path) })).sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity));
+  const [first, ...rest] = ranked;
+  if (first === undefined)
+    return { status: "absent", skillFiles: candidates.length };
+  const differs = rest.filter((entry) => entry.file.sha !== first.file.sha);
+  if (first.rank === null && differs.length > 0) {
+    return { status: "ambiguous", paths: ranked.map((entry) => entry.file.path) };
+  }
+  return {
+    status: "found",
+    file: first.file,
+    markdown: first.markdown,
+    alsoAt: rest.filter((entry) => entry.file.sha === first.file.sha).map((entry) => entry.file.path),
+    differsAt: differs.map((entry) => entry.file.path)
+  };
+}
+function usualPaths2(skill) {
+  return [`skills/${skill}/SKILL.md`, `${skill}/SKILL.md`, `.claude/skills/${skill}/SKILL.md`, "SKILL.md"];
+}
+async function readFileOnly2(result2, source) {
+  if (!/^[\w.-]+$/.test(result2.skill) || /^\.+$/.test(result2.skill))
+    return null;
+  const wanted = normaliseName3(result2.skill);
+  for (const path of usualPaths2(result2.skill)) {
+    const markdown = await source.file(result2.source, path);
+    if (markdown === null || normaliseName3(frontmatterName2(markdown) ?? "") !== wanted)
+      continue;
+    const { keys, paidWords, hosts, requires, contains } = readSkillFacts2(markdown, []);
+    return { ...result2, status: "read_file_only", path, keys, paidWords, hosts, requires, contains };
+  }
+  return null;
+}
+async function readPulse2(result2, source) {
+  if (!/^(?!\.{1,2}\/)[\w.-]+\/(?!\.{1,2}$)[\w.-]+$/.test(result2.source))
+    return { ...result2, status: "not_github" };
+  const listing2 = await source.listing(result2.source);
+  if (listing2 === "rate_limited")
+    return await readFileOnly2(result2, source) ?? { ...result2, status: "rate_limited" };
+  if (listing2 === "unreachable")
+    return { ...result2, status: "repository_unreachable" };
+  const located = await locate2(source, result2.source, result2.skill, listing2);
+  if (located.status === "absent")
+    return { ...result2, status: "absent", skillFiles: located.skillFiles };
+  if (located.status === "ambiguous")
+    return { ...result2, status: "ambiguous", paths: located.paths };
+  if (located.status === "incomplete")
+    return { ...result2, status: "incomplete", reason: located.reason };
+  const directory2 = parentOf2(located.file.path);
+  const prefix = directory2 === "" ? "" : `${directory2}/`;
+  const inDirectory = listing2.files.filter((file) => file.path.startsWith(prefix));
+  const scripts = filesItRuns2(located.markdown, listing2.files).slice(0, MAX_SCRIPTS_READ2);
+  const scriptTexts = await Promise.all(scripts.map(async (file) => ({ file, text: await source.file(result2.source, file) })));
+  const keysInScriptsItRuns = scriptTexts.map(({ file, text: text2 }) => ({ file, keys: [...new Set(text2?.match(KEY_NAME5) ?? [])] })).filter((entry) => entry.keys.length > 0);
+  const relative = (path) => path.startsWith(prefix) ? path.slice(prefix.length) : path;
+  const fetched = new Set(scriptTexts.filter((entry) => entry.text !== null).map((entry) => entry.file));
+  const contains = readSkillContents2([
+    { path: "SKILL.md", text: located.markdown },
+    ...scriptTexts.flatMap(({ file, text: text2 }) => text2 === null ? [] : [{ path: relative(file), text: text2 }]),
+    ...inDirectory.filter((file) => SCRIPT4.test(file.path) && !fetched.has(file.path)).map((file) => ({ path: relative(file.path), text: null, notFetched: true }))
+  ]);
+  return {
+    ...result2,
+    status: "read",
+    path: located.file.path,
+    alsoAt: located.alsoAt,
+    differsAt: located.differsAt,
+    contentId: directory2 === "" ? listing2.rootTreeId : listing2.trees.get(directory2) ?? located.file.sha,
+    skillMdSha: located.file.sha,
+    repository: await source.repository(result2.source),
+    ...listing2.readAt === undefined ? {} : { listingReadAt: listing2.readAt },
+    ...readSkillFacts2(located.markdown, inDirectory, listing2.files),
+    keysInScriptsItRuns,
+    contains
+  };
+}
+function githubPulseSource2(options = {}) {
+  const get = options.fetch ?? fetch;
+  const timeoutMs = options.timeoutMs ?? GITHUB_READ_TIMEOUT_MS2;
+  const bounded4 = () => {
+    const limit = AbortSignal.timeout(timeoutMs);
+    return options.signal === undefined ? limit : AbortSignal.any([limit, options.signal]);
+  };
+  const headers = {
+    accept: "application/vnd.github+json",
+    "user-agent": "arp-pulse",
+    ...options.token === undefined ? {} : { authorization: `Bearer ${options.token}` }
+  };
+  const listings2 = new Map;
+  const repositories = new Map;
+  const quota = { apiRequests: 0, limited: false, resetsAt: null };
+  const noteLimit = (response) => {
+    const hit = response.status === 429 || response.status === 403 && (response.headers.get("x-ratelimit-remaining") === "0" || response.headers.has("retry-after"));
+    if (!hit)
+      return false;
+    quota.limited = true;
+    const reset = Number(response.headers.get("x-ratelimit-reset"));
+    if (Number.isFinite(reset) && reset > 0)
+      quota.resetsAt = new Date(reset * 1000).toISOString();
+    return true;
+  };
+  const readListing = async (repo) => {
+    const cached = await options.cache?.get(repo).catch(() => null);
+    if (cached !== null && cached !== undefined)
+      return cached;
+    if (quota.limited)
+      return "rate_limited";
+    quota.apiRequests += 1;
+    const response = await get(`https://api.github.com/repos/${repo}/git/trees/HEAD?recursive=1`, { headers, signal: bounded4() });
+    if (noteLimit(response))
+      return "rate_limited";
+    if (!response.ok)
+      return "unreachable";
+    const body = await response.json();
+    const files = [];
+    const trees = new Map;
+    for (const entry of body.tree ?? []) {
+      if (typeof entry.path !== "string" || typeof entry.sha !== "string")
+        continue;
+      if (entry.type === "tree")
+        trees.set(entry.path, entry.sha);
+      if (entry.type === "blob") {
+        files.push({ path: entry.path, sha: entry.sha, size: typeof entry.size === "number" ? entry.size : 0 });
+      }
+    }
+    const listing2 = {
+      rootTreeId: typeof body.sha === "string" ? body.sha : "",
+      files,
+      trees,
+      truncated: body.truncated === true
+    };
+    await options.cache?.set(repo, listing2).catch(() => {
+      return;
+    });
+    return listing2;
+  };
+  const readRepository = async (repo) => {
+    if (options.withRepository === false || quota.limited)
+      return null;
+    quota.apiRequests += 1;
+    const response = await get(`https://api.github.com/repos/${repo}`, { headers, signal: bounded4() });
+    noteLimit(response);
+    if (!response.ok)
+      return null;
+    const body = await response.json();
+    return {
+      stars: typeof body.stargazers_count === "number" ? body.stargazers_count : 0,
+      pushedAt: typeof body.pushed_at === "string" ? body.pushed_at : null,
+      archived: body.archived === true
+    };
+  };
+  const once2 = (cache, repo, read2) => {
+    const hit = cache.get(repo);
+    if (hit !== undefined)
+      return hit;
+    const started = read2(repo);
+    cache.set(repo, started);
+    return started;
+  };
+  return {
+    listing: (repo) => once2(listings2, repo, readListing),
+    repository: (repo) => once2(repositories, repo, readRepository),
+    file: async (repo, path) => {
+      const encoded = path.split("/").map(encodeURIComponent).join("/");
+      const response = await get(`https://raw.githubusercontent.com/${repo}/HEAD/${encoded}`, { signal: bounded4() });
+      return response.ok ? response.text() : null;
+    },
+    quota: () => ({ ...quota })
+  };
+}
+var MAX_SKILL_FILES_READ2 = 200, MAX_SCRIPTS_READ2 = 5, GITHUB_READ_TIMEOUT_MS2 = 1e4, INSTALLER_ORDER2, KEY_NAME5, PAID_WORD2, HOST2, NOT_A_SERVICE2, LOOKS_LIKE_A_FILE2, SCRIPT4, RUNS_FILE2, PLACEHOLDER2;
+var init_pulse3 = __esm(() => {
+  init_skill_contents2();
+  init_skill_requires3();
+  INSTALLER_ORDER2 = [
+    "",
+    "skills/",
+    "skills/.curated/",
+    "skills/.experimental/",
+    "skills/.system/",
+    ".agents/skills/",
+    ".claude/skills/",
+    ".cline/skills/",
+    ".codebuddy/skills/",
+    ".codex/skills/",
+    ".commandcode/skills/",
+    ".continue/skills/",
+    ".factory/skills/",
+    ".github/skills/",
+    ".goose/skills/",
+    ".grok/skills/",
+    ".iflow/skills/",
+    ".junie/skills/",
+    ".kilo/skills/",
+    ".kilocode/skills/",
+    ".kimchi/skills/",
+    ".kiro/skills/",
+    ".minimax/skills/",
+    ".mux/skills/",
+    ".neovate/skills/",
+    ".opencode/skills/",
+    ".openhands/skills/",
+    ".pi/skills/",
+    ".posit/assistant/skills/",
+    ".qoder/skills/",
+    ".roo/skills/",
+    ".trae/skills/",
+    ".windsurf/skills/",
+    ".zcode/skills/",
+    ".zencoder/skills/"
+  ];
+  KEY_NAME5 = /\b[A-Z][A-Z0-9_]*(?:API_KEY|APIKEY|_TOKEN|_SECRET)\b/g;
+  PAID_WORD2 = /\b(pricing|paid|subscription|credits?|billing|free tier|per minute)\b/gi;
+  HOST2 = /https?:\/\/([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  NOT_A_SERVICE2 = /(^|\.)(github\.com|githubusercontent\.com|example\.(com|org|net))$/;
+  LOOKS_LIKE_A_FILE2 = /\.(jpe?g|png|gif|webp|mp[34]|wav|mov|webm|pdf|md|json|txt)$/;
+  SCRIPT4 = /\.(sh|bash|py|js|mjs|cjs|ts|rb|pl)$/i;
+  RUNS_FILE2 = /\b(?:node|bun|deno|tsx|python3?|bash|sh)\s+((?:~|\.{1,2})?\/?[\w.@-]+(?:\/[\w.@-]+)*\.(?:mjs|cjs|js|ts|py|sh))\b/g;
+  PLACEHOLDER2 = /(^|\/)(path|your|my|foo|example|script|file|input|output)(\/|\.|$)/i;
+});
+
+// ../../packages/protocol/src/skill-install.ts
+async function namesUnder(install, source) {
+  const listing2 = await source.listing(install.repo);
+  if (listing2 === "rate_limited" || listing2 === "unreachable")
+    return listing2;
+  const prefix = install.subpath === null ? "" : `${install.subpath}/`;
+  const files = skillFilesIn2(listing2.files).filter((file) => file.path.startsWith(prefix)).sort((a, b) => a.path.split("/").length - b.path.split("/").length || a.path.localeCompare(b.path));
+  const names = await Promise.all(files.slice(0, MAX_SKILLS_READ2).map(async (file) => {
+    const markdown = await source.file(install.repo, file.path);
+    const parts = file.path.split("/");
+    return (markdown === null ? null : frontmatterName2(markdown)) ?? parts.at(-2) ?? install.repo.split("/")[1] ?? "";
+  }));
+  return { names, total: files.length };
+}
+async function readSkillInstall2(install, source, deadline) {
+  if (install.kind === "elsewhere")
+    return install;
+  const late = deadline.then(() => "late");
+  let names;
+  let total;
+  if (install.skills === "all") {
+    const found2 = await Promise.race([
+      namesUnder(install, source).catch(() => "unreachable"),
+      late
+    ]);
+    if (found2 === "late")
+      return {
+        kind: "github",
+        install,
+        readings: [],
+        notRead: 0,
+        listing: "no answer in time"
+      };
+    if (found2 === "rate_limited" || found2 === "unreachable") {
+      return { kind: "github", install, readings: [], notRead: 0, listing: found2 };
+    }
+    ({ names, total } = found2);
+  } else {
+    names = install.skills.slice(0, MAX_SKILLS_READ2);
+    total = install.skills.length;
+  }
+  const readings = await Promise.all(names.map(async (skill) => {
+    const pulse2 = readPulse2({ source: install.repo, skill, installs: null, installsText: null, url: null }, source).then((read2) => ({ skill, pulse: read2 })).catch(() => ({ skill, pulse: null, why: "read failed" }));
+    const settled = await Promise.race([pulse2, late]);
+    return settled === "late" ? { skill, pulse: null, why: "no answer in time" } : settled;
+  }));
+  return {
+    kind: "github",
+    install,
+    readings,
+    notRead: Math.max(0, total - names.length),
+    listing: null
+  };
+}
+function readingLines(repo, reading) {
+  const head = `${repo} · ${reading.skill}`;
+  const { pulse: pulse2 } = reading;
+  if (pulse2 === null)
+    return [
+      `${head}: not read (${reading.why === "no answer in time" ? "GitHub did not answer in time" : "the read failed"})`
+    ];
+  switch (pulse2.status) {
+    case "read": {
+      const facts = [
+        `${pulse2.path}`,
+        plural3(pulse2.files, "file"),
+        ...pulse2.repository === null ? [] : [
+          plural3(pulse2.repository.stars, "star"),
+          ...pulse2.repository.pushedAt === null ? [] : [`last push ${pulse2.repository.pushedAt.slice(0, 10)}`],
+          ...pulse2.repository.archived ? ["archived"] : []
+        ]
+      ];
+      return [
+        `${head} (${facts.join(", ")})`,
+        ...contentsLines2(pulse2.contains).map((line) => `  ${line}`),
+        ...pulse2.differsAt.length === 0 ? [] : [`  Other files carry this name and differ: ${pulse2.differsAt.join(", ")}`]
+      ];
+    }
+    case "read_file_only":
+      return [
+        `${head} (${pulse2.path}; GitHub's hourly limit was reached, so SKILL.md alone was read, not its scripts)`,
+        ...contentsLines2(pulse2.contains).map((line) => `  ${line}`)
+      ];
+    case "absent":
+      return [
+        `${head}: no SKILL.md in the repository names it (${plural3(pulse2.skillFiles, "skill file")} read)`
+      ];
+    case "ambiguous":
+      return [
+        `${head}: several files carry this name and differ, and which one installs is not knowable here: ${pulse2.paths.join(", ")}`
+      ];
+    case "incomplete":
+      return [
+        `${head}: not read (${pulse2.reason === "truncated_listing" ? "GitHub cut the repository's file list" : "too many skill files to search"})`
+      ];
+    case "rate_limited":
+      return [`${head}: not read (GitHub's hourly limit; GITHUB_TOKEN raises it)`];
+    case "repository_unreachable":
+      return [`${head}: not read (the repository did not answer)`];
+    case "not_github":
+      return [`${head}: not read (not a GitHub repository)`];
+  }
+}
+function skillInstallReport2(read2) {
+  const title = "ARP read this skill before the install (what its own files contain; facts, not a verdict):";
+  if (read2.kind === "elsewhere") {
+    return `${title}
+${read2.source}: not read (ARP reads GitHub sources only)`;
+  }
+  const { install } = read2;
+  const lines = [title];
+  if (read2.listing !== null) {
+    const why = read2.listing === "rate_limited" ? "GitHub's hourly limit; GITHUB_TOKEN raises it" : read2.listing === "no answer in time" ? "GitHub did not answer in time" : "the repository did not answer";
+    lines.push(`${install.repo}${install.subpath === null ? "" : `/${install.subpath}`}: not read (${why})`);
+  } else if (read2.readings.length === 0) {
+    lines.push(`${install.repo}${install.subpath === null ? "" : `/${install.subpath}`}: no SKILL.md found`);
+  }
+  for (const reading of read2.readings)
+    lines.push(...readingLines(install.repo, reading));
+  if (read2.notRead > 0)
+    lines.push(`${plural3(read2.notRead, "more skill")} in this install not read (ARP reads ${MAX_SKILLS_READ2})`);
+  if (install.ref !== null)
+    lines.push(`Read at the default branch's HEAD; the command names ${install.ref}.`);
+  return lines.join(`
+`);
+}
+var MAX_SKILLS_READ2 = 3, ADD, RUNNERS, plural3 = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
+var init_skill_install = __esm(() => {
+  init_skill_contents2();
+  init_pulse3();
+  ADD = new Set(["add", "a", "install", "i"]);
+  RUNNERS = new Set(["npx", "pnpx", "bunx"]);
+});
+
+// src/check.ts
+var exports_check = {};
+__export(exports_check, {
+  thisMachine: () => thisMachine,
+  skillRefOf: () => skillRefOf,
+  neededNames: () => neededNames,
+  namedInFiles: () => namedInFiles,
+  hereLines: () => hereLines,
+  checkSkill: () => checkSkill,
+  CHECK_BUDGET_MS: () => CHECK_BUDGET_MS
+});
+import { createHash as createHash2 } from "node:crypto";
+import { existsSync as existsSync8, statSync as statSync2 } from "node:fs";
+import { delimiter as delimiter2, join as join12 } from "node:path";
+function skillRefOf(arg) {
+  const part = /^[\w.-]+$/;
+  const fromUrl = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/?\?skill=([^&#]+)$/.exec(arg.trim());
+  if (fromUrl !== null) {
+    const skill = decodeURIComponent(fromUrl[3] ?? "");
+    return part.test(skill) ? { repo: `${fromUrl[1]}/${fromUrl[2]}`, skill } : null;
+  }
+  const pieces = arg.trim().split("/");
+  if (pieces.length !== 3 || !pieces.every((piece) => part.test(piece)))
+    return null;
+  return { repo: `${pieces[0]}/${pieces[1]}`, skill: pieces[2] ?? "" };
+}
+function neededNames(usage) {
+  const byName = new Map;
+  for (const row of usage?.declarations ?? []) {
+    for (const line of row.lines) {
+      if (line.outcome !== "failed")
+        continue;
+      for (const name of line.needs ?? []) {
+        byName.set(name, (byName.get(name) ?? new Set).add(row.writer.toLowerCase()));
+      }
+    }
+  }
+  return new Map([...byName].map(([name, wallets]) => [name, wallets.size]));
+}
+function thisMachine(env = process.env, platform = process.platform) {
+  const dirs = (env["PATH"] ?? "").split(delimiter2).filter((dir) => dir !== "");
+  const exts = platform === "win32" ? (env["PATHEXT"] ?? ".EXE;.CMD;.BAT").split(";") : [""];
+  return {
+    hasProgram: (name) => dirs.some((dir) => exts.some((ext) => {
+      const path = join12(dir, name + ext);
+      try {
+        return existsSync8(path) && statSync2(path).isFile();
+      } catch {
+        return false;
+      }
+    })),
+    hasVariable: (name) => (env[name] ?? "") !== ""
+  };
+}
+function namedInFiles(read2) {
+  if (read2.kind !== "github")
+    return [];
+  const names = new Set;
+  for (const reading of read2.readings) {
+    const pulse2 = reading.pulse;
+    if (pulse2 === null || pulse2.status !== "read")
+      continue;
+    for (const program of pulse2.contains.programs)
+      names.add(program.name);
+    for (const setting of pulse2.contains.settings)
+      names.add(setting);
+  }
+  return [...names];
+}
+function hereLines(needed, named, machine) {
+  const fromFiles = [...new Set(named)].filter((name) => !needed.has(name)).sort((a, b) => a.localeCompare(b));
+  if (needed.size === 0 && fromFiles.length === 0)
+    return ["Here: nothing named to check."];
+  const lines = ["Here (checked on this machine, nothing sent):"];
+  const wallets = (n) => `${n} wallet${n === 1 ? "" : "s"}`;
+  for (const [name, n] of [...needed].sort(([a, x], [b, y]) => y - x || a.localeCompare(b))) {
+    lines.push(`  ${name}: ${stateOf(name, machine)} (needed when it failed, ${wallets(n)})`);
+  }
+  for (const name of fromFiles)
+    lines.push(`  ${name}: ${stateOf(name, machine)} (named in its files)`);
+  return lines;
+}
+async function checkSkill(ref, deps) {
+  const budgetMs = deps.budgetMs ?? CHECK_BUDGET_MS;
+  const token = (deps.env["GITHUB_TOKEN"] ?? deps.env["GH_TOKEN"])?.trim() || undefined;
+  const deadline = new Promise((resolve3) => setTimeout(resolve3, budgetMs).unref?.());
+  const source = githubPulseSource2({
+    ...deps.fetch === undefined ? {} : { fetch: deps.fetch },
+    ...token === undefined ? {} : { token },
+    timeoutMs: budgetMs + 500,
+    signal: AbortSignal.timeout(budgetMs + 500)
+  });
+  const contents = readSkillInstall2({ kind: "github", repo: ref.repo, ref: null, subpath: null, skills: [ref.skill] }, source, deadline);
+  const url = `https://github.com/${ref.repo}?skill=${encodeURIComponent(ref.skill)}`;
+  const { uri, label } = skillAtom(url, (text2) => createHash2("sha256").update(text2, "utf8").digest());
+  const usage = readSkillLines(uri, {
+    graphqlUrl: deps.env["INTUITION_GRAPHQL_URL"] ?? _13579_default.chain.graphqlUrl,
+    inContextOf: IN_CONTEXT_OF2,
+    payers: PAYERS,
+    timeoutMs: budgetMs,
+    ...deps.fetch === undefined ? {} : { fetch: deps.fetch }
+  }).then((read3) => ({ ok: true, read: read3 }), () => ({ ok: false }));
+  const [read2, lines] = await Promise.all([contents, usage]);
+  const blocks = [skillInstallReport2(read2)];
+  blocks.push(lines.ok ? linesSentence(lines.read, label, WHERE) ?? `Lines: no agent wrote an outcome on ${label} (${WHERE}).` : `Lines: not read (${WHERE} did not answer).`);
+  blocks.push(hereLines(lines.ok ? neededNames(lines.read) : new Map, namedInFiles(read2), deps.machine).join(`
+`));
+  return `${blocks.join(`
+
+`)}
+`;
+}
+var CHECK_BUDGET_MS = 8000, WHERE = "Intuition testnet 13579", IN_CONTEXT_OF2, PAYERS, stateOf = (name, machine) => {
+  if (KEY_NAME4.test(name))
+    return machine.hasVariable(name) ? "set" : "not set";
+  if (PROGRAM_NAME3.test(name))
+    return machine.hasProgram(name) ? "found on PATH" : "missing here";
+  return "not checked";
+};
+var init_check = __esm(() => {
+  init_failure_lines();
+  init_line_need2();
+  init_pulse3();
+  init_skill_install();
+  init_13579();
+  IN_CONTEXT_OF2 = _13579_default.arp.endpointBinding.inContextOf;
+  PAYERS = [_13579_default.arp.deployer, _13579_default.arp.sponsor];
+});
+
 // ../hook/src/classify.ts
 function isCancelled(text2) {
   return CANCELLED.test(text2);
@@ -42832,9 +44432,9 @@ var init_skill_nodes_13579 = __esm(() => {
 });
 
 // ../hook/src/skill-failure.ts
-import { existsSync as existsSync8, mkdirSync as mkdirSync9, readFileSync as readFileSync8 } from "node:fs";
+import { existsSync as existsSync9, mkdirSync as mkdirSync9, readFileSync as readFileSync8 } from "node:fs";
 import { homedir as homedir5 } from "node:os";
-import { dirname as dirname6, join as join12 } from "node:path";
+import { dirname as dirname6, join as join13 } from "node:path";
 function failureReason(text2) {
   if (MISSING_PROGRAM.test(text2))
     return "missing-program";
@@ -42852,7 +44452,7 @@ function programsOf(command) {
     if (first === undefined || first === "")
       continue;
     const program = first.split("/").pop() ?? first;
-    if (!RUNNERS.has(program)) {
+    if (!RUNNERS2.has(program)) {
       found2.push(program);
       continue;
     }
@@ -42873,19 +44473,19 @@ function contextOf(words, skill) {
   return domainInText2(words, WORDS) ?? SKILL_NODE[skill.split(":").pop() ?? skill] ?? null;
 }
 function skillDirectory(name, cwd) {
-  const roots = [join12(cwd, ".claude", "skills"), join12(homedir5(), ".claude", "skills")];
+  const roots = [join13(cwd, ".claude", "skills"), join13(homedir5(), ".claude", "skills")];
   const given = process.env["ARP_SKILLS_DIR"];
   if (given !== undefined && given !== "")
     roots.unshift(given);
-  return roots.map((root2) => join12(root2, name)).find((dir) => existsSync8(join12(dir, "SKILL.md"))) ?? null;
+  return roots.map((root2) => join13(root2, name)).find((dir) => existsSync9(join13(dir, "SKILL.md"))) ?? null;
 }
 function arpHome2() {
   const given = process.env["ARP_HOME"]?.trim();
-  return given !== undefined && given !== "" ? given : join12(homedir5(), ".arp");
+  return given !== undefined && given !== "" ? given : join13(homedir5(), ".arp");
 }
 function appendFailure(line) {
-  const path = join12(arpHome2(), "failures.jsonl");
-  const seen = existsSync8(path) ? readFileSync8(path, "utf8") : "";
+  const path = join13(arpHome2(), "failures.jsonl");
+  const seen = existsSync9(path) ? readFileSync8(path, "utf8") : "";
   const key = `"session":${JSON.stringify(line.session)},"skill":${JSON.stringify(line.skill)},`;
   if (seen.split(`
 `).some((row) => row.includes(key) && row.includes(`"reason":"${line.reason}"`)))
@@ -42895,7 +44495,7 @@ function appendFailure(line) {
 `);
   return true;
 }
-var MISSING_KEY, MISSING_KEY_VARIABLE, MISSING_PROGRAM, MISSING_FILE, RUNNERS, escaped2 = (text2) => text2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), NODES, WORDS, SKILL_NODE;
+var MISSING_KEY, MISSING_KEY_VARIABLE, MISSING_PROGRAM, MISSING_FILE, RUNNERS2, escaped2 = (text2) => text2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), NODES, WORDS, SKILL_NODE;
 var init_skill_failure = __esm(() => {
   init_append();
   init_dist2();
@@ -42907,7 +44507,7 @@ var init_skill_failure = __esm(() => {
   MISSING_KEY_VARIABLE = /\b[A-Z0-9_]*(API_KEY|TOKEN|SECRET)\b.{0,30}\b(not set|missing|required|unset)\b/;
   MISSING_PROGRAM = /command not found|executable file not found|\bnot installed\b|No module named|spawn \S+ ENOENT|Cannot find module/i;
   MISSING_FILE = /No such file or directory|\bENOENT\b|file not found|\b(file|path|directory|folder)\b(?!\.).{0,80}\bdoes not exist\b/i;
-  RUNNERS = new Set(["bash", "bun", "bunx", "node", "npx", "python", "python3", "sh", "uv", "uvx", "zsh"]);
+  RUNNERS2 = new Set(["bash", "bun", "bunx", "node", "npx", "python", "python3", "sh", "uv", "uvx", "zsh"]);
   NODES = skill_nodes_13579_default.nodes;
   WORDS = { labels: NODES, aliases: domain_aliases_default.aliases };
   SKILL_NODE = skill_nodes_13579_default.skills;
@@ -42919,9 +44519,9 @@ __export(exports_backfill, {
   readTranscript: () => readTranscript,
   backfill: () => backfill
 });
-import { readdirSync, readFileSync as readFileSync9, statSync as statSync2 } from "node:fs";
+import { readdirSync, readFileSync as readFileSync9, statSync as statSync3 } from "node:fs";
 import { homedir as homedir6 } from "node:os";
-import { basename, join as join13 } from "node:path";
+import { basename, join as join14 } from "node:path";
 function blocksOf(content2) {
   return Array.isArray(content2) ? content2 : [];
 }
@@ -42934,7 +44534,7 @@ function textOf(content2) {
 function fromDisk(name, cwd) {
   try {
     const directory2 = skillDirectory(name, cwd);
-    return directory2 === null ? null : { name, directory: directory2, markdown: readFileSync9(join13(directory2, "SKILL.md"), "utf8") };
+    return directory2 === null ? null : { name, directory: directory2, markdown: readFileSync9(join14(directory2, "SKILL.md"), "utf8") };
   } catch {
     return null;
   }
@@ -43034,9 +44634,9 @@ function transcripts(root2) {
     return found2;
   }
   for (const name of names) {
-    const path = join13(root2, name);
+    const path = join14(root2, name);
     try {
-      if (statSync2(path).isDirectory())
+      if (statSync3(path).isDirectory())
         found2.push(...transcripts(path));
       else if (name.endsWith(".jsonl"))
         found2.push(path);
@@ -43046,7 +44646,7 @@ function transcripts(root2) {
   }
   return found2;
 }
-function backfill(root2 = join13(homedir6(), ".claude", "projects")) {
+function backfill(root2 = join14(homedir6(), ".claude", "projects")) {
   const files = transcripts(root2);
   let uses = 0;
   let added = 0;
@@ -43063,7 +44663,7 @@ function backfill(root2 = join13(homedir6(), ".claude", "projects")) {
       if (appendFailure(failure))
         added += 1;
   }
-  return { transcripts: files.length, uses, added, file: join13(arpHome2(), "failures.jsonl") };
+  return { transcripts: files.length, uses, added, file: join14(arpHome2(), "failures.jsonl") };
 }
 var BODY, lastPart = (name) => name.split(":").pop() ?? name;
 var init_backfill = __esm(() => {
@@ -43329,12 +44929,12 @@ var init_task = __esm(() => {
 
 // ../node/src/tunnel.ts
 import { spawn as spawnChild } from "node:child_process";
-import { accessSync, constants as constants2, statSync as statSync3 } from "node:fs";
-import { delimiter as delimiter2, join as join14 } from "node:path";
+import { accessSync, constants as constants2, statSync as statSync4 } from "node:fs";
+import { delimiter as delimiter3, join as join15 } from "node:path";
 import { createInterface } from "node:readline";
 function isExecutable(path) {
   try {
-    if (!statSync3(path).isFile())
+    if (!statSync4(path).isFile())
       return false;
     accessSync(path, constants2.X_OK);
     return true;
@@ -43343,10 +44943,10 @@ function isExecutable(path) {
   }
 }
 function findOnPath(name, path, executable) {
-  for (const dir of (path ?? "").split(delimiter2)) {
+  for (const dir of (path ?? "").split(delimiter3)) {
     if (dir.length === 0)
       continue;
-    const candidate = join14(dir, name);
+    const candidate = join15(dir, name);
     if (executable(candidate))
       return candidate;
   }
@@ -43841,8 +45441,8 @@ var init_edits = __esm(() => {
 });
 
 // src/install/targets.ts
-import { existsSync as existsSync9, readFileSync as readFileSync10 } from "node:fs";
-import { join as join15 } from "node:path";
+import { existsSync as existsSync10, readFileSync as readFileSync10 } from "node:fs";
+import { join as join16 } from "node:path";
 function namesOurServer(text2, cliPath) {
   return text2.includes("@arp-protocol/cli") || text2.includes(cliPath) || /apps[\\/]cli[\\/]dist[\\/]cli\.js/.test(text2) || /[\\/]dist[\\/]cli\.js/.test(text2) && text2.includes("ARP_TARGET") || /(?:packaging[\\/]claude[\\/]arp|plugins[\\/]cache[\\/]arp[\\/]arp[\\/][^\\/]+)[\\/]bin[\\/]arp\.js/.test(text2);
 }
@@ -43861,7 +45461,7 @@ function foreignRefusal(where) {
 }
 function read2(path) {
   try {
-    return existsSync9(path) ? readFileSync10(path, "utf8") : null;
+    return existsSync10(path) ? readFileSync10(path, "utf8") : null;
   } catch {
     return null;
   }
@@ -43873,7 +45473,7 @@ function npxLaunch(pkg) {
   };
 }
 function commandsFor(env, cliPath, capture = false, sponsored = false, force = false) {
-  const hookFile = join15(env.home, ".arp", "bin", "hook.js");
+  const hookFile = join16(env.home, ".arp", "bin", "hook.js");
   const fromNpx = /[\\/]_npx[\\/]/.test(cliPath);
   const mcp = {
     ...fromNpx ? {
@@ -43916,8 +45516,8 @@ function hasForeignServer(path, commands) {
 function claudeFiles(env, project) {
   const root2 = project ? env.cwd : env.home;
   return {
-    mcp: project ? join15(env.cwd, ".mcp.json") : join15(env.home, ".claude.json"),
-    settings: join15(root2, ".claude", "settings.json")
+    mcp: project ? join16(env.cwd, ".mcp.json") : join16(env.home, ".claude.json"),
+    settings: join16(root2, ".claude", "settings.json")
   };
 }
 function mcpEntry(server, typed) {
@@ -44031,8 +45631,8 @@ function hookStep(path, spec, commands, remove) {
 function jsonMcpRuntime(options) {
   const { id, name, dir, file, typed, binary, hook } = options;
   const root2 = (env, project) => project ? env.cwd : env.home;
-  const path = (env, project) => join15(root2(env, project), dir, file);
-  const hookPath = (env, project) => join15(root2(env, project), dir, hook.file);
+  const path = (env, project) => join16(root2(env, project), dir, file);
+  const hookPath = (env, project) => join16(root2(env, project), dir, hook.file);
   const mcpEdit = (commands) => (config) => withMcpServer(config, SERVER_NAME, commands === null ? null : mcpEntry(commands.mcp, typed));
   const steps = (env, commands, project, remove) => {
     const withHook = remove || commands.capture;
@@ -44061,7 +45661,7 @@ function jsonMcpRuntime(options) {
   return {
     id,
     name,
-    detect: (env) => env.which(binary) !== null || existsSync9(join15(env.home, dir)),
+    detect: (env) => env.which(binary) !== null || existsSync10(join16(env.home, dir)),
     install: (env, commands, project) => steps(env, commands, project, false),
     remove: (env, commands, project) => steps(env, commands, project, true),
     check: (env, _commands, project) => {
@@ -44072,7 +45672,7 @@ function jsonMcpRuntime(options) {
   };
 }
 function codexStep(env, entry, project, force = false) {
-  const path = join15(project ? env.cwd : env.home, ".codex", "config.toml");
+  const path = join16(project ? env.cwd : env.home, ".codex", "config.toml");
   const before = read2(path);
   const after = withCodexServer(before, entry, force);
   if (after instanceof Error) {
@@ -44112,7 +45712,7 @@ var init_targets = __esm(() => {
   claude = {
     id: "claude",
     name: "Claude Code",
-    detect: (env) => env.which("claude") !== null || existsSync9(join15(env.home, ".claude")),
+    detect: (env) => env.which("claude") !== null || existsSync10(join16(env.home, ".claude")),
     install: (env, commands, project) => [
       ...claudeMcpSteps(env, commands, project, false, true),
       claudeHookStep(env, commands, project, false)
@@ -44126,7 +45726,7 @@ var init_targets = __esm(() => {
   grok = {
     id: "grok",
     name: "Grok Build",
-    detect: (env) => env.which("grok") !== null || existsSync9(join15(env.home, ".grok")),
+    detect: (env) => env.which("grok") !== null || existsSync10(join16(env.home, ".grok")),
     install: (env, commands, project) => claude.detect(env) ? [{ kind: "skip", summary: "reads Claude Code's files, written above" }] : [
       ...claudeMcpSteps(env, commands, project, false, false),
       claudeHookStep(env, commands, project, false)
@@ -44164,17 +45764,17 @@ var init_targets = __esm(() => {
   codex2 = {
     id: "codex",
     name: "Codex",
-    detect: (env) => env.which("codex") !== null || existsSync9(join15(env.home, ".codex")),
+    detect: (env) => env.which("codex") !== null || existsSync10(join16(env.home, ".codex")),
     install: (env, commands, project) => [
       codexStep(env, commands.mcp, project, commands.force),
-      commands.capture ? hookStep(join15(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, false) : noHook(join15(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands)
+      commands.capture ? hookStep(join16(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, false) : noHook(join16(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands)
     ],
     remove: (env, commands, project) => [
       codexStep(env, null, project),
-      hookStep(join15(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, true)
+      hookStep(join16(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, true)
     ],
     check: (env, _commands, project) => {
-      const path = join15(project ? env.cwd : env.home, ".codex", "config.toml");
+      const path = join16(project ? env.cwd : env.home, ".codex", "config.toml");
       return [[`MCP server "arp" declared (${path})`, hasCodexServer(read2(path))]];
     }
   };
@@ -44207,7 +45807,7 @@ var init_targets = __esm(() => {
       file: "mcp-config.json",
       typed: true,
       binary: "copilot",
-      hook: { file: join15("hooks", "arp.json"), spec: COPILOT_HOOKS }
+      hook: { file: join16("hooks", "arp.json"), spec: COPILOT_HOOKS }
     })
   ];
 });
@@ -44224,15 +45824,15 @@ __export(exports_commands, {
 import {
   chmodSync as chmodSync4,
   copyFileSync,
-  existsSync as existsSync10,
+  existsSync as existsSync11,
   mkdirSync as mkdirSync10,
   readFileSync as readFileSync11,
   renameSync,
   rmSync as rmSync2,
-  statSync as statSync4,
+  statSync as statSync5,
   writeFileSync as writeFileSync9
 } from "node:fs";
-import { dirname as dirname7, join as join16 } from "node:path";
+import { dirname as dirname7, join as join17 } from "node:path";
 function parseFlags(args) {
   const flags = {
     yes: false,
@@ -44289,7 +45889,7 @@ function installsHook(runtimes, capture) {
 }
 function read3(path) {
   try {
-    return existsSync10(path) ? readFileSync11(path, "utf8") : null;
+    return existsSync11(path) ? readFileSync11(path, "utf8") : null;
   } catch {
     return null;
   }
@@ -44315,7 +45915,7 @@ function apply(env, step2) {
       return null;
     }
     mkdirSync10(dirname7(step2.path), { recursive: true });
-    const mode2 = step2.before === null ? undefined : statSync4(step2.path).mode & 511;
+    const mode2 = step2.before === null ? undefined : statSync5(step2.path).mode & 511;
     const temp = `${step2.path}.arp-tmp`;
     writeFileSync9(temp, step2.after, mode2 === undefined ? undefined : { mode: mode2 });
     if (mode2 !== undefined)
@@ -44328,7 +45928,7 @@ function apply(env, step2) {
 }
 function hookFileStep(env, commands, remove) {
   const before = read3(commands.hookFile);
-  const after = remove ? null : read3(join16(env.dist, "hook.js"));
+  const after = remove ? null : read3(join17(env.dist, "hook.js"));
   if (!remove && after === null) {
     return {
       kind: "skip",
@@ -44428,8 +46028,8 @@ async function init(env, flags, cliPath) {
   return code;
 }
 async function offerSharing(env, flags) {
-  const home = env.arpHome ?? join16(env.home, ".arp");
-  const file = join16(home, "sharing.json");
+  const home = env.arpHome ?? join17(env.home, ".arp");
+  const file = join17(home, "sharing.json");
   const save = (on) => {
     mkdirSync10(home, { recursive: true });
     writeFileSync9(file, `${JSON.stringify({ failures: on })}
@@ -44440,7 +46040,7 @@ async function offerSharing(env, flags) {
     env.out(`Sharing ${flags.share ? "on" : "off"}. ${SHARE_OFFER2.later}`);
     return;
   }
-  if (existsSync10(file))
+  if (existsSync11(file))
     return;
   if (flags.yes || flags.noInput || !env.interactive) {
     env.out(`Sharing is off. ${SHARE_OFFER2.later}`);
@@ -44460,8 +46060,8 @@ async function uninstall(env, flags, cliPath) {
   }));
   plan.push({ runtime: "hook", steps: [hookFileStep(env, commands, true)] });
   const code = await change(env, flags, plan, "Remove");
-  const captures = join16(env.home, ".arp", "captures");
-  if (existsSync10(captures))
+  const captures = join17(env.home, ".arp", "captures");
+  if (existsSync11(captures))
     env.out(`Captures kept in ${captures}. Delete them when you no longer need them.`);
   return code;
 }
@@ -44477,7 +46077,7 @@ function doctor(env, flags, cliPath) {
   }
   if (installsHook(runtimes, false)) {
     const installed = read3(commands.hookFile);
-    const packaged = read3(join16(env.dist, "hook.js"));
+    const packaged = read3(join17(env.dist, "hook.js"));
     rows.push(["hook", `${commands.hookFile} present`, installed !== null]);
     if (installed !== null && packaged !== null) {
       rows.push([
@@ -44486,7 +46086,7 @@ function doctor(env, flags, cliPath) {
         installed === packaged
       ]);
     }
-    rows.push(["hook", `node at ${env.node}`, existsSync10(env.node)]);
+    rows.push(["hook", `node at ${env.node}`, existsSync11(env.node)]);
   }
   const answer2 = env.run([commands.mcp.command, ...commands.mcp.args], INITIALIZE, 30000);
   rows.push([
@@ -44494,7 +46094,7 @@ function doctor(env, flags, cliPath) {
     `answers initialize (${commands.mcp.command} ${commands.mcp.args.join(" ")})`,
     answer2.stdout.includes('"name":"ARP"')
   ]);
-  const log = read3(join16(env.cwd, ".arp", "session.jsonl"));
+  const log = read3(join17(env.cwd, ".arp", "session.jsonl"));
   const last = log?.trim().split(`
 `).pop();
   let lastAt = null;
@@ -44507,7 +46107,7 @@ function doctor(env, flags, cliPath) {
   }
   for (const [where, what, ok] of rows)
     env.out(`${ok ? "ok  " : "FAIL"}  ${where.padEnd(12)} ${what}`);
-  env.out(`--    session log  ${lastAt === null ? `no call recorded in ${join16(env.cwd, ".arp")}` : `last call recorded ${lastAt}`}`);
+  env.out(`--    session log  ${lastAt === null ? `no call recorded in ${join17(env.cwd, ".arp")}` : `last call recorded ${lastAt}`}`);
   return rows.every(([, , ok]) => ok) ? EXIT.ok : EXIT.problems;
 }
 var EXIT, INITIALIZE;
@@ -44533,16 +46133,16 @@ __export(exports_env, {
   processEnv: () => processEnv
 });
 import { spawnSync } from "node:child_process";
-import { existsSync as existsSync11 } from "node:fs";
+import { existsSync as existsSync12 } from "node:fs";
 import { homedir as homedir7 } from "node:os";
-import { delimiter as delimiter3, join as join17 } from "node:path";
+import { delimiter as delimiter4, join as join18 } from "node:path";
 import { createInterface as createInterface2 } from "node:readline/promises";
 function which(command) {
-  for (const dir of (process.env.PATH ?? "").split(delimiter3)) {
+  for (const dir of (process.env.PATH ?? "").split(delimiter4)) {
     if (dir.length === 0)
       continue;
-    const candidate = join17(dir, command);
-    if (existsSync11(candidate))
+    const candidate = join18(dir, command);
+    if (existsSync12(candidate))
       return candidate;
   }
   return null;
@@ -44550,7 +46150,7 @@ function which(command) {
 function processEnv(dist, version5) {
   return {
     home: homedir7(),
-    arpHome: process.env["ARP_HOME"]?.trim() || join17(homedir7(), ".arp"),
+    arpHome: process.env["ARP_HOME"]?.trim() || join18(homedir7(), ".arp"),
     cwd: process.cwd(),
     which,
     run: (argv, stdin, timeoutMs = 15000) => {
@@ -44603,6 +46203,9 @@ usage
   arp share          say what would be public from ~/.arp/failures.jsonl and outcomes.jsonl,
                      and what stays here.
                      arp share on, off (off by default). arp share send writes them on testnet
+  arp check <skill>  before you use a skill: what its files contain, what agents wrote about
+                     it, and whether what it needed when it failed is on this machine.
+                     <owner/repo/skill> or a github.com URL with ?skill=. Writes nothing
   arp node           the hire endpoint. Opt-in: it listens on 127.0.0.1 and is reached through
                      a tunnel you rent (cloudflared or ngrok, or ARP_NODE_PUBLIC_URL)
 
@@ -44729,6 +46332,17 @@ async function run(argv) {
 `);
         return EXIT2.writeFailed;
       }
+    case "check": {
+      const { checkSkill: checkSkill2, skillRefOf: skillRefOf2, thisMachine: thisMachine2 } = await Promise.resolve().then(() => (init_check(), exports_check));
+      const ref = rest.length === 1 ? skillRefOf2(rest[0] ?? "") : null;
+      if (ref === null) {
+        process.stderr.write(`usage: arp check <owner/repo/skill | https://github.com/owner/repo?skill=name>
+`);
+        return EXIT2.usage;
+      }
+      process.stdout.write(await checkSkill2(ref, { env: process.env, machine: thisMachine2() }));
+      return EXIT2.ok;
+    }
     case "line": {
       const flag = (name) => {
         const at = rest.indexOf(`--${name}`);

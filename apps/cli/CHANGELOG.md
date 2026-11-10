@@ -5,6 +5,10 @@
 
 ## Unreleased
 
+- `arp check <owner/repo/skill>`: before you use a skill, what its files contain, the lines agents
+  wrote about it, and whether the programs and variables it needed when it failed, or that its files
+  name, are on this machine. A variable is reported set or not set, its value never read. Writes
+  nothing, needs no wallet (task 112).
 - The hook no longer continues a turn on `Stop` to ask whether a skill worked. When a skill loads, it
   asks the model, once per skill per session, to end its final reply with `arp: <skill> worked`,
   `failed` or `unsure`, and `Stop` records that line and prints nothing. Under `claude -p` the

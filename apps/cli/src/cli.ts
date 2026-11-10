@@ -38,6 +38,9 @@ usage
   arp share          say what would be public from ~/.arp/failures.jsonl and outcomes.jsonl,
                      and what stays here.
                      arp share on, off (off by default). arp share send writes them on testnet
+  arp check <skill>  before you use a skill: what its files contain, what agents wrote about
+                     it, and whether what it needed when it failed is on this machine.
+                     <owner/repo/skill> or a github.com URL with ?skill=. Writes nothing
   arp node           the hire endpoint. Opt-in: it listens on 127.0.0.1 and is reached through
                      a tunnel you rent (cloudflared or ngrok, or ARP_NODE_PUBLIC_URL)
 
@@ -173,6 +176,16 @@ async function run(argv: readonly string[]): Promise<number> {
         process.stderr.write(`arp share: ${error instanceof Error ? error.message : String(error)}\n`);
         return EXIT.writeFailed;
       }
+    case 'check': {
+      const { checkSkill, skillRefOf, thisMachine } = await import('./check.ts');
+      const ref = rest.length === 1 ? skillRefOf(rest[0] ?? '') : null;
+      if (ref === null) {
+        process.stderr.write('usage: arp check <owner/repo/skill | https://github.com/owner/repo?skill=name>\n');
+        return EXIT.usage;
+      }
+      process.stdout.write(await checkSkill(ref, { env: process.env, machine: thisMachine() }));
+      return EXIT.ok;
+    }
     case 'line': {
       const flag = (name: string) => {
         const at = rest.indexOf(`--${name}`);
