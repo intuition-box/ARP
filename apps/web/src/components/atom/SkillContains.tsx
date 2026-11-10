@@ -96,8 +96,10 @@ function More({count, cut}: {count: number; cut: boolean}) {
     return <span className="text-[color:var(--color-steel)]">{` +${Math.max(count, 0)}${cut ? "+" : ""}`}</span>;
 }
 
-function Names({names, cut}: {names: readonly string[]; cut: boolean}) {
-    if (names.length === 0) return <None />;
+/** A list cut at what a 26rem column holds, the rest counted; `empty` when there are none. */
+export function Names({names, cut, empty}: {names: readonly string[]; cut: boolean; empty?: string}) {
+    if (names.length === 0)
+        return empty === undefined ? <None /> : <span className="text-[color:var(--color-steel)]">{empty}</span>;
     return (
         <span className="[overflow-wrap:anywhere]">
             {names.slice(0, SHOWN).join(", ")}

@@ -10,8 +10,7 @@ import type {SieveReading} from "./agents-reachable";
  * x402 payments, the auth schemes it names, and whether it answered in the sieve's dated reading
  * (task 96, `packages/protocol/src/agent-contents.ts`). The agent-side twin of a skill's "Contains".
  *
- * **Ready for the agent page, not on it.** The page is being reworked on another branch, so this is
- * the service and `useAgentContents` the hook; `docs/tasks/96` says how to drop them in.
+ * On the agent page since task 104, through `useAgentContents` and `components/agent/AgentContains.tsx`.
  *
  * The document is read the way `agent-endpoints.ts` reads it, in the browser; the sieve's row is the
  * bundled reading `/agents` already uses, so nothing here probes an agent.

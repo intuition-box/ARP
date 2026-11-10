@@ -18,6 +18,7 @@ import {identityRegistryFor} from "../lib/deployments";
 import {AgentClaims, AgentDeclareCard} from "../components/agent/AgentClaims";
 import {SectionTabs} from "../components/agent/SectionTabs";
 import {AgentEndpoints} from "../components/agent/AgentEndpoints";
+import {AgentContains} from "../components/agent/AgentContains";
 import {AgentTrustIndex} from "../components/agent/AgentTrustIndex";
 import {useAgentLines} from "../hooks/use-agent-lines";
 import {actionCardClass} from "../lib/surface-class";
@@ -356,6 +357,16 @@ function AgentTrustPanelBody() {
                                 nothing when the reading did not ask about any of them. */}
                             <div className="mt-4 empty:hidden">
                                 <AgentTrustIndex registrationFile={view.registrationFile} />
+                            </div>
+                            {/* What its document declares and whether it answered (task 104). */}
+                            <div className="mt-4">
+                                <AgentContains
+                                    agent={{
+                                        registrationFile: view.registrationFile,
+                                        chainId: ref.chainId,
+                                        tokenId: view.tokenId,
+                                    }}
+                                />
                             </div>
                         </div>
 
