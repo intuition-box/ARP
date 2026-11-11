@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-182 decisions. Newest last. `choices/README.md` says when to write one.
+183 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -229,3 +229,4 @@ Read these before relying on them.
 | [0190](0190-a-tool-url-with-a-value-is-refused-wherever-it-is-listed.md) | 2026-11-11 | Accepted | A tool URL that carries a value is refused wherever it is listed, never stripped |
 | [0191](0191-ask-once-after-the-first-result-with-always.md) | 2026-11-11 | Accepted | Sharing is asked once, after the first skill result, with "always" |
 | [0193](0193-the-web-page-on-an-agent-offers-no-market.md) | 2026-11-11 | Accepted | the web page on an agent offers no market and no declaration |
+| [0194](0194-the-import-is-on-testnet-whatever-the-toggle.md) | 2026-11-11 | Accepted | The import is on testnet 13579, whatever the toggle says |

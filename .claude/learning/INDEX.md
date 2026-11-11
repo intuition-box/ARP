@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-119 entries, one per completed task. Written by `task-verifier` on a pass.
+120 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -125,3 +125,4 @@
 | [113](113-a-402-is-not-a-refusal.md) | `docs/tasks/125-a-402-is-not-a-refusal.md` | PASS (second pass; the first failed on two doc sites) | The hook tells x402's first 402 from a refusal, and a refusal from paid with nothing back |
 | [114](114-ask-once-to-share.md) | `docs/tasks/126-ask-once-to-share.md` | PASS (second pass; the first failed because "always" published every result already kept) | Ask once whether to share, with "always" |
 | [116](116-the-agent-page-is-for-reading.md) | `docs/tasks/128-the-agent-page-is-for-reading.md` | PASS (round 2) | The agent page is for reading |
+| [117](117-the-import-after-a-mint.md) | `docs/tasks/129-the-import-after-a-mint.md` | PASS (round 2; round 1 failed on missing tests and an uncited third-party claim) | The import after a mint |
