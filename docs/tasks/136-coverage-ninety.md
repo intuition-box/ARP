@@ -1,6 +1,6 @@
 # Task 136 — Coverage ninety
 
-**Status:** in progress, branch `test/coverage-90`, cut from `0b47689d`.
+**Status:** in progress, branch `test/coverage-90`, cut from `0b47689d`, rebased on `origin/dev` `4815c2b9`.
 **ADR:** `0198`.
 **Rules:** `code.md`, `workflow.md`, `claims.md`; `ui.md` for `apps/web`; `security.md` for `apps/sponsor`.
 **Required skills:** `arp-contributing`. **Reviewer:** none per domain (tests only, no product code
@@ -53,18 +53,21 @@ enforced any figure.
 
 ## Outcome
 
-Measured 2026-11-11 on the merged branch, each workspace's own `bun run test`:
+Measured 2026-11-11 at `abba75e9` (on `origin/dev` `4815c2b9`), by the root `bun run test`, which exits 0:
 
 | workspace | lines before → after | branches before → after | excluded, with the reason in the config |
 | --- | --- | --- | --- |
 | `packages/protocol` | 94.2 → 98.7 % | 82.0 → 91.3 % | none |
 | `packages/graphql` | 52.1 → 100 % | 66.9 → 94.6 % | none |
 | `apps/mcp` | 62.4 → 97.9 % | 50.4 → 91.7 % | `src/fetch-skill.ts`, `src/session-log.ts` (run at import) |
-| `apps/web` | 74.7 → 99.2 % | 63.5 → 94.4 % | `src/main.tsx` (mounts React only), test helpers under `src/` |
+| `apps/web` | 74.7 → 99.05 % | 63.5 → 94.08 % | `src/main.tsx` (mounts React only), test helpers under `src/` |
 | `apps/hook` | 67 → 98.7 % | not measured | `src/hook.ts` (reads stdin, exits at import; run as a child process by its tests) |
 | `apps/sponsor` | 84.7 → 99.2 % | not measured | `src/main.ts` (reads the key file, binds a port) |
 | `apps/api` | 92.8 → 98.9 % | not measured | none |
 | `apps/cli` | 97.6 → 97.9 % | not measured | `src/cli.ts` (runs a command at import; tested as the built binary) |
+
+`apps/cli`'s figure includes `scripts/mcpb.ts`, which task 135 added after the lot measured: its build
+moved into `build(paths, run)` so a test runs it (100 % functions, 97.4 % lines).
 | `apps/node` | 99.7 % | not measured | `src/node.ts` (calls the RPC at import) |
 | `apps/probe` | 74.0 → 100 % | not measured | none |
 
@@ -83,11 +86,18 @@ Found and **not fixed** (product behaviour, out of this task's scope):
 4. `apps/web/src/pages/AtomPanel.test.tsx` and `components/brand/ActivityLog.test.tsx` made real
    requests through happy-dom's `fetch`. Fixed here: both stub it.
 
-Known weaknesses: under `apps/mcp` about half the new tests mock `@arp-protocol/core`'s readers, and
+Known weaknesses: `apps/hook/src/hook.ts` (397 lines) and `apps/sponsor/src/main.ts` (500 lines) are
+excluded entrypoints, reached only by child-process tests bun does not count. Also: under `apps/mcp` about half the new tests mock `@arp-protocol/core`'s readers, and
 five mock an ARP module that does the I/O, rather than `fetch`, as its existing tests already did.
 `apps/hook`'s tests read the real `~/.agents` and `~/.claude/skills` (bun's `homedir()` ignores `HOME`)
 and use `zq-` names to avoid a match. `intuition-source.test.ts` timed out once under three parallel
 coverage runs.
+
+## Evidence ladder
+
+Skill column, observed tier: the gate keeps the code that writes observed records (the hook's records,
+the content receipt, the sponsor's payment checks) at 90 % under test. It does not move ARP up a tier,
+and because every test mocks the network it proves nothing about the live record.
 
 ## Do not do in this task
 

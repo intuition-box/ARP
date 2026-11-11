@@ -36,6 +36,12 @@ the config.
 **Negative:**
 - Bun workspaces have no branch gate; their 90 % is weaker than the vitest one.
 - `scripts/` stays outside every gate (7 test files for 166 `.ts`, 2026-11-11).
+- **A recorded departure from `code.md`'s "mock at the network boundary only"**: about half of
+  `apps/mcp`'s new tests mock `@arp-protocol/core`'s readers, and five mock an ARP module that does
+  the I/O (`readWindow`, `agents.js`, `runSearch`, `needProblemInSkill`, `agentSender`), as the
+  workspace's existing tests already did. Each mocked module has direct tests of its own.
+- Excluded entrypoints (`apps/hook/src/hook.ts`, `apps/sponsor/src/main.ts` among them) hold logic
+  reached only by child-process tests, which bun does not count.
 - Coverage proves code ran under a test, not that the test asserts the right thing, and every test
   mocks the network: the live GraphQL schema, the chain and the deployed services stay unverified.
 
