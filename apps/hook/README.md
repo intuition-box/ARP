@@ -48,8 +48,19 @@ By hand: `cd apps/hook && bun run build`, then point its four events in `.claude
 
 ## What it writes, and what it never writes
 
-Per call: the tool, the outcome (`ok`, `tool_error`, `auth`, `timeout`, `unreachable`, `payment`),
-the status code, the duration and the size of the response.
+Per call: the tool, the outcome (`ok`, `tool_error`, `auth`, `timeout`, `unreachable`, and for
+x402 `payment_required`, `payment_refused`, `paid_no_delivery`), the status code, the duration and
+the size of the response.
+
+The three x402 outcomes (task 125). `payment_required` is the `402` that opens every x402 call, and
+is not a failure: whether it was then paid is the next line of that tool in the session.
+`payment_refused` is a payment refused or failed before it settled (insufficient funds, a rejected
+payment, `Settlement failed`). `paid_no_delivery` is written only when the call's own payload holds
+a settlement (`success: true`, a network, a transaction) and the call failed or came back empty.
+Claude Code passes an MCP result's content and not its `_meta`, where x402's MCP transport puts the
+settlement, so there it is seen only when the tool writes it in its result; otherwise a paid call
+that failed is `tool_error`. None of the three feeds a line: `arp share` sends skill lines only.
+Lines before 2026-11-11 may say `payment`, which held all three.
 
 **Never** the response itself, the arguments or the error text, because those can hold a key or a
 file. A URL is stripped of its query, credentials and anything that looks like a token. The first

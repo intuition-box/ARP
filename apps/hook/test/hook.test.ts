@@ -133,6 +133,28 @@ test('a failed MCP call is recorded with its category, code and duration, never 
   expect(text).not.toContain('arg-secret');
 });
 
+test("x402: the challenge is not marked failed, a settled call that failed is, and the transaction is not kept", () => {
+  const transaction = `0x${'cd'.repeat(32)}`;
+  const { lines } = run({
+    session_id: 's1',
+    hook_event_name: 'PostToolUse',
+    tool_name: 'mcp__weather__forecast',
+    tool_use_id: 'toolu_402',
+    tool_response: { status: 402, content: [{ type: 'text', text: '{"x402Version":2,"accepts":[]}' }] },
+  });
+  expect(lines[0]).toMatchObject({ outcome: 'payment_required', code: '402', response: { failed: false } });
+
+  const paid = run({
+    session_id: 's1',
+    hook_event_name: 'PostToolUse',
+    tool_name: 'mcp__weather__forecast',
+    tool_use_id: 'toolu_paid',
+    tool_response: { status: 502, paymentResponse: { success: true, transaction, network: 'eip155:8453' } },
+  });
+  expect(paid.lines.at(-1)).toMatchObject({ outcome: 'paid_no_delivery', code: '502', response: { failed: true } });
+  expect(readFileSync(log, 'utf8')).not.toContain(transaction);
+});
+
 test('an interrupted call writes nothing', () => {
   const { lines } = run({
     hook_event_name: 'PostToolUseFailure',

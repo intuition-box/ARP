@@ -110,13 +110,13 @@ describe('classifyCall', () => {
     });
   });
 
-  test('categories: auth, payment, timeout, unreachable, with the status code only', () => {
+  test('categories: auth, a payment asked for, timeout, unreachable, with the status code only', () => {
     expect(classifyCall(call({ error: 'HTTP 401 Unauthorized: bad token sk-1' }))).toEqual({
       outcome: 'auth',
       code: '401',
     });
     expect(classifyCall(call({ error: '402 Payment Required' }))).toEqual({
-      outcome: 'payment',
+      outcome: 'payment_required',
       code: '402',
     });
     expect(classifyCall(call({ error: 'request timed out' }))?.outcome).toBe('timeout');
@@ -126,6 +126,80 @@ describe('classifyCall', () => {
     expect(classifyCall(call({ error: 'upstream 502' }))).toEqual({
       outcome: 'tool_error',
       code: '502',
+    });
+  });
+
+  describe('x402 (task 125)', () => {
+    const failure = (error: string) => call({ event: 'PostToolUseFailure', hasResponse: false, response: undefined, error });
+    const settled = { success: true, transaction: `0x${'ab'.repeat(32)}`, network: 'eip155:8453', payer: `0x${'1'.repeat(40)}` };
+    // The MCP transport's challenge: `isError: true`, the `PaymentRequired` object as the text (coinbase/x402,
+    // specs/transports-v2/mcp.md, "Payment Required Signaling"). Claude Code fires PostToolUseFailure on it.
+    const challenge = JSON.stringify({
+      x402Version: 2,
+      error: 'Payment required',
+      resource: { url: 'mcp://tool/weather' },
+      accepts: [{ scheme: 'exact', network: 'eip155:84532', amount: '1000' }],
+    });
+
+    test("the first 402 of an x402 call is the challenge, not a failure: it was 'payment' until task 125", () => {
+      expect(classifyCall(failure(challenge))).toEqual({ outcome: 'payment_required', code: '402' });
+      expect(classifyCall(call({ response: { status: 402 } }))).toEqual({ outcome: 'payment_required', code: '402' });
+    });
+
+    test('a call that paid and answered is ok, whatever its text says about the 402', () => {
+      const text = `402 Payment Required, paid: ${JSON.stringify(settled)}\n{"temp":12}`;
+      expect(classifyCall(call({ response: [{ type: 'text', text }] }))).toEqual({ outcome: 'ok', code: null });
+    });
+
+    test('refused before it settled: funds, a rejected payment, Settlement failed, success false', () => {
+      expect(classifyCall(failure('payment rejected: insufficient funds'))?.outcome).toBe('payment_refused');
+      expect(classifyCall(failure(JSON.stringify({ x402Version: 2, error: 'Settlement failed', accepts: [] })))).toEqual({
+        outcome: 'payment_refused',
+        code: '402',
+      });
+      const header = { success: false, errorReason: 'insufficient_funds', transaction: '', network: 'eip155:8453' };
+      expect(classifyCall(call({ response: { status: 402, paymentResponse: header } }))?.outcome).toBe('payment_refused');
+    });
+
+    test('"success": false outside a payment is an ordinary tool error', () => {
+      expect(classifyCall(failure('{"success":false,"error":"row locked"}'))?.outcome).toBe('tool_error');
+    });
+
+    test('paid, nothing delivered: a settlement in the payload and a failure after it, with the later status', () => {
+      expect(classifyCall(failure(`402, then paid ${JSON.stringify(settled)}, then upstream 502`))).toEqual({
+        outcome: 'paid_no_delivery',
+        code: '502',
+      });
+      const base64 = Buffer.from(JSON.stringify(settled)).toString('base64');
+      expect(classifyCall(failure(`HTTP 500 after PAYMENT-RESPONSE: ${base64}`))).toEqual({
+        outcome: 'paid_no_delivery',
+        code: '500',
+      });
+      expect(classifyCall(call({ response: { content: [], paymentResponse: settled } }))).toEqual({
+        outcome: 'paid_no_delivery',
+        code: null,
+      });
+    });
+
+    test('a settlement with content back is ok; a shape the hook cannot read the content of stays ok', () => {
+      const answered = { content: [{ type: 'text', text: 'sunny' }], paymentResponse: settled };
+      expect(classifyCall(call({ response: answered }))?.outcome).toBe('ok');
+      expect(classifyCall(call({ response: { body: '', paymentResponse: settled } }))?.outcome).toBe('ok');
+    });
+
+    test('no settlement in the payload, no paid class: a paid call that failed is what failed', () => {
+      expect(classifyCall(failure('402 Payment Required, retried with payment, then upstream 502'))).toEqual({
+        outcome: 'tool_error',
+        code: '502',
+      });
+      expect(classifyCall(failure('402 Payment Required; request timed out'))?.outcome).toBe('timeout');
+      const short = 'settled {"success":true,"transaction":"0xabc","network":"eip155:8453"} but 502';
+      expect(classifyCall(failure(short))?.outcome).toBe('tool_error');
+    });
+
+    test("the word x402 alone is not a payment: an x402 tool's timeout is a timeout", () => {
+      expect(classifyCall(failure('x402 fetch: request timed out'))?.outcome).toBe('timeout');
+      expect(classifyCall(failure('x402-weather: getaddrinfo ENOTFOUND api.x'))?.outcome).toBe('unreachable');
     });
   });
 

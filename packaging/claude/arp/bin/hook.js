@@ -785,12 +785,21 @@ function installedFromReceipts(text) {
   return found;
 }
 // ../hook/src/classify.ts
+function isFailure(outcome) {
+  return outcome !== "ok" && outcome !== "payment_required";
+}
 var CANCELLED = /\b(interrupted|cancel(l)?ed|aborted) by (the )?user\b|\buser (rejected|denied|declined)\b|\bpermission denied by user\b|\buser doesn't want to (proceed|take this action)\b/i;
 var AUTH = /\b(unauthori[sz]ed|forbidden|invalid (api )?(key|token)|authentication|not authenticated|expired token)\b/i;
 var TIMEOUT = /\b(timed? ?out|timeout|deadline exceeded|ETIMEDOUT)\b/i;
 var UNREACHABLE = /\b(ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|getaddrinfo|certificate|TLS|SSL|socket hang up|connection refused|fetch failed)\b/i;
-var PAYMENT = /\b(payment required|insufficient (funds|balance)|payment (failed|refused|rejected)|x402)\b/i;
-var STATUS = /\b(40[123]|429|5\d\d)\b/;
+var CHALLENGE = /\bpayment required\b|"x402Version"[\s\S]{0,2000}"accepts"|"accepts"[\s\S]{0,2000}"x402Version"/i;
+var REFUSED = /\binsufficient[ _](funds|balance)\b|\bpayment (failed|refused|rejected|declined|invalid)\b|\bsettlement failed\b/i;
+var REFUSED_IN_X402 = /"success"\s*:\s*false|"errorReason"\s*:\s*"[^"]+"|\binvalid_[a-z_]*(signature|payload|payment)[a-z_]*\b/i;
+var ABOUT_PAYMENT = /\bx402|\bpayment\b/i;
+var TRANSACTION = /^(0x[0-9a-fA-F]{64}|[1-9A-HJ-NP-Za-km-z]{64,90})$/;
+var FLAT_OBJECT = /\{[^{}]{0,2000}\}/g;
+var RESPONSE_HEADER = /\b(?:x-)?payment-response\s*[:=]\s*"?([A-Za-z0-9+/=_-]{16,4000})/gi;
+var STATUS = /\b(40[123]|429|5\d\d)\b/g;
 function isRecord2(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -831,21 +840,96 @@ function statusOf(call) {
 function flaggedError(response) {
   return isRecord2(response) && (response.isError === true || response.is_error === true);
 }
+function isSettled(value) {
+  return isRecord2(value) && value.success === true && typeof value.network === "string" && typeof value.transaction === "string" && TRANSACTION.test(value.transaction);
+}
+function stringsOf(value, depth = 0, out = []) {
+  if (typeof value === "string")
+    out.push(value);
+  else if (depth < 4 && Array.isArray(value))
+    for (const item of value)
+      stringsOf(item, depth + 1, out);
+  else if (depth < 4 && isRecord2(value))
+    for (const item of Object.values(value))
+      stringsOf(item, depth + 1, out);
+  return out;
+}
+function isUnsettled(value) {
+  return isRecord2(value) && value.success === false && typeof value.network === "string";
+}
+function anyIn(value, test, depth = 0) {
+  if (test(value))
+    return true;
+  if (depth >= 4)
+    return false;
+  if (Array.isArray(value))
+    return value.some((item) => anyIn(item, test, depth + 1));
+  if (isRecord2(value))
+    return Object.values(value).some((item) => anyIn(item, test, depth + 1));
+  return false;
+}
+function parsed(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+function decoded(base64) {
+  try {
+    return Buffer.from(base64.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
+  } catch {
+    return "";
+  }
+}
+function settledInText(text) {
+  for (const [object] of text.matchAll(FLAT_OBJECT))
+    if (isSettled(parsed(object)))
+      return true;
+  for (const match of text.matchAll(RESPONSE_HEADER))
+    if (isSettled(parsed(decoded(match[1] ?? ""))))
+      return true;
+  return false;
+}
+function settlementIn(call) {
+  if (anyIn(call.response, isSettled))
+    return true;
+  const texts = [...call.error === null ? [] : [call.error], ...stringsOf(call.response)];
+  return texts.some(settledInText);
+}
+function emptyContent(response) {
+  const blocks = Array.isArray(response) ? response : isRecord2(response) && Array.isArray(response.content) ? response.content : null;
+  if (typeof response === "string")
+    return response.trim().length === 0;
+  if (blocks === null)
+    return false;
+  return blocks.every((block) => !isRecord2(block) || typeof block.text !== "string" || block.text.trim().length === 0 || isSettled(parsed(block.text)));
+}
 function classifyCall(call) {
   if (call.interrupted)
     return null;
   const failed = call.event === "PostToolUseFailure" || call.error !== null || flaggedError(call.response);
   const status = statusOf(call);
-  if (!failed && (status === null || status < 400))
-    return { outcome: "ok", code: null };
+  if (!failed && (status === null || status < 400)) {
+    return settlementIn(call) && emptyContent(call.response) ? { outcome: "paid_no_delivery", code: null } : { outcome: "ok", code: null };
+  }
   const text = failureText(call);
   if (CANCELLED.test(text))
     return null;
-  const found = STATUS.exec(text);
-  const match = status ?? (found === null ? null : Number(found[0]));
+  const found = [...text.matchAll(STATUS)].map((one) => Number(one[0]));
+  const after = status !== null && status !== 402 ? status : found.find((one) => one !== 402) ?? null;
+  const challenge = status === 402 || status === null && (found.includes(402) || CHALLENGE.test(text));
+  const match = after ?? (challenge ? 402 : null);
   const code = match === null ? null : String(match);
-  if (match === 402 || PAYMENT.test(text))
-    return { outcome: "payment", code };
+  if (settlementIn(call))
+    return { outcome: "paid_no_delivery", code: after === null ? null : String(after) };
+  const refused = anyIn(call.response, isUnsettled) || REFUSED.test(text) || (challenge || ABOUT_PAYMENT.test(text)) && REFUSED_IN_X402.test(text);
+  if (refused) {
+    return { outcome: "payment_refused", code };
+  }
+  if (challenge && after === null && !TIMEOUT.test(text) && !UNREACHABLE.test(text)) {
+    return { outcome: "payment_required", code };
+  }
   if (match === 401 || match === 403 || AUTH.test(text))
     return { outcome: "auth", code };
   if (TIMEOUT.test(text))
@@ -1077,18 +1161,18 @@ function toolCallOf(raw) {
 
 // ../../packages/protocol/src/content-path.ts
 function skillRefFromUrl3(url) {
-  let parsed;
+  let parsed2;
   try {
-    parsed = new URL(url.includes("://") ? url : `https://${url}`);
+    parsed2 = new URL(url.includes("://") ? url : `https://${url}`);
   } catch {
     return null;
   }
-  if (parsed.hostname.replace(/^www\./, "") !== "github.com")
+  if (parsed2.hostname.replace(/^www\./, "") !== "github.com")
     return null;
-  const skill = parsed.searchParams.get("skill");
+  const skill = parsed2.searchParams.get("skill");
   if (skill === null || skill.length === 0)
     return null;
-  const [owner, repo] = parsed.pathname.replace(/^\/+/, "").replace(/\/+$/, "").replace(/\.git$/, "").split("/");
+  const [owner, repo] = parsed2.pathname.replace(/^\/+/, "").replace(/\/+$/, "").replace(/\.git$/, "").split("/");
   if (owner === undefined || repo === undefined)
     return null;
   if (owner.length === 0 || repo.length === 0)
@@ -4355,9 +4439,9 @@ function answerOf(response) {
     if (typeof text !== "string")
       continue;
     try {
-      const parsed = JSON.parse(text);
-      if (typeof parsed === "object" && parsed !== null)
-        return parsed;
+      const parsed2 = JSON.parse(text);
+      if (typeof parsed2 === "object" && parsed2 !== null)
+        return parsed2;
     } catch {
       continue;
     }
@@ -4457,7 +4541,7 @@ function appendFailure(line) {
 }
 function recordSkillFailure(call, cwd) {
   const classified = classifyCall(call);
-  if (classified === null || classified.outcome === "ok" || call.session === null)
+  if (classified === null || !isFailure(classified.outcome) || call.session === null)
     return null;
   const command = call.input?.["command"];
   if (typeof command !== "string")
@@ -4752,7 +4836,7 @@ function responseOf(call, outcome) {
   } catch {
     bytes = 0;
   }
-  return { answered: raw !== null, bytes, failed: outcome !== "ok" };
+  return { answered: raw !== null, bytes, failed: isFailure(outcome) };
 }
 function readString2(from, key) {
   const value = from?.[key];
@@ -4790,19 +4874,19 @@ function whatOf(call, cwd, fetched) {
 var raw = "";
 for await (const chunk of process.stdin)
   raw += chunk;
-var parsed;
+var parsed2;
 try {
-  parsed = JSON.parse(raw);
+  parsed2 = JSON.parse(raw);
 } catch {
   process.exit(0);
 }
 if (process.argv.includes("--capture"))
-  capture(parsed, join5(homedir3(), ".arp", "captures"));
-var event = eventOf(parsed);
+  capture(parsed2, join5(homedir3(), ".arp", "captures"));
+var event = eventOf(parsed2);
 var handler = event === null ? undefined : ROUTES[event];
 if (handler !== undefined)
-  await route(handler, parsed);
-var call = toolCallOf(parsed);
+  await route(handler, parsed2);
+var call = toolCallOf(parsed2);
 if (call === null)
   process.exit(0);
 var cwd = call.cwd ?? process.cwd();

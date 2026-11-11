@@ -705,7 +705,8 @@ looks like a token (long, letters and digits mixed). The first time it creates `
 `.arp/.gitignore` containing `*`, so your repository does not commit the log by accident.
 
 Per call it writes the call id, an outcome (`ok`, `tool_error`, `auth`, `timeout`, `unreachable`,
-`payment`), at most a status code such as `401`, the duration the runtime measured, and **the size
+and for x402 `payment_required`, which is the ordinary first `402` and not a failure,
+`payment_refused` or `paid_no_delivery`, task 125), at most a status code such as `401`, the duration the runtime measured, and **the size
 of the response, never its content, its arguments or the error's text**. A response can hold a key
 or a file, and this log later feeds a declaration. A call you cancel is not written.
 

@@ -16,7 +16,7 @@ import { publishableNeed } from '../../../packages/protocol/src/declare/line-nee
 import aliasTable from '../../../data/catalogue/domain-aliases.json';
 import skillNodes from '../../../data/catalogue/skill-nodes-13579.json';
 
-import { classifyCall, failureText } from './classify.ts';
+import { classifyCall, failureText, isFailure } from './classify.ts';
 import type { ToolCall } from './payload.ts';
 
 /** The hook can tell these three from a command's output. `not-the-right-tool` is a judgement. */
@@ -311,7 +311,7 @@ export function appendFailure(line: FailureLine): boolean {
  */
 export function recordSkillFailure(call: ToolCall, cwd: string): FailureLine | null {
   const classified = classifyCall(call);
-  if (classified === null || classified.outcome === 'ok' || call.session === null) return null;
+  if (classified === null || !isFailure(classified.outcome) || call.session === null) return null;
   const command = call.input?.['command'];
   if (typeof command !== 'string') return null;
   const reason = failureReason(failureText(call));

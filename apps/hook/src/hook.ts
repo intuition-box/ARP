@@ -106,7 +106,7 @@ import { dirname, join } from 'node:path';
 
 import { type FetchedRef, normaliseToolUrl, refForInvocation } from '@arp-protocol/core';
 
-import { type Classified, classifyCall } from './classify.ts';
+import { type Classified, classifyCall, isFailure } from './classify.ts';
 import { readMcpServers, serverUrlOf } from './mcp-config.ts';
 import { capture } from './capture.ts';
 import { eventOf, type PayloadFormat, type ToolCall, toolCallOf } from './payload.ts';
@@ -150,7 +150,10 @@ type Invocation = {
   call: string | null;
   /** How the payload was written, not who wrote it — see `payload.ts`. */
   format: PayloadFormat;
-  /** `classify.ts`. A line written before 2026-10-30 has none: failures were not seen then. */
+  /**
+   * `classify.ts`. A line written before 2026-10-30 has none: failures were not seen then. One written
+   * before 2026-11-11 may say `payment`, which held x402's challenge, a refusal and a failure after paying.
+   */
   outcome: Classified['outcome'];
   /** An HTTP status, when the failure carried one. Never the message. */
   code: string | null;
@@ -167,7 +170,7 @@ type Invocation = {
    * ```
    * answered  the response existed at all — the call went through
    * bytes     its size, which separates "answered" from "answered something"
-   * failed    whether `outcome` is anything but `ok`
+   * failed    whether `outcome` is a failure: anything but `ok` and x402's `payment_required`
    * ```
    *
    * **Never the content.** A tool's response can hold an API key, customer data or a file's
@@ -252,7 +255,7 @@ function responseOf(call: ToolCall, outcome: Classified['outcome']): Invocation[
     // A circular response is still a response. The size is unknown, the fact is not.
     bytes = 0;
   }
-  return { answered: raw !== null, bytes, failed: outcome !== 'ok' };
+  return { answered: raw !== null, bytes, failed: isFailure(outcome) };
 }
 
 function readString(from: Record<string, unknown> | undefined, key: string): string | null {

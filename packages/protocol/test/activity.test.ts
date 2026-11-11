@@ -70,6 +70,13 @@ describe("activityFromLine", () => {
         });
     });
 
+    it("the three x402 outcomes are read, and so is the older `payment` they replaced", () => {
+        for (const outcome of ["payment_required", "payment_refused", "paid_no_delivery", "payment"]) {
+            const event = activityFromLine("session", JSON.stringify({at: "x", kind: "mcp", name: "w", outcome}));
+            expect(event).toMatchObject({outcome});
+        }
+    });
+
     it("a hook line from before 33a has no outcome and no duration, not a made-up one", () => {
         const event = activityFromLine(
             "session",

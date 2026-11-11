@@ -47,7 +47,9 @@ sequenceDiagram
 
 ## What the hook records
 
-The hook runs after every tool call and records which skills and MCP tools the session used, in `.arp/session.jsonl`: the tool, an outcome (`ok`, `tool_error`, `auth`, `timeout`, `unreachable`, `payment`), the status code, the duration and the size of the response. Never the response, the arguments or the error text.
+The hook runs after every tool call and records which skills and MCP tools the session used, in `.arp/session.jsonl`: the tool, an outcome (`ok`, `tool_error`, `auth`, `timeout`, `unreachable`, `payment_required`, `payment_refused`, `paid_no_delivery`), the status code, the duration and the size of the response. Never the response, the arguments or the error text.
+
+For an x402 call, `payment_required` is the `402` every such call starts with, not a failure. `payment_refused` is a payment refused before it settled. `paid_no_delivery` is written only when the call's own result shows a settled payment and nothing came back. None of the three is sent anywhere.
 
 It writes a failure to `~/.arp/failures.jsonl` only when all of these hold:
 

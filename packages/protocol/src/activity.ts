@@ -23,13 +23,20 @@ import {multiVaultDeclareAbi} from "./declare/multivault.js";
 
 export type ActivitySource = "session" | "receipt" | "sent";
 
-/** What the hook classified a call's result as (ADR `0090`). Lines before 2026-10-30 carry none. */
+/**
+ * What the hook classified a call's result as (ADR `0090`, `apps/hook/src/classify.ts`). Lines before
+ * 2026-10-30 carry none. `payment` is only on lines before 2026-11-11, when it held x402's challenge,
+ * a refusal and a failure after paying; the three are apart since (task 125).
+ */
 export type InvocationOutcome =
     | "ok"
     | "tool_error"
     | "auth"
     | "timeout"
     | "unreachable"
+    | "payment_required"
+    | "payment_refused"
+    | "paid_no_delivery"
     | "payment";
 
 /** A MultiVault call, decoded from the calldata that was signed. */
@@ -85,6 +92,9 @@ const OUTCOMES: readonly InvocationOutcome[] = [
     "auth",
     "timeout",
     "unreachable",
+    "payment_required",
+    "payment_refused",
+    "paid_no_delivery",
     "payment",
 ];
 const HEX = /^0x[0-9a-fA-F]*$/;

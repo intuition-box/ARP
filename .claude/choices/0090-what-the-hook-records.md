@@ -1,6 +1,8 @@
 # 0090 — What the hook records: outcome and identity, never content or credentials
 
 **Status:** Accepted. Extended 2026-10-30 by task 33i — see "Extension: captures" at the end.
+Outcome list amended 2026-11-11 by task 125 (`docs/tasks/125-a-402-is-not-a-refusal.md`): `payment` is
+split into `payment_required` (x402's first 402, not a failure), `payment_refused` and `paid_no_delivery`.
 **Date:** 2026-10-30
 **Triggered by:** task `docs/tasks/33-one-installer.md` 33a, and its first `task-verifier` FAIL.
 Post-mortem `.claude/learning/23-one-installer-33a.md`.
