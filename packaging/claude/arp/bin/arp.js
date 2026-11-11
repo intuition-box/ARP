@@ -21931,41 +21931,6 @@ var init_market = __esm(() => {
   };
 });
 
-// ../../packages/protocol/dist/declare/tool-atom.js
-function intuitionToolAtomLookup(config) {
-  const transport = config.transport ?? createGraphqlTransport({
-    url: config.graphqlUrl,
-    fetch: config.fetch ?? defaultFetch(),
-    ...config.timeoutMs === undefined ? {} : { timeoutMs: config.timeoutMs }
-  });
-  return {
-    async findByUrl(url) {
-      const data = await transport.request(BY_URL_QUERY, { url });
-      const rows = Array.isArray(data["atoms"]) ? data["atoms"] : [];
-      const candidates = [];
-      for (const row of rows) {
-        if (!isRecord(row))
-          continue;
-        const termId = readString(row, "term_id");
-        if (termId === null)
-          continue;
-        candidates.push({
-          termId,
-          label: readString(row, "label"),
-          uri: readString(row, "data")
-        });
-      }
-      return candidates;
-    }
-  };
-}
-function derivesItsOwnAtom(uri) {
-  return /^(ipfs|ar):\/\//i.test(uri.trim());
-}
-var init_tool_atom = __esm(() => {
-  init_dist();
-});
-
 // ../../packages/protocol/dist/declare/thing-cid.js
 function thingDocument(thing) {
   return JSON.stringify({
@@ -22084,6 +22049,152 @@ var init_tool_thing = __esm(() => {
   };
 });
 
+// ../../packages/protocol/dist/endpoint-redaction.js
+function looksPersonal(segment) {
+  if (segment === REDACTED_SEGMENT)
+    return false;
+  let decoded = segment;
+  try {
+    decoded = decodeURIComponent(segment);
+  } catch {}
+  return [segment, decoded].some((form2) => PERSONAL.some((test) => test(form2)));
+}
+function redactEndpointUrl(url) {
+  const match = PARTS.exec(url);
+  if (match === null)
+    throw new EndpointNotRedactableError(url, "not a URL with a scheme and a host");
+  const scheme = match[1];
+  const authority = match[2];
+  if (!/^https?:\/\/$/i.test(scheme))
+    throw new EndpointNotRedactableError(url, `scheme ${scheme} is not http or https`);
+  if (authority.includes("@"))
+    throw new EndpointNotRedactableError(url, "it carries credentials (user:pass@)");
+  if (authority === "" || authority.startsWith(":"))
+    throw new EndpointNotRedactableError(url, "no host");
+  const path = match[3].split("/").map(reduce).join("/");
+  const names = (match[4] ?? "").split("&").filter((part) => part.indexOf("=") > 0).map((part) => reduce(part.slice(0, part.indexOf("="))));
+  const query = names.length === 0 ? "" : `?${names.map((name) => `${name}=`).join("&")}`;
+  return `${scheme}${authority}${path}${query}`;
+}
+var REDACTED_SEGMENT = ":id", EndpointNotRedactableError, PARTS, PERSONAL, reduce = (segment) => segment !== "" && looksPersonal(segment) ? REDACTED_SEGMENT : segment;
+var init_endpoint_redaction = __esm(() => {
+  EndpointNotRedactableError = class EndpointNotRedactableError extends Error {
+    input;
+    constructor(input, why) {
+      super(`${JSON.stringify(input)} cannot be written as an endpoint: ${why}`);
+      this.name = "EndpointNotRedactableError";
+      this.input = input;
+    }
+  };
+  PARTS = /^([A-Za-z][A-Za-z0-9+.-]*:\/\/)([^/?#]*)([^?#]*)(?:\?([^#]*))?(?:#.*)?$/;
+  PERSONAL = [
+    (s) => s.includes("@"),
+    (s) => /0x[0-9a-f]{40}/i.test(s),
+    (s) => /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(s),
+    (s) => /\d{6}/.test(s),
+    (s) => (s.match(/[0-9a-f]{16,}/gi) ?? []).some((run) => /\d/.test(run)),
+    (s) => /^[\d\s+().-]+$/.test(s) && (s.match(/\d/g) ?? []).length >= 7,
+    (s) => /\s/.test(s),
+    (s) => s.length > 20 && /^[A-Za-z0-9+/=_-]+$/.test(s) && /[A-Z]/.test(s) && /[a-z]/.test(s) && /\d/.test(s)
+  ];
+});
+
+// ../../packages/protocol/dist/tool-url-values.js
+function publishableToolUrl(url) {
+  if (GITHUB.test(url)) {
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return { ok: false, why: "it is not a URL", listable: null };
+    }
+    const names = [...parsed.searchParams.keys()];
+    const others = [...new Set(names.filter((name) => name !== "skill"))];
+    if (others.length === 0 && names.length <= 1 && parsed.hash === "")
+      return { ok: true };
+    const skill = parsed.searchParams.get("skill");
+    const listable = normaliseToolUrl(`${parsed.origin}${parsed.pathname}${skill === null ? "" : `?skill=${encodeURIComponent(skill)}`}`);
+    const why = others.length > 0 ? `its query carries ${others.join(", ")}` : "its query repeats skill";
+    return { ok: false, why, listable };
+  }
+  let redacted;
+  try {
+    redacted = redactEndpointUrl(url);
+  } catch (error) {
+    if (error instanceof EndpointNotRedactableError)
+      return { ok: false, why: error.message, listable: null };
+    throw error;
+  }
+  if (redacted === url)
+    return { ok: true };
+  const valued = new Set((url.split("#")[0] ?? "").split("?").slice(1).join("?").split("&").filter((part) => part.indexOf("=") > 0 && part.slice(part.indexOf("=") + 1) !== "").map((part) => part.slice(0, part.indexOf("="))));
+  const parts = [];
+  if (valued.size > 0)
+    parts.push(`a value for ${[...valued].join(", ")}`);
+  const pathOf = (u) => u.split(/[?#]/)[0];
+  if (pathOf(redacted) !== pathOf(url))
+    parts.push("a path segment or name that looks personal");
+  if (url.includes("#"))
+    parts.push("a fragment");
+  return { ok: false, why: `it carries ${parts.length === 0 ? "a value" : parts.join(" and ")}`, listable: redacted };
+}
+function assertPublishableToolUrl(url) {
+  const verdict = publishableToolUrl(url);
+  if (!verdict.ok)
+    throw new ToolUrlCarriesValuesError(url, verdict.why, verdict.listable);
+}
+var GITHUB, ToolUrlCarriesValuesError;
+var init_tool_url_values = __esm(() => {
+  init_tool_thing();
+  init_endpoint_redaction();
+  GITHUB = /^https?:\/\/(?:www\.)?github\.com(?:[/?#]|$)/i;
+  ToolUrlCarriesValuesError = class ToolUrlCarriesValuesError extends Error {
+    url;
+    listable;
+    constructor(url, why, listable) {
+      super(`${url} cannot be listed: ${why}. A tool's URL is written publicly and for good, so remove it` + (listable === null ? "." : ` and list ${listable}.`));
+      this.name = "ToolUrlCarriesValuesError";
+      this.url = url;
+      this.listable = listable;
+    }
+  };
+});
+
+// ../../packages/protocol/dist/declare/tool-atom.js
+function intuitionToolAtomLookup(config) {
+  const transport = config.transport ?? createGraphqlTransport({
+    url: config.graphqlUrl,
+    fetch: config.fetch ?? defaultFetch(),
+    ...config.timeoutMs === undefined ? {} : { timeoutMs: config.timeoutMs }
+  });
+  return {
+    async findByUrl(url) {
+      const data = await transport.request(BY_URL_QUERY, { url });
+      const rows = Array.isArray(data["atoms"]) ? data["atoms"] : [];
+      const candidates = [];
+      for (const row of rows) {
+        if (!isRecord(row))
+          continue;
+        const termId = readString(row, "term_id");
+        if (termId === null)
+          continue;
+        candidates.push({
+          termId,
+          label: readString(row, "label"),
+          uri: readString(row, "data")
+        });
+      }
+      return candidates;
+    }
+  };
+}
+function derivesItsOwnAtom(uri) {
+  return /^(ipfs|ar):\/\//i.test(uri.trim());
+}
+var init_tool_atom = __esm(() => {
+  init_dist();
+});
+
 // ../../packages/protocol/dist/declare/plan.js
 function once(read) {
   let pending = null;
@@ -22112,6 +22223,7 @@ async function resolveToolAtom(uri, reads, lookup) {
     });
   }
   const normalised = normaliseToolUrl(uri);
+  assertPublishableToolUrl(normalised);
   if (lookup !== undefined) {
     const candidates = await findExistingToolAtoms(lookup, uri, normalised);
     if (candidates.length > 1)
@@ -22287,6 +22399,7 @@ async function prepareStakeOnUsed(params) {
 var EmptyPlanError, NonPositiveAmountError, AmbiguousToolAtomError, BelowMinDepositError, ZeroPositionError;
 var init_plan = __esm(() => {
   init_terms();
+  init_tool_url_values();
   init_multivault();
   init_tool_atom();
   init_tool_thing();
@@ -22453,56 +22566,6 @@ var init_attestors = __esm(() => {
     "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f",
     "0xE596096F4176b682E300d73963e7B04B383C1AA1",
     "0x77939A4c276f3E549276CEB3A09CDa1fF58b7ec9"
-  ];
-});
-
-// ../../packages/protocol/dist/endpoint-redaction.js
-function looksPersonal(segment) {
-  if (segment === REDACTED_SEGMENT)
-    return false;
-  let decoded = segment;
-  try {
-    decoded = decodeURIComponent(segment);
-  } catch {}
-  return [segment, decoded].some((form2) => PERSONAL.some((test) => test(form2)));
-}
-function redactEndpointUrl(url) {
-  const match = PARTS.exec(url);
-  if (match === null)
-    throw new EndpointNotRedactableError(url, "not a URL with a scheme and a host");
-  const scheme = match[1];
-  const authority = match[2];
-  if (!/^https?:\/\/$/i.test(scheme))
-    throw new EndpointNotRedactableError(url, `scheme ${scheme} is not http or https`);
-  if (authority.includes("@"))
-    throw new EndpointNotRedactableError(url, "it carries credentials (user:pass@)");
-  if (authority === "" || authority.startsWith(":"))
-    throw new EndpointNotRedactableError(url, "no host");
-  const path = match[3].split("/").map(reduce).join("/");
-  const names = (match[4] ?? "").split("&").filter((part) => part.indexOf("=") > 0).map((part) => reduce(part.slice(0, part.indexOf("="))));
-  const query = names.length === 0 ? "" : `?${names.map((name) => `${name}=`).join("&")}`;
-  return `${scheme}${authority}${path}${query}`;
-}
-var REDACTED_SEGMENT = ":id", EndpointNotRedactableError, PARTS, PERSONAL, reduce = (segment) => segment !== "" && looksPersonal(segment) ? REDACTED_SEGMENT : segment;
-var init_endpoint_redaction = __esm(() => {
-  EndpointNotRedactableError = class EndpointNotRedactableError extends Error {
-    input;
-    constructor(input, why) {
-      super(`${JSON.stringify(input)} cannot be written as an endpoint: ${why}`);
-      this.name = "EndpointNotRedactableError";
-      this.input = input;
-    }
-  };
-  PARTS = /^([A-Za-z][A-Za-z0-9+.-]*:\/\/)([^/?#]*)([^?#]*)(?:\?([^#]*))?(?:#.*)?$/;
-  PERSONAL = [
-    (s) => s.includes("@"),
-    (s) => /0x[0-9a-f]{40}/i.test(s),
-    (s) => /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(s),
-    (s) => /\d{6}/.test(s),
-    (s) => (s.match(/[0-9a-f]{16,}/gi) ?? []).some((run) => /\d/.test(run)),
-    (s) => /^[\d\s+().-]+$/.test(s) && (s.match(/\d/g) ?? []).length >= 7,
-    (s) => /\s/.test(s),
-    (s) => s.length > 20 && /^[A-Za-z0-9+/=_-]+$/.test(s) && /[A-Z]/.test(s) && /[a-z]/.test(s) && /\d/.test(s)
   ];
 });
 

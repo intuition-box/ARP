@@ -1,6 +1,7 @@
 import type {Address, Hex} from "viem";
 
 import {USES} from "../sources/intuition/terms.js";
+import {assertPublishableToolUrl} from "../tool-url-values.js";
 import type {AgentIdentityAtom} from "../verify/subject.js";
 import {
     atomDataForUri,
@@ -160,6 +161,9 @@ async function findExistingToolAtoms(
  * Anything else — a `did:`, an `npm:` specifier, a bare name — falls back to a bare URI atom with
  * `bareUrlWarning`, because there is no URL to normalise and nothing to derive a document from.
  *
+ * An http(s) URL whose normalised form carries a value (`?api_key=…`, a token in its path) is refused with
+ * `ToolUrlCarriesValuesError` before either path 2 or 3 (task 123, ADR `0190`).
+ *
  * The 84/78/77 figures in the warning string come from `scripts/measure/tool-atom-shape.ts`.
  */
 async function resolveToolAtom(
@@ -197,6 +201,8 @@ async function resolveToolAtom(
     }
 
     const normalised = normaliseToolUrl(uri);
+    // Before the lookup, so a key in the URL reaches neither the index nor the chain (task 123, ADR `0190`).
+    assertPublishableToolUrl(normalised);
 
     if (lookup !== undefined) {
         const candidates = await findExistingToolAtoms(lookup, uri, normalised);

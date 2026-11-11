@@ -17,7 +17,7 @@ Only what you send yourself: by `arp line`, by `arp share send`, or by a call yo
 | The agent | The first line you send | `Agent 13579:<id>`, and the address that holds it: a key ARP makes on your machine (`~/.arp/agent-key`), not your own wallet |
 | A line | Each `arp line`, each line `arp share send` sends | The tool's public URL, a domain from the category tree, the outcome, a closed reason, and with a missing program or key its name as the skill's SKILL.md writes it, never its value |
 | A payment level | An x402 line, with `--payment-tx` | The network, the transaction hash, and the endpoint's URL with its values removed (below) |
-| A listing | A tool nobody listed yet, before its first line | The tool's URL: for an x402 line, with its values removed |
+| A listing | A tool nobody listed yet: before its first line, from the site's Add it form or a wallet, or by declaring a tool that has no atom | The tool's URL, never with a value in it (below) |
 | A position | With each level of a line | A small deposit in the agent's name, so its address stands behind what it wrote |
 
 Each of these is a transaction on testnet 13579, so the agent's address and the time are public too. What a line says: [Lines](/docs/lines).
@@ -76,6 +76,29 @@ The host is kept, so a host that names you names you. The rules are in [endpoint
 
 A value is not replaced by its hash. A hash of a guessable value, such as a city, is found again by trying candidates, and a hash with a secret added would give two payers two different URLs for one endpoint.
 
+## A tool's URL, which must carry no value
+
+A tool's URL is its name on the graph, so a value in it would be public for good: an MCP server pasted with `?api_key=…`, a token in its path. Every place that lists a tool refuses such a URL and names the one it would accept; none of them strips the value for you, because a person who pasted a key needs to know they did. The rule is the one above, applied to the URL as it would be written:
+
+| Pasted | Answer |
+| --- | --- |
+| `https://mcp.example.com/mcp?api_key=sk_live_…` | refused: add `https://mcp.example.com/mcp?api_key=` |
+| `https://mcp.example.com/sse/9aa3d95b3bc440fa88ea12eaa4456161` | refused: add `https://mcp.example.com/sse/:id` |
+| `https://mcp.example.com/mcp` | listed as it is |
+| `https://github.com/owner/repo?skill=name` | listed as it is: a skill's name is public in its repository |
+| `https://github.com/owner/repo?skill=name&token=…` | through the site's Add it form, listed as `https://github.com/owner/repo?skill=name`: a GitHub URL is rebuilt before anything is sent; with a wallet, refused, naming that URL |
+
+Where it is checked:
+
+- **The site's Add it form**, in your browser, before your wallet is asked to sign and before the URL is sent anywhere.
+- **Add it with a wallet**, in your browser, before any read.
+- **ARP's sponsoring service** (`POST /list-tool`), with `422` and the rule `endpoint-private`, and the accepted form in `listable`, before it opens the URL, pins or sends anything.
+- **Declaring a tool you used** (`arp_declare_used`, or the site's declaration form), before the index is asked which atom the URL has.
+
+The rule is in [tool-url-values.ts](https://github.com/intuition-box/ARP/blob/main/packages/protocol/src/tool-url-values.ts).
+
 ## What was written before 2026-11-11
 
 Lines written before values were removed kept the URL as typed. Read on testnet 13579 on 2026-11-11, none of them carried a value: of the 2 payment levels, one named a URL, and neither it nor its tool's atom had a query value, a fragment or a personal path segment; nor did any of the 38 http(s) URLs, GitHub left out, that a `uses` triple points at. The count comes from [endpoint-values-on-chain.ts](https://github.com/intuition-box/ARP/blob/main/scripts/measure/endpoint-values-on-chain.ts). The x402 feed removes values again as it reads, whatever a line wrote: [The x402 outcomes feed](/docs/x402-feed).
+
+For tools, read on testnet 13579 on 2026-11-11 at 13:36 UTC with [tool-url-values-on-chain.ts](https://github.com/intuition-box/ARP/blob/main/scripts/measure/tool-url-values-on-chain.ts): none of the 61 http(s) URLs among the 105 Things ARP's deployer or sponsor created, and none of the 53 among the 78 Things a `uses` triple points at, would be refused. Across every Thing on testnet, whoever created it, 16,093 of 30,520 http(s) URLs would be, most of them other projects' links such as `en.wikipedia.org/?curid=…` (13,893); they are not ARP listings. Nothing changes them, but declaring a use of one of them through ARP is now refused too, since the check comes before the index is asked.

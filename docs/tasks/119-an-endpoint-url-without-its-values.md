@@ -97,7 +97,7 @@ The defect was latent: nothing on testnet carries a value today.
   counts ten there. A writer paying once from its own address and once from its `agentWallet` counts as
   two payers.
 
-**(c) Open, outside this task:** `/list-tool` writes the URL a person pastes on the web register page as
+**(c) Closed by task 123 (ADR `0190`), outside this task:** `/list-tool` writes the URL a person pastes on the web register page as
 typed (normalised). An MCP URL with `?api_key=…` would go on chain with its key. The line path is safe
 (the payer reduces, the sponsor checks the tool atom); the listing path for other tools is not.
 

@@ -557,6 +557,18 @@ describe("arp_declare_used", () => {
         expect(fits["calls"]).toHaveLength(2);
     });
 
+    it("refuses a tool URL that carries a key, without echoing the key (task 123, ADR 0190)", async () => {
+        const KEY = "sk_live_51Hq9d2eZvKYlo2C8xY7Qw3";
+        const {body} = await call({
+            agent_chain_id: 8453,
+            agent_token_id: "1380",
+            tools: [`https://mcp.example.com/mcp?api_key=${KEY}`],
+        });
+        const message = (body?.["error"] as {message: string}).message;
+        expect(message).toContain("cannot be listed: it carries a value for api_key");
+        expect(message).not.toContain(KEY);
+    });
+
     it("refuses a budget that is not a decimal string of wei", async () => {
         const {body} = await call({agent_chain_id: 8453, agent_token_id: "1380", tools: ["ipfs://bafkreistub"], budget_wei: "0.01"});
         expect((body?.["error"] as {message: string}).message).toContain("budget_wei");

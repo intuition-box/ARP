@@ -1649,6 +1649,39 @@ describe('POST /list-tool', () => {
     }
   });
 
+  test('refuses a URL that carries a value, before it is checked, pinned or sent (task 123, ADR 0190)', async () => {
+    const KEY = 'sk_live_51Hq9d2eZvKYlo2C8xY7Qw3';
+    let resolved = false;
+    for (const [url, listable] of [
+      [`${TOOL}?api_key=${KEY}`, `${TOOL}?api_key=`],
+      [`https://example.com/mcp/${KEY}`, 'https://example.com/mcp/:id'],
+      [`https://example.com/u/alice@example.com/mcp`, 'https://example.com/u/:id/mcp'],
+    ] as const) {
+      const w = world();
+      const service = listing(w, {
+        resolveTool: async () => ((resolved = true), { ok: true }),
+      });
+      const res = await call(service, '/list-tool', { url });
+      expect(res.status, url).toBe(422);
+      expect(res.body.rule, url).toBe('endpoint-private');
+      expect(res.body.listable, url).toBe(listable);
+      expect(JSON.stringify(res.body.listable)).not.toContain(KEY);
+      const signed = await call(service, '/list-tool', { url, request: await signedFor(url) });
+      expect(signed.body.rule, url).toBe('endpoint-private');
+      expect(pinned).toHaveLength(0);
+      expect(admitted).toHaveLength(0);
+      expect(w.sent).toHaveLength(0);
+    }
+    expect(resolved).toBe(false);
+    // The form it names is accepted, and a skill's `?skill=` and a GitHub URL's other parameters, which
+    // `canonicalToolUrl` drops before anything is written, still list.
+    for (const url of [`${TOOL}?api_key=`, SKILL, 'https://github.com/a/b?skill=c&token=abc123def456']) {
+      const res = await call(listing(world()), '/list-tool', { url });
+      expect(res.status, url).toBe(200);
+      expect(String(res.body.url)).not.toContain('token');
+    }
+  });
+
   test('a refusal does not count against the limits', async () => {
     const w = world();
     const ledger = new SponsorLedger(null);

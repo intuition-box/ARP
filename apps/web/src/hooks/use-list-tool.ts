@@ -3,7 +3,7 @@ import {bytesToHex} from "viem";
 import {useAccount} from "wagmi";
 
 import {intuitionTestnet} from "../lib/chains";
-import {listTool, type ListToolResult} from "../services/list-tool";
+import {listingRequest, listTool, type ListToolResult} from "../services/list-tool";
 import {signListing, type ListingWallet} from "../services/list-tool-sign";
 import {SPONSOR_URL} from "../services/sponsor-url";
 import {connectedWalletClient} from "./wallet-client";
@@ -25,7 +25,11 @@ export function useListTool(): {
 } {
     const {address} = useAccount();
     const mutation = useMutation({
-        mutationFn: async (url: string) => {
+        mutationFn: async (pasted: string) => {
+            // Before the wallet is asked to sign it, and before it leaves the page (task 123).
+            const request = listingRequest(pasted);
+            if ("answer" in request) return request.answer;
+            const url = request.send;
             const signature = await signListing({
                 address,
                 url,

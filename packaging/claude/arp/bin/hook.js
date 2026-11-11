@@ -17,6 +17,39 @@ function appendOwn(path, text) {
 import { existsSync as existsSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync4, readFileSync as readFileSync4, writeFileSync as writeFileSync2 } from "node:fs";
 import { homedir as homedir3 } from "node:os";
 import { dirname as dirname3, join as join5 } from "node:path";
+// ../../packages/protocol/dist/declare/tool-thing.js
+class InvalidToolUrlError extends Error {
+  input;
+  constructor(input, why) {
+    super(`${JSON.stringify(input)} is not a usable tool URL: ${why}`);
+    this.name = "InvalidToolUrlError";
+    this.input = input;
+  }
+}
+function normaliseToolUrl(input) {
+  const trimmed = input.trim();
+  if (trimmed.length === 0)
+    throw new InvalidToolUrlError(input, "empty");
+  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  let url;
+  try {
+    url = new URL(withScheme);
+  } catch {
+    throw new InvalidToolUrlError(input, "not parseable as a URL");
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new InvalidToolUrlError(input, `scheme ${url.protocol} is not http or https`);
+  }
+  if (url.hostname.length === 0)
+    throw new InvalidToolUrlError(input, "no host");
+  const host = url.hostname.replace(/\.+$/, "").replace(/^(?:www\.)+/, "");
+  const path = url.pathname.replace(/(?:\.git|\/)+$/, "");
+  const params = [...new URLSearchParams(url.search).entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
+  const query = params.length === 0 ? "" : `?${new URLSearchParams(params).toString()}`;
+  const port = url.port === "" || url.port === "80" || url.port === "443" ? "" : `:${url.port}`;
+  return `https://${host}${port}${path}${query}`;
+}
+
 // ../../packages/graphql/dist/http.js
 var DEFAULT_TIMEOUT_MS = 1e4;
 var DEFAULT_MAX_BODY_BYTES = 8 * 1024 * 1024;
@@ -504,38 +537,6 @@ var X402_REASONS_QUERY = `query X402Reasons($ids: [String!]!, $because: String!,
         ${LEVEL}
     }
 }`;
-// ../../packages/protocol/dist/declare/tool-thing.js
-class InvalidToolUrlError extends Error {
-  input;
-  constructor(input, why) {
-    super(`${JSON.stringify(input)} is not a usable tool URL: ${why}`);
-    this.name = "InvalidToolUrlError";
-    this.input = input;
-  }
-}
-function normaliseToolUrl(input) {
-  const trimmed = input.trim();
-  if (trimmed.length === 0)
-    throw new InvalidToolUrlError(input, "empty");
-  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  let url;
-  try {
-    url = new URL(withScheme);
-  } catch {
-    throw new InvalidToolUrlError(input, "not parseable as a URL");
-  }
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new InvalidToolUrlError(input, `scheme ${url.protocol} is not http or https`);
-  }
-  if (url.hostname.length === 0)
-    throw new InvalidToolUrlError(input, "no host");
-  const host = url.hostname.replace(/\.+$/, "").replace(/^(?:www\.)+/, "");
-  const path = url.pathname.replace(/(?:\.git|\/)+$/, "");
-  const params = [...new URLSearchParams(url.search).entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
-  const query = params.length === 0 ? "" : `?${new URLSearchParams(params).toString()}`;
-  const port = url.port === "" || url.port === "80" || url.port === "443" ? "" : `:${url.port}`;
-  return `https://${host}${port}${path}${query}`;
-}
 // ../../packages/protocol/dist/session.js
 function refForInvocation(name, source, fetched) {
   const bare = name.includes(":") ? name.split(":").pop() ?? name : name;

@@ -1,0 +1,57 @@
+{
+  "script": "scripts/measure/tool-url-values-on-chain.ts",
+  "chain": 13579,
+  "readAt": "2026-11-11T13:36:05.362Z",
+  "graphql": "https://testnet.intuition.sh/v1/graphql",
+  "rule": "a URL counts as refused when publishableToolUrl (packages/protocol/src/tool-url-values.ts) does not accept it as written",
+  "allThings": {
+    "things": 55078,
+    "httpUrls": 30520,
+    "github": 904,
+    "refused": 16093,
+    "byWhy": {
+      "query value": 14252,
+      "personal path segment": 1568,
+      "query value + personal path segment": 174,
+      "fragment": 83,
+      "personal path segment + fragment": 4,
+      "other": 11,
+      "query value + personal path segment + fragment": 1
+    },
+    "topHosts": {
+      "en.wikipedia.org": 13893,
+      "x.com": 845,
+      "www.imdb.com": 460,
+      "open.spotify.com": 211,
+      "support.apple.com": 52,
+      "signal.xyz": 47,
+      "www.amazon.com": 38,
+      "intunft.lovable.app": 32,
+      "www.youtube.com": 30,
+      "lu.ma": 30,
+      "atlas.discourse.group": 28,
+      "www.bing.com": 21,
+      "www.goodreads.com": 16,
+      "medium.com": 15,
+      "youtube.com": 12
+    }
+  },
+  "arpCreated": {
+    "things": 105,
+    "httpUrls": 61,
+    "github": 23,
+    "refused": 0,
+    "byWhy": {},
+    "topHosts": {},
+    "refusedUrls": []
+  },
+  "usesObjects": {
+    "things": 78,
+    "httpUrls": 53,
+    "github": 14,
+    "refused": 0,
+    "byWhy": {},
+    "topHosts": {},
+    "refusedUrls": []
+  }
+}

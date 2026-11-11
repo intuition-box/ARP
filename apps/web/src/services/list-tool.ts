@@ -1,4 +1,9 @@
-import type {SignedListToolRequest} from "@arp-protocol/core";
+import {
+    canonicalToolUrl,
+    isToolUrl,
+    publishableToolUrl,
+    type SignedListToolRequest,
+} from "@arp-protocol/core";
 
 /**
  * Ask the sponsor to list a tool or a skill on testnet 13579 (task 53c, ADR `0123`).
@@ -12,7 +17,9 @@ import type {SignedListToolRequest} from "@arp-protocol/core";
 export type ListToolResult =
     | {status: "listed"; atomId: string; created: boolean; transactions: readonly string[]}
     | {status: "refused"; rule: string | null; retry: boolean; httpStatus: number}
-    | {status: "unavailable"};
+    | {status: "unavailable"}
+    /** Not sent: the URL carries a value a listing would make public (task 123, ADR `0190`). */
+    | {status: "private"; listable: string | null};
 
 export type ListToolDeps = {
     /** `undefined` when no sponsor is configured: nothing is sent. */
@@ -22,6 +29,19 @@ export type ListToolDeps = {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
+}
+
+/**
+ * What to sign and send for a pasted URL, decided before either (task 123, ADR `0190`): its canonical form,
+ * so a GitHub URL's other parameters never leave the page, or the answer itself when the listed form would
+ * carry a value (an `?api_key=…`, a token in the path). Refused rather than stripped, so the person who
+ * pasted a key knows they did. A URL that is not a tool goes as typed, for the sponsor to refuse.
+ */
+export function listingRequest(url: string): {send: string} | {answer: ListToolResult} {
+    if (!isToolUrl(url)) return {send: url};
+    const canonical = canonicalToolUrl(url);
+    const verdict = publishableToolUrl(canonical);
+    return verdict.ok ? {send: canonical} : {answer: {status: "private", listable: verdict.listable}};
 }
 
 export async function listTool(
@@ -68,6 +88,10 @@ export function listToolMessage(result: ListToolResult): string {
             return result.created ? "Listed." : "Already listed.";
         case "unavailable":
             return "Adding is not available right now.";
+        case "private":
+            return result.listable === null
+                ? "That URL carries a value, such as a key, and a listing is public for good. Remove it."
+                : `That URL carries a value, such as a key, and a listing is public for good. Add ${result.listable} instead.`;
         case "refused":
             if (result.rule === "url") return "That is not a tool or skill URL.";
             if (result.rule === "resolves" && !result.retry)
@@ -78,6 +102,8 @@ export function listToolMessage(result: ListToolResult): string {
                 return "No skill, plugin, MCP server, A2A agent or x402 endpoint found there.";
             if (result.rule === "unreachable") return "That URL did not answer.";
             if (result.rule === "private-address") return "That URL is not a public address.";
+            if (result.rule === "endpoint-private")
+                return "That URL carries a value, such as a key, and a listing is public for good. Remove it.";
             // 409 `pending`: a send of this same listing is not confirmed yet (ADR `0123`).
             if (result.rule === "pending") return "Already being added. Try again in a minute.";
             if (result.retry) return "Not answered right now. Try again.";

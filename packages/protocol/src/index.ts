@@ -425,6 +425,13 @@ export {
     redactEndpointUrl,
     REDACTED_SEGMENT,
 } from "./endpoint-redaction.js";
+/** Whether a tool's URL may be listed as it is: refused while it carries a value (task 123, ADR `0190`). */
+export {
+    assertPublishableToolUrl,
+    publishableToolUrl,
+    ToolUrlCarriesValuesError,
+    type ToolUrlVerdict,
+} from "./tool-url-values.js";
 export {
     buildX402Feed,
     signedByPayer,

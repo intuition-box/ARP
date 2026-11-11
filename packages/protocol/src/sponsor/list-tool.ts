@@ -10,6 +10,7 @@ import {
 } from "../declare/multivault.js";
 import {isToolUrl, normaliseToolUrl, toolAtomUri, toolThing} from "../declare/tool-thing.js";
 import type {PreparedCall} from "../declare/types.js";
+import {assertPublishableToolUrl} from "../tool-url-values.js";
 
 /**
  * A sponsored tool listing (ADR `0123`, `docs/tasks/53` 53c): the atoms and the one triple that make
@@ -99,7 +100,10 @@ export function githubRepoOf(url: string): string | null {
     return owner && name ? `${owner}/${name.replace(/\.git$/, "")}` : null;
 }
 
-/** Plan a listing for `url`. Nothing to create gives an empty `calls`. Throws on a URL that is not a tool. */
+/**
+ * Plan a listing for `url`. Nothing to create gives an empty `calls`. Throws on a URL that is not a tool, and
+ * `ToolUrlCarriesValuesError` on one whose canonical form carries a value (task 123, ADR `0190`).
+ */
 export async function planToolListing(params: {
     url: string;
     reads: MultiVaultReads;
@@ -109,6 +113,7 @@ export async function planToolListing(params: {
     const {reads} = params;
     if (!isToolUrl(params.url)) throw new Error(`${params.url} is not a tool URL`);
     const url = canonicalToolUrl(params.url, params.repoFullName);
+    assertPublishableToolUrl(url);
     const ref = skillRefFromUrl(url);
     const repoUrl = ref === null ? null : normaliseToolUrl(`https://github.com/${ref.repo}`);
 

@@ -181,6 +181,29 @@ describe("planToolRegistration", () => {
         }
     });
 
+    it("refuses a URL that carries a value before any read, and names the one it would add (task 123)", async () => {
+        const KEY = "sk_live_51Hq9d2eZvKYlo2C8xY7Qw3";
+        const asked: string[] = [];
+        const plan = planToolRegistration({
+            url: `https://mcp.example.com/mcp?api_key=${KEY}`,
+            publicClient: pc as never,
+            chain: MAINNET,
+            graphqlUrl: "https://indexer.test/graphql",
+            lookup: {
+                findByUrl: async (url) => {
+                    asked.push(url);
+                    return [];
+                },
+            },
+        });
+        expect(await codeOf(plan)).toBe("carries-values");
+        await expect(plan).rejects.toThrow(
+            "This URL cannot be added: it carries a value for api_key. A tool's URL is public for good, so remove it and add https://mcp.example.com/mcp?api_key=. Nothing was sent.",
+        );
+        expect(asked).toEqual([]);
+        expect(pc.readContract).not.toHaveBeenCalled();
+    });
+
     it("derives the same atom from every spelling of one URL", async () => {
         const spellings = [
             "github.com/crytic/slither",

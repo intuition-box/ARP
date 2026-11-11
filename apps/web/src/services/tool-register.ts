@@ -4,6 +4,7 @@ import {
     intuitionToolAtomLookup,
     multiVaultReads,
     normaliseToolUrl,
+    publishableToolUrl,
     toolAtomUri,
     toolThingDocument,
     type ToolAtomCandidate,
@@ -108,6 +109,7 @@ export type ToolRegistration = {
 export class ToolRegisterGuardError extends Error {
     readonly code:
         | "bad-url"
+        | "carries-values"
         | "wrong-chain"
         | "cost-above-ceiling"
         | "already-exists"
@@ -135,6 +137,8 @@ function assertChain(expected: StakeChain, chainId: number | undefined): void {
  *
  * Throws `bad-url` for anything `normaliseToolUrl` cannot handle — a `did:`, an `npm:` specifier, a
  * bare word. Those have no URL to derive a document from, and this screen is for URLs.
+ * Throws `carries-values` for a URL whose normalised form holds a query value, a fragment or a path segment
+ * that looks personal (`publishableToolUrl`, task 123), before anything is read.
  */
 export async function planToolRegistration(params: {
     url: string;
@@ -158,6 +162,19 @@ export async function planToolRegistration(params: {
         throw new ToolRegisterGuardError(
             "bad-url",
             caught instanceof Error ? caught.message : String(caught),
+        );
+    }
+
+    // Before any read, so a key pasted with the URL reaches neither the index nor the chain (task 123,
+    // ADR `0190`). Refused, not stripped: the operator has to know the URL they pasted carried one.
+    const publishable = publishableToolUrl(normalisedUrl);
+    if (!publishable.ok) {
+        throw new ToolRegisterGuardError(
+            "carries-values",
+            `This URL cannot be added: ${publishable.why}. A tool's URL is public for good, so ` +
+                (publishable.listable === null
+                    ? "remove it first. Nothing was sent."
+                    : `remove it and add ${publishable.listable}. Nothing was sent.`),
         );
     }
 

@@ -77,6 +77,7 @@ A refusal is `422` with a stable `rule` and an `error` that says why, and spends
 | `not-a-tool` | reached, and it holds or answers none of the above |
 | `unreachable` | no answer: a timeout, a refused connection, a name that does not resolve |
 | `private-address` | it names or resolves to a private, loopback or link-local address |
+| `endpoint-private` | its canonical form carries a query value, a fragment or a path segment that looks personal (`publishableToolUrl`, task 123, ADR `0190`); `listable` names the form that would be accepted. Checked first, before the URL is asked anything. A GitHub URL is rebuilt to `?skill=` alone and always passes |
 
 When it cannot tell (GitHub rate-limited, or more than `SPONSOR_ENDPOINT_CHECKS_PER_HOUR` checks
 of other URLs in the last hour, default 60), it answers `503` with `retry`.

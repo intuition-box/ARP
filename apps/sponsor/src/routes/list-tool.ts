@@ -7,6 +7,7 @@ import {
   githubRepoOf,
   isToolUrl,
   planToolListing,
+  publishableToolUrl,
   thingUri,
   toolAtomUri,
   verifyListToolRequest,
@@ -36,6 +37,11 @@ export const MAX_TOOL_URL_LENGTH = 2_048;
  * endpoint that answers as MCP, A2A or x402. A refusal is 422 with `rule` `not-a-tool`,
  * `unreachable` or `private-address`, and spends nothing. An atom already on the graph is answered
  * `created: false` without that check.
+ *
+ * **With no value in it** (task 123, ADR `0190`): a URL whose canonical form carries a query value, a
+ * fragment or a path segment that looks personal is refused with 422 `rule: 'endpoint-private'` and the form
+ * that would be accepted as `listable`, before it is fetched, signed for or pinned. A GitHub URL is rebuilt
+ * by `canonicalToolUrl` and keeps only `?skill=`, so it always passes.
  */
 export async function listTool(ctx: SponsorContext, body: Body): Promise<Response> {
   const { options, chainId, reads, limits, ledger, now, exclusive, assertMultiVault } = ctx;
@@ -54,6 +60,19 @@ export async function listTool(ctx: SponsorContext, body: Body): Promise<Respons
     return json({ error: 'url is not a tool URL', rule: 'url' }, 400);
   }
   const pasted = body.url;
+  // Before anything reads it or signs for it (task 123, ADR `0190`): a value in a tool's URL would be on
+  // chain for good. Refused rather than stripped: the person who pasted a key has to know they did.
+  const publishable = publishableToolUrl(canonicalToolUrl(pasted));
+  if (!publishable.ok) {
+    return json(
+      {
+        error: `${publishable.why}; a tool's URL is public and permanent, so remove it${publishable.listable === null ? '' : ` and list ${publishable.listable}`}`,
+        rule: 'endpoint-private',
+        ...(publishable.listable === null ? {} : { listable: publishable.listable }),
+      },
+      422,
+    );
+  }
 
   let lister: Address | null = null;
   let nonce: Hex | null = null;

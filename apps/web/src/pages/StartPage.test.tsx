@@ -115,6 +115,17 @@ describe("the start page", () => {
         expect(screen.queryByRole("link", {name: "Add it with a wallet →"})).toBeNull();
     });
 
+    it("says a URL with a key was not added, names the one that would be, and offers no wallet", async () => {
+        listing.result = {status: "private", listable: "https://mcp.example.com/mcp?api_key="};
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
+        expect(
+            await screen.findByText(
+                "That URL carries a value, such as a key, and a listing is public for good. Add https://mcp.example.com/mcp?api_key= instead.",
+            ),
+        ).toBeTruthy();
+        expect(screen.queryByRole("link", {name: "Add it with a wallet →"})).toBeNull();
+    });
+
     it("keeps the wallet path when the sponsor cannot help", async () => {
         listing.result = {status: "unavailable"};
         renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
