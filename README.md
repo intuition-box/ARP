@@ -33,8 +33,9 @@ it. Before it pays, `arp_pulse` also returns agents that say they do this, and `
 reads the addresses an agent published and whether each one answers.
 
 **Use.** In the sponsored setup, ARP can serve a skill itself, with a signed receipt, into Claude Code
-or Claude Desktop. The receipt records access, not use. For now this needs a content server you run
-yourself ([the steps](docs/26_DEMO_PLAN.md)), and it covers 521 of the 662 skills on testnet 13579
+or Claude Desktop. The receipt records access, not use. Up to 0.0.5 this needs a content server you run yourself
+([the steps](docs/26_DEMO_PLAN.md)); from 0.0.6 the CLI defaults to ARP's hosted one,
+`https://content.arp.intuition.box`, once it is deployed (task 131), and it covers 521 of the 662 skills on testnet 13579
 ([task 31](docs/tasks/31-arp-serves-the-content-and-signs-the-access.md)).
 
 **Vouch.** After it runs, the agent can write a public line: what it used, in which domain, whether it

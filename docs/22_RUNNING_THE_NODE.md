@@ -161,8 +161,9 @@ would stop accepting your receipts.
 ## Every outbound connection
 
 Seven fixed hosts, the first two configurable, and agents' own signed addresses. The sponsored mode also reaches two more, both
-configurable: ARP's content server (`ARP_CONTENT`) and ARP's sponsoring service (`ARP_SPONSOR`),
-both local by default. `arp line` and `arp share send` reach the sponsoring service too, and so does
+configurable: ARP's content server (`ARP_CONTENT`) and ARP's sponsoring service (`ARP_SPONSOR`).
+The sponsoring service defaults to `https://sponsor.arp.intuition.box` since 0.0.4, the content server
+to `https://content.arp.intuition.box` from 0.0.6 (task 131); both are loopback from a checkout. `arp line` and `arp share send` reach the sponsoring service too, and so does
 `arp share send --auto`, which the hook starts detached when a session ends with sharing on or a
 "yes, this once" from that session; the hook itself does not connect. The hook
 reaches `api.github.com` and `raw.githubusercontent.com` before a skills install, and at no other
@@ -318,7 +319,7 @@ Three things it shows that a count alone would hide:
 
 - Two of the ten literals (`localhost:`, `stdio`) are in **log lines** and fetched by nobody,
   `github.com` is in the probe's **user-agent**, which identifies the server and sends nothing, and in the URI `arp_pulse` builds for a skill's atom, which it fetches nowhere, and two
-  (`127.0.0.1:3002`, `127.0.0.1:3200`) are local defaults of the sponsored mode. Five are destinations:
+  (`127.0.0.1:3002`, `127.0.0.1:3200`) are the sponsored mode's defaults from a checkout; a release replaces both with the hosted services at build time. Five are destinations:
   `api.github.com`, `raw.githubusercontent.com`, `gateway.pinata.cloud`, `ipfs.io` and `skills.sh`.
 - The Intuition graph and RPC are **absent from the literals and present in the server** — they come
   from `data/deployments/<chainId>.json` at startup. Absence from a literal list is not absence from the

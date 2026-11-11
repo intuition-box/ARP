@@ -153,7 +153,7 @@ Beside the score, each result shows what its files name: commands, keys, a login
 | `apps/sponsor`, the sponsoring service | **Hosted** at `https://sponsor.arp.intuition.box` since 2026-11-11 (task 117), the CLI's default from 0.0.4. Testnet 13579 only. Without it, `arp share send` names the service and fails. _Amended 2026-11-11: read "Local only, on our machine, port 3200"._ |
 | `apps/mcp`, hosted and read-only | `https://mcp.arp.intuition.box/mcp` since 2026-11-11: the three read tools, no key. Nothing installed uses it |
 | `scripts/demo/x402-seller`, the demo seller | `https://seller.arp.intuition.box` since 2026-11-11: takes 0.001 test USDC on Base Sepolia and delivers nothing (task 118) |
-| `arp mcp --http`, the content server | Local, port 3002, for a checkout. ARP's own runs as `apps/mcp/src/content-server.ts` at `https://content.arp.intuition.box` once task 131 is deployed, the CLI's default from 0.0.6. Used by the sponsored setup, not by the plugin |
+| `arp mcp --http`, the content server | Local, port 3002, for a checkout. ARP's own runs as `apps/mcp/src/content-server.ts` at `https://content.arp.intuition.box` once task 131 is deployed, the CLI's default from 0.0.6. Used by the sponsored setup, not by the plugin. _Amended 2026-11-11: read "**Local only**, port 3002"._ |
 | `arp node` | The operator's machine, on 127.0.0.1 behind a tunnel they rent. Only our test agents run one so far |
 | `apps/web`, the web app | **Hosted** at `https://arp.intuition.box` since 2026-11-11 (task 117), testnet only. _Amended 2026-11-11: read "Local only, `bun run dev`"._ |
 | `apps/probe`, `apps/api`, Workers | **Local only**, with no public deployment (`docs/27`) |

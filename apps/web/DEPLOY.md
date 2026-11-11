@@ -295,6 +295,6 @@ curl -s http://127.0.0.1:3003/
 ## What the site does not run
 
 Since 2026-11-11 the site, the sponsor and the MCP endpoint run at `https://arp.intuition.box`,
-`https://sponsor.arp.intuition.box` and `https://mcp.arp.intuition.box` (task 117). The activity feed runs on one machine and is not hosted; the content server has its own section below (task 131). Nothing on the site
+`https://sponsor.arp.intuition.box` and `https://mcp.arp.intuition.box` (task 117). The activity feed runs on one machine and is not hosted; the content server has its own section above (task 131). Nothing on the site
 needs them: steps that would are hidden while their variable is unset. The sponsor and the MCP
 endpoint are above.
