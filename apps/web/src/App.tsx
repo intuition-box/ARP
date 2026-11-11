@@ -64,9 +64,8 @@ function App() {
                     replacement for `ModuleList` — ARP's own `ModuleRegistry`, retired by ADR
                     `0051`. The catalogue keeps `/tools`.
 
-                    Everything on it reads from the chain, including the empty state: on mainnet
-                    there are zero declarations by an identified agent, and the page says so rather
-                    than showing a sample. */}
+                    Its scenes read nothing: they show a static sample on either chain (task 133,
+                    ADR `0197`). */}
                     <Route
                         path="/"
                         element={

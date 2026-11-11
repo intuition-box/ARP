@@ -30,12 +30,12 @@ The UI must not look like a generic shadcn/ui starter, a v0.dev export, or a Ver
   a pinned scene sequence (six scenes, five since task 53, ADR `0114`), which is scrollytelling, so this bullet has to say what it still
   rejects. It rejects a scroll-triggered **section** bolted onto an ordinary page to illustrate the
   product's mechanics — the template signal is the decoration, not the scroll. What makes the deck
-  not that: each scene **states** a mechanism or **reads a figure off the chain**, and the figures
-  are real or the scene says there are none. A scene that illustrated how ARP works with an
-  animation standing in for data is still the thing this forbids. **Amended 2026-11-10** (ADR `0152`
-  §6 amendment, the user): while the chain answers with nothing, scenes 0 to 2 show the design
-  reference's sample **unmarked**. That is the one exception to "the figures are real", it ends
-  the moment a real line exists, and it never stands in for a failed read
+  not that: each scene **states** a mechanism in the design file's own copy. **Amended 2026-11-11**
+  (ADR `0197`, the user: « le front à cet endroit est static, rien n'est lu »): the deck **reads
+  nothing**. Scenes 0 to 2 illustrate the mechanism with the design reference's sample, unmarked,
+  the same on either chain, and no figure on `/` is presented as read from the chain (no chain in a
+  panel head, no "reading…", no failed-read state). That is the one place sample data stands in for
+  data; anywhere else a figure is real or the page says there is none
 - Generic skeleton loaders with the gray-block-on-gray-background pattern
 
 Strip these reflexes. If you find yourself reaching for one, stop.

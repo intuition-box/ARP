@@ -1,21 +1,20 @@
 import {useCallback, useRef, useState, type CSSProperties, type ReactNode} from "react";
 import {Link} from "react-router-dom";
-import type {RecentDeclaration} from "@arp-protocol/core";
 
 import {GalaxyField} from "../components/brand/GalaxyField";
-import {NoActivityYet} from "../components/brand/NoActivityYet";
 import {SceneDeck} from "../components/brand/SceneDeck";
 import {cameraDuration, cameraFor, readingAt, WORDS_AT} from "../components/brand/galaxy-geometry";
 import {useDeck, useSceneTime} from "../components/brand/scene-context";
 import {useOnboarding} from "../components/onboarding/onboarding-context";
-import {useLandingField, type LandingFieldRead} from "../hooks/use-landing-field";
-import {useRecentDeclarations} from "../hooks/use-recent-declarations";
-import {useChainChoice} from "../lib/chain-choice";
 import {cssVars} from "../lib/css-vars";
 import {heroControlClass, linkClass} from "../lib/control-class";
-import {parseToolLabel, primaryNameOf} from "../lib/tool-label";
-import {SAMPLE_LINES} from "../services/landing-sample";
-import {relativeDay, truncateMiddle} from "../services/trust-format";
+import {
+    SAMPLE_FIELD,
+    SAMPLE_LINE,
+    SAMPLE_LINES,
+    SAMPLE_READINGS,
+    SAMPLE_TOOL,
+} from "../services/landing-sample";
 
 /**
  * `/` — one camera through the registry, in six scenes (task 81, ADR `0152`).
@@ -28,28 +27,14 @@ import {relativeDay, truncateMiddle} from "../services/trust-format";
  *
  * The order is the user's: Pulse · Written · Travels · Plug in · No grade · Build.
  *
- * ## Real data, or the sample
+ * ## Static: nothing is read
  *
- * The pulse reads the chain's recent lines and the field reads the most declared tool on the
- * chain the reader chose, with ARP's own test identities left out (`services/test-identities.ts`).
- * When the chain **answers with nothing** — on testnet every real line is one of those tests —
- * scenes 0 to 2 show the reference's sample (`services/landing-sample.ts`), unlabelled since
- * 2026-11-10 (the user removed every « Sample » mark, ADR `0152` §6 amended). Real data replaces
- * it panel by panel; no panel mixes the two. A failed read says it failed; a sample never stands
- * in for one (`rules/claims.md` §1).
+ * Every scene shows the reference's sample (`services/landing-sample.ts`), and nothing on `/`
+ * reads the chain or any API for them (task 133, ADR `0197`, the user, 2026-11-11: « le front à
+ * cet endroit est static, rien n'est lu »). The scenes illustrate the mechanism; the index pages
+ * are where the chain is read. Until then real lines replaced the sample panel by panel (ADR
+ * `0152` §6), which put one of ARP's own test agents on the front page.
  */
-
-/** How many recent lines the pulse asks for, and how many it shows. */
-const RECENT_LIMIT = 8;
-const PULSE_ROWS = 4;
-
-type Read<T> = {status: "pending"} | {status: "failed"} | {status: "ok"; data: T};
-
-function readOf<T>(query: {isPending: boolean; isError: boolean; data: T | undefined}): Read<T> {
-    if (query.isPending) return {status: "pending"};
-    if (query.isError || query.data === undefined) return {status: "failed"};
-    return {status: "ok", data: query.data};
-}
 
 /** The camera's time between two scenes, at this width. The deck uses it to pace the arrival. */
 function durationOf(from: number, to: number, width: number): number {
@@ -57,8 +42,6 @@ function durationOf(from: number, to: number, width: number): number {
 }
 
 export function Landing() {
-    const recent = readOf(useRecentDeclarations(RECENT_LIMIT));
-    const field = useLandingField();
     const rows = useRef<(HTMLElement | null)[]>([]);
     const readRow = useCallback((index: number) => rows.current[index] ?? null, []);
     const rowRef = useCallback(
@@ -74,17 +57,15 @@ export function Landing() {
                 durationOf={durationOf}
                 backdrop={
                     <GalaxyField
-                        field={field.status === "ok" ? field.field : null}
-                        beats={
-                            recent.status === "ok" ? recent.data.length || SAMPLE_LINES.length : 0
-                        }
+                        field={SAMPLE_FIELD}
+                        beats={SAMPLE_LINES.length}
                         readRow={readRow}
                     />
                 }
             >
-                <ScenePulse read={recent} />
-                <SceneWritten read={field} />
-                <SceneTravels read={field} rowRef={rowRef} />
+                <ScenePulse />
+                <SceneWritten />
+                <SceneTravels rowRef={rowRef} />
                 <ScenePlugIn />
                 <SceneNoGrade />
                 <SceneBuild />
@@ -160,76 +141,33 @@ function Panel({
     );
 }
 
-/** What a panel says when its read is not an answer, or the answer is empty. */
-function NotYet({read, empty}: {read: {status: "pending" | "failed" | "ok"}; empty: ReactNode}) {
-    if (read.status === "pending") return <p className="arp-gx-quiet">reading…</p>;
-    if (read.status === "failed") {
-        return (
-            <p className="arp-gx-quiet">
-                The graph did not answer. This is a read that failed, not an empty chain.
-            </p>
-        );
-    }
-    return <div className="arp-gx-empty">{empty}</div>;
-}
-
-/**
- * The field's read as the lines see it: the tool can be found while its lines did not answer, and
- * then the line panels say the read failed rather than that nobody wrote one.
- */
-function linesOf(read: LandingFieldRead): {status: "pending" | "failed" | "ok"} {
-    return read.status === "ok" && read.field.linesFailed ? {status: "failed"} : read;
-}
-
-/** Names only: a tool's label is its URL, and a skill is named by its skill. */
-function nameOf(end: {atomId: string; label: string | null}): string {
-    return end.label === null
-        ? truncateMiddle(end.atomId, 6, 4)
-        : primaryNameOf(parseToolLabel(end.label));
-}
-
 /* -------------------------------------------------------------------------- */
 /* 0 · Pulse                                                                   */
 /* -------------------------------------------------------------------------- */
 
-function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
-    const chain = useChainChoice();
-    const rows = read.status === "ok" ? read.data.slice(0, PULSE_ROWS) : [];
-    // The chain answered with nothing: the sample (the user, 2026-11-09).
-    const sample = read.status === "ok" && rows.length === 0;
+function ScenePulse() {
     return (
         <>
-            {/* The pulse panel, top left, desktop only (the design's open question 2, decided). */}
-            <Panel label={`Lines · ${chain.label.toLowerCase()}`} className="arp-gx-beat" index={2}>
-                {sample ? (
-                    <ul className="arp-gx-beatrows">
-                        {SAMPLE_LINES.map((row) => (
-                            <li key={row.agent}>
-                                <b>{row.agent}</b>
-                                <span>{row.tool}</span>
-                                <em>{row.context}</em>
-                            </li>
-                        ))}
-                    </ul>
-                ) : rows.length === 0 ? (
-                    <NotYet read={read} empty={<NoActivityYet />} />
-                ) : (
-                    <ul className="arp-gx-beatrows">
-                        {rows.map((row) => (
-                            <li key={row.tripleId}>
-                                <b>{nameOf(row.subject)}</b>
-                                <span>{nameOf(row.object)}</span>
-                                <em>{relativeDay(row.at)}</em>
-                            </li>
-                        ))}
-                    </ul>
-                )}
+            {/* The pulse panel, top left, desktop only (the design's open question 2, decided).
+                No chain in its label: it is the sample on either chain (ADR `0197`). */}
+            <Panel label="Lines" className="arp-gx-beat" index={2}>
+                <ul className="arp-gx-beatrows">
+                    {SAMPLE_LINES.map((row) => (
+                        <li key={row.agent}>
+                            <b>{row.agent}</b>
+                            <span>{row.tool}</span>
+                            <em>{row.context}</em>
+                        </li>
+                    ))}
+                </ul>
             </Panel>
             <div className="arp-gx-copy is-center">
                 <h1 {...rv(0)}>The public pulse for tools and autonomous agents.</h1>
                 <div {...rv(1)} className="arp-gx-rv arp-gx-ctas">
-                    <Link to="/agents" className={heroControlClass}>
-                        Open the agent index
+                    {/* Not the agent index: the Agents part is out of the navigation for now (the
+                        user, 2026-11-11, task 133: « brouille notre proposition initiale »). */}
+                    <Link to="/tools" className={heroControlClass}>
+                        Open the tool index
                     </Link>
                     <a href="#build" className={`arp-gx-quiet-link ${linkClass}`}>
                         or build against it →
@@ -258,29 +196,14 @@ const GLOW_AFTER = 0.5;
 /** A piece of the panel appears this long after its atom leaves its star: as it lands. */
 const PIECE_AFTER = 0.6;
 
-function SceneWritten({read}: {read: LandingFieldRead}) {
+function SceneWritten() {
     const since = useSceneTime(1);
     const deck = useDeck();
     // Coming back from scene 2, the line is already written.
     const written = deck.previous >= 2 && deck.current === 1 ? Infinity : since;
     const reached = (stage: number) => written > (STAGES[stage] ?? 0) + PIECE_AFTER;
-    const field = read.status === "ok" ? read.field : null;
-    const line = field?.line ?? null;
+    const line = SAMPLE_LINE;
     const label = "A line, word by word";
-
-    if (line === null) {
-        return (
-            <>
-                <Panel label={label} className="arp-gx-subject arp-gx-feed" index={1}>
-                    <NotYet
-                        read={linesOf(read)}
-                        empty={<NoActivityYet what="No line written here yet." />}
-                    />
-                </Panel>
-                <SceneWrittenCopy />
-            </>
-        );
-    }
 
     // A line can stop at any level (docs/28): a part it does not have never appears.
     const showAgent = reached(1);
@@ -369,50 +292,30 @@ function SceneWrittenCopy() {
 /* -------------------------------------------------------------------------- */
 
 function SceneTravels({
-    read,
     rowRef,
 }: {
-    read: LandingFieldRead;
     rowRef: (index: number) => (element: HTMLElement | null) => void;
 }) {
     const since = useSceneTime(2);
     const deck = useDeck();
-    const field = read.status === "ok" ? read.field : null;
-    const readings = field?.readings ?? [];
     const ended = since === Infinity;
-    const reading = ended ? -1 : readingAt(since, readings.length, deck.still);
-    const tool = field?.tool?.name;
+    const reading = ended ? -1 : readingAt(since, SAMPLE_READINGS.length, deck.still);
 
     return (
         <>
             <Panel
-                label={
-                    tool === undefined ? "What your agent reads" : `What your agent reads · ${tool}`
-                }
+                label={`What your agent reads · ${SAMPLE_TOOL.name}`}
                 className="arp-gx-subject arp-gx-board"
                 index={1}
             >
-                {readings.length === 0 ? (
-                    <NotYet read={linesOf(read)} empty={<p>Nothing to read here yet.</p>} />
-                ) : (
-                    <>
-                        <ol className="arp-gx-reads">
-                            {readings.map((row, index) => (
-                                <li
-                                    key={row.kind}
-                                    ref={rowRef(index)}
-                                    data-on={ended || index === reading}
-                                >
-                                    <em>{row.kind}</em>
-                                    <span>{row.text}</span>
-                                </li>
-                            ))}
-                        </ol>
-                        {field?.linesFailed === true ? (
-                            <NotYet read={{status: "failed"}} empty={null} />
-                        ) : null}
-                    </>
-                )}
+                <ol className="arp-gx-reads">
+                    {SAMPLE_READINGS.map((row, index) => (
+                        <li key={row.kind} ref={rowRef(index)} data-on={ended || index === reading}>
+                            <em>{row.kind}</em>
+                            <span>{row.text}</span>
+                        </li>
+                    ))}
+                </ol>
             </Panel>
             <div className="arp-gx-copy">
                 <h2 {...rv(0)}>
@@ -560,9 +463,9 @@ function SceneBuild() {
                 <h3>Entry points</h3>
                 <ul>
                     <li>
-                        <Link to="/agents">
-                            <span>The agent index</span>
-                            <span className="arp-gx-entry-path">/agents</span>
+                        <Link to="/tools">
+                            <span>The tool index</span>
+                            <span className="arp-gx-entry-path">/tools</span>
                         </Link>
                     </li>
                     <li>

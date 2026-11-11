@@ -1,6 +1,7 @@
 # 0152 — The landing is one camera through a galaxy, and the claim field is on it
 
-**Status:** Accepted
+**Status:** Accepted; §5, §6 and §6's 2026-11-10 amendment reversed by ADR `0197` (2026-11-11: the
+landing's scenes are static and read nothing)
 **Date:** 2026-11-09
 **Triggered by:** `docs/tasks/81-the-landing-galaxy.md`, the user's design session of 2026-11-09
 (`docs/design/landing-galaxy/LANDING-GALAXY.md`)

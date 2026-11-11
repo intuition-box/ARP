@@ -57,8 +57,8 @@ import {arrivalOf, useDeck, type DeckState} from "./scene-context";
  * - **Canvas 2D, no dependency** (`docs/18` §6): 3,500 points and a few circles.
  * - **No pointer** (`rules/ui.md`): the camera follows the deck's scene, nothing else. The loupe
  *   tours on a clock; the panel row it reads is a fact the page already holds.
- * - **Real data, or the sample**: the most declared tool's real claims; while the chain answers
- *   with nothing, `landing-sample.ts`'s.
+ * - **The sample, and nothing read**: `landing-sample.ts`'s field, on either chain (ADR `0197`;
+ *   it replaced the real data of ADR `0152` §6).
  * - **Saffron** on the subject atom, your agent, and a claim while it is being written or read —
  *   a selected state in motion (ADR `0067`), gone when the motion settles.
  * - **Reduced motion**: every scene jumps to its end state; the loupe holds on the first reading.
@@ -123,14 +123,14 @@ function readPalette(): Palette {
 }
 
 /** Which of scene 2's readings reads this claim, or `null`. */
-function readingOf(field: LandingField | null, key: string): number | null {
-    const i = (field?.readings ?? []).findIndex((reading) => reading.claimKey === key);
+function readingOf(field: LandingField, key: string): number | null {
+    const i = field.readings.findIndex((reading) => reading.claimKey === key);
     return i < 0 ? null : i;
 }
 
 /** The atoms the field asks for, in the order scene 1 writes them. */
 function atomsFor(
-    field: LandingField | null,
+    field: LandingField,
 ): Omit<Atom, "v" | "from" | "to" | "t0" | "dur" | "hl" | "labelA" | "leaving" | "fw">[] {
     const out: Omit<
         Atom,
@@ -140,7 +140,7 @@ function atomsFor(
         key: "tool",
         k: 0,
         kind: "tool",
-        label: field?.tool?.name ?? null,
+        label: field.tool?.name ?? null,
         isId: false,
         ring: -1,
         positions: 0,
@@ -149,7 +149,7 @@ function atomsFor(
         read: null,
         inField: null,
     });
-    const rings = field?.rings ?? [];
+    const rings = field.rings;
     const placed = new Map<
         string,
         {
@@ -164,7 +164,7 @@ function atomsFor(
             placed.set(claim.key, {ring: r, position, drawn: ring.claims.length, claim}),
         ),
     );
-    const line = field?.line ?? null;
+    const line = field.line;
     const first: [string | null | undefined, number][] = [
         [line?.keys.agent, WORDS_AT.agent],
         [line?.keys.context, WORDS_AT.context],
@@ -221,8 +221,8 @@ export function GalaxyField({
     beats,
     readRow,
 }: {
-    field: LandingField | null;
-    /** Real lines on the chain: the pulse beats only when there is something to beat for. */
+    field: LandingField;
+    /** The pulse panel's rows: scene 0 beats once for each. */
     beats: number;
     /** Scene 2's panel row for a reading, so the loupe's line can run to it. */
     readRow: (index: number) => HTMLElement | null;
@@ -231,7 +231,7 @@ export function GalaxyField({
     const deck = useDeck();
     const live = useRef<{
         deck: DeckState;
-        field: LandingField | null;
+        field: LandingField;
         beats: number;
         readRow: typeof readRow;
     }>({
@@ -261,7 +261,7 @@ export function GalaxyField({
         let height = 0;
         let frame = 0;
         let last = performance.now();
-        /** Scene 0's beats: one per real line, once each time the pulse is shown. */
+        /** Scene 0's beats: one per pulse row, once each time the pulse is shown. */
         let beatsLeft = 0;
         let nextBeat = 0;
 
@@ -274,10 +274,9 @@ export function GalaxyField({
         let camDur = 1;
         let camNow: Camera = camFrom;
 
-        let seenField: LandingField | null | undefined;
+        let seenField: LandingField | undefined;
         let atoms: Atom[] = [];
         const loupe = {x: 0, y: 0, set: false, a: 0, reading: -1};
-        let emptyA = 0;
         const ringNameA = [0, 0, 0];
 
         function fit() {
@@ -293,7 +292,7 @@ export function GalaxyField({
             camNow = camFrom;
         }
 
-        function syncField(field: LandingField | null) {
+        function syncField(field: LandingField) {
             if (field === seenField) return;
             seenField = field;
             const wanted = atomsFor(field);
@@ -418,7 +417,7 @@ export function GalaxyField({
 
             // Scene 5, the network: one star per agent that declared the tool, lighting up one
             // after another and staying lit while the scene is on.
-            const network = networkStars(field?.agents ?? 0);
+            const network = networkStars(field.agents);
             network.forEach((index, j) => {
                 const want = current === 5 ? (still ? 1 : clamp((since - networkAt(j)) / 0.5)) : 0;
                 joined[index] = lerp(joined[index] ?? 0, want, ease(6));
@@ -515,11 +514,9 @@ export function GalaxyField({
             const zoom = clamp(Math.sqrt(view.scale / 12), 0.55, 1.25);
             const cx = view.x(SUBJECT.x);
             const cy = view.y(SUBJECT.y);
-            const claims = atoms.filter((atom) => atom.kind === "claim" && !atom.leaving);
 
             // Each ring as its first atom arrives, and only then: the ring is whole by half the
-            // atom's trip, so the dot lands on a ring already there. With no claim at all, the
-            // empty field: one dashed ring, as `ClaimField`'s `arp-cf-zero` draws it.
+            // atom's trip, so the dot lands on a ring already there.
             ctx.strokeStyle = palette.track;
             ctx.lineWidth = 1;
             RING_RADII.forEach((r, ring) => {
@@ -532,22 +529,9 @@ export function GalaxyField({
                 ctx.arc(cx, cy, r * view.scale, 0, Math.PI * 2);
                 ctx.stroke();
             });
-            emptyA = lerp(
-                emptyA,
-                claims.length === 0 && current >= 1 && current <= 4 && field !== null ? vis : 0,
-                ease(5),
-            );
-            if (emptyA > 0.01) {
-                ctx.globalAlpha = emptyA;
-                ctx.setLineDash([3, 4]);
-                ctx.beginPath();
-                ctx.arc(cx, cy, RING_RADII[2] * view.scale, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.setLineDash([]);
-            }
             ctx.globalAlpha = 1;
 
-            const readings = field?.readings ?? [];
+            const readings = field.readings;
             const reading = current === 2 ? readingAt(since, readings.length, still) : -1;
             const readKey = reading >= 0 ? readings[reading]?.claimKey : undefined;
 
@@ -701,7 +685,7 @@ export function GalaxyField({
             });
 
             // The words beside their dots.
-            const line = field?.line ?? null;
+            const line = field.line;
             for (const atom of atoms) {
                 const at = where.get(atom.key);
                 let show = current >= 1 && current <= 3 && vis > 0.5;

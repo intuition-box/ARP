@@ -1617,16 +1617,6 @@ a.arp-cf-card:hover {
     background: var(--color-steel);
 }
 
-.arp-gx-quiet,
-.arp-gx-empty {
-    margin: 10px 0 0;
-    color: var(--color-steel);
-}
-
-.arp-gx-empty p {
-    margin: 0;
-}
-
 .arp-deck-pinned .arp-gx-beat {
     left: max(24px, 5vw);
     top: clamp(112px, 16vh, 160px);

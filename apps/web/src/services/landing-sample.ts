@@ -1,15 +1,12 @@
-import type {LandingField} from "./landing-field";
+import type {FieldLine, FieldReading, LandingField} from "./landing-field";
 
 /**
- * The landing's sample, shown only while the chain has nothing to show (task 81, ADR `0152`).
- *
- * The user's decision of 2026-11-09, for the landing only: on testnet every real line comes from
- * ARP's own hidden test identities, so the page showed an empty field and no dot, and « on peut
- * faire des mock data, c'est pas grave ». So when a read **answers** with nothing, scenes 0 to 2
- * show this, unmarked since 2026-11-10, when the user removed every « Sample » label (ADR `0152`
- * §6 amended). A read that **failed** still says it failed; a sample never stands in for a
- * failure. The moment the chain has a real line, it replaces the sample, panel by panel, and a
- * panel never mixes the two.
+ * The landing's scenes, as a static illustration: **the landing reads nothing** (task 133, ADR
+ * `0197`). The user's decision of 2026-11-11: « je veux que tu vires ces variables, le front à cet
+ * endroit est static, rien n'est lu ». Before it, scenes 0 to 2 showed this only while the chain
+ * answered with nothing, and real lines replaced it panel by panel (ADR `0152` §6, amended
+ * 2026-11-10 to remove the « Sample » marks); on production that put one of ARP's own test agents
+ * on the front page. Now every reader sees this, on either chain, and no read is made for it.
  *
  * The shape is the design reference's sample (`docs/design/landing-galaxy/`), with its counts and
  * `hyperframes`, a real catalogue entry, as the tool. **Its agent ids are not kept**: `8453:3107`,
@@ -19,14 +16,44 @@ import type {LandingField} from "./landing-field";
  * can take one for a token id on any chain.
  */
 
-/** A sample pulse row: who, what, and what for. */
+/** A pulse row: who, what, and what for. */
 export type SampleLine = {agent: string; tool: string; context: string};
 
+/** Scene 0's pulse panel. */
 export const SAMPLE_LINES: readonly SampleLine[] = [
     {agent: "agent 1", tool: "hyperframes", context: "video"},
     {agent: "agent 2", tool: "pptx", context: "document"},
     {agent: "agent 3", tool: "remotion-render", context: "video"},
     {agent: "agent 4", tool: "frontend-design", context: "design"},
+];
+
+/** The tool the field is about. */
+export const SAMPLE_TOOL = {atomId: "sample:hyperframes", name: "hyperframes", label: null};
+
+/** Scene 1's line, word by word. */
+export const SAMPLE_LINE: FieldLine = {
+    agent: "agent 1",
+    agentIsId: false,
+    tool: "hyperframes",
+    context: "video",
+    outcome: "task done",
+    keys: {agent: "agent:agent 1", context: "context:video", outcome: "outcome:task done"},
+};
+
+/** Scene 2's readings: what the next agent reads in the field. */
+export const SAMPLE_READINGS: readonly FieldReading[] = [
+    {kind: "useful", claimKey: "agent:agent 2", text: "agent 2 uses it · one of 5 agents"},
+    {kind: "for what", claimKey: "context:video", text: "in context of video · 4 positions"},
+    {
+        kind: "working",
+        claimKey: "outcome:failed: missing-key",
+        text: "failed once: missing-key · you have one?",
+    },
+    {
+        kind: "paid",
+        claimKey: "paid:paid service",
+        text: "its files name a paid service · no position",
+    },
 ];
 
 const agent = (id: string, positions: number) => ({
@@ -51,8 +78,9 @@ const outcome = (word: string, positions: number) => ({
     positions,
 });
 
+/** What the galaxy draws: the tool, its three rings, the line and the readings. */
 export const SAMPLE_FIELD: LandingField = {
-    tool: {atomId: "sample:hyperframes", name: "hyperframes", label: null},
+    tool: SAMPLE_TOOL,
     rings: [
         {
             name: "used by",
@@ -86,33 +114,7 @@ export const SAMPLE_FIELD: LandingField = {
             ],
         },
     ],
-    line: {
-        agent: "agent 1",
-        agentIsId: false,
-        tool: "hyperframes",
-        context: "video",
-        outcome: "task done",
-        keys: {agent: "agent:agent 1", context: "context:video", outcome: "outcome:task done"},
-    },
+    line: SAMPLE_LINE,
     agents: 5,
-    readings: [
-        {kind: "useful", claimKey: "agent:agent 2", text: "agent 2 uses it · one of 5 agents"},
-        {kind: "for what", claimKey: "context:video", text: "in context of video · 4 positions"},
-        {
-            kind: "working",
-            claimKey: "outcome:failed: missing-key",
-            text: "failed once: missing-key · you have one?",
-        },
-        {
-            kind: "paid",
-            claimKey: "paid:paid service",
-            text: "its files name a paid service · no position",
-        },
-    ],
-    linesFailed: false,
+    readings: [...SAMPLE_READINGS],
 };
-
-/** The chain answered and has no tool with a line: the field the landing shows instead. */
-export function fieldOrSample(field: LandingField): LandingField {
-    return field.tool === null ? SAMPLE_FIELD : field;
-}

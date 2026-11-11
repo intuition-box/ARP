@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-186 decisions. Newest last. `choices/README.md` says when to write one.
+187 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -36,6 +36,7 @@ Read these before relying on them.
 - **0144** (Accepted. Amended by ADR `0159`, 2026-11-09: a line about an endpoint is sponsored when it names a payment the agent made.) — A sponsored line asks no proof of use, and its key stays out of the plugin's server
 - **0145** (Accepted. Amended 2026-11-06 for the Claude Code plugin, at the end: it no longer goes through `npx`.) — The published CLI carries viem and has no dependency
 - **0148** (Accepted (design; nothing built)) — The hire loop reuses x402, ERC-8183 and ERC-8004, and checks the payment at read time
+- **0152** (Accepted; §5, §6 and §6's 2026-11-10 amendment reversed by ADR `0197` (2026-11-11: the) — The landing is one camera through a galaxy, and the claim field is on it
 - **0154** (Proposed) — Public read pages are dated static snapshots, not a live endpoint
 - **0155** (Accepted. Amended by ADR `0161` (2026-11-10): ARP's hosted read-only MCP endpoint receives the words of a caller who chooses it, and keeps none; point 3 holds for everything a person installs.) — A word names a node through a local alias table; the words never leave the machine
 - **0164** (Accepted (the user saw both versions, 2026-11-10; on `feat/95-agent-lines`)) — The agent page leads with lines, and shows no payment yet
@@ -197,7 +198,7 @@ Read these before relying on them.
 | [0149](0149-the-sponsor-is-hosted-with-its-own-key.md) | 2026-11-09 | Accepted | The sponsor is hosted, beside the site, with a key of its own |
 | [0150](0150-the-tree-is-oasf-and-arp-adds-depth.md) | 2026-11-09 | Accepted | The domain tree is OASF's skills taxonomy, and ARP adds depth below it |
 | [0151](0151-the-nav-is-a-coin-the-mark-leaves-the-centre.md) | 2026-11-09 | Accepted | The nav is a coin: the mark leaves the centre |
-| [0152](0152-the-landing-is-one-camera-through-a-galaxy.md) | 2026-11-09 | Accepted | The landing is one camera through a galaxy, and the claim field is on it |
+| [0152](0152-the-landing-is-one-camera-through-a-galaxy.md) | 2026-11-09 | Accepted; §5, §6 and §6's 2026-11-10 amendment reversed by ADR `0197` (2026-11-11: the | The landing is one camera through a galaxy, and the claim field is on it |
 | [0153](0153-search-reads-skills-sh-and-agents-open-on-reachable.md) | 2026-11-09 | Accepted | The search reads skills.sh's index, and the agent list opens on the reachable |
 | [0154](0154-public-read-pages-are-dated-static-snapshots.md) | 2026-11-09 | Proposed | Public read pages are dated static snapshots, not a live endpoint |
 | [0155](0155-words-to-the-tree-stay-local.md) | 2026-11-09 | Accepted. Amended by ADR `0161` (2026-11-10): ARP's hosted read-only MCP endpoint receives the words of a caller who chooses it, and keeps none; point 3 holds for everything a person installs. | A word names a node through a local alias table; the words never leave the machine |
@@ -234,3 +235,4 @@ Read these before relying on them.
 | [0194](0194-the-import-is-on-testnet-whatever-the-toggle.md) | 2026-11-11 | Accepted | The import is on testnet 13579, whatever the toggle says |
 | [0195](0195-the-hosted-surfaces-bound-their-load.md) | 2026-11-11 | Accepted | The hosted surfaces bound their load, and the server caches none of the words searched |
 | [0196](0196-a-hosted-content-server-that-signs-receipts.md) | 2026-11-11 | Accepted | A hosted content server that signs receipts, and serves nothing else |
+| [0197](0197-the-landing-scenes-are-static.md) | 2026-11-11 | Accepted | The landing's scenes are static: they read nothing |

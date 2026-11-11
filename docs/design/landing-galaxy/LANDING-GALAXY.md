@@ -121,6 +121,10 @@ From Emil Kowalski's `emil-design-eng` and `review-animations` skills (found thr
 
 ## Data: what is real, what is not
 
+> **Superseded 2026-11-11** (task 133, ADR `0197`, the user): the built landing reads nothing.
+> Every scene shows `apps/web/src/services/landing-sample.ts`, on either chain. The reads below are
+> the handoff's text, kept as written.
+
 The reference is **all sample** except the tool's name, hyperframes, a real catalogue entry
 (testnet 13579, read 2026-11-09). The standing rule holds: **no sample data ships**.
 

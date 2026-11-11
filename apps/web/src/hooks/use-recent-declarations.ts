@@ -1,7 +1,5 @@
-import {useQuery} from "@tanstack/react-query";
 import {getRecentDeclarations, type RecentDeclaration} from "@arp-protocol/core";
 
-import {useChainChoice} from "../lib/chain-choice";
 import {hiddenAtomIds, visibleDeclarations} from "../services/test-identities";
 
 /**
@@ -26,7 +24,7 @@ function recentQueryKey(chainId: number, limit: number) {
 
 /**
  * The default read leaves out ARP's own test identities (`services/test-identities.ts`, task 74),
- * so every surface built on it — the landing's pulse, `/activity`, the bar — shows the same rows.
+ * so both surfaces built on it, `/activity` and the bar, show the same rows.
  */
 export const getVisibleRecentDeclarations: RecentFetcher = async (config) => {
     const [rows, hidden] = await Promise.all([
@@ -46,13 +44,8 @@ export function recentQueryOptions(
         queryFn: (): Promise<RecentDeclaration[]> =>
             fetchRecent({graphqlUrl: chain.graphqlUrl, limit}),
         // A minute. The edges change when somebody writes one, which is rare enough that re-asking
-        // the indexer on every mount would be the expensive half of a landing page.
+        // the indexer on every mount would be the expensive half of a page.
         staleTime: 60_000,
         retry: 0,
     };
-}
-
-export function useRecentDeclarations(limit = 8) {
-    const chain = useChainChoice();
-    return useQuery(recentQueryOptions(chain, limit));
 }
