@@ -10,7 +10,7 @@ Every way to install ARP, and the state of each on 2026-11-10. This page is the 
 | Claude Desktop | [the extension, one `.mcpb` file](#claude-desktop-the-extension) | **not published** | sponsored tools, nothing to sign |
 | Cursor, Gemini CLI, Codex, Copilot, Grok Build | [`arp init`](#other-runtimes-arp-init) | works | the full tool set; the hook in Claude Code and Grok Build only |
 | the runtimes `arp init` finds, sponsored | [`arp init --sponsored`](#arp-init---sponsored) | works; the hosted sponsor is the default from 0.0.4 | tools that sign nothing for you |
-| any MCP client | [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry) | published, 0.0.4 on npm (2026-11-11) | what the client's entry starts |
+| any MCP client | [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry) | published, 0.0.5 on npm (2026-11-11) | what the client's entry starts |
 | nothing installed | [the skill file](#nothing-installed-the-skill-file) | works | the procedure, as public reads and calls you sign |
 | a throwaway machine | [a Docker container](#an-isolated-test-in-docker) | works | the plugin, away from your own files |
 
@@ -45,7 +45,7 @@ What you get, the full feature set of this round:
 - the MCP server with three read tools: `arp_pulse`, `arp_tool_reputation`, `arp_agent_endpoints` ([MCP tools](/docs/mcp-tools));
 - the hook ([Local memory and sharing](/docs/local-memory)): it keeps a local memory of what failed, shows what a skill contains before `npx skills add` runs, shows what others wrote when a skill fails, and asks once per skill whether it did its job;
 - one question, once: after the first skill result, the agent asks whether to share it, with three answers, "yes, this once", "always" and "no". Nothing is shared before you answer. "Always" sends that result and each later one in the background when its session ends, nothing kept before ([Sharing](/docs/local-memory#sharing));
-- five commands you type yourself: `/arp:share`, `/arp:share-on`, `/arp:share-off`, `/arp:share-send`, `/arp:line`. The last two need a sponsoring service: ARP's is hosted at `https://sponsor.arp.intuition.box`, the default from 0.0.4. 0.0.3 cannot write a line through it once it checks line request v5 (task 122), which 0.0.3 does not sign, so update to 0.0.4. The send after "always" or "yes, this once" goes through the same service; when it fails, why is written down in `~/.arp/share-log.jsonl`, not shown.
+- five commands you type yourself: `/arp:share`, `/arp:share-on`, `/arp:share-off`, `/arp:share-send`, `/arp:line`. The last two need a sponsoring service: ARP's is hosted at `https://sponsor.arp.intuition.box`, the default from 0.0.4. 0.0.3 cannot write a line through it once it checks line request v5 (task 122), which 0.0.3 does not sign, so update to 0.0.5 (0.0.5 also asks once whether to share). The send after "always" or "yes, this once" goes through the same service; when it fails, why is written down in `~/.arp/share-log.jsonl`, not shown.
 
 Checked on 2026-11-10 in a clean `node:22-bookworm` container with Claude Code 2.1.322: both install commands succeeded, `claude plugin list` showed `arp@arp`, version 0.0.3, enabled, and the update commands answered `arp is already at the latest version (0.0.3)`.
 
@@ -65,7 +65,7 @@ Add ARP under `mcpServers` (merge it with any servers already there), then quit 
   "mcpServers": {
     "arp": {
       "command": "npx",
-      "args": ["-y", "@arp-protocol/cli@0.0.4", "mcp"],
+      "args": ["-y", "@arp-protocol/cli@0.0.5", "mcp"],
       "env": { "ARP_TARGET": "testnet", "ARP_TOOLS": "read" }
     }
   }
