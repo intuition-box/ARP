@@ -1,6 +1,6 @@
 # Task 119 — An x402 endpoint's URL is written without its values
 
-**Status:** verified 2026-11-11, `task-verifier` PASS (round 1), post-mortem `.claude/learning/107-an-endpoint-url-without-its-values.md`; on branch `worktree-agent-ad447ea218aeebeda`, for the orchestrator to push.
+**Status:** verified 2026-11-11, `task-verifier` PASS (round 1), post-mortem `.claude/learning/107-an-endpoint-url-without-its-values.md`; on branch `main`, for the orchestrator to push.
 **ADR:** `0186` (amends `0162`).
 **Rules:** `code.md`, `security.md` (a signing site changed: its entry and the sponsoring row updated),
 `claims.md`, `workflow.md`, `portability.md`. Gates: `packages/protocol` test and lint, `apps/sponsor`
