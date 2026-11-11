@@ -54,4 +54,10 @@ describe("ToolWallets", () => {
         const {container} = renderWithProviders(<ToolWallets atomId="0xaa" />);
         expect(container.textContent).toBe("");
     });
+
+    it("shows nothing for a tool the catalogue does not list", () => {
+        state.data = [{account: ACCOUNT, deposits: 2, assets: 1n}];
+        const {container} = renderWithProviders(<ToolWallets atomId="0xbb" />);
+        expect(container.textContent).toBe("");
+    });
 });
