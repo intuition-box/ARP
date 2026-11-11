@@ -322,6 +322,9 @@ async function approveSponsor(config: LoopConfig, agent: AgentSender, ref: objec
   await agent.send({ to: next.to, data: next.data, value: BigInt(next.value), chainId: DESKTOP_CHAIN_ID }, [approval]);
 }
 
+/** The terms an x402 payment was made against, as `arp line --pay-to --asset --price --terms-at` takes them. */
+export type LineTerms = { payTo: string; asset: string; price: string; receivedAt: number };
+
 export type LineInput = {
   toolUrl: string;
   domain?: string;
@@ -335,6 +338,12 @@ export type LineInput = {
    * before anything is signed or listed (task 119, ADR `0186`).
    */
   payment?: X402PaymentRef;
+  /**
+   * With `payment`, and required by it: the terms the endpoint's `402` gave and the payer paid against
+   * (`PaymentRequirements`' `payTo`, `asset` and `amount`), and when they were received, unix seconds (task
+   * 122, ADR `0189`). Signed into the request; the sponsor checks the transfer and the endpoint against them.
+   */
+  terms?: LineTerms;
   /**
    * `needs` on a missing-program or missing-key failure, `with` on a worked line: a program's or an environment
    * variable's name, never its value (task 97, ADR `0166`). The sponsor writes it only when the skill's
@@ -354,6 +363,8 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, asked: L
   // An endpoint's values never reach a signature, the tool atom or the payment level (ADR `0186`). A skill's
   // URL is not an endpoint: its `?skill=` value is the skill's name, and stays.
   const input = asked.payment === undefined ? asked : { ...asked, toolUrl: redactEndpointUrl(asked.toolUrl) };
+  if (input.payment !== undefined && input.terms === undefined) throw new Error('a line with a payment names the terms it paid against');
+  const terms = input.payment === undefined ? null : (input.terms ?? null);
   const state = await ensureAgent(config, agent);
   const ref = { agentRegistry: registryRef(config), agentId: state.agentId };
   await ensureIdentity(config, state);
@@ -410,6 +421,10 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, asked: L
         payment: input.payment === undefined ? '' : paymentAtomLabel(input.payment),
         endpoint: input.payment === undefined ? '' : input.toolUrl,
         need: input.need ?? '',
+        payTo: terms?.payTo ?? '',
+        asset: terms?.asset ?? '',
+        price: terms?.price ?? '',
+        termsAt: terms?.receivedAt ?? 0,
         nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
         expiresAt: expiresAt(),
       },

@@ -18,6 +18,9 @@
  *  `ARP_SPONSOR` names ARP's sponsoring service, whose `GET /line-request` holds the request each x402
  *  line was signed with (task 121, ADR `0188`); the feed carries it as `signed_request`, and says in
  *  `signed_requests_from` where it read it. Unset, no request is read and every `signed_by_payer` is false.
+ *  A version 5 request names the terms its payer paid against (task 122, ADR `0189`): the transfer is
+ *  checked against them, and the service's `payee_check` beside the request becomes the record's; without
+ *  one, every record is `unchecked` and counted apart in `by_endpoint`.
  *
  *  The file is a dated snapshot (ADR `0154`): rerun it to refresh. It refuses to write when a paying
  *  chain or the named sponsoring service does not answer, so a record never loses a field to an outage.

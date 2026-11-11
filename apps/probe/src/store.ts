@@ -5,6 +5,8 @@ export type Readings = {
   append(rows: readonly Reading[]): Promise<void>;
   /** Every reading of every target since `sinceIso`, oldest first. */
   since(sinceIso: string): Promise<Reading[]>;
+  /** The most recent `x402` reading of `target` strictly before `beforeIso`, or `null` (ADR `0189`). */
+  latestX402(target: string, beforeIso: string): Promise<Reading | null>;
 };
 
 /** The part of D1 this uses. Workers' `D1Database` satisfies it. */
@@ -41,6 +43,16 @@ export function d1Readings(db: D1Like): Readings {
         .all<Reading>();
       return results;
     },
+    async latestX402(target, beforeIso) {
+      // `readings_target_at` serves this: one target, its rows ordered by time.
+      const { results } = await db
+        .prepare(
+          "SELECT target, kind, at, outcome, http, ms, detail FROM readings WHERE target = ? AND outcome = 'x402' AND at < ? ORDER BY at DESC LIMIT 1",
+        )
+        .bind(target, beforeIso)
+        .all<Reading>();
+      return results[0] ?? null;
+    },
   };
 }
 
@@ -53,6 +65,10 @@ export function memoryReadings(): Readings & { rows: Reading[] } {
     },
     async since(sinceIso) {
       return rows.filter((row) => row.at >= sinceIso).sort((a, b) => (a.at < b.at ? -1 : 1));
+    },
+    async latestX402(target, beforeIso) {
+      const found = rows.filter((row) => row.target === target && row.outcome === 'x402' && row.at < beforeIso);
+      return found.sort((a, b) => (a.at < b.at ? 1 : -1))[0] ?? null;
     },
   };
 }

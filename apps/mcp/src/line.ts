@@ -33,7 +33,7 @@ import { chainId, domainWalk } from './config.js';
 import { domainWords } from './domain-words.js';
 import type { AgentSender } from './desktop/agent-key.js';
 import { agentFor, loopConfig } from './desktop/handlers.js';
-import { sponsorApproval, writeLine, type LineInput, type LoopConfig, type WrittenLine } from './desktop/loop.js';
+import { sponsorApproval, writeLine, type LineInput, type LineTerms, type LoopConfig, type WrittenLine } from './desktop/loop.js';
 
 /** Base by default, plus what `ARP_X402_NETWORKS` adds (task 91, ADR `0160`). Throws on a malformed setting. */
 export function lineNetworks(env: Readonly<Record<string, string | undefined>> = process.env): X402NetworkTable {
@@ -52,6 +52,14 @@ export function lineFromArgs(args: {
   /** With `network`, the x402 settlement this outcome refers to (task 89, ADR `0159`). */
   paymentTx?: string | undefined;
   network?: string | undefined;
+  /**
+   * With `paymentTx`, all four: the `payTo`, `asset` and `amount` of the x402 `PaymentRequirements` that was
+   * paid, and when that `402` was received, unix seconds or ISO 8601 (task 122, ADR `0189`).
+   */
+  payTo?: string | undefined;
+  asset?: string | undefined;
+  price?: string | undefined;
+  termsAt?: string | undefined;
   /** With a missing-program or missing-key failure: the program or variable's name that was missing (ADR `0166`). */
   needs?: string | undefined;
   /** With a worked outcome: the program or variable's name the agent had to add (ADR `0166`). */
@@ -72,6 +80,11 @@ export function lineFromArgs(args: {
     if (!networks.has(args.network)) return new Error(`--network must be one of ${[...networks.keys()].join(', ')}`);
   }
   if (args.paymentTx !== undefined && !/^0x[0-9a-fA-F]{64}$/.test(args.paymentTx)) return new Error('--payment-tx is a 32-byte transaction hash');
+  const terms = termsFromArgs(args);
+  if (terms instanceof Error) return terms;
+  if (args.reason === 'no-delivery' && args.paymentTx === undefined) {
+    return new Error('--reason no-delivery means paid, nothing received: it takes --payment-tx and --network');
+  }
   // The line names the URL as it was called, beside the tool's canonical atom (ADR `0162`), with its values
   // removed before anything is signed (ADR `0186`): `?city=paris` is written `?city=`.
   let toolUrl = args.toolUrl;
@@ -111,8 +124,46 @@ export function lineFromArgs(args: {
     ...(args.paymentTx === undefined || args.network === undefined
       ? {}
       : { payment: { network: args.network, txHash: args.paymentTx.toLowerCase() as Hex } }), // checked above
+    ...(terms === null ? {} : { terms }),
     ...(need === undefined ? {} : { need }),
   };
+}
+
+const TERMS_FLAGS = ['--pay-to', '--asset', '--price', '--terms-at'] as const;
+
+/** The four terms flags: all of them with a payment, none without (ADR `0189`). */
+function termsFromArgs(args: {
+  paymentTx?: string | undefined;
+  payTo?: string | undefined;
+  asset?: string | undefined;
+  price?: string | undefined;
+  termsAt?: string | undefined;
+}): LineTerms | null | Error {
+  const given = [args.payTo, args.asset, args.price, args.termsAt];
+  if (args.paymentTx === undefined) {
+    return given.every((value) => value === undefined) ? null : new Error(`${TERMS_FLAGS.join(', ')} follow --payment-tx`);
+  }
+  if (given.some((value) => value === undefined)) {
+    return new Error(`with --payment-tx, name the terms the 402 gave and you paid against: ${TERMS_FLAGS.join(' ')}`);
+  }
+  const { payTo, asset, price, termsAt } = args as Required<typeof args>; // each checked defined above
+  if (!/^0x[0-9a-fA-F]{40}$/.test(payTo)) return new Error("--pay-to is the 402's payTo address");
+  if (!/^0x[0-9a-fA-F]{40}$/.test(asset)) return new Error("--asset is the 402's asset address");
+  if (!/^[1-9][0-9]{0,77}$/.test(price)) return new Error("--price is the 402's amount, a positive integer in the asset's smallest unit");
+  const receivedAt = /^[0-9]+$/.test(termsAt) ? Number(termsAt) : Math.floor(Date.parse(termsAt) / 1000);
+  if (!Number.isSafeInteger(receivedAt) || receivedAt <= 0) return new Error('--terms-at is when the 402 was received: unix seconds or ISO 8601');
+  if (receivedAt > Math.floor(Date.now() / 1000) + 300) return new Error('--terms-at is in the future');
+  return { payTo, asset, price, receivedAt };
+}
+
+/** Whether a transfer the payment holds matches the terms: their payee, their asset, at least their price. */
+function matchesTerms(payment: ReadPayment, terms: LineTerms): boolean {
+  return payment.transfers.some(
+    (transfer) =>
+      transfer.payTo.toLowerCase() === terms.payTo.toLowerCase() &&
+      transfer.asset.toLowerCase() === terms.asset.toLowerCase() &&
+      BigInt(transfer.amount) >= BigInt(terms.price),
+  );
 }
 
 /** What the payment's transaction holds, read before anything is signed. Amounts are decimal strings, so it prints as JSON. */
@@ -171,6 +222,12 @@ export async function writeLineChecked(
     if (!isExactEndpointUrl(input.toolUrl)) throw new Error(`${input.toolUrl} is not the exact http(s) URL that was paid`);
     if (steps.payments === undefined) throw new Error('this build reads no payment network');
     payment = await readLinePayment(input, steps.payments);
+    if (input.terms === undefined) throw new Error('a line with a payment names the terms it paid against');
+    if (payment !== null && !matchesTerms(payment, input.terms)) {
+      throw new Error(
+        `no transfer in ${input.payment.txHash} pays ${input.terms.payTo} at least ${input.terms.price} of ${input.terms.asset}: check --pay-to, --asset and --price`,
+      );
+    }
   }
   if (input.domain !== undefined) {
     // The sponsor's normalisation, so the word checked, filed and written is one word.

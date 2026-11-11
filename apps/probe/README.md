@@ -23,6 +23,7 @@ The readings are kept in D1, Cloudflare's SQL database.
 | ------------------- | ------------------------------------------------------- |
 | `GET /probe`        | each target's latest reading, and its last 24 hours     |
 | `GET /probe?days=7` | the same over 7 days (30 at most)                       |
+| `GET /x402?target=<label>&before=<ISO>` | an x402 endpoint's offers (network, asset, payee, amount) from its latest `402` before then, or 404 (ADR `0189`) |
 | `GET /healthz`      | how many targets, and when the last cycle ran           |
 
 ## What it is, and what it is not

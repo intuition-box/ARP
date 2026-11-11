@@ -562,7 +562,7 @@ outcome, the settlement transaction, the network, and the date. Frits offers to 
 the first version exists. So an x402 failure line must carry the settlement transaction, and the
 networks Doctor reads are mainnets (Base, Solana and others, `openapi.json`, read 2026-11-09).
 
-**When it is picked up:** start with the read feed above, the shape Frits asked for. **Built 2026-11-09 by task 89** (ADR `0159`): `/feeds/x402-outcomes.json`, empty until a line names a real payment. Since task 93 (ADR `0162`) a record's `endpoint` is the URL the payer called, with `endpoint_canonical` beside it; a line written before then has `endpoint: null`. Since task 119 (ADR `0186`, schema `arp.x402-outcomes/3`) both carry no value: `?city=paris` is `?city=`. Then do point 2, which is the cheapest. Do 41b, the node
+**When it is picked up:** start with the read feed above, the shape Frits asked for. **Built 2026-11-09 by task 89** (ADR `0159`): `/feeds/x402-outcomes.json`, empty until a line names a real payment. Since task 93 (ADR `0162`) a record's `endpoint` is the URL the payer called, with `endpoint_canonical` beside it; a line written before then has `endpoint: null`. Since task 119 (ADR `0186`, schema `arp.x402-outcomes/3`) both carry no value: `?city=paris` is `?city=`. Since task 122 (ADR `0189`, schema `arp.x402-outcomes/4`) a record carries the `price` its payer signed and a `payee_check` (`probe`, `live` or `unchecked`), and `by_endpoint` counts only checked records. Then do point 2, which is the cheapest. Do 41b, the node
 answering 402, with Doctor's `diagnose` as its test.
 
 **Built 2026-11-11 by task 118:** `/feeds/x402-outcomes-test.json`, the same schema with `"test": true`,

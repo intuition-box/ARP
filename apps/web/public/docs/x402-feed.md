@@ -56,10 +56,26 @@ From the CLI, with `--tool` the URL you paid:
 
 ```
 arp line --tool http://www.api.example.com/x402/weather/ --outcome failed --reason no-delivery \
-  --payment-tx 0x… --network eip155:8453
+  --payment-tx 0x… --network eip155:8453 \
+  --pay-to 0x… --asset 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 --price 20000 --terms-at 2026-11-09T19:31:40Z
 ```
 
-`arp line` reads the transaction on Base before it signs anything, and ARP's sponsoring service reads it again before it writes. Neither signs or spends anything on Base. The line itself is written on Intuition testnet 13579.
+`--pay-to`, `--asset` and `--price` are the `payTo`, `asset` and `amount` of the `402` you paid against, and `--terms-at` is when it came. They are signed with the line. `arp line` reads the transaction on Base before it signs anything and refuses one that does not pay `--pay-to` at least `--price` of `--asset`. ARP's sponsoring service reads it again before it writes. Neither signs or spends anything on Base. The line itself is written on Intuition testnet 13579.
+
+## The payment went to the endpoint, for its price
+
+A transfer of almost nothing to the payer's own second wallet would otherwise back a `no-delivery` line about any endpoint. So the terms the payer signed are checked twice before the line is written:
+
+1. **Against the transfer.** It must pay the signed `payTo`, in the signed asset, on the payment's network, at least the signed price. A client may pay more than it was asked, never less. The feed checks this again when it is built, and leaves out a record that fails.
+2. **Against a reading the payer does not control**, in this order:
+   - ARP's probe's dated reading of the endpoint's `402`, the most recent one before the payment. This is what still works once the endpoint stops answering;
+   - a live read of the `402` when the line is written, from the URL the payer signed.
+
+   The first reading that names the signed payee, asset and network, at a price no higher than the signed one, is the answer. A probe reading that disagrees is overruled by a live read that agrees, since a payee can change. A reading that disagrees with nothing to overrule it refuses the line (`422`, rule `payee`).
+
+When neither reading exists, the line is still written, and its record says `unchecked`. Third-party listings are not read.
+
+ARP's probe reads only the endpoints in its own catalogue, and is not hosted yet. Today the second check is a live read or nothing.
 
 ## What a record holds
 
@@ -82,18 +98,23 @@ arp line --tool http://www.api.example.com/x402/weather/ --outcome failed --reas
   "written_at": "2026-11-09T20:00:00.000Z",
   "signed_request": {
     "typed_data": {
-      "domain": {"name": "ARP Line Request", "version": "4", "chainId": 13579},
+      "domain": {"name": "ARP Line Request", "version": "5", "chainId": 13579},
       "types": {"LineRequest": [{"name": "agent", "type": "address"}, "…"]},
       "primaryType": "LineRequest",
-      "message": {"agent": "0x…", "payment": "eip155:8453/tx/0x…", "outcome": "failed", "…": "…"}
+      "message": {"agent": "0x…", "payment": "eip155:8453/tx/0x…", "outcome": "failed", "payTo": "0x…", "price": "20000", "…": "…"}
     },
     "signature": "0x…"
   },
-  "signed_by_payer": true
+  "signed_by_payer": true,
+  "price": "20000",
+  "payee_check": "live",
+  "payee_checked_at": "2026-11-09T20:00:00.000Z"
 }
 ```
 
-`endpoint` is the URL the payer called, with its values removed. A line written before 2026-11-10 did not name it, so its `endpoint` is `null`: unknown, not guessed. `endpoint_canonical` is always there, also without values, so two calls that differ only in what they asked count under one key. The feed removes values again as it reads, whatever a line wrote: no value reaches the file, and a line whose URLs no longer agree once reduced, or that carries credentials, is counted in `skipped`. `amount` is in the asset's smallest unit: 20000 is 0.02 USDC. `line_id` is T5's id on Intuition testnet 13579. Beside the records: `by_endpoint` (records, worked, failed, no-delivery and distinct payers per `endpoint_canonical`), `skipped` (lines left out, by why), and `truncated`. `signed_request` and `signed_by_payer` are below. The schema is `arp.x402-outcomes/3`; `signed_request`, `signed_by_payer` and the top-level `signed_requests_from` were added to it on 2026-11-11 without changing any other field. Version 2 published both URLs with their values, and version 1 had no `endpoint_canonical` and put the canonical URL in `endpoint`.
+`endpoint` is the URL the payer called, with its values removed. A line written before 2026-11-10 did not name it, so its `endpoint` is `null`: unknown, not guessed. `endpoint_canonical` is always there, also without values, so two calls that differ only in what they asked count under one key. The feed removes values again as it reads, whatever a line wrote: no value reaches the file, and a line whose URLs no longer agree once reduced, or that carries credentials, is counted in `skipped`. `amount` is in the asset's smallest unit: 20000 is 0.02 USDC. `line_id` is T5's id on Intuition testnet 13579. `price` is the `402`'s amount the payer signed it paid against, or `null` when no signed request with terms is kept for the payment. `payee_check` says which reading named the signed terms as the endpoint's when the line was written: `probe`, `live`, or `unchecked`, and `payee_checked_at` when that reading was made (`null` when unchecked). Beside the records: `by_endpoint` (records, worked, failed, no-delivery and distinct payers per `endpoint_canonical`, counted over records whose `payee_check` is not `unchecked`, with `unchecked` beside them), `skipped` (lines left out, by why), and `truncated`. `signed_request` and `signed_by_payer` are below.
+
+The schema is `arp.x402-outcomes/4`. Version 4 (2026-11-11) added `price`, `payee_check` and `payee_checked_at`, and changed what `by_endpoint` counts: a record whose payee no reading confirmed is counted in `unchecked` only. Version 3 had `signed_request`, `signed_by_payer` and the top-level `signed_requests_from`, added on 2026-11-11 without changing any other field. Version 2 published both URLs with their values, and version 1 had no `endpoint_canonical` and put the canonical URL in `endpoint`.
 
 `payers` in `by_endpoint` counts distinct paying addresses per `endpoint_canonical`. A writer who pays one endpoint from two addresses counts twice, and nothing in the feed can tell that apart from two writers.
 
@@ -104,6 +125,7 @@ All of these, checked when the file is built:
 - the transaction exists on its network and succeeded;
 - it holds exactly one transfer of an accepted asset (USDC on Base today) from the line's writer, or from the `agentWallet` of an ERC-8004 agent that writer holds. The payer is read from the token's `Transfer` log, never from the transaction's sender, which for x402 is the facilitator;
 - the transfer pays someone other than the payer, and more than nothing;
+- when the payer signed the terms it paid against, the transfer pays that `payTo`, in that asset, at least that price;
 - the exact URL, when the line names one, reduces to the tool's URL, before and after values are removed;
 - the line was written after the payment;
 - no other line whose payment also checks names the same payment;
@@ -114,13 +136,13 @@ Anything else is left out and counted in `skipped`. If Base does not answer, no 
 ## What a record does not prove
 
 - **That the endpoint failed to deliver.** A record proves a payment and who made it. The outcome is the payer's word.
-- **That `pay_to` is the endpoint's payee.** Only the endpoint's own 402 answer says who it should pay. A checker such as Doctor compares the two.
+- **That `pay_to` is the endpoint's payee, when `payee_check` is `unchecked`.** Otherwise a reading of the endpoint's own `402` named it, at the time `payee_checked_at` gives, and the record proves no more than that reading: a payee can change after it, and an endpoint can name any address it likes. A checker such as Doctor can compare the two again.
 - **That the payer is anonymous.** The paying wallet is public on its own chain. Pay from a wallet dedicated to the agent's payments, never a personal one: [What ARP publishes about you](/docs/what-arp-publishes).
 - **That two payers are two people.** One person can hold several wallets. ARP's own ranking counts an outcome only from 3 distinct wallets; the feed lists every record and leaves the counting to the reader.
 
 ## Who signed the line
 
-A line written by ARP's sponsoring service rests on a request the agent signed: an EIP-712 `LineRequest` that names the payment, the outcome, the reason and the URL paid. The service keeps it, and the feed carries it as `signed_request`, so a reader checks who signed without trusting ARP. ARP could leave a request out; it cannot make one up, because only the signer's key produces the signature.
+A line written by ARP's sponsoring service rests on a request the agent signed: an EIP-712 `LineRequest` that names the payment, the outcome, the reason, the URL paid and, since version 5, the terms paid against (`payTo`, `asset`, `price`, `termsAt`). The service keeps it, and the feed carries it as `signed_request`, so a reader checks who signed without trusting ARP. ARP could leave a request out; it cannot make one up, because only the signer's key produces the signature.
 
 `signed_by_payer` is `true` when all three hold, and each can be recomputed from the record alone:
 
@@ -143,7 +165,7 @@ const same = m.payment === `${record.network}/tx/${record.settlement_tx.toLowerC
 // signed && same === record.signed_by_payer
 ```
 
-`typed_data` takes viem's form: `expiresAt` is a number, and `types` leaves out `EIP712Domain`. A tool built on `eth_signTypedData_v4` adds it from the domain's three fields: `name` string, `version` string, `chainId` uint256. There is no `verifyingContract`: no contract checks this signature.
+`typed_data` takes viem's form: `termsAt` and `expiresAt` are numbers, and `types` leaves out `EIP712Domain`. A tool built on `eth_signTypedData_v4` adds it from the domain's three fields: `name` string, `version` string, `chainId` uint256. There is no `verifyingContract`: no contract checks this signature.
 
 **It is EIP-712, not EIP-191.** A reader that verifies only `personal_sign` (EIP-191) messages cannot check it as one: the agent signed typed data, and there is no EIP-191 signature to check. Adding one would mean the agent signs a second time.
 

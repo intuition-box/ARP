@@ -69,6 +69,7 @@ import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
 import { LineRequestStore } from './line-requests.ts';
+import { liveTerms, probeTerms } from './x402-terms-read.ts';
 import { listenFrom, type Listen } from './listen.ts';
 import { categoryLog, categoryTree, compoundsFrom, lineSubjectCheck, lineToolUrl, toolCheck } from './categories.ts';
 import { resolveOnGitHubCached, skillMarkdownOnGitHub } from './github.ts';
@@ -170,6 +171,10 @@ const ENDPOINT_CHECKS_PER_HOUR = count(
   'SPONSOR_ENDPOINT_CHECKS_PER_HOUR',
   DEFAULT_ENDPOINT_CHECKS_PER_HOUR,
 );
+// Task 122, ADR `0189`: ARP's probe, whose dated readings of an endpoint's 402 check an x402 line's
+// terms after the endpoint goes dark. Optional: unset, only a live read can check them.
+const PROBE_URL = (process.env.ARP_PROBE_URL ?? '').trim();
+if (PROBE_URL !== '' && !URL.canParse(PROBE_URL)) fail(`ARP_PROBE_URL: ${PROBE_URL} is not a URL`);
 
 const threshold = process.env.SPONSOR_WITHDRAWAL_THRESHOLD_BPS;
 const limits: SponsorLimits = {
@@ -390,6 +395,11 @@ const service = createSponsor({
     // ADR `0159`: an x402 line's payment, read on its own network. Read-only; this key never signs there.
     payments: x402Reading(x402NetworksFrom(X402_DEFAULT_NETWORKS, process.env), process.env),
     requests: lineRequests,
+    // ADR `0189`: the terms an x402 line signed, checked against the probe's reading or a live one.
+    x402Terms: {
+      probe: PROBE_URL === '' ? async () => null : probeTerms(PROBE_URL, { log: (line) => process.stderr.write(`${line}\n`) }),
+      live: liveTerms(pinnedAsk({ allowPrivate: ALLOW_PRIVATE_TOOL_CHECK }), Date.now),
+    },
   },
   categories: {
     ...CATEGORY_TREE,
@@ -471,6 +481,7 @@ export async function main(): Promise<void> {
   );
   process.stderr.write(`  ledger     ${LEDGER}\n`);
   process.stderr.write(`  requests   ${LINE_REQUESTS}\n`);
+  process.stderr.write(`  x402 terms ${PROBE_URL === '' ? 'live read only (no ARP_PROBE_URL)' : `probe ${PROBE_URL}, then a live read`}\n`);
   process.stderr.write(
     `  publish    ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : 'on (delegation register, task 37c)'}\n`,
   );

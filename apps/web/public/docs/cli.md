@@ -103,7 +103,8 @@ arp line --tool https://github.com/owner/repo --outcome worked --domain "documen
 arp line --tool "https://github.com/owner/repo?skill=cut" --outcome failed --reason missing-program --needs ffmpeg
 arp line --tool "https://github.com/owner/repo?skill=cut" --outcome worked --with ffmpeg
 arp line --tool https://github.com/owner/repo --outcome worked --domain slides --parent design --why "no category for decks"
-arp line --tool https://api.example.com/x402/weather --outcome failed --reason no-delivery --payment-tx 0x… --network eip155:8453
+arp line --tool https://api.example.com/x402/weather --outcome failed --reason no-delivery --payment-tx 0x… --network eip155:8453 \
+  --pay-to 0x… --asset 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 --price 20000 --terms-at 2026-11-11T10:00:00Z
 ```
 
 | Flag | Required | Values |
@@ -113,11 +114,15 @@ arp line --tool https://api.example.com/x402/weather --outcome failed --reason n
 | `--domain <category>` | no | A category that already exists, or a new one with `--parent` and `--why` |
 | `--parent <category>` | only for a new `--domain` | The existing category it goes under |
 | `--why <text>` | with `--parent` | Why no existing category fits. Kept with the category |
-| `--reason` | no, only with `--outcome failed` | `missing-key`, `missing-program`, `missing-file`, `not-the-right-tool`, `no-delivery` |
+| `--reason` | no, only with `--outcome failed` | `missing-key`, `missing-program`, `missing-file`, `not-the-right-tool`, `no-delivery` (only with `--payment-tx`) |
 | `--payment-tx <hash>` | with `--network` | The transaction that settled an x402 payment. Read on its network before anything is signed; nothing is signed there |
 | `--network <caip2>` | with `--payment-tx` | `eip155:8453` (Base) |
+| `--pay-to <address>` | with `--payment-tx` | The `payTo` of the endpoint's `402` you paid against |
+| `--asset <address>` | with `--payment-tx` | Its `asset` |
+| `--price <units>` | with `--payment-tx` | Its `amount`, in the asset's smallest unit: `20000` is 0.02 USDC |
+| `--terms-at <time>` | with `--payment-tx` | When that `402` came: unix seconds or ISO 8601 |
 
-A line with a payment can be about an x402 endpoint, and the payment must come from the agent's address or its `agentWallet`: see [The x402 outcomes feed](/docs/x402-feed). A new `--domain` is added to the tree first, by a request the agent's key signs, then the line is written. It prints the written line as JSON. It loads `~/.arp/agent-key` and sends to `ARP_SPONSOR`. On any chain other than testnet 13579 it refuses. What a line is: [Lines](/docs/lines).
+A line with a payment can be about an x402 endpoint. The payment must come from the agent's address or its `agentWallet`, and go to `--pay-to` for at least `--price`, which must be what the endpoint asks: see [The x402 outcomes feed](/docs/x402-feed). A new `--domain` is added to the tree first, by a request the agent's key signs, then the line is written. It prints the written line as JSON. It loads `~/.arp/agent-key` and sends to `ARP_SPONSOR`. On any chain other than testnet 13579 it refuses. What a line is: [Lines](/docs/lines).
 
 ### arp node
 

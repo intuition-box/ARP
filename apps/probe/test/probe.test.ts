@@ -29,6 +29,15 @@ function answering(response: () => Response): typeof fetch {
   return (async () => response()) as unknown as typeof fetch;
 }
 
+/** One x402 offer: Base's USDC, 0.02, to a payee. */
+const OFFER = {
+  network: 'eip155:8453',
+  asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  payTo: `0x${'5e'.repeat(20)}`,
+  amount: '20000',
+};
+const OLD_PAYEE = `0x${'0d'.repeat(20)}`;
+
 let clock = 1_800_000_000_000;
 const now = () => (clock += 25);
 
@@ -65,6 +74,21 @@ describe('an endpoint', () => {
       now,
     );
     expect(reading.outcome).toBe('asks-for-auth');
+  });
+
+  test('a 402 with x402 requirements keeps its offers, and one without them is an http error (ADR 0189)', async () => {
+    const required = btoa(
+      JSON.stringify({ x402Version: 2, accepts: [{ scheme: 'exact', ...OFFER, maxTimeoutSeconds: 60, extra: {} }] }),
+    );
+    const paid = await read(
+      endpoint,
+      answering(() => new Response('', { status: 402, headers: { 'payment-required': required } })),
+      now,
+    );
+    expect(paid.outcome).toBe('x402');
+    expect(JSON.parse(paid.detail ?? '')).toEqual({ offers: [OFFER] });
+    const bare = await read(endpoint, answering(() => new Response('pay me', { status: 402 })), now);
+    expect([bare.outcome, bare.detail]).toEqual(['http-error', null]);
   });
 
   test('a bare 401 refuses, and is not taken for an MCP server', async () => {
@@ -193,6 +217,27 @@ describe('the service', () => {
       () => clock,
     );
     expect(((await response.json()) as { window: { days: number } }).window.days).toBe(30);
+  });
+
+  test('/x402 serves the latest x402 reading of a target before a date, and 404 without one (ADR 0189)', async () => {
+    const store = memoryReadings();
+    const offers = (payTo: string) => JSON.stringify({ offers: [{ ...OFFER, payTo }] });
+    await store.append([
+      { target: endpoint.label, kind: 'endpoint', at: '2026-11-10T10:00:00.000Z', outcome: 'x402', http: 402, ms: 9, detail: offers(OLD_PAYEE) },
+      { target: endpoint.label, kind: 'endpoint', at: '2026-11-11T09:00:00.000Z', outcome: 'x402', http: 402, ms: 9, detail: offers(OFFER.payTo) },
+      { target: endpoint.label, kind: 'endpoint', at: '2026-11-11T09:30:00.000Z', outcome: 'no-answer', http: null, ms: 9, detail: null },
+      { target: endpoint.label, kind: 'endpoint', at: '2026-11-11T11:00:00.000Z', outcome: 'x402', http: 402, ms: 9, detail: offers(OLD_PAYEE) },
+    ]);
+    const ask = async (query: string) => {
+      const response = await handle(new Request(`https://probe.test/x402?${query}`), store, () => clock);
+      return { status: response.status, body: (await response.json()) as { reading?: { at: string; offers: { payTo: string }[] } } };
+    };
+    const found = await ask(`target=${encodeURIComponent(endpoint.label)}&before=2026-11-11T10:00:00Z`);
+    expect(found.status).toBe(200);
+    expect(found.body.reading?.at).toBe('2026-11-11T09:00:00.000Z');
+    expect(found.body.reading?.offers.map((offer) => offer.payTo)).toEqual([OFFER.payTo]);
+    expect((await ask(`target=${encodeURIComponent(endpoint.label)}&before=2026-11-01T00:00:00Z`)).status).toBe(404);
+    expect((await ask('target=&before=x')).status).toBe(400);
   });
 
   test('the bundled list holds the eight packages and only endpoints with a public URL', () => {
