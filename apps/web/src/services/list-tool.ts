@@ -81,6 +81,8 @@ export async function listTool(
     };
 }
 
+const CARRIES_A_VALUE = "That URL carries a value, such as a key, and a listing is public for good.";
+
 /** One short line for each outcome, in the page's plain words (ADR `0103`). */
 export function listToolMessage(result: ListToolResult): string {
     switch (result.status) {
@@ -90,8 +92,8 @@ export function listToolMessage(result: ListToolResult): string {
             return "Adding is not available right now.";
         case "private":
             return result.listable === null
-                ? "That URL carries a value, such as a key, and a listing is public for good. Remove it."
-                : `That URL carries a value, such as a key, and a listing is public for good. Add ${result.listable} instead.`;
+                ? `${CARRIES_A_VALUE} Remove it.`
+                : `${CARRIES_A_VALUE} Add ${result.listable} instead.`;
         case "refused":
             if (result.rule === "url") return "That is not a tool or skill URL.";
             if (result.rule === "resolves" && !result.retry)
@@ -103,7 +105,7 @@ export function listToolMessage(result: ListToolResult): string {
             if (result.rule === "unreachable") return "That URL did not answer.";
             if (result.rule === "private-address") return "That URL is not a public address.";
             if (result.rule === "endpoint-private")
-                return "That URL carries a value, such as a key, and a listing is public for good. Remove it.";
+                return `${CARRIES_A_VALUE} Remove it.`;
             // 409 `pending`: a send of this same listing is not confirmed yet (ADR `0123`).
             if (result.rule === "pending") return "Already being added. Try again in a minute.";
             if (result.retry) return "Not answered right now. Try again.";
