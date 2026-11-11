@@ -170,6 +170,27 @@ describe('a package', () => {
     expect(asked).toBe('https://registry.npmjs.org/@o%2fserver');
   });
 
+  test('pypi: the latest version and its upload date, and a yanked release says so', async () => {
+    const record = {
+      info: { version: '0.4.1', yanked: false },
+      urls: [{ upload_time_iso_8601: '2026-10-02T12:00:00.000Z' }],
+    };
+    const published = await read(pypi, answering(() => Response.json(record)), now);
+    expect(published.outcome).toBe('published');
+    expect(published.http).toBe(200);
+    expect(JSON.parse(published.detail ?? '')).toEqual({ version: '0.4.1', modified: '2026-10-02T12:00:00.000Z' });
+
+    const yanked = await read(pypi, answering(() => Response.json({ info: { yanked: true } })), now);
+    expect(yanked.outcome).toBe('deprecated');
+    expect(JSON.parse(yanked.detail ?? '')).toEqual({ version: null, modified: null });
+  });
+
+  test('pypi: a registry error is an http error', async () => {
+    const reading = await read(pypi, answering(() => new Response('', { status: 503 })), now);
+    expect(reading.outcome).toBe('http-error');
+    expect(reading.http).toBe(503);
+  });
+
   test('pypi: a missing project is not found', async () => {
     expect(
       (
