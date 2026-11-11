@@ -1,6 +1,6 @@
 # Task 131 — A hosted content server
 
-**Status:** built 2026-11-11 on `feat/131-hosted-content-server`, written by arp-97. Task 131, ADR
+**Status:** built 2026-11-11 on `feat/131-hosted-content-server`, written by arp-97. `task-verifier` PASS on round 2, post-mortem `.claude/learning/119-a-hosted-content-server.md`. Task 131, ADR
 `0196`, post-mortem `119`, allocated by the orchestrator. **Not deployed**: the deploy is the user's
 (the steps below), then the orchestrator's 0.0.6 release, then the end-to-end check.
 **Rules:** `code.md`, `security.md`, `portability.md`, `claims.md`, `workflow.md`.
