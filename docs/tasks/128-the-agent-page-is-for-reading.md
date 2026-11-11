@@ -1,6 +1,6 @@
 # Task 128 — The agent page is for reading
 
-**Status:** done 2026-11-11, branch `feat/agent-page-for-humans`, written by arp-97. Task 128, ADR
+**Status:** done 2026-11-11, branch `feat/agent-page-for-humans`, written by arp-97. `ui-reviewer` (comments only, fixed) then `task-verifier` PASS on round 2, post-mortem `.claude/learning/116-the-agent-page-is-for-reading.md`. Task 128, ADR
 `0193`, post-mortem `116`, allocated by the orchestrator.
 **ADR:** `0193` — the web page on an agent offers no market and no declaration; ADR `0056` stands for
 the protocol.

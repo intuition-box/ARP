@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-117 entries, one per completed task. Written by `task-verifier` on a pass.
+118 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -123,3 +123,4 @@
 | [111](111-a-tool-url-without-its-values.md) | `docs/tasks/123-a-tool-url-without-its-values.md` | PASS | A tool URL is never listed with a value in it |
 | [112](112-the-dev-server-reads-the-source.md) | `docs/tasks/124-the-dev-server-reads-the-source.md` | PASS | What runs from the checkout reads `packages/protocol/src`, not a stale `dist/` |
 | [113](113-a-402-is-not-a-refusal.md) | `docs/tasks/125-a-402-is-not-a-refusal.md` | PASS (second pass; the first failed on two doc sites) | The hook tells x402's first 402 from a refusal, and a refusal from paid with nothing back |
+| [116](116-the-agent-page-is-for-reading.md) | `docs/tasks/128-the-agent-page-is-for-reading.md` | PASS (round 2) | The agent page is for reading |
