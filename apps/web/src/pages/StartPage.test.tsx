@@ -245,4 +245,48 @@ describe("the start page", () => {
         renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("operator"));
         expect(await screen.findByText("No path by that name")).toBeTruthy();
     });
+
+    it("sends nothing for an empty URL, to the search or to the sponsor", async () => {
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
+        fireEvent.click(await screen.findByRole("button", {name: "Find"}));
+        expect(screen.getByLabelText("Repository URL")).toBeTruthy();
+        fireEvent.change(screen.getByLabelText("Tool or skill URL"), {target: {value: "   "}});
+        fireEvent.click(screen.getByRole("button", {name: "Add it"}));
+        expect(listing.submit).not.toHaveBeenCalled();
+    });
+
+    it("says it is adding while the sponsor works, and sends nothing twice", async () => {
+        listing.pending = true;
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
+        expect(await screen.findByText("Adding…")).toBeTruthy();
+        expect(screen.getByRole("button", {name: "Add it"})).toBeDisabled();
+        fireEvent.change(screen.getByLabelText("Tool or skill URL"), {
+            target: {value: "https://github.com/Wieedze/ARP"},
+        });
+        const form = screen.getByLabelText("Tool or skill URL").closest("form");
+        if (form === null) throw new Error("the field sits in a form");
+        fireEvent.submit(form);
+        expect(listing.submit).not.toHaveBeenCalled();
+    });
+
+    it("offers no wallet after a refusal a retry can change", async () => {
+        listing.result = {status: "refused", rule: "daily-cap", retry: true, httpStatus: 429};
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
+        await screen.findByLabelText("Tool or skill URL");
+        expect(screen.queryByRole("link", {name: "Add it with a wallet →"})).toBeNull();
+    });
+
+    it("offers the wallet after a refusal no retry will change", async () => {
+        listing.result = {status: "refused", rule: "not-a-tool", retry: false, httpStatus: 400};
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("tool"));
+        expect(await screen.findByRole("link", {name: "Add it with a wallet →"})).toBeTruthy();
+    });
+
+    it("goes back to the steps when the answer changes to no", async () => {
+        renderWithProviders(<StartPage feed={feedWith([]).feed} />, at("agent?have=yes"));
+        const no = await screen.findByRole("button", {name: "No"});
+        expect(no).toHaveAttribute("aria-pressed", "false");
+        fireEvent.click(no);
+        expect(await screen.findByText("Add ARP to your runtime")).toBeTruthy();
+    });
 });

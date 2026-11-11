@@ -152,4 +152,79 @@ describe("PulsePage", () => {
         expect(screen.queryByText("Before you install")).toBeNull();
         if (read.status === "ok") expect(pulseContentsEntry(read.view.pulse)).toBeNull();
     });
+
+    it("says the skill could not be read when the read failed", () => {
+        read = {status: "failed"};
+        open();
+        expect(screen.getByRole("status")).toHaveTextContent("Could not read this skill. Try again later.");
+    });
+
+    it("lists keys in scripts it runs, the login line, other copies, and sizes past a megabyte", () => {
+        read = {
+            status: "ok",
+            contents: null,
+            view: {
+                pulse: {
+                    ...pulse,
+                    files: 1,
+                    scripts: 2,
+                    bytes: 3 * 1024 * 1024,
+                    keysInScriptsItRuns: [{file: "scripts/run.sh", keys: ["A_KEY", "B_KEY"]}],
+                    requires: {...pulse.requires, login: {line: 7, text: "gh auth login"}},
+                    differsAt: ["other/SKILL.md"],
+                    repository: {stars: 3, pushedAt: null, archived: true},
+                },
+                atomId: "0x1",
+                usage: null,
+            },
+        };
+        open();
+        expect(screen.getByText("Keys in scripts it runs").nextElementSibling).toHaveTextContent("scripts/run.sh: A_KEY, B_KEY");
+        expect(screen.getByText("Login").nextElementSibling).toHaveTextContent("line 7: gh auth login");
+        expect(screen.getByText("Other files with this name").nextElementSibling).toHaveTextContent("other/SKILL.md");
+        expect(screen.getByText("Size").nextElementSibling).toHaveTextContent("1 file, 3.0 MB, 2 scripts");
+        expect(screen.getByText("Last push").nextElementSibling).toHaveTextContent("none");
+        expect(screen.getByText("Archived").nextElementSibling).toHaveTextContent("yes");
+        expect(screen.getByText("npx skills add a/b --skill cut-silences")).toBeTruthy();
+    });
+
+    it("shows the first ten declarations, names an agent by its id when it has no label, and opens its entry", () => {
+        const declarations = Array.from({length: 12}, (_, index) => ({
+            tripleId: `0xt${index}`,
+            agent: {atomId: `0xagent${index}`, label: null},
+            writer: `0xw${index}`,
+            declaredAt: null,
+            domains: [],
+            outcomes: [],
+            lines: [],
+        }));
+        read = {
+            status: "ok",
+            contents: null,
+            view: {
+                pulse: {...pulse, repository: null},
+                atomId: "0x1",
+                usage: {declarations, agents: 12, wallets: 12, byDomain: {}, byOutcome: {}, byReason: {}, byOthers: [], truncated: false},
+            },
+        };
+        open();
+        expect(screen.getByText("0xagent0")).toBeTruthy();
+        expect(screen.queryByText("0xagent10")).toBeNull();
+        expect(screen.getByText("First 10 of 12")).toBeTruthy();
+        expect(screen.getByRole("link", {name: "Open its entry"}).getAttribute("href")).toBe("/atom/0x1");
+        // No repository read, so no Repository panel.
+        expect(screen.queryByRole("heading", {name: "Repository"})).toBeNull();
+        expect(screen.getByText("Domains").nextElementSibling).toHaveTextContent("none");
+    });
+
+    it("offers no entry link for a skill with no atom", () => {
+        const declaration = {tripleId: "0x2", agent: {atomId: "0x3", label: "agent six"}, writer: "0x4", declaredAt: null, domains: [], outcomes: [], lines: []};
+        read = {
+            status: "ok",
+            contents: null,
+            view: {pulse, atomId: null, usage: {declarations: [declaration], agents: 1, wallets: 1, byDomain: {}, byOutcome: {}, byReason: {}, byOthers: [], truncated: true}},
+        };
+        open();
+        expect(screen.queryByRole("link", {name: "Open its entry"})).toBeNull();
+    });
 });

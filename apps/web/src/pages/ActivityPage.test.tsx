@@ -158,6 +158,37 @@ describe("the public table", () => {
     });
 });
 
+describe("a row the indexer gave less for", () => {
+    it("prints a dash for a time it cannot read, no transaction link without a hash, and a skill's repository", async () => {
+        const reads: ChainReads = {
+            fetchRecent: async () => [],
+            fetchStakes: async () => [
+                {
+                    id: "no-hash-1",
+                    kind: "redeem",
+                    at: "not a time",
+                    txHash: null,
+                    tripleId: "claim-2",
+                    subject: {atomId: "a9", label: "Agent 13579:9"},
+                    object: {atomId: "t2", label: "github.com/obra/superpowers?skill=writing-plans"},
+                    account: null,
+                    receiver: null,
+                    assets: null,
+                },
+            ],
+        };
+        renderWithProviders(<ActivityPage reads={reads} />);
+        const table = await screen.findByRole("table", {name: /every agent/i});
+        const [row] = within(table).getAllByRole("row").slice(1);
+        if (row === undefined) throw new Error("one row");
+        expect(within(row).getByText("—")).toBeTruthy();
+        expect(within(row).getByText("withdrew")).toBeTruthy();
+        expect(within(row).getByText("obra/superpowers")).toBeTruthy();
+        expect(within(row).queryByRole("link", {name: /Transaction/})).toBeNull();
+        expect(within(row).queryByText(/^by /)).toBeNull();
+    });
+});
+
 describe("one view (2026-11-10)", () => {
     it("has no Yours view, no positions and no local runtime", async () => {
         renderWithProviders(<ActivityPage reads={NOTHING} />, {

@@ -1,4 +1,4 @@
-import {screen} from "@testing-library/react";
+import {screen, waitFor} from "@testing-library/react";
 import {afterEach, describe, expect, it, vi} from "vitest";
 
 import {renderWithProviders} from "../test/render";
@@ -42,5 +42,38 @@ describe("DocsPage", () => {
         serve(PAGE);
         at("/docs/overview");
         expect((await screen.findByRole("link", {name: /Quickstart →/})).getAttribute("href")).toBe("/docs/quickstart");
+    });
+
+    it("opens the first page when no page is named", async () => {
+        serve(PAGE);
+        renderWithProviders(<DocsPage />, {route: {path: "/docs/:slug?", at: "/docs"}});
+        expect(await screen.findByRole("heading", {level: 1, name: "Overview"})).toBeTruthy();
+    });
+
+    it("lands on the section a link names once the text has arrived", async () => {
+        serve(PAGE);
+        const scrolled = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {});
+        at("/docs/overview#four-jobs");
+        await screen.findByRole("heading", {level: 2, name: "Four jobs"});
+        await waitFor(() => expect(scrolled).toHaveBeenCalled());
+        expect(scrolled.mock.contexts[0]).toBe(screen.getByRole("heading", {level: 2, name: "Four jobs"}));
+        scrolled.mockRestore();
+    });
+
+    it("links the previous page, and no next page after the last one", async () => {
+        serve(PAGE);
+        at("/docs/glossary");
+        expect((await screen.findByRole("link", {name: /← For developers/})).getAttribute("href")).toBe("/docs/developers");
+        expect(screen.queryByRole("link", {name: /→$/})).toBeNull();
+    });
+
+    it("titles the browser tab after the page, and gives the old title back on leaving", async () => {
+        serve(PAGE);
+        document.title = "ARP";
+        const page = at("/docs/overview");
+        await screen.findByRole("heading", {level: 1, name: "Overview"});
+        expect(document.title).toBe("Overview · ARP docs");
+        page.unmount();
+        expect(document.title).toBe("ARP");
     });
 });

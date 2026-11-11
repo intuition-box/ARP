@@ -1,4 +1,4 @@
-import {describe, expect, it, vi, beforeEach, afterEach} from "vitest";
+import {describe, expect, it, vi, beforeAll, beforeEach, afterEach} from "vitest";
 import {screen, waitFor} from "@testing-library/react";
 import type {AtomStanding, MarketSide} from "@arp-protocol/core";
 
@@ -34,6 +34,20 @@ vi.mock("@arp-protocol/core", async () => {
 
 const {getAtomStanding, getToolWallets, listTools, resolveAgentRefForAtom, getDeclaredModulesFor} =
     await import("@arp-protocol/core");
+
+/**
+ * No read leaves the machine. The market's chain reads and the GraphQL calls nobody mocked above
+ * went to happy-dom's real `fetch` until this stub, and were only cut off when the window was torn
+ * down. For the whole file and never restored, because a polling read outlives the last test.
+ */
+beforeAll(() => {
+    vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => {
+            throw new Error("no network in tests");
+        }),
+    );
+});
 
 /** The catalogue's row for this page's atom, with Signals from a declarer who is not a test. */
 function withSignals(declarers: string[]) {

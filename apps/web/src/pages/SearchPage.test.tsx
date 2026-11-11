@@ -1,5 +1,5 @@
 import {fireEvent, screen} from "@testing-library/react";
-import {describe, expect, it, vi} from "vitest";
+import {afterEach, describe, expect, it, vi} from "vitest";
 
 import type {SkillsIndexRead} from "../hooks/use-skills-index";
 import type {CohortView} from "../services/agent-cohort";
@@ -62,16 +62,24 @@ const agents = (names: string[]): CohortView => ({
     })),
 });
 
+type Read<T> = {data: T | undefined; error: Error | null};
+
+const byName = (name: string): Read<CohortView> => ({
+    data: agents(name.toLowerCase().includes("dackie") ? ["Captain Dackie"] : []),
+    error: null,
+});
+/** The agent search's answer, per test; by name unless a test says otherwise. */
+let agentRead: (name: string) => Read<CohortView> = byName;
+/** The catalogue's answer, per test. */
+let catalogRead: Read<ToolCatalogView> = {data: CATALOG, error: null};
+
 vi.mock("../hooks/use-agent-cohort", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../hooks/use-agent-cohort")>()),
-    useAgentSearch: (name: string) => ({
-        data: agents(name.toLowerCase().includes("dackie") ? ["Captain Dackie"] : []),
-        error: null,
-    }),
+    useAgentSearch: (name: string) => agentRead(name),
 }));
 vi.mock("../hooks/use-tool-catalog", () => ({
     useReadsSignals: () => false,
-    useToolCatalog: () => ({data: CATALOG, error: null}),
+    useToolCatalog: () => catalogRead,
 }));
 vi.mock("../hooks/use-skill-facts", () => ({
     useSkillFacts: () => ({
@@ -86,6 +94,12 @@ vi.mock("../hooks/use-skill-facts", () => ({
 
 let indexRead: SkillsIndexRead = {status: "ok", skills: []};
 vi.mock("../hooks/use-skills-index", () => ({useSkillsIndex: () => indexRead}));
+
+afterEach(() => {
+    agentRead = byName;
+    catalogRead = {data: CATALOG, error: null};
+    indexRead = {status: "ok", skills: []};
+});
 
 const search = (text: string) => {
     const box = screen.getByRole("searchbox", {name: "Search agents and tools"});
@@ -155,5 +169,68 @@ describe("the search reads skills.sh too (task 82)", () => {
         search("writing");
         expect(screen.getByText("skills.sh did not answer. Try again in a moment.")).toBeInTheDocument();
         indexRead = {status: "ok", skills: []};
+    });
+});
+
+describe("while a read is out, and when it fails", () => {
+    it("shows a loader under each heading while nothing has answered", () => {
+        agentRead = () => ({data: undefined, error: null});
+        catalogRead = {data: undefined, error: null};
+        indexRead = {status: "pending"};
+        renderWithProviders(<SearchPage />);
+        search("plans");
+        expect(screen.getByRole("heading", {name: "Agents"})).toBeInTheDocument();
+        expect(screen.getByRole("heading", {name: "In ARP"})).toBeInTheDocument();
+        expect(screen.getByRole("heading", {name: "On skills.sh"})).toBeInTheDocument();
+        expect(screen.getByRole("img", {name: /Searching agents/})).toBeInTheDocument();
+        expect(screen.getByRole("img", {name: /Searching ARP/})).toBeInTheDocument();
+        expect(screen.getByRole("img", {name: /Searching skills\.sh/})).toBeInTheDocument();
+    });
+
+    it("says the index did not answer, for agents and for tools, rather than that nothing matched", () => {
+        agentRead = () => ({data: undefined, error: new Error("502")});
+        catalogRead = {data: undefined, error: new Error("502")};
+        renderWithProviders(<SearchPage />);
+        search("plans");
+        expect(screen.getAllByText("The index did not answer. Try again in a moment.")).toHaveLength(2);
+        expect(screen.queryByText(/No agent by that name/)).toBeNull();
+        expect(screen.queryByText("Nothing in ARP by that name.")).toBeNull();
+    });
+
+    it("keeps the agents heading bare when the index gives no total", () => {
+        const named = byName("dackie").data;
+        if (named === undefined) throw new Error("fixture");
+        agentRead = () => ({data: {...named, total: null}, error: null});
+        renderWithProviders(<SearchPage />);
+        search("dackie");
+        expect(screen.getByRole("heading", {name: "Agents"})).toBeInTheDocument();
+        expect(screen.getByText("Captain Dackie")).toBeInTheDocument();
+    });
+
+    it("says nothing matched, in ARP and on skills.sh, when nothing does", () => {
+        renderWithProviders(<SearchPage />);
+        search("nothing-like-this");
+        expect(screen.getByText("Nothing in ARP by that name.")).toBeInTheDocument();
+        expect(screen.getByText("Nothing more on skills.sh for that.")).toBeInTheDocument();
+        expect(screen.getByRole("heading", {name: "On skills.sh · 0"})).toBeInTheDocument();
+    });
+
+    it("lists a skills.sh result with no install count without inventing one", () => {
+        indexRead = {
+            status: "ok",
+            skills: [{source: "openai/skills", skill: "transcribe", installs: null, url: "https://github.com/openai/skills?skill=transcribe"}],
+        };
+        renderWithProviders(<SearchPage />);
+        search("transcribe");
+        expect(screen.getByRole("link", {name: /transcribe/})).toHaveTextContent("transcribeopenai/skills");
+        expect(screen.queryByText(/installs/)).toBeNull();
+    });
+
+    it("clears the results when the field is emptied", () => {
+        renderWithProviders(<SearchPage />);
+        search("writing");
+        expect(screen.getByRole("heading", {name: /^Agents/})).toBeInTheDocument();
+        search("   ");
+        expect(screen.queryByRole("heading", {name: /^Agents/})).toBeNull();
     });
 });
