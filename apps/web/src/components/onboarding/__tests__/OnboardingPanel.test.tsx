@@ -58,10 +58,12 @@ describe("the onboarding panel", () => {
         expect(document.activeElement?.getAttribute("href")).toBe("/start/claude");
     });
 
-    it("closes on Escape", async () => {
+    it("closes on Escape, and on no other key", async () => {
         panel();
         fireEvent.click(await screen.findByRole("button", {name: "Get started"}));
         await screen.findByRole("dialog");
+        fireEvent.keyDown(window, {key: "Tab"});
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
         fireEvent.keyDown(window, {key: "Escape"});
         expect(screen.queryByRole("dialog")).toBeNull();
     });

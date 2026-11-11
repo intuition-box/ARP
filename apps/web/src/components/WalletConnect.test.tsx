@@ -7,12 +7,13 @@ import {describe, expect, it, vi} from "vitest";
  * mocked to a connected account, because the real config never connects under `happy-dom`.
  */
 const disconnect = vi.fn();
+const account = {
+    address: "0x000000000000000000000000000000000000c0DE" as string | undefined,
+    isConnected: true,
+    status: "connected",
+};
 vi.mock("wagmi", () => ({
-    useAccount: () => ({
-        address: "0x000000000000000000000000000000000000c0DE",
-        isConnected: true,
-        status: "connected",
-    }),
+    useAccount: () => account,
     useConnect: () => ({connectors: [], connect: vi.fn(), isPending: false}),
     useDisconnect: () => ({disconnect}),
 }));
@@ -30,7 +31,37 @@ function renderMenu() {
     fireEvent.click(screen.getByRole("button", {name: /0x0000…c0DE/}));
 }
 
+describe("the wallet button", () => {
+    it("says it is connecting while wagmi reconnects", () => {
+        account.status = "reconnecting";
+        render(<WalletConnect />);
+        expect(screen.getByRole("button", {name: "Connecting…"})).toBeDisabled();
+        account.status = "connected";
+    });
+
+    it("renders nothing without a connected account", () => {
+        account.isConnected = false;
+        const {container} = render(<WalletConnect />);
+        expect(container).toBeEmptyDOMElement();
+        account.isConnected = true;
+    });
+});
+
 describe("the wallet menu", () => {
+    it("closes on Escape and on a click outside it, not on a click inside", () => {
+        renderMenu();
+        fireEvent.keyDown(window, {key: "Enter"});
+        expect(screen.getByRole("menu")).toBeInTheDocument();
+        fireEvent.keyDown(window, {key: "Escape"});
+        expect(screen.queryByRole("menu")).toBeNull();
+
+        fireEvent.click(screen.getByRole("button", {name: /0x0000…c0DE/}));
+        fireEvent.mouseDown(screen.getByRole("menuitem", {name: "Disconnect"}));
+        expect(screen.getByRole("menu")).toBeInTheDocument();
+        fireEvent.mouseDown(document.body);
+        expect(screen.queryByRole("menu")).toBeNull();
+    });
+
     it("offers copy and disconnect, in that order", () => {
         renderMenu();
         expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
