@@ -30,7 +30,8 @@ All with `curl`, the endpoint's public URL the only thing sent.
 
 1. `apps/api/src/purchases.ts`: `readLastPurchase` (the free `GET /v1/resolve?url=`, a 404 `unknown`
    read as an answer), `lastPurchase` (KV under a SHA-256 of the URL, so any accepted URL fits KV's
-   512-byte key; six hours fresh, a week to expiry; a failed refresh serves the older answer with its
+   512-byte key; six hours fresh, a week to expiry; an `unknown` answer never stored and about 100 (a soft cap, ADR `0187`)
+   stored a UTC day, counted in one key, so the writes it shares with the facts cycle are bounded; a failed refresh serves the older answer with its
    date), `lastPurchaseAnswer` (the source, the licence, network
    `eip155:8453`, the listing's URL, `fetchedAt`). Route `GET /x402/last-purchase?url=` in
    `worker.ts`: 400 for a URL that is not absolute http(s), 502 for a failed read with nothing cached.
@@ -59,7 +60,7 @@ All with `curl`, the endpoint's public URL the only thing sent.
 
 | gate | scope | result |
 | --- | --- | --- |
-| `bun run --cwd apps/api test` | `apps/api/test` | 29 pass |
+| `bun run --cwd apps/api test` | `apps/api/test` | 31 pass |
 | `bun run --cwd apps/api lint` | `apps/api` `src` and `test` (`tsc --noEmit`) | clean |
 | `cd apps/web && bunx tsc -b` | `apps/web/src` | clean |
 | `cd apps/web && bun run lint` | `apps/web` | clean |

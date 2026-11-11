@@ -576,7 +576,7 @@ date D". Never written on chain, the same treatment as the Trust Index read in p
 **That source, built 2026-11-11 by task 120** (ADR `0187`): nohumans.directory buys listed
 x402 endpoints with real USDC on Base and publishes whether each purchase delivered, under CC BY 4.0
 (`https://nohumans.directory/llms.txt`, "## Licence"). `apps/api` reads its free
-`GET /v1/resolve?url=` for a tool atom's endpoint, on demand, kept six hours, and the endpoint's page
+`GET /v1/resolve?url=` for a tool atom's endpoint, on demand, a listed endpoint's answer kept six hours (about 100 new a day, a soft cap), and the endpoint's page
 shows the last purchase dated and credited; never on chain, never an ARP line, never in the score.
 Left open: on 13579 the nine MCP endpoint atoms checked on 2026-11-11 all read "not listed there"
 (the rest of the atoms that get the card were not checked); and nohumans' own buyer reports

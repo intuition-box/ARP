@@ -30,7 +30,8 @@ previous value is kept along with its date.
 | `POST /refresh` | run a slice now. Off unless `REFRESH_SECRET` is set              |
 
 `/x402/last-purchase` is read on demand, not on the schedule: the first request for an endpoint
-reads `api.nohumans.directory/v1/resolve?url=`, a free route, and the answer is kept six hours. Only
+reads `api.nohumans.directory/v1/resolve?url=`, a free route. A listed endpoint's answer is kept six hours, about 100 new ones a UTC day (a soft cap, ADR `0187`); an
+endpoint not listed there is not stored, so made-up URLs cost no KV write. Only
 the endpoint's public URL is sent. The paid routes there are never called.
 
 ## What it is not

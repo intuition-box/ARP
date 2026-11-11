@@ -4,6 +4,7 @@ import {
   endpointOf,
   FRESH_FOR_MS,
   lastPurchase,
+  MAX_ENTRIES_PER_DAY,
   purchaseOf,
   readLastPurchase,
 } from '../src/purchases.ts';
@@ -174,12 +175,35 @@ describe("nohumans.directory's last purchase", () => {
     const first = await lastPurchase('https://e.example/a', store, fetcher, t0);
     await lastPurchase('https://e.example/a', store, fetcher, t0 + 60_000);
     expect(calls).toBe(1);
-    expect(store.writes).toBe(1);
+    // The answer and today's count.
+    expect(store.writes).toBe(2);
     fail = true;
     const later = await lastPurchase('https://e.example/a', store, fetcher, t0 + FRESH_FOR_MS + 1);
     expect(calls).toBe(2);
     expect(later).toEqual(first);
     expect(later).toMatchObject({ fetchedAt: '2026-11-11T09:00:00.000Z' });
+  });
+
+  test('a URL never listed there costs no write, so made-up URLs cannot spend the budget', async () => {
+    const store = memoryStore();
+    for (let i = 0; i < 50; i += 1)
+      expect(
+        await lastPurchase(`https://e.example/${i}`, store, answer(UNKNOWN, 404), Date.now()),
+      ).toMatchObject({ match: 'unknown' });
+    expect(store.writes).toBe(0);
+  });
+
+  test('past the daily cap a listed answer is served uncached, and the count restarts the next day', async () => {
+    const store = memoryStore();
+    const t0 = Date.parse('2026-11-11T09:00:00Z');
+    for (let i = 0; i < MAX_ENTRIES_PER_DAY + 5; i += 1)
+      await lastPurchase(`https://e.example/${i}`, store, answer(FAILED), t0);
+    expect(store.writes).toBe(2 * MAX_ENTRIES_PER_DAY);
+    const over = await lastPurchase('https://e.example/over', store, answer(FAILED), t0);
+    expect(over).toMatchObject({ match: 'active', purchase: { reason: 'stale_data' } });
+    expect(store.writes).toBe(2 * MAX_ENTRIES_PER_DAY);
+    await lastPurchase('https://e.example/next', store, answer(FAILED), t0 + 86_400_000);
+    expect(store.writes).toBe(2 * MAX_ENTRIES_PER_DAY + 2);
   });
 });
 
@@ -232,11 +256,10 @@ describe('GET /x402/last-purchase', () => {
     const response = await handle(
       new Request(`http://api/x402/last-purchase?url=${encodeURIComponent(long)}`),
       env(store),
-      answer(UNKNOWN, 404),
+      answer(FAILED),
     );
     expect(response.status).toBe(200);
-    expect(store.keys()).toHaveLength(1);
-    expect(store.keys()[0]).toMatch(/^nohumans:[0-9a-f]{64}$/);
+    expect(store.keys().filter((key) => /^nohumans:[0-9a-f]{64}$/.test(key))).toHaveLength(1);
   });
 
   test('a failed read with nothing cached is a 502, not an empty answer', async () => {

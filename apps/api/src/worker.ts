@@ -4,7 +4,7 @@
  *  GET  /facts     every repository's and skill's facts, each with the moment it was read
  *  GET  /x402/last-purchase?url=<endpoint>
  *                  nohumans.directory's last purchase of one x402 endpoint, read on demand and
- *                  cached six hours (`purchases.ts`, task 120, ADR `0187`)
+ *                  cached six hours when listed, about 100 a day (`purchases.ts`, task 120, ADR `0187`)
  *  GET  /healthz   the refresh cycle's state
  *  POST /refresh   one slice now (`?all=1`: until the cycle ends). Off unless REFRESH_SECRET is set
  *  cron            one slice every ten minutes while a cycle runs (`wrangler.jsonc`)

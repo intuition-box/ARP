@@ -157,9 +157,29 @@ export async function lastPurchase(
   const read = await readLastPurchase(endpoint, fetch);
   if ('error' in read) return cached ?? read;
   const fresh: Cached = { ...read, fetchedAt: new Date(now).toISOString() };
+  // The write bound (ADR `0187`): an `unknown` answer is never stored, so a stranger's made-up URLs
+  // cost no write; and a listed one is stored only while today's count is under the cap. Past it,
+  // the answer is still served, uncached. Each stored answer is two writes: it and the count.
+  if (read.match === 'unknown') return fresh;
+  const day = fresh.fetchedAt.slice(0, 10);
+  // Only `lastPurchase` writes `nohumans-writes`, always a whole `WriteCount`.
+  const count = (await store.get(WRITES_KEY, 'json')) as WriteCount | null;
+  const used = count !== null && count.day === day ? count.entries : 0;
+  if (used >= MAX_ENTRIES_PER_DAY) return fresh;
   await store.put(key, JSON.stringify(fresh), { expirationTtl: EXPIRE_AFTER_S });
+  await store.put(WRITES_KEY, JSON.stringify({ day, entries: used + 1 } satisfies WriteCount));
   return fresh;
 }
+
+/** Today's stored answers, kept in one key beside them. A soft cap: the count has no lock (ADR `0187`). */
+type WriteCount = { day: string; entries: number };
+const WRITES_KEY = 'nohumans-writes';
+
+/**
+ * About this many answers are stored a UTC day, 200 KV writes with their count; soft, see above. The namespace is
+ * shared with the facts cycle, which `refresh.ts` slices to stay under KV's daily write budget.
+ */
+export const MAX_ENTRIES_PER_DAY = 100;
 
 /** The answer served: the source and its licence first, then the reading, dated. */
 export function lastPurchaseAnswer(endpoint: string, cached: Cached) {

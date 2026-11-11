@@ -10,7 +10,7 @@ Every piece of data has one place where it is true, and ARP never keeps a second
 | --- | --- | --- |
 | A skill's files | Its GitHub repository | Reads them, keeps no copy |
 | Who has a skill | skills.sh, through its search | Asks at search time |
-| Whether an x402 endpoint delivered when it was last bought | [nohumans.directory](https://api.nohumans.directory), which pays listed endpoints in USDC on Base; its data is [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | The facts cache reads its free `GET /v1/resolve?url=` for the endpoint's public URL and keeps the answer six hours; the tool's page shows it dated and credited. Never written on chain, never an ARP line, never in ARP's score |
+| Whether an x402 endpoint delivered when it was last bought | [nohumans.directory](https://api.nohumans.directory), which pays listed endpoints in USDC on Base; its data is [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | The facts cache reads its free `GET /v1/resolve?url=` for the endpoint's public URL and keeps a listed endpoint's answer six hours, about 100 new answers a day, a soft cap; the tool's page shows it dated and credited. Never written on chain, never an ARP line, never in ARP's score |
 | An agent's identity | An ERC-8004 registry (an NFT contract for agent identities) | Reads it |
 | A line, a listing, support | Intuition's MultiVault, on chain | Writes it through a signed transaction, reads it through the index |
 | What failed on your machine | `~/.arp/failures.jsonl`, on your machine | Reads it, sends it only if you share |

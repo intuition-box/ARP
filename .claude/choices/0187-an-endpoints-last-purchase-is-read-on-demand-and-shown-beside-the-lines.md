@@ -33,8 +33,11 @@ Two facts about the site shaped the rest, both read 2026-11-11:
 ## Decision
 
 1. **`apps/api` reads `GET /v1/resolve?url=<endpoint>` on demand** (`GET /x402/last-purchase?url=`),
-   caches each answer in KV for six hours (a week before KV drops it), and serves it with the source,
-   the licence and `fetchedAt`. A failed refresh serves the previous answer with its own date. Only the
+   keeps an answer for a listed endpoint in KV for six hours (a week before KV drops it), and serves it
+   with the source, the licence and `fetchedAt`. **Writes are bounded:** an `unknown` answer is never
+   stored, and about `MAX_ENTRIES_PER_DAY` (100) answers are stored a UTC day, counted in one key (a
+   soft cap: see Negative);
+   past the cap the answer is served uncached. A failed refresh serves the previous answer with its own date. Only the
    free route is called; only the endpoint's public URL is sent (ADR `0155`).
 2. **The card is shown for an atom whose label is a URL on a dotted host that is not a code or
    package host** (`github.com`, `gitlab.com`, `npmjs.com`, `pypi.org`, `hub.docker.com`), when the
@@ -51,7 +54,7 @@ Two facts about the site shaped the rest, both read 2026-11-11:
   one is a second copy of the chain's tool list, which the storage principle forbids.
 - **The browser calls nohumans.directory directly** — `/v1/resolve`, asked with an `Origin` header on
   2026-11-11, answered with no `access-control-allow-origin`, so a browser cannot read it; and every
-  visitor would make the call, where the Worker makes one per endpoint per six hours.
+  visitor would make the call, where the Worker keeps a listed endpoint's answer six hours.
 - **Show the card only when the endpoint is listed** — the card would appear after the read and push
   everything below it, which is what the user asked these pages not to do.
 - **`GET /v1/listings/:id`** — needs the listing id, which ARP does not hold; `resolve` takes the URL.
@@ -75,13 +78,18 @@ Two facts about the site shaped the rest, both read 2026-11-11:
   whole population that gets the card was not listed, so how many others do is not known.
 - The host list in point 2 is hand-kept. A new package host shows a card that says "not listed there"
   until it is added.
-- Anyone can make the Worker ask nohumans.directory about any URL, and each URL not in the cache
-  costs one KV write. Those writes share the `FACTS` namespace's daily write budget with the cron,
-  which `refresh.ts` slices to stay under it, so a stranger cycling distinct URLs can spend that
-  budget and stall the facts refresh. Nothing bounds it today. It is latent: `apps/api` is not
-  deployed. Before a deploy it needs a bound, such as a daily cap on `nohumans:` writes or a
-  namespace of its own. The key is a SHA-256 of the URL, so a URL up to the 2048-character limit
-  fits KV's 512-byte key.
+- Anyone can make the Worker ask nohumans.directory about any URL. The KV writes this costs share
+  the `FACTS` namespace's daily write budget with the cron, which `refresh.ts` slices to stay under
+  it, so they are bounded (point 1): made-up URLs answer `unknown` and cost no write, and stored
+  answers stop at about 100 a UTC day, 200 writes with their count (a soft cap, below). Past the cap every request for an
+  uncached endpoint is a read of nohumans.directory, so the edge's five-minute `cache-control` is
+  then the only cache. The count is a read-then-write in KV with no lock, and KV is eventually consistent between
+  locations, so the cap is soft: misses on listed URLs that land together, or at different
+  locations before the count propagates, can each store an answer past it. The overshoot is bounded
+  by the number of such requests, not by one. The key is a SHA-256 of the URL, so a URL up to the
+  2048-character limit fits KV's 512-byte key.
+- An `unknown` answer is not cached in KV, so an endpoint not listed there is asked again on each
+  request past the edge's five minutes.
 
 **Neutral (worth knowing):**
 

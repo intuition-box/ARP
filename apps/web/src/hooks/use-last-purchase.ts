@@ -11,7 +11,7 @@ export const hasLastPurchaseSource = API_URL !== undefined && API_URL.trim().len
 /**
  * nohumans.directory's last purchase of `endpoint`, through ARP's Worker (task 120). Only the
  * endpoint's public URL leaves the browser (ADR `0155`). Kept five minutes, as the Worker's own
- * `cache-control` says; the Worker keeps it six hours.
+ * `cache-control` says; the Worker keeps a listed endpoint's answer six hours.
  */
 export function useLastPurchase(endpoint: string | null) {
     return useQuery({
