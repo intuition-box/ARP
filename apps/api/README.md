@@ -5,8 +5,9 @@
 
 # ARP API
 
-A Cloudflare Worker that puts a cache in front of GitHub and skills.sh. It gives the web app each
-tool's stars, activity and installs, without every visitor hitting GitHub's rate limit.
+A Cloudflare Worker that puts a cache in front of GitHub, skills.sh and nohumans.directory. It gives
+the web app each tool's stars, activity and installs, without every visitor hitting GitHub's rate
+limit, and an x402 endpoint's last purchase by nohumans.directory.
 
 ## Schedule
 
@@ -24,8 +25,13 @@ previous value is kept along with its date.
 | route           | returns                                                          |
 | --------------- | ---------------------------------------------------------------- |
 | `GET /facts`    | every repository's and skill's figures, each dated and sourced   |
+| `GET /x402/last-purchase?url=<endpoint>` | nohumans.directory's last purchase of that endpoint: delivered or not, its failure code, the day, the settlement transaction, with the source and its licence (CC BY 4.0) |
 | `GET /healthz`  | where the refresh cycle is                                       |
 | `POST /refresh` | run a slice now. Off unless `REFRESH_SECRET` is set              |
+
+`/x402/last-purchase` is read on demand, not on the schedule: the first request for an endpoint
+reads `api.nohumans.directory/v1/resolve?url=`, a free route, and the answer is kept six hours. Only
+the endpoint's public URL is sent. The paid routes there are never called.
 
 ## What it is not
 

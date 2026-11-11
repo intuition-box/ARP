@@ -573,6 +573,17 @@ x402 purchase outcomes, CC BY 4.0, with free reads per listing and by resolving 
 next to ARP's lines on an x402 endpoint as a dated, attributed fact: "N outcomes per <source>, on
 date D". Never written on chain, the same treatment as the Trust Index read in point 2 (ADR `0093`).
 
+**That source, built 2026-11-11 by task 120** (ADR `0187`): nohumans.directory buys listed
+x402 endpoints with real USDC on Base and publishes whether each purchase delivered, under CC BY 4.0
+(`https://nohumans.directory/llms.txt`, "## Licence"). `apps/api` reads its free
+`GET /v1/resolve?url=` for a tool atom's endpoint, on demand, kept six hours, and the endpoint's page
+shows the last purchase dated and credited; never on chain, never an ARP line, never in the score.
+Left open: on 13579 the nine MCP endpoint atoms checked on 2026-11-11 all read "not listed there"
+(the rest of the atoms that get the card were not checked); and nohumans' own buyer reports
+(`POST /v1/reports`, signed by the payer) are a second "after paying" channel beside ARP's lines,
+not wired to anything. It shows the last purchase, not 118's idea of "N outcomes": the count is
+behind the paid `/v1/listings/:id/purchases`.
+
 ## x402 as a feature: who is actually paid, then what they delivered
 
 Asked for by the user, 2026-11-10, as a lead, not a decision: rather than exploring ERC-8004

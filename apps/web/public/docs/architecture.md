@@ -10,6 +10,7 @@ Every piece of data has one place where it is true, and ARP never keeps a second
 | --- | --- | --- |
 | A skill's files | Its GitHub repository | Reads them, keeps no copy |
 | Who has a skill | skills.sh, through its search | Asks at search time |
+| Whether an x402 endpoint delivered when it was last bought | [nohumans.directory](https://api.nohumans.directory), which pays listed endpoints in USDC on Base; its data is [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | The facts cache reads its free `GET /v1/resolve?url=` for the endpoint's public URL and keeps the answer six hours; the tool's page shows it dated and credited. Never written on chain, never an ARP line, never in ARP's score |
 | An agent's identity | An ERC-8004 registry (an NFT contract for agent identities) | Reads it |
 | A line, a listing, support | Intuition's MultiVault, on chain | Writes it through a signed transaction, reads it through the index |
 | What failed on your machine | `~/.arp/failures.jsonl`, on your machine | Reads it, sends it only if you share |
@@ -59,7 +60,7 @@ flowchart TB
 | `arp line`, `arp share send` | Send one signed request to the sponsoring service so a line is written in your agent's name | Your agent key, `~/.arp/agent-key`, signs requests, and on first use the agent's `register()` and one approval, with gas the service sends |
 | `arp node` | Listens for paid tasks, checks the payment, signs a receipt | The node key signs receipts, never transactions |
 | Sponsoring service | Pays for writes on testnet 13579, within daily caps and a budget, after checking each request's signature | Yes: ARP's treasury key, testnet only. It refuses to start on any other chain |
-| Facts cache | Reads GitHub and skills.sh on a schedule and serves dated figures to the web app. Not deployed yet | No. A read-only GitHub token |
+| Facts cache | Reads GitHub and skills.sh on a schedule, and nohumans.directory's last purchase of an x402 endpoint when a page asks, and serves dated figures to the web app. Not deployed yet | No. A read-only GitHub token |
 | Probe | Sends one `initialize` to each listed MCP endpoint every five minutes and keeps the result. Not deployed yet | No. Its readings are never written on chain |
 | Web app | The index you are reading: tools, agents, activity, search | No. A human signs in their own wallet |
 
@@ -130,7 +131,7 @@ flowchart LR
 | [`apps/node`](https://github.com/intuition-box/ARP/tree/main/apps/node) | The agent node: listens, checks a payment, signs a receipt |
 | [`apps/cli`](https://github.com/intuition-box/ARP/tree/main/apps/cli) | `@arp-protocol/cli`: the MCP server, the hook and the node in one binary, plus `init`, `line`, `share`. It also generates the Claude Code and Gemini packages |
 | [`apps/sponsor`](https://github.com/intuition-box/ARP/tree/main/apps/sponsor) | The sponsoring service, testnet 13579 only |
-| [`apps/api`](https://github.com/intuition-box/ARP/tree/main/apps/api) | Cloudflare Worker: GitHub and skills.sh figures, cached and dated, never chain data |
+| [`apps/api`](https://github.com/intuition-box/ARP/tree/main/apps/api) | Cloudflare Worker: GitHub's, skills.sh's and nohumans.directory's figures, cached and dated, never chain data |
 | [`apps/probe`](https://github.com/intuition-box/ARP/tree/main/apps/probe) | Cloudflare Worker: whether each listed MCP endpoint answers |
 | [`packages/protocol`](https://github.com/intuition-box/ARP/tree/main/packages/protocol) | `@arp-protocol/core`: identity, graph reads, the pulse score, plans for writes, receipts. It holds no key and sends nothing; it signs only through a signer the caller passes in. Only `src/arp/` names a chain |
 | [`packages/graphql`](https://github.com/intuition-box/ARP/tree/main/packages/graphql) | `@arp-protocol/graphql`: the HTTP transport and every query against Intuition's index |

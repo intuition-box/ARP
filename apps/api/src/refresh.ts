@@ -26,7 +26,7 @@ import {
 /** The part of a KV namespace this uses. Workers' `KVNamespace` satisfies it; so does a Map in a test. */
 export type Store = {
   get(key: string, type: 'json'): Promise<unknown>;
-  put(key: string, value: string): Promise<void>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
 };
 
 /** An entry with the moment it was read. Every value served carries one. */

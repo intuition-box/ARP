@@ -1,7 +1,10 @@
-/** ARP's one backend: a cache in front of GitHub and skills.sh, never a source.
+/** ARP's one backend: a cache in front of GitHub, skills.sh and nohumans.directory, never a source.
  *
  *  ```
  *  GET  /facts     every repository's and skill's facts, each with the moment it was read
+ *  GET  /x402/last-purchase?url=<endpoint>
+ *                  nohumans.directory's last purchase of one x402 endpoint, read on demand and
+ *                  cached six hours (`purchases.ts`, task 120, ADR `0187`)
  *  GET  /healthz   the refresh cycle's state
  *  POST /refresh   one slice now (`?all=1`: until the cycle ends). Off unless REFRESH_SECRET is set
  *  cron            one slice every ten minutes while a cycle runs (`wrangler.jsonc`)
@@ -19,7 +22,9 @@
  *  **It holds no key that moves value.** `GITHUB_TOKEN` is a classic token with no scopes: public
  *  read and nothing else.
  */
+import { endpointOf, lastPurchase, lastPurchaseAnswer } from './purchases.ts';
 import { readDocuments, readState, runSlice, type Documents, type Store } from './refresh.ts';
+import type { Fetch } from './sources.ts';
 
 export type Env = {
   FACTS: Store;
@@ -116,7 +121,7 @@ export async function sameSecret(given: string, expected: string): Promise<boole
 export async function handle(
   request: Request,
   env: Env,
-  fetcher: typeof fetch = fetch,
+  fetcher: Fetch = fetch,
 ): Promise<Response> {
   const url = new URL(request.url);
 
@@ -129,6 +134,16 @@ export async function handle(
   if (request.method === 'GET' && url.pathname === '/facts') {
     // Five minutes at the edge and in the browser: the data moves once a day at most.
     return json(factsAnswer(await readDocuments(env.FACTS), Date.now()), 200, {
+      'cache-control': 'public, max-age=300',
+    });
+  }
+
+  if (request.method === 'GET' && url.pathname === '/x402/last-purchase') {
+    const endpoint = endpointOf(url.searchParams.get('url'));
+    if (endpoint === null) return json({ error: 'url must be an absolute http(s) URL' }, 400);
+    const result = await lastPurchase(endpoint, env.FACTS, fetcher, Date.now());
+    if ('error' in result) return json({ error: result.error }, 502);
+    return json(lastPurchaseAnswer(endpoint, result), 200, {
       'cache-control': 'public, max-age=300',
     });
   }
@@ -165,7 +180,10 @@ export async function handle(
     return json(result);
   }
 
-  return json({ error: 'GET /facts, GET /healthz, or POST /refresh' }, 404);
+  return json(
+    { error: 'GET /facts, GET /x402/last-purchase?url=, GET /healthz, or POST /refresh' },
+    404,
+  );
 }
 
 export default {

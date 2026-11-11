@@ -799,3 +799,15 @@ describe("a repository's page", () => {
         expect(screen.getByText(/Nothing points at example\/pack yet/)).toBeTruthy();
     });
 });
+
+describe("an endpoint's page", () => {
+    it("keeps an endpoint with two path segments on this page, not the repository's (task 120)", async () => {
+        read.mockResolvedValue(
+            standing({label: "mcp.atlassian.com/v2/mcp", url: "https://mcp.atlassian.com/v2/mcp"}),
+        );
+        renderAt();
+        await waitFor(() => expect(screen.getByRole("heading", {level: 1})).toBeInTheDocument());
+        // `RepoPage` tags its header "Repository"; it read GitHub for a host that is not GitHub.
+        expect(screen.queryByText("Repository")).toBeNull();
+    });
+});

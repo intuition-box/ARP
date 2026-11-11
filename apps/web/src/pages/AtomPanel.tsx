@@ -6,6 +6,7 @@ import {PageLoading} from "../components/brand/PageLoading";
 import {AtomSigil} from "../components/atom/AtomSigil";
 import {Backing, Empty, Group} from "../components/atom/ClaimList";
 import {ClaimField} from "../components/atom/ClaimField";
+import {LastPurchase} from "../components/atom/LastPurchase";
 import {ToolWallets} from "../components/atom/ToolWallets";
 import {AtomMarket} from "../components/market/AtomMarket";
 import {actionCardClass} from "../lib/surface-class";
@@ -141,7 +142,13 @@ export function AtomPanel() {
     const view = query.data;
 
     // A skill and a repository have their own pages (`docs/design/pages/`); every other atom keeps this one.
-    const kind = view.exists && view.label !== null ? parseToolLabel(view.label).kind : null;
+    // On GitHub only: both pages read GitHub. Two path segments on any other host made an endpoint
+    // such as `mcp.atlassian.com/v2/mcp` a "repository" (task 120, ADR `0187`).
+    const parsed = view.exists && view.label !== null ? parseToolLabel(view.label) : null;
+    const kind =
+        parsed !== null && parsed.kind !== "other" && parsed.host === "github.com"
+            ? parsed.kind
+            : null;
     if (kind === "repo") {
         return <RepoPage view={view} atomId={atomId} modules={modules.data ?? {}} />;
     }
@@ -200,6 +207,11 @@ export function AtomPanel() {
                         agent that declared this — and it costs no query, because those agents are
                         the subjects of the `uses` edges the page already read. */}
                     <AtomSigil atomId={view.atomId} name={view.title} groups={view.groups} />
+                    {/* An endpoint's last purchase by nohumans.directory: its word, dated and
+                        credited, beside ARP's lines and never among them (task 120). Above
+                        `Signals`, which renders only once the GitHub figures arrive and would
+                        otherwise push this card down. */}
+                    {view.offersMarket ? <LastPurchase label={view.label} /> : null}
                     <Signals view={view} />
                     <Claims view={view} />
                     <Identity view={view} />
