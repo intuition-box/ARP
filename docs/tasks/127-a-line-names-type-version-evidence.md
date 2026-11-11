@@ -2,7 +2,7 @@
 
 **Status:** spec, 2026-11-11, written by arp-c1 for the orchestrator on the user's request (« je veux
 qu'on fasse ces preuves »). Task 127, ADR `0192`, post-mortem `115`, allocated by the orchestrator. Nothing built.
-**Open:** section 2 — whether « has type pour le versionning » means a triple from the subject; arp-c1 is confirming with the user. Do not build section 2 before that answer is recorded here.
+**Decided 2026-11-11 (the user, relayed by arp-c1), section 2:** the version is V = (skill, `version`, X), a triple from the subject with the `version` predicate atom, and the line is T1 = (agent, uses, V). « has type pour le versionning » meant "a triple from the subject, like has type", not the `has type` predicate itself.
 **ADR:** one, amending ADR `0185` on where the version hangs, and recording the two evidence modules.
 **Rules:** `code.md`, `security.md` (two signing sites: a new one for the MCP response, the content
 receipt's reuse as line evidence), `portability.md`, `claims.md`, `workflow.md`.
