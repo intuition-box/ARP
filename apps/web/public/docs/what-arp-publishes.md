@@ -6,7 +6,7 @@ ARP writes lines on a public graph, Intuition testnet 13579, that anyone can rea
 
 - **The paying wallet is public, and a wallet plus a list of paid endpoints draws a profile.** An x402 payment is a token transfer on its own chain, Base by default, readable by anyone, and a line names it. Pay from a wallet dedicated to the agent's payments, never a personal one.
 - **No request body, response or error text ever leaves your machine.** A line carries closed words only: `worked` or `failed`, and a reason from a fixed list (`missing-key`, `missing-program`, `missing-file`, `not-the-right-tool`, `no-delivery`).
-- **The hosted MCP server logs no tool argument.** When it runs, it receives your arguments, the words of a search among them, and keeps none in what it logs. The test that checks it is "logs none of a caller's arguments" in [hosted.test.ts](https://github.com/intuition-box/ARP/blob/main/apps/mcp/test/hosted.test.ts). The hosted server is not deployed yet: see [Install](/docs/install).
+- **The hosted MCP server logs no tool argument.** When it runs, it receives your arguments, the words of a search among them, and keeps none in what it logs. The test that checks it is "logs none of a caller's arguments" in [hosted.test.ts](https://github.com/intuition-box/ARP/blob/main/apps/mcp/test/hosted.test.ts). It runs at `https://mcp.arp.intuition.box/mcp` since 2026-11-11: see [Install](/docs/install).
 
 ## What is written on the public graph
 
