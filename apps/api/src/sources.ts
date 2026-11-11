@@ -119,7 +119,7 @@ export async function readTree(
 
 /**
  * Where a description is cut, as `scripts/build/build-skill-facts.ts` cut it: median 448 characters over
- * the 662, and a list row has room for about two lines. The full text is the SKILL.md itself.
+ * the 662 skills catalogued then (2026-10-30; 673 on 2026-11-11), and a list row has room for about two lines. The full text is the SKILL.md itself.
  */
 const CUT_AT = 200;
 

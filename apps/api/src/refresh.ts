@@ -1,7 +1,8 @@
 /** A refresh cycle, run a slice at a time.
  *
- *  One cycle reads every repository (53), every skill repository's tree (31) and every skill's page
- *  (662) — about 750 requests. A Worker invocation has a subrequest ceiling, and KV a daily write
+ *  One cycle reads every repository (53), every skill repository's tree (41) and every skill's page
+ *  (673) — about 770 requests (counted 2026-11-11 from `catalogue.ts`: `REPOS.length`,
+ *  the distinct `repo` of `SKILLS`, `SKILLS.length`). A Worker invocation has a subrequest ceiling, and KV a daily write
  *  budget, so a cycle is cut into slices of `budget` reads, and each slice writes the three
  *  documents once at its end rather than once per read. The cursor lives in KV beside them.
  *

@@ -16,7 +16,7 @@ cron   */10 * * * *   one slice of the refresh cycle while one is running, nothi
 ```
 
 One cycle reads every catalogued repository, every skill repository's file tree and every skill's
-page on skills.sh, about 750 requests in all. It runs in slices to stay under the Worker's limits,
+page on skills.sh, about 770 requests in all (53 repositories, 41 trees, 673 pages on 2026-11-11). It runs in slices to stay under the Worker's limits,
 then waits `REFRESH_EVERY_HOURS` (24 by default) before the next one. When a read fails, the
 previous value is kept along with its date.
 

@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-176 decisions. Newest last. `choices/README.md` says when to write one.
+177 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -223,3 +223,4 @@ Read these before relying on them.
 | [0183](0183-a-search-reads-a-dated-reading-and-the-packaged-skill-names-tools.md) | 2026-11-10 | Accepted | A search reads a dated reading for catalogued skills, caps what it reads, and the packaged skill names the tools |
 | [0185](0185-a-skill-version-is-its-directory-digest.md) | 2026-11-10 | Accepted (the decision). Not built: the code waits for the user's return. | A skill's version is the digest of its directory, and a line will carry it |
 | [0186](0186-an-endpoint-url-is-written-without-its-values.md) | 2026-11-11 | Accepted | An x402 endpoint's URL is written without its values, reduced at the payer before signing |
+| [0187](0187-an-endpoints-last-purchase-is-read-on-demand-and-shown-beside-the-lines.md) | 2026-11-11 | Accepted | An endpoint's last purchase by nohumans.directory is read on demand, and shown beside the lines |
