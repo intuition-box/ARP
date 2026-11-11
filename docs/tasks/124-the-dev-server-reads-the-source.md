@@ -1,6 +1,6 @@
 # Task 124 — What runs from this checkout reads `packages/protocol/src`, not a stale `dist/`
 
-**Status:** in progress.
+**Status:** verified 2026-11-11, `task-verifier` PASS (round 1), implementation `8ca44008`, post-mortem `.claude/learning/112-the-dev-server-reads-the-source.md`; on the worktree branch, for the orchestrator to push.
 **ADR:** none. The decision and its reasons are below; it is build configuration, and every consumer
 that ships keeps its own build.
 **Rules:** `code.md`, `workflow.md`, `claims.md`. Gates: `apps/web` `tsc -b`, lint, test, `check:tokens`;
