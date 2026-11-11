@@ -1,8 +1,8 @@
 # Post-mortem index
 
-**Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-108 entries, one per completed task. Written by `task-verifier` on a pass.
+109 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -114,3 +114,4 @@
 | [102](102-fewer-requests-per-search.md) | `docs/tasks/113-fewer-requests-per-search.md` | PASS (second pass; the first failed on four claims, no code) | One search makes far too many requests |
 | [103](103-every-install-route.md) | `docs/tasks/114-every-install-route.md` | PASS | Every way to install ARP, listed in one place |
 | [104](104-the-hol-adapter.md) | `docs/tasks/115-the-hol-adapter.md` (A and B only; C, D, E wait for the user's return) | PASS (second pass; first failed on two one-line items) | The HOL adapter, deliverables A and B |
+| [106](106-x402-test-feed.md) | `docs/tasks/118-x402-test-feed.md` | PASS | A separate x402 test feed for Base Sepolia |

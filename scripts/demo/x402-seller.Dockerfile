@@ -23,7 +23,7 @@ ENV ARP_SELLER_LISTEN=0.0.0.0 \
 
 USER bun
 EXPOSE 4021
-# Any answer at all is alive: the seller answers 404 off its one path.
+# Alive means the 402 on the seller's one path, which also proves the facilitator answered at start.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
     CMD bun -e "fetch('http://127.0.0.1:' + (process.env.PORT ?? '4021') + '/x402-demo/no-delivery').then(r => process.exit(r.status === 402 ? 0 : 1), () => process.exit(1))"
 CMD ["bun", "run", "scripts/demo/x402-fake-seller.ts"]

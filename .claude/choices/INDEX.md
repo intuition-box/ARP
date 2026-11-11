@@ -1,6 +1,6 @@
 # ADR index
 
-**Generated** 2026-11-10 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
 175 decisions. Newest last. `choices/README.md` says when to write one.
 

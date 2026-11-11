@@ -1,6 +1,6 @@
 # Task 118 — A separate x402 test feed for Base Sepolia
 
-**Status:** in progress, 2026-11-11, on `worktree-agent-a16f8ba98af84b432`. Deadline 2026-11-12.
+**Status:** verified 2026-11-11, `task-verifier` PASS (round 1) at `0b49663d`, post-mortem `.claude/learning/106-x402-test-feed.md`; on `worktree-agent-a16f8ba98af84b432`. The paid run against the hosted seller waits on task 117.
 **ADR:** none (no decision beyond what the orchestrator specified; see "What was decided").
 **Rules:** `code.md`, `claims.md`, `portability.md`, `workflow.md`. Gates: root `bun run check` and
 `bun run test:scripts`, `packages/protocol` test and lint, `apps/web` `tsc -b`, lint, test, `check:tokens`.
