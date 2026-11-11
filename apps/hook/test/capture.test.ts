@@ -1,6 +1,10 @@
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import { describe, expect, test } from 'bun:test';
 
-import { redact } from '../src/capture.ts';
+import { capture, redact } from '../src/capture.ts';
 
 /** The verifier's probes on the first version, each of which leaked. */
 describe('redact', () => {
@@ -77,5 +81,41 @@ describe('redact', () => {
     ).toEqual({
       tool_response: { isError: true, content: [{ type: '<string:4>', text: '<string:1>' }] },
     });
+  });
+});
+
+describe('capture', () => {
+  const NOW = new Date('2026-11-11T10:20:30.400Z');
+
+  test('a URL that does not parse keeps only its length; a payload that is not an object is redacted whole', () => {
+    expect(redact({ url: 'not a url' })).toEqual({ url: '<string:9>' });
+    expect(redact(['secret', 3])).toEqual(['<string:6>', '<number>']);
+  });
+
+  test('writes one redacted payload, named by the time and the event', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'arp-capture-'));
+    try {
+      capture({ hookEventName: 'Post-Tool_Use1', tool_input: { command: 'cat ~/.ssh/id_rsa' } }, join(dir, 'captures'), NOW);
+      capture('loose text', join(dir, 'captures'), new Date('2026-11-11T10:20:31.000Z'));
+      expect(readdirSync(join(dir, 'captures')).sort()).toEqual([
+        '2026-11-11T10-20-30-400Z-PostToolUse.json',
+        '2026-11-11T10-20-31-000Z-event.json',
+      ]);
+      const kept = readFileSync(join(dir, 'captures', '2026-11-11T10-20-30-400Z-PostToolUse.json'), 'utf8');
+      expect(JSON.parse(kept)).toEqual({ hookEventName: 'Post-Tool_Use1', tool_input: { command: '<string:17>' } });
+      expect(kept).not.toContain('id_rsa');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('a directory it cannot create costs nothing', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'arp-capture-'));
+    try {
+      writeFileSync(join(dir, 'file'), 'x');
+      expect(() => capture({ hook_event_name: 'Stop' }, join(dir, 'file', 'captures'), NOW)).not.toThrow();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

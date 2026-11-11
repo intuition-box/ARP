@@ -6,7 +6,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 
 import { classifyCall } from '../src/classify.ts';
 import { readMcpServers, serverUrlOf } from '../src/mcp-config.ts';
-import { type ToolCall, toolCallOf } from '../src/payload.ts';
+import { eventOf, type ToolCall, toolCallOf } from '../src/payload.ts';
 
 const dirs: string[] = [];
 afterEach(() => {
@@ -37,6 +37,17 @@ function call(over: Partial<ToolCall> = {}): ToolCall {
     ...over,
   };
 }
+
+describe('eventOf', () => {
+  test('names the event in either format, and nothing for a payload that names none', () => {
+    expect(eventOf({ hook_event_name: 'Stop' })).toBe('Stop');
+    expect(eventOf({ hookEventName: 'SessionEnd' })).toBe('SessionEnd');
+    expect(eventOf({ hook_event_name: '' })).toBeNull();
+    expect(eventOf({ tool_name: 'Bash' })).toBeNull();
+    expect(eventOf(['Stop'])).toBeNull();
+    expect(eventOf(null)).toBeNull();
+  });
+});
 
 describe('toolCallOf', () => {
   test('reads the Claude Code failure payload as documented', () => {
