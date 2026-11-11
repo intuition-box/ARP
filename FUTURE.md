@@ -752,3 +752,20 @@ since each is signed by its writer; it can omit or delay one. Mitigations:
 
 **A middle way.** Batch by default, plus the existing triple path for a line someone wants supported at
 once.
+
+## A load test of the hosted surfaces
+
+**Asked 2026-11-11, then set aside the same day** (_« oublie ça, marque en remarque dans futur »_).
+Task 130 (ADR `0195`) put limits on the hosted MCP server's search processes and on the site's
+skills.sh proxy, so a crowd gets a "busy" answer or a `429` instead of an outage. How large a crowd
+was never measured: no load test was run, and the default `ARP_SEARCH_CONCURRENCY=4` was a guess.
+
+What it would be: a committed `scripts/measure/load-hosted.ts` that sends N simultaneous `arp_pulse`
+calls (10, 25, 50, each a different phrase) to the MCP image run locally with the server's CPU and
+memory. It would record how many answer, how many are told the server is busy, the response times,
+and the container's CPU and RAM, with the raw output in `data/measurements/`. It would run against
+the local image and not production, because production's load also reaches skills.sh and
+Intuition's GraphQL, which are third parties. The result is what `ARP_SEARCH_CONCURRENCY` should be
+set to in Coolify.
+
+`.claude/STATE.md` (the user's list, 2026-11-03) gives performance checks to another session.
