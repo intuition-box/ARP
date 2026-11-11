@@ -33,8 +33,9 @@ import {WalletConnect} from "./WalletConnect";
  * fact about where the data came from rather than a warning about it.
  */
 
+// No "Agents" tab: the user's decision 2026-11-11, the agents' part blurs the first proposition for
+// now. `/agents` and `/agent/…` still answer by URL, since lines and feeds link to an agent.
 const NAV_TABS = [
-    {to: "/agents", label: "Agents"},
     {to: "/tools", label: "Tools"},
     // The agent's calls, declarations and stakes, and every transaction this browser sent.
     {to: "/activity", label: "Activity"},
