@@ -7,16 +7,18 @@ import {
     X402_REASONS_QUERY,
     type GraphqlTransport,
 } from "@arp-protocol/graphql";
-import {getAddress, type Address, type Hex} from "viem";
+import {getAddress, recoverTypedDataAddress, type Address, type Hex} from "viem";
 
 import {normaliseToolUrl} from "./declare/tool-thing.js";
 import {isUsageOutcome, isUsageReason, type UsageOutcome} from "./declare/usage-context.js";
 import {redactEndpointUrl} from "./endpoint-redaction.js";
+import {lineRequestTypedDataJson, verifyLineRequest, type LineRequestTypedDataJson, type SignedLineRequest} from "./sponsor/line.js";
 import {privateProbeTarget} from "./verify/probe.js";
 import {
     checkX402Payment,
     exactEndpointNamesTool,
     parsePaymentLevelLabel,
+    paymentAtomLabel,
     type X402NetworkPolicy,
     type X402TransferReads,
 } from "./x402-payment.js";
@@ -43,6 +45,12 @@ import {
  * that agent's `agentWallet`), and that wallet's word about the outcome. **Not** that the endpoint
  * delivered or failed to: that is the payer's claim. Nor that the recipient is the endpoint's own
  * payee, which only the endpoint's 402 answer says; a reader such as Doctor checks it.
+ *
+ * **The request the writer signed** (task 121, ADR `0188`): a line ARP's sponsoring service wrote rests
+ * on an EIP-712 `LineRequest` the agent signed, which names the payment and the outcome. The service
+ * keeps it, and the feed carries it as `signed_request`, so a reader recovers the signer itself and needs
+ * no word of ARP's: `signed_by_payer` is what {@link signedByPayer} says of the two. Added fields, so the
+ * schema stays 3: no field changed meaning.
  */
 export const X402_FEED_SCHEMA = "arp.x402-outcomes/3";
 
@@ -79,6 +87,25 @@ export type X402FeedRecord = {
     line_id: Hex;
     /** When the payment level was written, as the index says. */
     written_at: string;
+    /**
+     * The `LineRequest` the writer signed and ARP's sponsoring service wrote this line from, as typed data
+     * and its signature (ADR `0188`). `null` when the feed was built without the service's store, for a line
+     * written before task 121, or for one the writer sent itself, which signs transactions and no request.
+     */
+    signed_request: X402SignedRequest | null;
+    /** {@link signedByPayer} over this record: a reader recomputes it from the record alone. */
+    signed_by_payer: boolean;
+};
+
+/** EIP-712 typed data in JSON and the signature over it: viem's `verifyTypedData` takes both as they are. */
+export type X402SignedRequest = {typed_data: LineRequestTypedDataJson; signature: Hex};
+
+/** Where the signed requests are read: ARP's sponsoring service, `GET /line-request?payment=<label>`. */
+export type X402SignedRequests = {
+    /** Named in the feed as `signed_requests_from`. */
+    source: string;
+    /** The request the service kept for this payment label, or `null` when it kept none. Throws on an outage. */
+    read(payment: string): Promise<unknown>;
 };
 
 export type X402EndpointSummary = {
@@ -104,6 +131,8 @@ export type X402Feed = {
     skipped: {count: number; reasons: Record<string, number>};
     /** The read hit a limit, so the feed may miss lines. */
     truncated: boolean;
+    /** Where `signed_request` was read, or `null` when this build read no signed request at all. */
+    signed_requests_from: string | null;
 };
 
 /** The holder and `agentWallet` of the agent an identity atom names, or `null` when it names none this reader can read. */
@@ -126,6 +155,8 @@ export type X402FeedConfig = {
      * feed sets it (task 118): its one seller runs on the machine that paid it. Off, such a line is skipped.
      */
     allowPrivateEndpoints?: boolean;
+    /** Absent, every record's `signed_request` is `null` and `signed_by_payer` false. */
+    signedRequests?: X402SignedRequests;
     /** ISO 8601. Passed in, so two builds of one graph differ only here. */
     generatedAt: string;
     pageSize?: number;
@@ -181,6 +212,48 @@ const rowsOf = (data: Record<string, unknown>): Record<string, unknown>[] =>
 function isoOf(at: string): string {
     const parsed = Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(at) ? at : `${at}Z`);
     return Number.isNaN(parsed) ? at : new Date(parsed).toISOString();
+}
+
+/**
+ * Whether a record's payer signed the request its line was written from (ADR `0188`). True only when all
+ * three hold, each checkable by anyone from the record alone:
+ *
+ * 1. the signature recovers, over `typed_data`, to the record's `payer`;
+ * 2. the signed `payment` names this settlement, `<network>/tx/<settlement_tx>` in lower case;
+ * 3. the signed `outcome` is this record's outcome.
+ *
+ * So a payment made by the agent's `agentWallet` while the line is signed by the address that holds the
+ * agent gives `false`: the payer did not sign. That is the answer, not a fault.
+ */
+export async function signedByPayer(
+    record: Pick<X402FeedRecord, "network" | "settlement_tx" | "outcome" | "payer">,
+    signed: X402SignedRequest | null,
+): Promise<boolean> {
+    if (signed === null) return false;
+    const {message} = signed.typed_data;
+    if (message.payment !== paymentAtomLabel({network: record.network, txHash: record.settlement_tx})) return false;
+    if (message.outcome !== record.outcome) return false;
+    try {
+        // JSON carries `expiresAt` as a number; viem's types ask a bigint, and a value that is neither throws here.
+        const typedData = {...signed.typed_data, message: {...message, expiresAt: BigInt(message.expiresAt)}};
+        return getAddress(await recoverTypedDataAddress({...typedData, signature: signed.signature})) === getAddress(record.payer);
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * The service's answer as a published request, or `null` when it is not one. Read with `verifyLineRequest`
+ * at a time just before its expiry: it was spent when the line was written, so only its shape and its
+ * signature are in question here.
+ */
+async function signedRequestOf(stored: unknown): Promise<X402SignedRequest | null> {
+    if (typeof stored !== "object" || stored === null) return null;
+    const {request} = stored as Partial<SignedLineRequest>; // checked by `verifyLineRequest` below
+    if (typeof request !== "object" || request === null || typeof request.expiresAt !== "number") return null;
+    if ((await verifyLineRequest(stored, request.expiresAt - 1)).status !== "valid") return null;
+    const {chainId, signature} = stored as SignedLineRequest; // valid, so these are its fields
+    return {typed_data: lineRequestTypedDataJson(request, chainId), signature};
 }
 
 /**
@@ -245,7 +318,7 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
         }
     }
 
-    type Candidate = {payment: Level; record: Omit<X402FeedRecord, "payer" | "pay_to" | "amount" | "asset" | "paid_at" | "writer">; writers: Set<string>; owner: Address | null; agentWallet: Address | null};
+    type Candidate = {payment: Level; record: Omit<X402FeedRecord, "payer" | "pay_to" | "amount" | "asset" | "paid_at" | "writer" | "signed_request" | "signed_by_payer">; writers: Set<string>; owner: Address | null; agentWallet: Address | null};
     const candidates: Candidate[] = [];
     for (const payment of payments) {
         // `data`, not `label`: the index cuts a label at 256 characters and the exact URL can be longer.
@@ -370,15 +443,13 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
         }
         const payer = checked.transfer.payer;
         const writer = candidate.writers.has(key(payer)) ? payer : (candidate.owner ?? payer);
-        verified.push({
-            ...record,
-            payer,
-            pay_to: checked.transfer.payTo,
-            amount: checked.transfer.amount.toString(),
-            asset: checked.transfer.asset,
-            paid_at: paidAt,
-            writer,
-        });
+        // An outage throws and no snapshot is written: a record must not lose its signature to it.
+        const signed =
+            config.signedRequests === undefined
+                ? null
+                : await signedRequestOf(await config.signedRequests.read(paymentAtomLabel({network: record.network, txHash: record.settlement_tx})));
+        const paid = {...record, payer, pay_to: checked.transfer.payTo, amount: checked.transfer.amount.toString(), asset: checked.transfer.asset, paid_at: paidAt, writer};
+        verified.push({...paid, signed_request: signed, signed_by_payer: await signedByPayer(paid, signed)});
     }
     if (unreadable.length > 0) throw new Error(`a paying chain could not be read, so no snapshot is written: ${unreadable[0]}`);
 
@@ -417,5 +488,6 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
         by_endpoint: Object.fromEntries(Object.entries(byEndpoint).sort(([a], [b]) => a.localeCompare(b))),
         skipped: {count: skippedCount, reasons: Object.fromEntries(Object.entries(skipped).sort(([a], [b]) => a.localeCompare(b)))},
         truncated,
+        signed_requests_from: config.signedRequests?.source ?? null,
     };
 }

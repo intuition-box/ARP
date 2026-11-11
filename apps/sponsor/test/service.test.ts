@@ -15,6 +15,7 @@ import {
   planToolListing,
   multiVaultDeclareAbi,
   signCategoryRequest,
+  lineRequestTypedData,
   signLineRequest,
   signListToolRequest,
   thingUri,
@@ -46,6 +47,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { lineSubjectCheck } from '../src/categories.ts';
 import { assertSponsorChain, KeyFileError, readKeyFile } from '../src/key-file.ts';
 import { SponsorLedger } from '../src/ledger.ts';
+import { LineRequestStore } from '../src/line-requests.ts';
 import { intuitionJsonPinner } from '../src/pin.ts';
 import { nullOnRevert } from '../src/routes/context.ts';
 import {
@@ -2475,6 +2477,72 @@ describe('POST /line', () => {
       expect((await post(paid(w, base(AGENT.address)), { request: await withPayment() })).status).toBe(200);
       const label = stringToHex(`eip155:8453/tx/${TX} ${CALLED}`);
       expect(w.sent.some((c) => c.kind === 'create-atom' && c.data.includes(label.slice(2)))).toBe(true);
+    });
+
+    describe('keeps the request it was signed with, for the feed (task 121, ADR 0188)', () => {
+      const get = async (service: ReturnType<typeof createSponsor>, payment: string) => {
+        const response = await service.fetch(
+          new Request(`http://sponsor/line-request?payment=${encodeURIComponent(payment)}`, { headers: { host: 'sponsor' } }),
+        );
+        return { status: response.status, body: (await response.json()) as Record<string, unknown> };
+      };
+      const kept = (w: World, requests: LineRequestStore | null) =>
+        paid(w, base(AGENT.address), {
+          lines: {
+            inContextOf: IN_CONTEXT,
+            subject: async () => 'other',
+            toolUrl: async () => TOOL_URL,
+            payments: { policy: x402Policy(X402_DEFAULT_NETWORKS), readsFor: () => base(AGENT.address) },
+            requests,
+          },
+        });
+
+      test('answers the request as the agent posted it, under its payment', async () => {
+        const service = kept(seeded(), new LineRequestStore(null));
+        const signed = await withPayment();
+        expect((await post(service, { request: signed })).status).toBe(200);
+        const answer = await get(service, `eip155:8453/tx/${TX}`);
+        expect(answer.status).toBe(200);
+        expect(answer.body).toEqual(JSON.parse(JSON.stringify(signed)));
+        const { request: message, signature } = answer.body as { request: Parameters<typeof signLineRequest>[0]; signature: Hex }; // the body checked equal to `signed` above
+        expect(await verifyTypedData({ ...lineRequestTypedData(message, CHAIN), address: AGENT.address, signature })).toBe(true);
+      });
+
+      test('answers 404 for a payment no line names, 400 for a label that is not one, 503 when nothing is kept', async () => {
+        const service = kept(seeded(), new LineRequestStore(null));
+        expect((await get(service, `eip155:8453/tx/0x${'ab'.repeat(32)}`)).status).toBe(404);
+        expect((await get(service, 'paid on Tuesday')).status).toBe(400);
+        expect((await get(kept(seeded(), null), `eip155:8453/tx/${TX}`)).status).toBe(503);
+      });
+
+      test('keeps nothing for a refused request, nor for a line without a payment', async () => {
+        const requests = new LineRequestStore(null);
+        const refused = await post(kept(seeded(), requests), { request: await withPayment({ endpoint: 'https://evil.example/x402/weather' }) });
+        expect(refused.status).toBe(422);
+        expect(requests.get(`eip155:8453/tx/${TX}`)).toBeNull();
+        const plain = await signLineRequest(
+          { ...(await request()).request, payment: '', endpoint: '' },
+          CHAIN,
+          AGENT,
+        );
+        requests.keep(plain, NOW);
+        expect(requests.get('')).toBeNull();
+      });
+
+      test('reads its file back after a restart, the latest request per payment', async () => {
+        const dir = mkdtempSync(join(tmpdir(), 'sponsor-line-requests-'));
+        try {
+          const path = join(dir, 'line-requests.jsonl');
+          const first = await withPayment();
+          const second = await withPayment();
+          const store = new LineRequestStore(path);
+          store.keep(first, NOW);
+          store.keep(second, NOW + 1);
+          expect(new LineRequestStore(path).get(`eip155:8453/tx/${TX}`)).toEqual(JSON.parse(JSON.stringify(second)));
+        } finally {
+          rmSync(dir, { recursive: true, force: true });
+        }
+      });
     });
 
     test('refuses an exact URL that is not a spelling of the tool, before anything is sent', async () => {

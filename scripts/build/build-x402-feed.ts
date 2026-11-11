@@ -15,8 +15,12 @@
  *  network and its asset, with `ARP_X402_RPC_<chain id>` to read it (ADR `0160`); Base Sepolia is
  *  read by `--test` alone, at `https://sepolia.base.org` unless `ARP_X402_RPC_84532` names another RPC.
  *
+ *  `ARP_SPONSOR` names ARP's sponsoring service, whose `GET /line-request` holds the request each x402
+ *  line was signed with (task 121, ADR `0188`); the feed carries it as `signed_request`, and says in
+ *  `signed_requests_from` where it read it. Unset, no request is read and every `signed_by_payer` is false.
+ *
  *  The file is a dated snapshot (ADR `0154`): rerun it to refresh. It refuses to write when a paying
- *  chain does not answer, so a record never goes missing because of an outage.
+ *  chain or the named sponsoring service does not answer, so a record never loses a field to an outage.
  */
 import {mkdirSync, writeFileSync} from "node:fs";
 import {dirname} from "node:path";
@@ -66,6 +70,20 @@ async function agentKeys(identity: {atomId: string; label: string | null}): Prom
     return {owner, agentWallet: wallet === null || wallet === ZERO ? null : wallet};
 }
 
+const sponsor = (process.env["ARP_SPONSOR"] ?? "").trim().replace(/\/+$/, "");
+const signedRequests =
+    sponsor === ""
+        ? undefined
+        : {
+              source: `${sponsor}/line-request`,
+              async read(payment: string): Promise<unknown> {
+                  const response = await fetch(`${sponsor}/line-request?payment=${encodeURIComponent(payment)}`, {signal: AbortSignal.timeout(20_000)});
+                  if (response.status === 404) return null;
+                  if (!response.ok) throw new Error(`${sponsor}/line-request answered ${response.status}`);
+                  return response.json();
+              },
+          };
+
 const reading = x402Reading(x402FeedNetworks(test ? "test" : "main", process.env), process.env);
 const feed = await buildX402Feed({
     transport: createGraphqlTransport({url: deployment.chain.graphqlUrl, fetch: defaultFetch(), timeoutMs: 20_000}),
@@ -76,9 +94,11 @@ const feed = await buildX402Feed({
     readsFor: reading.readsFor,
     agentKeys,
     allowPrivateEndpoints: test,
+    ...(signedRequests === undefined ? {} : {signedRequests}),
     generatedAt: new Date().toISOString(),
 });
 
 mkdirSync(dirname(out), {recursive: true});
 writeFileSync(out, `${JSON.stringify(test ? {test: true, ...feed} : feed, null, 2)}\n`);
-console.log(`${feed.records.length} records, ${feed.skipped.count} skipped, truncated ${feed.truncated}: ${out}`);
+const signedByPayer = feed.records.filter((record) => record.signed_by_payer).length;
+console.log(`${feed.records.length} records (${signedByPayer} signed by the payer), ${feed.skipped.count} skipped, truncated ${feed.truncated}: ${out}`);

@@ -256,6 +256,8 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
         ];
     for (const call of calls) assertMultiVault(call);
 
+    // Kept before the first send, as the spend is reserved: a line that lands always has its request (ADR `0188`).
+    if (payment !== null) lines.requests?.keep(signed, now());
     ledger.reserve({ kind: 'line', subject: agent, value, at: now(), key, termId: usesId });
     const transactions: Hex[] = [];
     // A revert frees the reservation only when nothing landed. Terms already paid for stay counted, and
@@ -286,6 +288,22 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
     ledger.settle('line', key, { status: 'success', hash: transactions.at(-1) as Hex }); // at least one, checked above
     return json({ termId: usesId, levels, created: calls.length > 0, transactions });
   });
+}
+
+/**
+ * `GET /line-request?payment=eip155:<chain>/tx/<hash>`: the request an agent signed for the x402 line that
+ * names this payment, as it posted it, or 404 (task 121, ADR `0188`). Read-only, and nothing in it is new:
+ * every field but the nonce, the expiry and the signature is already on chain in the line.
+ */
+export function lineRequest(ctx: SponsorContext, url: URL): Response {
+  const store = ctx.options.lines?.requests ?? null;
+  if (store === null) return json({ error: 'signed requests are not kept on this service', rule: 'config' }, 503);
+  const payment = url.searchParams.get('payment') ?? '';
+  if (parsePaymentAtomLabel(payment) === null) {
+    return json({ error: 'payment is eip155:<chain>/tx/<hash>, lower case', rule: 'payment' }, 400);
+  }
+  const signed = store.get(payment);
+  return signed === null ? json({ error: 'no signed request is kept for this payment' }, 404) : json(signed);
 }
 
 /**

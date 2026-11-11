@@ -79,11 +79,23 @@ arp line --tool http://www.api.example.com/x402/weather/ --outcome failed --reas
   "paid_at": "2026-11-09T19:32:02.000Z",
   "writer": "0x…",
   "line_id": "0x…",
-  "written_at": "2026-11-09T20:00:00.000Z"
+  "written_at": "2026-11-09T20:00:00.000Z",
+  "signed_request": {
+    "typed_data": {
+      "domain": {"name": "ARP Line Request", "version": "4", "chainId": 13579},
+      "types": {"LineRequest": [{"name": "agent", "type": "address"}, "…"]},
+      "primaryType": "LineRequest",
+      "message": {"agent": "0x…", "payment": "eip155:8453/tx/0x…", "outcome": "failed", "…": "…"}
+    },
+    "signature": "0x…"
+  },
+  "signed_by_payer": true
 }
 ```
 
-`endpoint` is the URL the payer called, with its values removed. A line written before 2026-11-10 did not name it, so its `endpoint` is `null`: unknown, not guessed. `endpoint_canonical` is always there, also without values, so two calls that differ only in what they asked count under one key. The feed removes values again as it reads, whatever a line wrote: no value reaches the file, and a line whose URLs no longer agree once reduced, or that carries credentials, is counted in `skipped`. `amount` is in the asset's smallest unit: 20000 is 0.02 USDC. `line_id` is T5's id on Intuition testnet 13579. Beside the records: `by_endpoint` (records, worked, failed, no-delivery and distinct payers per `endpoint_canonical`), `skipped` (lines left out, by why), and `truncated`. The schema is `arp.x402-outcomes/3`; version 2 published both URLs with their values, and version 1 had no `endpoint_canonical` and put the canonical URL in `endpoint`.
+`endpoint` is the URL the payer called, with its values removed. A line written before 2026-11-10 did not name it, so its `endpoint` is `null`: unknown, not guessed. `endpoint_canonical` is always there, also without values, so two calls that differ only in what they asked count under one key. The feed removes values again as it reads, whatever a line wrote: no value reaches the file, and a line whose URLs no longer agree once reduced, or that carries credentials, is counted in `skipped`. `amount` is in the asset's smallest unit: 20000 is 0.02 USDC. `line_id` is T5's id on Intuition testnet 13579. Beside the records: `by_endpoint` (records, worked, failed, no-delivery and distinct payers per `endpoint_canonical`), `skipped` (lines left out, by why), and `truncated`. `signed_request` and `signed_by_payer` are below. The schema is `arp.x402-outcomes/3`; `signed_request`, `signed_by_payer` and the top-level `signed_requests_from` were added to it on 2026-11-11 without changing any other field. Version 2 published both URLs with their values, and version 1 had no `endpoint_canonical` and put the canonical URL in `endpoint`.
+
+`payers` in `by_endpoint` counts distinct paying addresses per `endpoint_canonical`. A writer who pays one endpoint from two addresses counts twice, and nothing in the feed can tell that apart from two writers.
 
 ## When a line becomes a record
 
@@ -105,6 +117,38 @@ Anything else is left out and counted in `skipped`. If Base does not answer, no 
 - **That `pay_to` is the endpoint's payee.** Only the endpoint's own 402 answer says who it should pay. A checker such as Doctor compares the two.
 - **That the payer is anonymous.** The paying wallet is public on its own chain. Pay from a wallet dedicated to the agent's payments, never a personal one: [What ARP publishes about you](/docs/what-arp-publishes).
 - **That two payers are two people.** One person can hold several wallets. ARP's own ranking counts an outcome only from 3 distinct wallets; the feed lists every record and leaves the counting to the reader.
+
+## Who signed the line
+
+A line written by ARP's sponsoring service rests on a request the agent signed: an EIP-712 `LineRequest` that names the payment, the outcome, the reason and the URL paid. The service keeps it, and the feed carries it as `signed_request`, so a reader checks who signed without trusting ARP. ARP could leave a request out; it cannot make one up, because only the signer's key produces the signature.
+
+`signed_by_payer` is `true` when all three hold, and each can be recomputed from the record alone:
+
+1. the signature recovers, over `typed_data`, to the record's `payer`;
+2. `typed_data.message.payment` is this settlement: `<network>/tx/<settlement_tx>`, the hash in lower case;
+3. `typed_data.message.outcome` is the record's `outcome`.
+
+With viem, in TypeScript:
+
+```ts
+import {verifyTypedData} from "viem";
+
+const {typed_data, signature} = record.signed_request;
+const signed = await verifyTypedData({...typed_data, address: record.payer, signature});
+const same = typed_data.message.payment === `${record.network}/tx/${record.settlement_tx.toLowerCase()}` && typed_data.message.outcome === record.outcome;
+// signed && same === record.signed_by_payer
+```
+
+`typed_data` takes viem's form: `expiresAt` is a number, and `types` leaves out `EIP712Domain`. A tool built on `eth_signTypedData_v4` adds it from the domain's three fields: `name` string, `version` string, `chainId` uint256. There is no `verifyingContract`: no contract checks this signature.
+
+**It is EIP-712, not EIP-191.** A reader that verifies only `personal_sign` (EIP-191) messages cannot check it as one: the agent signed typed data, and there is no EIP-191 signature to check. Adding one would mean the agent signs a second time.
+
+`signed_by_payer` is `false`, and the reason is in the record:
+
+- **when `signed_request` is `null`**: the sponsoring service wrote the line before it kept requests, as for every x402 line written up to 2026-11-11, or the writer sent the line's transactions itself, which signs transactions and no request, or the feed was built without reading the service (`signed_requests_from` is `null`);
+- **when the agent's `agentWallet` paid and the address that holds the agent signed.** `payer` and `writer` differ, the signature recovers to `writer`, and the payer signed nothing. That is the honest answer, not a fault: the line is still the holder's word about a payment its agent's wallet made.
+
+`signed_requests_from`, beside the records, says where the requests were read: the sponsoring service's `GET /line-request`. Ask it yourself with `?payment=<network>/tx/<settlement_tx>`; it answers the request as the agent posted it, or `404`.
 
 ## How to check a record
 

@@ -1,6 +1,6 @@
 {
   "schema": "arp.x402-outcomes/3",
-  "generated_at": "2026-11-11T09:16:17.890Z",
+  "generated_at": "2026-11-11T09:36:13.794Z",
   "trace": {
     "chain": "eip155:13579",
     "graphql": "https://testnet.intuition.sh/v1/graphql"
@@ -17,5 +17,6 @@
       "network eip155:84532 is not read": 2
     }
   },
-  "truncated": false
+  "truncated": false,
+  "signed_requests_from": null
 }

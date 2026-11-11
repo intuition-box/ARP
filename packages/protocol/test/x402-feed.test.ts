@@ -1,13 +1,15 @@
 import {X402_LEVELS_BY_ID_QUERY, X402_PAYMENT_LEVELS_QUERY, X402_REASONS_QUERY, type GraphqlTransport} from "@arp-protocol/graphql";
-import {getAddress} from "viem";
+import {getAddress, keccak256, pad, stringToBytes, verifyTypedData, type Hex} from "viem";
+import {privateKeyToAccount} from "viem/accounts";
 import {describe, expect, it} from "vitest";
 
 import {readFileSync} from "node:fs";
 
 import {X402_DEFAULT_NETWORKS, X402_TEST_NETWORKS, x402FeedNetworks} from "../src/arp/x402-networks.js";
-import {buildX402Feed, type X402FeedConfig} from "../src/x402-feed.js";
+import {lineRequestTypedDataJson, signLineRequest, type LineRequest} from "../src/sponsor/line.js";
+import {buildX402Feed, signedByPayer, type X402FeedConfig, type X402SignedRequest} from "../src/x402-feed.js";
 import {x402Policy, x402Reading, type X402TransferReads} from "../src/x402-payment.js";
-import {PAYER, PAY_TO, recordedReads, TX, type Fixture} from "./x402-fixture.js";
+import {FIXTURE, PAYER, PAY_TO, recordedReads, TX, type Fixture} from "./x402-fixture.js";
 
 const id = (n: number) => `0x${n.toString(16).padStart(64, "0")}`;
 const PRED = {paidWith: id(1), hasOutcome: id(2), because: id(3), inContextOf: id(4), uses: id(5)};
@@ -111,8 +113,11 @@ describe("buildX402Feed", () => {
                 writer: PAYER,
                 line_id: id(1),
                 written_at: "2026-11-09T20:00:00.000Z",
+                signed_request: null,
+                signed_by_payer: false,
             },
         ]);
+        expect(feed.signed_requests_from).toBeNull();
         // Keyed by the canonical URL, so every spelling of one endpoint counts under one key.
         expect(feed.by_endpoint[ENDPOINT]).toEqual({records: 1, worked: 0, failed: 1, no_delivery: 1, payers: 1});
         expect(feed.skipped).toEqual({count: 0, reasons: {}});
@@ -259,6 +264,96 @@ describe("buildX402Feed", () => {
     it("is empty, not missing, when no line names a payment", async () => {
         const feed = await buildX402Feed(config([]));
         expect(feed).toMatchObject({records: [], by_endpoint: {}, skipped: {count: 0, reasons: {}}, truncated: false});
+    });
+});
+
+describe("the request the payer signed (task 121, ADR 0188)", () => {
+    // Fixed test keys, generated for nothing and holding nothing.
+    const AGENT = privateKeyToAccount(`0x${"68".repeat(32)}`);
+    const HOLDER = privateKeyToAccount(`0x${"69".repeat(32)}`);
+    /** The recorded settlement, with its payer replaced by `payer`, so a test key can be the one that paid. */
+    const paidBy = (payer: string): Fixture => ({
+        ...FIXTURE,
+        receipt: {
+            ...FIXTURE.receipt,
+            logs: FIXTURE.receipt.logs.map((log) => ({
+                ...log,
+                topics: log.topics.map((topic) => (topic.toLowerCase() === pad(PAYER.toLowerCase() as Hex) ? pad(payer.toLowerCase() as Hex) : topic)),
+            })),
+        },
+    });
+    const request = (agent: string, over: Partial<LineRequest> = {}): LineRequest => ({
+        agent: getAddress(agent),
+        agentRegistry: `eip155:13579:0x${"11".repeat(20)}`,
+        agentId: "9",
+        tool: id(901) as Hex,
+        domain: "data",
+        outcome: "failed",
+        reason: "no-delivery",
+        payment: `eip155:8453/tx/${TX.toLowerCase()}`,
+        endpoint: CALLED,
+        need: "",
+        nonce: keccak256(stringToBytes("n")),
+        expiresAt: 1_762_718_000,
+        ...over,
+    });
+    /** A store that holds `stored` under its payment label, as the sponsoring service's `GET /line-request` does. */
+    const store = (stored: {request: {payment: string}}) => ({
+        source: "http://127.0.0.1:3200/line-request",
+        read: async (payment: string) => (payment === stored.request.payment ? stored : null),
+    });
+    const published = async (over: Partial<LineRequest> = {}, signer = AGENT): Promise<X402SignedRequest> => {
+        const signed = await signLineRequest(request(signer.address, over), 13579, signer);
+        return {typed_data: lineRequestTypedDataJson(signed.request, 13579), signature: signed.signature};
+    };
+
+    it("carries the request, and says true when the payer signed it", async () => {
+        const signed = await signLineRequest(request(AGENT.address), 13579, AGENT);
+        const feed = await buildX402Feed(config(line(0, AGENT.address.toLowerCase()), {readsFor: () => recordedReads(paidBy(AGENT.address)), signedRequests: store(signed)}));
+        const [record] = feed.records;
+        expect(record?.payer).toBe(AGENT.address);
+        expect(record?.signed_by_payer).toBe(true);
+        expect(feed.signed_requests_from).toBe("http://127.0.0.1:3200/line-request");
+        // What a reader does with the file: parse it, hand the typed data to viem, name the payer.
+        const read = JSON.parse(JSON.stringify(record?.signed_request)) as X402SignedRequest;
+        expect(read.typed_data.domain).toEqual({name: "ARP Line Request", version: "4", chainId: 13579});
+        // As parsed: `expiresAt` is a number, which viem's types call a bigint and its encoder takes as either.
+        const typedData = read.typed_data as unknown as Parameters<typeof verifyTypedData>[0];
+        expect(await verifyTypedData({...typedData, address: AGENT.address, signature: read.signature})).toBe(true);
+    });
+
+    it("says false when the agentWallet paid and the holder signed", async () => {
+        const signed = await signLineRequest(request(HOLDER.address), 13579, HOLDER);
+        const feed = await buildX402Feed(
+            config(line(0, HOLDER.address.toLowerCase()), {
+                readsFor: () => recordedReads(paidBy(AGENT.address)),
+                agentKeys: async () => ({owner: HOLDER.address, agentWallet: AGENT.address}),
+                signedRequests: store(signed),
+            }),
+        );
+        expect(feed.records.map((r) => [r.payer, r.writer, r.signed_by_payer])).toEqual([[AGENT.address, HOLDER.address, false]]);
+        expect(feed.records[0]?.signed_request?.signature).toBe(signed.signature);
+    });
+
+    it("says false when the signed request names another outcome, another payment or another signer", async () => {
+        const record = {network: "eip155:8453", settlement_tx: TX, outcome: "failed" as const, payer: AGENT.address};
+        expect(await signedByPayer(record, await published())).toBe(true);
+        expect(await signedByPayer(record, await published({outcome: "worked", reason: ""}))).toBe(false);
+        expect(await signedByPayer(record, await published({payment: `eip155:8453/tx/0x${"ab".repeat(32)}`}))).toBe(false);
+        expect(await signedByPayer(record, await published({}, HOLDER))).toBe(false);
+        expect(await signedByPayer(record, null)).toBe(false);
+    });
+
+    it("publishes no request the store holds in a form that does not verify", async () => {
+        const signed = await signLineRequest(request(AGENT.address), 13579, AGENT);
+        const altered = {...signed, request: {...signed.request, outcome: "worked", reason: ""}};
+        const feed = await buildX402Feed(config(line(0, AGENT.address.toLowerCase()), {readsFor: () => recordedReads(paidBy(AGENT.address)), signedRequests: store(altered)}));
+        expect(feed.records.map((r) => [r.signed_request, r.signed_by_payer])).toEqual([[null, false]]);
+    });
+
+    it("writes nothing when the store does not answer", async () => {
+        const down = {source: "http://127.0.0.1:3200/line-request", read: async () => Promise.reject(new Error("fetch failed"))};
+        await expect(buildX402Feed(config(line(0, PAYER.toLowerCase()), {signedRequests: down}))).rejects.toThrow(/fetch failed/);
     });
 });
 

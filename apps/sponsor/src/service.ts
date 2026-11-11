@@ -18,6 +18,9 @@
  *  | `POST /propose-category`| a new category, its parent edge and one skill's tag | `planCategory`'s rules, a daily cap |
  *  | `POST /line`    | one form B line, with the agent's position on each level | a registered agent's signature, daily caps |
  *
+ *  Two routes read and spend nothing: `GET /`, and `GET /line-request?payment=<label>`, the request an
+ *  agent signed for an x402 line, kept for the feed (task 121, ADR `0188`).
+ *
  *  `/mint-gas`, `/identity`, and the `uses` triple `/deposit` creates when it is missing, are ADR
  *  `0110`. `/list-tool` is ADR `0123`; it and `/propose-category` are the only routes a browser may
  *  call.
@@ -79,13 +82,14 @@ import type { ToolResolution } from './github.ts';
 import type { ToolAdmission } from './admit-tool.ts';
 import type { RepoSpelling } from './indexer.ts';
 import type { SponsorLedger } from './ledger.ts';
+import type { LineRequestStore } from './line-requests.ts';
 import { createContext, json, readBody, REGISTRY } from './routes/context.ts';
 import { deposit } from './routes/deposit.ts';
 import { gas } from './routes/gas.ts';
 import { identity } from './routes/identity.ts';
 import { info } from './routes/info.ts';
 import { mintGas } from './routes/mint-gas.ts';
-import { line } from './routes/line.ts';
+import { line, lineRequest } from './routes/line.ts';
 import { listTool } from './routes/list-tool.ts';
 import { proposeCategory, type CategoryLogEntry } from './routes/propose-category.ts';
 import { publish } from './routes/publish.ts';
@@ -218,6 +222,11 @@ export type SponsorOptions = {
      */
     skillMarkdown?(toolUrl: string): Promise<string | null>;
     payments?: { policy: X402NetworkPolicy; readsFor(network: string): X402TransferReads } | null;
+    /**
+     * Where an x402 line's signed request is kept, and `GET /line-request` reads it (task 121, ADR
+     * `0188`). Absent, the line is written as before and that route answers 503.
+     */
+    requests?: LineRequestStore | null;
   } | null;
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;
@@ -266,11 +275,12 @@ export function createSponsor(options: SponsorOptions): {
 
   async function answer(request: Request, url: URL): Promise<Response> {
     if (request.method === 'GET' && url.pathname === '/') return json(info(ctx));
+    if (request.method === 'GET' && url.pathname === '/line-request') return lineRequest(ctx, url);
     if (request.method !== 'POST')
       return json(
         {
           error:
-            'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category, /line',
+            'GET /, GET /line-request, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category, /line',
         },
         404,
       );
@@ -288,7 +298,7 @@ export function createSponsor(options: SponsorOptions): {
       return json(
         {
           error:
-            'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category, /line',
+            'GET /, GET /line-request, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category, /line',
         },
         404,
       );

@@ -103,7 +103,7 @@ That address goes in two places, in the release that ships with it: `arp.sponsor
 | Domain | `https://<SPONSOR_PUBLIC_HOST>` |
 | Health check | path `/`, port `3200` (the image has its own `HEALTHCHECK`) |
 | **Consistent Container Names** | **on**. Coolify then stops the old container before it starts the new one. A rolling update would run two sponsors on one ledger for a moment, and the ledger's lock cannot see a process in another container |
-| **Persistent storage, volume** | a volume mounted on **`/data`**. The ledger (`sponsor-ledger.jsonl`) and the category log live there. Without it every redeploy starts from an empty ledger, and an empty ledger sponsors every proof a second time |
+| **Persistent storage, volume** | a volume mounted on **`/data`**. The ledger (`sponsor-ledger.jsonl`), the category log and the signed x402 line requests (`line-requests.jsonl`, the only copy, read by the x402 feed) live there. Without it every redeploy starts from an empty ledger, and an empty ledger sponsors every proof a second time |
 | **Persistent storage, file mount** | destination `/run/secrets/sponsor.key`, content: the key file's one line. Never in the image, in git or in an environment variable |
 | Replicas | one. Never scale it out |
 

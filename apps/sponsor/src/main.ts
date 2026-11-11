@@ -68,6 +68,7 @@ import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
+import { LineRequestStore } from './line-requests.ts';
 import { listenFrom, type Listen } from './listen.ts';
 import { categoryLog, categoryTree, compoundsFrom, lineSubjectCheck, lineToolUrl, toolCheck } from './categories.ts';
 import { resolveOnGitHubCached, skillMarkdownOnGitHub } from './github.ts';
@@ -123,11 +124,16 @@ const PIN_KEY = (process.env.INTUITION_PIN_API_KEY ?? '').trim();
 // Opened here, before the key is read: a second service on the same ledger is refused (ADR `0116`).
 let LEDGER: string;
 let CATEGORY_LOG: string;
+let LINE_REQUESTS: string;
 let ledger: SponsorLedger;
+let lineRequests: LineRequestStore;
 try {
   LEDGER = stateFile(process.env.SPONSOR_LEDGER, 'sponsor-ledger.jsonl');
   CATEGORY_LOG = stateFile(process.env.SPONSOR_CATEGORY_LOG, 'category-log.jsonl');
+  // ADR `0188`: the request each x402 line was written from, the one copy, read by the feed.
+  LINE_REQUESTS = stateFile(process.env.SPONSOR_LINE_REQUESTS, 'line-requests.jsonl');
   ledger = new SponsorLedger(LEDGER);
+  lineRequests = new LineRequestStore(LINE_REQUESTS);
 } catch (error) {
   fail(String(error instanceof Error ? error.message : error));
 }
@@ -383,6 +389,7 @@ const service = createSponsor({
     skillMarkdown: (url) => skillMarkdownOnGitHub(url),
     // ADR `0159`: an x402 line's payment, read on its own network. Read-only; this key never signs there.
     payments: x402Reading(x402NetworksFrom(X402_DEFAULT_NETWORKS, process.env), process.env),
+    requests: lineRequests,
   },
   categories: {
     ...CATEGORY_TREE,
@@ -463,6 +470,7 @@ export async function main(): Promise<void> {
     `  categories ${limits.categoriesPerDay} new/day (${limits.categoriesPerAgentPerDay} per agent), ${limits.categoryTagsPerDay} tags/day, log ${CATEGORY_LOG}\n`,
   );
   process.stderr.write(`  ledger     ${LEDGER}\n`);
+  process.stderr.write(`  requests   ${LINE_REQUESTS}\n`);
   process.stderr.write(
     `  publish    ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : 'on (delegation register, task 37c)'}\n`,
   );

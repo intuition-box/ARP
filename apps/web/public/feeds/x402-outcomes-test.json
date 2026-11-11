@@ -1,7 +1,7 @@
 {
   "test": true,
   "schema": "arp.x402-outcomes/3",
-  "generated_at": "2026-11-11T09:16:19.855Z",
+  "generated_at": "2026-11-11T09:35:59.975Z",
   "trace": {
     "chain": "eip155:13579",
     "graphql": "https://testnet.intuition.sh/v1/graphql"
@@ -26,7 +26,9 @@
       "amount": "1000",
       "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
       "paid_at": "2026-11-10T07:15:53.000Z",
-      "writer": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42"
+      "writer": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42",
+      "signed_request": null,
+      "signed_by_payer": false
     },
     {
       "endpoint": "http://127.0.0.1:4021/x402-demo/no-delivery",
@@ -43,7 +45,9 @@
       "amount": "1000",
       "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
       "paid_at": "2026-11-10T11:35:31.000Z",
-      "writer": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42"
+      "writer": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42",
+      "signed_request": null,
+      "signed_by_payer": false
     }
   ],
   "by_endpoint": {
@@ -59,5 +63,6 @@
     "count": 0,
     "reasons": {}
   },
-  "truncated": false
+  "truncated": false,
+  "signed_requests_from": null
 }

@@ -98,6 +98,22 @@ export function lineRequestTypedData(request: LineRequest, chainId: number) {
     };
 }
 
+/**
+ * The same typed data in JSON, as the x402 feed publishes it (task 121, ADR `0188`): `expiresAt` a number,
+ * no `bigint`. viem's `verifyTypedData` and `recoverTypedDataAddress` take it as it is; a tool built on
+ * `eth_signTypedData_v4` adds `EIP712Domain` from the domain's three fields, which it leaves out.
+ */
+export type LineRequestTypedDataJson = {
+    domain: {name: "ARP Line Request"; version: "4"; chainId: number};
+    types: typeof LINE_REQUEST_TYPES;
+    primaryType: "LineRequest";
+    message: LineRequest;
+};
+
+export function lineRequestTypedDataJson(request: LineRequest, chainId: number): LineRequestTypedDataJson {
+    return {domain: {name: "ARP Line Request", version: "4", chainId}, types: LINE_REQUEST_TYPES, primaryType: "LineRequest", message: {...request}};
+}
+
 export type LineRequestSigner = {
     signTypedData(data: ReturnType<typeof lineRequestTypedData>): Promise<Hex>;
 };

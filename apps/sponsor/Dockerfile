@@ -6,7 +6,7 @@
 #
 # The image holds no key and no ledger. At run time it needs:
 #   - the treasury key, a file mounted by the host and named by SPONSOR_KEY_FILE;
-#   - a persistent volume on /data, where the ledger and the category log live;
+#   - a persistent volume on /data, where the ledger, the category log and the signed line requests live;
 #   - one container at a time on that volume (apps/web/DEPLOY.md, "The sponsor").
 
 FROM oven/bun:1.3.14

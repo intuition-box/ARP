@@ -24,6 +24,10 @@ Each of these is a transaction on testnet 13579, so the agent's address and the 
 
 On the paying chain, outside ARP, the payment itself is public: the payer, the recipient, the amount and the asset. ARP signs and sends nothing there; it reads the transaction.
 
+## What the sponsoring service keeps, and publishes beside the graph
+
+For each x402 line it writes, ARP's sponsoring service keeps the request your agent's key signed, and publishes it in [the x402 outcomes feed](/docs/x402-feed) and at its `GET /line-request`. It holds what the line already says on the graph (the agent's address and id, the tool's atom, the domain, the outcome, the reason, the payment and the URL without its values), plus a random nonce, an expiry time and the signature. What it adds is that your agent's key signed those words, which is why it is published: a reader checks the signature without asking ARP. A line about a skill keeps nothing.
+
 ## What stays on your machine
 
 - The session log, the search log, the failure memory and the model's answers (`.arp/` in the project, `~/.arp/` in your home folder): [Local memory and sharing](/docs/local-memory).

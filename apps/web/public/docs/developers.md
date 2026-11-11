@@ -178,7 +178,7 @@ The full account of the node is in [Running the MCP server, the node and the hoo
 | `SPONSOR_REGISTRIES` | the ERC-8004 registries it accepts |
 | `SPONSOR_CONTENT_SIGNERS` | which content servers' receipts unlock a deposit |
 | `SPONSOR_PORT` | default `3200` |
-| `SPONSOR_LEDGER`, `SPONSOR_CATEGORY_LOG` | its ledger and its log of accepted categories, by default `sponsor-ledger.jsonl` and `category-log.jsonl` in `ARP_HOME` |
+| `SPONSOR_LEDGER`, `SPONSOR_CATEGORY_LOG`, `SPONSOR_LINE_REQUESTS` | its ledger, its log of accepted categories and the request each x402 line was signed with, by default `sponsor-ledger.jsonl`, `category-log.jsonl` and `line-requests.jsonl` in `ARP_HOME` |
 | `SPONSOR_DEPOSITS_PER_AGENT_PER_DAY`, `SPONSOR_NEW_AGENTS_PER_DAY`, `SPONSOR_LINES_PER_DAY`, `SPONSOR_LINES_PER_AGENT_PER_DAY`, `SPONSOR_LISTINGS_PER_DAY`, `SPONSOR_LISTINGS_PER_ADDRESS_PER_DAY`, `SPONSOR_ANONYMOUS_LISTINGS_PER_DAY`, `SPONSOR_CATEGORIES_PER_DAY`, `SPONSOR_CATEGORY_TAGS_PER_DAY`, `SPONSOR_PUBLICATIONS_PER_DELEGATOR_PER_DAY` | its daily caps |
 | `SPONSOR_WITHDRAWAL_THRESHOLD_BPS` | when it takes deposits back |
 | `SPONSOR_ALLOWED_ORIGINS` | extra browser origins allowed to call it |

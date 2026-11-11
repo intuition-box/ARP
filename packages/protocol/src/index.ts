@@ -427,6 +427,7 @@ export {
 } from "./endpoint-redaction.js";
 export {
     buildX402Feed,
+    signedByPayer,
     X402_FEED_NOTE,
     X402_FEED_SCHEMA,
     type X402AgentKeys,
@@ -434,6 +435,8 @@ export {
     type X402Feed,
     type X402FeedConfig,
     type X402FeedRecord,
+    type X402SignedRequest,
+    type X402SignedRequests,
 } from "./x402-feed.js";
 export {
     buildSkillLinesFeed,
@@ -1021,10 +1024,12 @@ export {
     LINE_MAX_TTL_SECONDS,
     LINE_REQUEST_TYPES,
     lineRequestTypedData,
+    lineRequestTypedDataJson,
     signLineRequest,
     verifyLineRequest,
     type LineRequest,
     type LineRequestSigner,
+    type LineRequestTypedDataJson,
     type LineRequestVerdict,
     type SignedLineRequest,
 } from "./sponsor/line.js";
