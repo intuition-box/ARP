@@ -1,0 +1,63 @@
+{
+  "test": true,
+  "schema": "arp.x402-outcomes/2",
+  "generated_at": "2026-11-11T09:05:11.196Z",
+  "trace": {
+    "chain": "eip155:13579",
+    "graphql": "https://testnet.intuition.sh/v1/graphql"
+  },
+  "networks": [
+    "eip155:84532"
+  ],
+  "note": "Each record is one payer's word about one paid call, tied to a payment ARP read on its own chain when this file was built. It proves the payment and who made it, not what the endpoint delivered. ARP's own ranking counts an outcome only once 3 distinct wallets say it (ADR 0143); this feed lists every record and leaves the counting to the reader.",
+  "records": [
+    {
+      "endpoint": null,
+      "endpoint_canonical": "https://127.0.0.1:4021/x402-demo/no-delivery",
+      "outcome": "failed",
+      "reason": "no-delivery",
+      "domain": null,
+      "settlement_tx": "0xa08cad0c23e2a74b70f47f85b395ebe20e7052befe58a2f67cc007d3ce7d7191",
+      "network": "eip155:84532",
+      "line_id": "0xefdb82325730c58d13c9018fc411e2b5fca60d399fa22b5c664f88d024beca01",
+      "written_at": "2026-11-10T07:16:16.000Z",
+      "payer": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42",
+      "pay_to": "0x000000000000000000000000000000000000dEaD",
+      "amount": "1000",
+      "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "paid_at": "2026-11-10T07:15:53.000Z",
+      "writer": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42"
+    },
+    {
+      "endpoint": "http://127.0.0.1:4021/x402-demo/no-delivery",
+      "endpoint_canonical": "https://127.0.0.1:4021/x402-demo/no-delivery",
+      "outcome": "failed",
+      "reason": "no-delivery",
+      "domain": null,
+      "settlement_tx": "0x8e0483db4cc7b3c605ef1c6deac44209cf6b72ca566e7028efd795f04dc643c7",
+      "network": "eip155:84532",
+      "line_id": "0x144e04f5bcc802894c6b6dd277998cd70a66627bafe9e6d6c1ebf09ea9b45436",
+      "written_at": "2026-11-10T11:35:43.000Z",
+      "payer": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42",
+      "pay_to": "0x000000000000000000000000000000000000dEaD",
+      "amount": "1000",
+      "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "paid_at": "2026-11-10T11:35:31.000Z",
+      "writer": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42"
+    }
+  ],
+  "by_endpoint": {
+    "https://127.0.0.1:4021/x402-demo/no-delivery": {
+      "records": 2,
+      "worked": 0,
+      "failed": 2,
+      "no_delivery": 2,
+      "payers": 1
+    }
+  },
+  "skipped": {
+    "count": 0,
+    "reasons": {}
+  },
+  "truncated": false
+}

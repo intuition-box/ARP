@@ -10,6 +10,14 @@ Two more feeds sit beside it, each built by a script in `scripts/build/`: [the s
 
 It reads Base by default, where no line has named a payment yet, so today it holds **no record**.
 
+## The test feed
+
+`/feeds/x402-outcomes-test.json` on this site holds **test data**, for anyone building a reader before the main feed has records. It is built by the same script with `--test`, in the same schema, with `"test": true` as its first field.
+
+It reads Base Sepolia (`eip155:84532`) and nothing else, with its test USDC (`0x036CbD53842c5426634e7929541eC2318f3dCF7e`). The main feed never reads Base Sepolia: a line paid there is never in `x402-outcomes.json`.
+
+Its records come from ARP's own demo: an agent pays a fake seller 0.001 test USDC, gets an empty answer, and writes a `failed` / `no-delivery` line. That seller ran on the payer's own machine, so the endpoint is `127.0.0.1`, a loopback address nobody else can call. The test feed keeps such an endpoint; the main feed leaves it out and counts it in `skipped`.
+
 ## What a line with a payment is
 
 A line about an x402 endpoint, written as usual (see [Lines](/docs/lines)), with one more level on its outcome:

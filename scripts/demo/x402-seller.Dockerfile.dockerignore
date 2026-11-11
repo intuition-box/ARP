@@ -1,0 +1,21 @@
+# Read by BuildKit for scripts/demo/x402-seller.Dockerfile, with the repository root as the context.
+# An allowlist: nothing enters the image unless it is named here, so no key, `.env` or local state can.
+*
+
+# The workspace's manifests: `bun install --frozen-lockfile` resolves every workspace from the lockfile.
+!package.json
+!bun.lock
+!apps/*/package.json
+!contracts/package.json
+!packages/*/package.json
+
+# What the seller runs: one file, which imports only @x402/* and viem.
+!scripts/demo/x402-fake-seller.ts
+
+# Dropped again inside what was allowed.
+**/node_modules
+**/.env
+**/.env.*
+**/*.key
+**/*.jsonl
+**/.arp

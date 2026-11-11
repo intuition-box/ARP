@@ -3,6 +3,7 @@
  *      bun run scripts/demo/x402-e2e.ts                                   # dry run: nothing signed on chain, nothing sent
  *      bun run scripts/demo/x402-e2e.ts --execute --agent 0xYourAgent     # pays 0.001 test USDC, writes the line, builds the feed
  *      bun run scripts/demo/x402-e2e.ts --execute --agent 0x… --payment-tx 0x…   # already paid: the line and the feed only
+ *      bun run scripts/demo/x402-e2e.ts --seller https://seller.arp.intuition.box/x402-demo/no-delivery …   # a hosted seller (task 118)
  *
  *  1. Base Sepolia and its USDC are added **by configuration** (`ARP_X402_NETWORKS`, ADR `0160`); the
  *     token is read on chain first (`symbol()`, `decimals()`).
@@ -48,7 +49,7 @@ import {X402_DEFAULT_NETWORKS} from "../../packages/protocol/src/arp/x402-networ
 import {arpHome, readKeyFile} from "../../packages/protocol/src/node/local-state.ts";
 import {normaliseToolUrl} from "../../packages/protocol/src/declare/tool-thing.ts";
 import {checkX402Payment, x402NetworksFrom, x402Policy, x402TransferReads} from "../../packages/protocol/src/x402-payment.ts";
-import {BASE_SEPOLIA, BASE_SEPOLIA_USDC, MAX_TIMEOUT_SECONDS, PRICE_UNITS, startFakeSeller} from "./x402-fake-seller.ts";
+import {BASE_SEPOLIA, BASE_SEPOLIA_USDC, MAX_TIMEOUT_SECONDS, PRICE_UNITS, remoteFakeSeller, SELLER_PATH, startFakeSeller} from "./x402-fake-seller.ts";
 
 const flag = (name: string) => {
     const at = process.argv.indexOf(`--${name}`);
@@ -97,8 +98,16 @@ const skew = Number(latest.timestamp) - Math.floor(Date.now() / 1000);
 if (skew > MAX_TIMEOUT_SECONDS - 120) stop(`this machine's clock is ${skew} s off Base Sepolia's; an authorisation would expire within two minutes; set it right first (WSL: \`sudo hwclock -s\` or \`wsl --shutdown\`)`);
 say(`1. ${BASE_SEPOLIA} accepted by configuration; ${BASE_SEPOLIA_USDC} is ${symbol}, ${decimals} decimals (read now on ${sepoliaRpc}); this clock is ${skew} s off the chain's`);
 
-// 2. The seller, and its 402.
-const seller = await startFakeSeller({payTo, ...(flag("facilitator") === undefined ? {} : {facilitatorUrl: flag("facilitator")})});
+// 2. The seller, and its 402: started here, or hosted at `--seller` (task 118), an https URL ending in
+// SELLER_PATH. A hosted one is held to the same offer below: this network, this asset, `--pay-to`, the price.
+const hosted = flag("seller");
+if (hosted !== undefined && (!hosted.startsWith("https://") || new URL(hosted).pathname !== SELLER_PATH)) {
+    stop(`--seller is the hosted seller's https URL, ending in ${SELLER_PATH}`);
+}
+const seller =
+    hosted === undefined
+        ? await startFakeSeller({payTo, facilitatorUrl: flag("facilitator")})
+        : await remoteFakeSeller({url: hosted, payTo, facilitatorUrl: flag("facilitator")});
 try {
     const unpaid = await fetch(seller.url);
     const header = unpaid.headers.get("PAYMENT-REQUIRED");
@@ -259,7 +268,7 @@ try {
     let found: Feed["records"][number] | undefined;
     for (let attempt = 0; attempt < 12 && found === undefined; attempt += 1) {
         if (attempt > 0) await new Promise((done) => setTimeout(done, 10_000));
-        const built = spawnSync("bun", ["run", "scripts/build/build-x402-feed.ts", "--out", out], {encoding: "utf8", env: process.env, timeout: 300_000});
+        const built = spawnSync("bun", ["run", "scripts/build/build-x402-feed.ts", "--test", "--out", out], {encoding: "utf8", env: process.env, timeout: 300_000});
         if (built.status !== 0) stop(`the feed build failed: ${built.stderr.trim()}`);
         const feed = JSON.parse(readFileSync(out, "utf8")) as Feed;
         found = feed.records.find((r) => r.settlement_tx.toLowerCase() === txHash);

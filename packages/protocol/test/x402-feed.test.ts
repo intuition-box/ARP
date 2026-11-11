@@ -2,10 +2,12 @@ import {X402_LEVELS_BY_ID_QUERY, X402_PAYMENT_LEVELS_QUERY, X402_REASONS_QUERY, 
 import {getAddress} from "viem";
 import {describe, expect, it} from "vitest";
 
-import {X402_DEFAULT_NETWORKS} from "../src/arp/x402-networks.js";
+import {readFileSync} from "node:fs";
+
+import {X402_DEFAULT_NETWORKS, X402_TEST_NETWORKS, x402FeedNetworks} from "../src/arp/x402-networks.js";
 import {buildX402Feed, type X402FeedConfig} from "../src/x402-feed.js";
-import {x402Policy, type X402TransferReads} from "../src/x402-payment.js";
-import {PAYER, PAY_TO, recordedReads, TX} from "./x402-fixture.js";
+import {x402Policy, x402Reading, type X402TransferReads} from "../src/x402-payment.js";
+import {PAYER, PAY_TO, recordedReads, TX, type Fixture} from "./x402-fixture.js";
 
 const id = (n: number) => `0x${n.toString(16).padStart(64, "0")}`;
 const PRED = {paidWith: id(1), hasOutcome: id(2), because: id(3), inContextOf: id(4), uses: id(5)};
@@ -210,6 +212,63 @@ describe("buildX402Feed", () => {
     it("is empty, not missing, when no line names a payment", async () => {
         const feed = await buildX402Feed(config([]));
         expect(feed).toMatchObject({records: [], by_endpoint: {}, skipped: {count: 0, reasons: {}}, truncated: false});
+    });
+});
+
+describe("the main feed and the test feed (task 118)", () => {
+    const SEPOLIA = JSON.parse(readFileSync(new URL("./fixtures/x402-base-sepolia-usdc-3009.json", import.meta.url), "utf8")) as Fixture; // written by task 91
+    const SEPOLIA_PAYER = "0x011a56928886904a79a7f4b18f5b0b352a0fc9ac";
+    const LOOPBACK = "https://127.0.0.1:4021/x402-demo/no-delivery";
+    /** `line`, paid on Base Sepolia with the recorded settlement, after it, at `tool`. */
+    const sepoliaLine = (base: number, tool: string = ENDPOINT) =>
+        line(base, SEPOLIA_PAYER, SEPOLIA.receipt.transactionHash, "failed", tool).map((r) => {
+            const paid = `eip155:84532/tx/${SEPOLIA.receipt.transactionHash} ${tool}`;
+            const object =
+                r.predicate_id === PRED.paidWith ? {...r.object, label: paid, data: paid} : r.predicate_id === PRED.uses ? {...r.object, value: {thing: {url: tool}}} : r.object;
+            return {...r, created_at: "2026-11-09T21:00:00.000", object};
+        });
+    const feedOf = (kind: "main" | "test", rows: Row[]) => {
+        const reading = x402Reading(x402FeedNetworks(kind, {}), {});
+        const readsFor = (network: string) => (network === "eip155:84532" ? recordedReads(SEPOLIA) : recordedReads());
+        return buildX402Feed(config(rows, {policy: reading.policy, readsFor, allowPrivateEndpoints: kind === "test"}));
+    };
+    const SEPOLIA_ENV = {ARP_X402_NETWORKS: "eip155:84532=0x036CbD53842c5426634e7929541eC2318f3dCF7e", ARP_X402_RPC_84532: "http://localhost:8545"};
+
+    it("reads Base for the main feed and Base Sepolia alone for the test feed", () => {
+        expect([...x402FeedNetworks("main", {}).keys()]).toEqual(["eip155:8453"]);
+        expect([...x402FeedNetworks("test", {}).keys()]).toEqual(["eip155:84532"]);
+        // What the end-to-end runbook sets, with an RPC of one's own, is fine for the test feed.
+        expect(x402FeedNetworks("test", SEPOLIA_ENV).get("eip155:84532")?.rpcUrl).toBe("http://localhost:8545");
+    });
+
+    it("refuses to read Base Sepolia in the main feed, and anything but Base Sepolia in the test feed", () => {
+        expect(() => x402FeedNetworks("main", SEPOLIA_ENV)).toThrow(/main x402 feed does not read eip155:84532/);
+        const base = {ARP_X402_NETWORKS: "eip155:8453=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", ARP_X402_RPC_8453: "https://mainnet.base.org"};
+        expect(() => x402FeedNetworks("test", base)).toThrow(/test x402 feed does not read eip155:8453/);
+    });
+
+    it("keeps a Base Sepolia line out of the main feed and in the test feed", async () => {
+        const main = await feedOf("main", sepoliaLine(0));
+        expect(main.records).toEqual([]);
+        expect(main.skipped.reasons).toEqual({"network eip155:84532 is not read": 1});
+        const test = await feedOf("test", sepoliaLine(0));
+        expect(test.networks).toEqual(["eip155:84532"]);
+        expect(test.records.map((r) => [r.network, r.payer, r.amount])).toEqual([["eip155:84532", getAddress(SEPOLIA_PAYER), "2000"]]);
+    });
+
+    it("keeps a Base line out of the test feed", async () => {
+        const test = await feedOf("test", line(0, PAYER.toLowerCase()));
+        expect(test.records).toEqual([]);
+        expect(test.skipped.reasons).toEqual({"network eip155:8453 is not read": 1});
+        expect((await feedOf("main", line(0, PAYER.toLowerCase()))).records).toHaveLength(1);
+    });
+
+    it("keeps a loopback endpoint in the test feed only", async () => {
+        const test = await feedOf("test", sepoliaLine(0, LOOPBACK));
+        expect(test.records.map((r) => r.endpoint)).toEqual([LOOPBACK]);
+        const strict = await buildX402Feed(config(sepoliaLine(0, LOOPBACK), {policy: x402Policy(X402_TEST_NETWORKS), readsFor: () => recordedReads(SEPOLIA)}));
+        expect(strict.records).toEqual([]);
+        expect(strict.skipped.reasons).toEqual({"the endpoint is a loopback or private address": 1});
     });
 });
 

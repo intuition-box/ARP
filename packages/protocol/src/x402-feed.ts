@@ -10,6 +10,7 @@ import {
 import {getAddress, type Address, type Hex} from "viem";
 
 import {isUsageOutcome, isUsageReason, type UsageOutcome} from "./declare/usage-context.js";
+import {privateProbeTarget} from "./verify/probe.js";
 import {
     checkX402Payment,
     exactEndpointNamesTool,
@@ -109,6 +110,11 @@ export type X402FeedConfig = {
     policy: X402NetworkPolicy;
     readsFor(network: string): X402TransferReads;
     agentKeys?: X402AgentKeys;
+    /**
+     * Keep a record whose endpoint is a loopback or private address, such as `127.0.0.1`. Only the test
+     * feed sets it (task 118): its one seller runs on the machine that paid it. Off, such a line is skipped.
+     */
+    allowPrivateEndpoints?: boolean;
     /** ISO 8601. Passed in, so two builds of one graph differ only here. */
     generatedAt: string;
     pageSize?: number;
@@ -266,6 +272,10 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
         }
         if (level.endpoint !== null && !exactEndpointNamesTool(level.endpoint, canonical)) {
             skip("the exact URL does not normalise to the tool's URL");
+            continue;
+        }
+        if (config.allowPrivateEndpoints !== true && privateProbeTarget(canonical) !== null) {
+            skip("the endpoint is a loopback or private address");
             continue;
         }
         const chain = [payment, outcome, ...(uses === above ? [] : above === undefined ? [] : [above]), uses];

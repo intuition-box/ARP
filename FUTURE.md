@@ -565,6 +565,14 @@ networks Doctor reads are mainnets (Base, Solana and others, `openapi.json`, rea
 **When it is picked up:** start with the read feed above, the shape Frits asked for. **Built 2026-11-09 by task 89** (ADR `0159`): `/feeds/x402-outcomes.json`, empty until a line names a real payment. Since task 93 (ADR `0162`, schema `arp.x402-outcomes/2`) a record's `endpoint` is the URL the payer called, as typed, with `endpoint_canonical` beside it; a line written before then has `endpoint: null`. Then do point 2, which is the cheapest. Do 41b, the node
 answering 402, with Doctor's `diagnose` as its test.
 
+**Built 2026-11-11 by task 118:** `/feeds/x402-outcomes-test.json`, the same schema with `"test": true`,
+reading Base Sepolia only, so a reader can be built before the main feed has a record.
+
+**A second outside source, noted 2026-11-11. An idea, not decided.** A public open-data directory of
+x402 purchase outcomes, CC BY 4.0, with free reads per listing and by resolving a URL, could be shown
+next to ARP's lines on an x402 endpoint as a dated, attributed fact: "N outcomes per <source>, on
+date D". Never written on chain, the same treatment as the Trust Index read in point 2 (ADR `0093`).
+
 ## x402 as a feature: who is actually paid, then what they delivered
 
 Asked for by the user, 2026-11-10, as a lead, not a decision: rather than exploring ERC-8004

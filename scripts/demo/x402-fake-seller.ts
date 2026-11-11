@@ -13,6 +13,13 @@
  *  submits the payer's EIP-3009 authorisation and pays the gas. So this process holds no key and
  *  signs nothing. `payTo` is the address the caller names; the runbook defaults to `0x…dEaD` (ADR `0160`).
  *
+ *  Hosted for task 118, so a test line can name a public URL rather than `127.0.0.1`: the image is
+ *  `scripts/demo/x402-seller.Dockerfile`, and these settings make it public, each also a flag:
+ *  `ARP_SELLER_PUBLIC_URL` (the origin it is reached at, `https://seller.arp.intuition.box`; the 402's
+ *  resource URL and the URL printed are that origin plus `SELLER_PATH`), `ARP_SELLER_LISTEN` (the
+ *  interface, `127.0.0.1` unless set; the image sets `0.0.0.0`), `PORT`, and `ARP_SELLER_PAY_TO` (the
+ *  payee). Its refusals do not move with hosting: one network, one asset, one payee, one price.
+ *
  *  Never shipped: nothing under `apps/` imports `scripts/` (CLAUDE.md).
  */
 import {HTTPFacilitatorClient, x402ResourceServer} from "@x402/core/server";
@@ -42,27 +49,43 @@ export type FakeSeller = {
     stop(): void;
 };
 
-export async function startFakeSeller(options: {payTo: Address; port?: number; facilitatorUrl?: string}): Promise<FakeSeller> {
-    const server = new x402ResourceServer(new HTTPFacilitatorClient({url: options.facilitatorUrl ?? DEFAULT_FACILITATOR}));
+/** The one offer this seller makes, and a facilitator client to verify and settle it. Holds no key. */
+async function offerOf(payTo: Address, facilitatorUrl: string | undefined): Promise<{server: x402ResourceServer; requirements: PaymentRequirements[]}> {
+    const server = new x402ResourceServer(new HTTPFacilitatorClient({url: facilitatorUrl ?? DEFAULT_FACILITATOR}));
     registerExactEvmScheme(server);
     // Reads the facilitator's `/supported`: it must settle `exact` on Base Sepolia, or nothing here can.
     await server.initialize();
     const requirements: PaymentRequirements[] = await server.buildPaymentRequirements({
         scheme: "exact",
         network: BASE_SEPOLIA,
-        payTo: options.payTo,
+        payTo,
         price: {amount: PRICE_UNITS.toString(), asset: BASE_SEPOLIA_USDC, extra: {name: "USDC", version: "2"}},
         maxTimeoutSeconds: MAX_TIMEOUT_SECONDS,
     });
+    return {server, requirements};
+}
+
+/** `https://host`, with no path, query or fragment, or a throw: the origin a hosted seller is reached at. */
+export function sellerOrigin(publicUrl: string): string {
+    const url = new URL(publicUrl);
+    if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error(`${publicUrl} is not an http(s) origin`);
+    if (url.pathname !== "/" || url.search !== "" || url.hash !== "") throw new Error(`${publicUrl} is an origin: no path, query or fragment`);
+    return url.origin;
+}
+
+export async function startFakeSeller(options: {payTo: Address; port?: number; facilitatorUrl?: string | undefined; hostname?: string; publicUrl?: string | undefined}): Promise<FakeSeller> {
+    const {server, requirements} = await offerOf(options.payTo, options.facilitatorUrl);
     const settlements: SettleResponse[] = [];
+    const publicOrigin = options.publicUrl === undefined ? null : sellerOrigin(options.publicUrl);
 
     const http = Bun.serve({
-        hostname: "127.0.0.1",
+        hostname: options.hostname ?? "127.0.0.1",
         port: options.port ?? 4021,
         async fetch(request) {
             const url = new URL(request.url);
             if (url.pathname !== SELLER_PATH) return new Response("not found", {status: 404});
-            const resource = {url: `${url.origin}${SELLER_PATH}`, description: "ARP demo: takes the payment, delivers nothing", mimeType: "application/json"};
+            // Behind a proxy the request's own origin is the container's, not the one the payer called.
+            const resource = {url: `${publicOrigin ?? url.origin}${SELLER_PATH}`, description: "ARP demo: takes the payment, delivers nothing", mimeType: "application/json"};
             const header = request.headers.get("PAYMENT-SIGNATURE") ?? request.headers.get("X-PAYMENT");
             if (header === null) {
                 const required = await server.createPaymentRequiredResponse(requirements, resource);
@@ -83,7 +106,7 @@ export async function startFakeSeller(options: {payTo: Address; port?: number; f
     });
 
     return {
-        url: `http://127.0.0.1:${http.port}${SELLER_PATH}`,
+        url: `${publicOrigin ?? `http://127.0.0.1:${http.port}`}${SELLER_PATH}`,
         payTo: options.payTo,
         settlements,
         async verifyOnly(payload) {
@@ -94,16 +117,41 @@ export async function startFakeSeller(options: {payTo: Address; port?: number; f
     };
 }
 
+/**
+ * A seller that runs elsewhere, at `url`, as the runbook sees it: the same offer is built here, so the
+ * dry run's verification makes no call to the seller, and nothing is started or stopped.
+ */
+export async function remoteFakeSeller(options: {url: string; payTo: Address; facilitatorUrl?: string | undefined}): Promise<FakeSeller> {
+    const {server, requirements} = await offerOf(options.payTo, options.facilitatorUrl);
+    return {
+        url: options.url,
+        payTo: options.payTo,
+        settlements: [],
+        async verifyOnly(payload) {
+            const verified = await server.verifyPayment(payload, requirements[0] as PaymentRequirements); // built above
+            return {isValid: verified.isValid, invalidReason: verified.invalidReason};
+        },
+        stop: () => undefined,
+    };
+}
+
 if (import.meta.main) {
     const flag = (name: string) => {
         const at = process.argv.indexOf(`--${name}`);
         return at === -1 ? undefined : process.argv[at + 1];
     };
-    const payTo = flag("pay-to");
+    const env = (name: string) => (process.env[name] === "" ? undefined : process.env[name]);
+    const payTo = flag("pay-to") ?? env("ARP_SELLER_PAY_TO");
     if (payTo === undefined || !isAddress(payTo)) {
-        console.error("usage: --pay-to <address> [--port 4021] [--facilitator <url>]");
+        console.error("usage: --pay-to <address> [--port 4021] [--listen 127.0.0.1] [--public-url https://host] [--facilitator <url>]");
         process.exit(1);
     }
-    const seller = await startFakeSeller({payTo: getAddress(payTo), port: Number(flag("port") ?? 4021), facilitatorUrl: flag("facilitator")});
+    const seller = await startFakeSeller({
+        payTo: getAddress(payTo),
+        port: Number(flag("port") ?? env("PORT") ?? 4021),
+        hostname: flag("listen") ?? env("ARP_SELLER_LISTEN") ?? "127.0.0.1",
+        facilitatorUrl: flag("facilitator") ?? env("ARP_SELLER_FACILITATOR"),
+        publicUrl: flag("public-url") ?? env("ARP_SELLER_PUBLIC_URL"),
+    });
     console.log(`fake x402 seller on ${seller.url}, ${BASE_SEPOLIA}, ${PRICE_UNITS} units of ${BASE_SEPOLIA_USDC} to ${seller.payTo}`);
 }
