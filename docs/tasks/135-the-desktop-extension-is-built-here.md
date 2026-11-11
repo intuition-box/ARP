@@ -1,6 +1,6 @@
 # Task 135 — The Claude Desktop extension is built here
 
-**Status:** built 2026-11-11 on `feat/135-desktop-extension`, written by arp-97. Task 135, post-mortem
+**Status:** built 2026-11-11 on `feat/135-desktop-extension`, written by arp-97. `task-verifier` PASS, post-mortem `.claude/learning/123-the-desktop-extension-is-built-here.md`. Task 135, post-mortem
 `123`, no ADR (ADR `0110` decides the mode; task 88 decided the setting and its default). **Not
 released**: the user tests the file in Claude Desktop on Windows and macOS, then says so, then the
 orchestrator attaches it to the GitHub Release `v0.0.6`, and only then does `install.md` link it.
@@ -45,11 +45,13 @@ could build it again. The user, 2026-11-11: publish it on GitHub as a custom ext
 Build it (`bun run --cwd apps/cli mcpb`) or take `apps/cli/dist-mcpb/arp-0.0.6.mcpb`. On Windows, then
 macOS:
 
-1. Claude Desktop, Settings, Extensions: install the file (drag it in, or Install from file). The
-   install screen shows **ARP** 0.0.6 and the setting "Share this machine's skill failures as public
-   lines", unticked.
-2. Remove any older ARP entry first (an earlier `.mcpb`, or the entry by hand in
+1. Remove any older ARP entry first (an earlier `.mcpb`, or the entry by hand in
    `claude_desktop_config.json`): one ARP per runtime.
+2. Claude Desktop, Settings, Extensions: install the file (drag it in, or Install from file). The
+   install screen shows **ARP** 0.0.6 and the setting "Share this machine's skill failures as public
+   lines", unticked. Afterwards `~/.arp/sharing.json` reads `"failures": false` and `"how": "desktop"`.
+   If Claude Code on the same machine had `arp share on`, note that Desktop's start set it back to off
+   (task-verifier, task 135: the setting writes the file both share at every start).
 3. A new chat: « Find me a skill to work with PDF files, with ARP ». Claude lists skills.
 4. « Get the pdf skill with ARP ». Claude shows what it contains, then its SKILL.md.
 5. « Declare with ARP that I used it ». About a minute; the answer says declared.

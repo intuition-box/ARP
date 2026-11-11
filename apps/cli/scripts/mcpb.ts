@@ -29,6 +29,7 @@ const OUT = join(CLI, 'dist-mcpb');
 const STAGE = join(OUT, 'stage');
 const MCPB = join(CLI, 'node_modules', '.bin', 'mcpb');
 
+// This package's own manifest: the three fields read below are in it, and `bun run mcpb` fails at once if not.
 const pkg = JSON.parse(readFileSync(join(CLI, 'package.json'), 'utf8')) as {
   version: string;
   license: string;

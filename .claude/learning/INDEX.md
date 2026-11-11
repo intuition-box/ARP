@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-124 entries, one per completed task. Written by `task-verifier` on a pass.
+125 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -130,3 +130,4 @@
 | [118](118-load-on-the-hosted-surfaces.md) | `docs/tasks/130-load-on-the-hosted-surfaces.md` | PASS (second pass; the first failed on one claim and flagged one gate defect) | The hosted surfaces under a crowd |
 | [119](119-a-hosted-content-server.md) | `docs/tasks/131-a-hosted-content-server.md` | PASS (second pass; the first failed on three stale doc copies) | A hosted content server |
 | [120](120-the-install-page-says-what-runs.md) | `docs/tasks/132-the-install-page-says-what-runs.md` | PASS (round 2) | The install page says what runs today |
+| [123](123-the-desktop-extension-is-built-here.md) | `docs/tasks/135-the-desktop-extension-is-built-here.md` | PASS | The Claude Desktop extension is built here |
