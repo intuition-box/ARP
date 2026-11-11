@@ -4,7 +4,8 @@
  *      bun run scripts/build/build-x402-feed.ts --test [--out apps/web/public/feeds/x402-outcomes-test.json]
  *
  *  `--test` builds the test feed (task 118): the same code and schema, `"test": true` first, reading Base
- *  Sepolia `eip155:84532` only and keeping a loopback endpoint. The main feed never reads a test network
+ *  Sepolia `eip155:84532` only. Neither keeps a loopback or private endpoint: since 2026-11-11 the demo
+ *  seller is hosted (`https://seller.arp.intuition.box`), so the test feed holds what a reader can call. The main feed never reads a test network
  *  (`x402FeedNetworks` throws when the environment adds one), and the test feed reads nothing else.
  *
  *  Reads every line that names an x402 payment, `(outcome, paid with, "eip155:<chain>/tx/<hash>")`, on
@@ -96,7 +97,6 @@ const feed = await buildX402Feed({
     policy: reading.policy,
     readsFor: reading.readsFor,
     agentKeys,
-    allowPrivateEndpoints: test,
     ...(signedRequests === undefined ? {} : {signedRequests}),
     generatedAt: new Date().toISOString(),
 });
