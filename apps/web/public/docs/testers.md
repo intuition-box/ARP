@@ -57,7 +57,7 @@ An issue on GitHub is public. Never paste a key, a token or a private path.
 
 ARP can make a result public, as a short line on the testnet graph, so the next person's search reads it. Sharing is off by default. After the first skill result, the agent asks you once whether to share it: "yes, this once", "always" or "no". "Always" sends that result and each later one in the background when its session ends, and nothing kept before; "no" is not asked again. `/arp:share-on` turns it on at any time.
 
-**Sending needs ARP's sponsoring service, which pays for the line, and it is not online yet.** Until it is, `/arp:share-send` and `/arp:line` fail and name the service they could not reach. That is expected, and you do not need to report it. `/arp:share`, `/arp:share-on` and `/arp:share-off` work, and send nothing themselves. The send the hook starts after "always" or "yes, this once" shows nothing; when it fails, why is in `~/.arp/share-log.jsonl`.
+**Sending goes through ARP's sponsoring service, which pays for the line.** It is hosted at `https://sponsor.arp.intuition.box`, the default from 0.0.4; 0.0.3 cannot write a line through it. If it does not answer, `/arp:share-send` and `/arp:line` fail and name it. `/arp:share`, `/arp:share-on` and `/arp:share-off` work, and send nothing themselves. The send the hook starts after "always" or "yes, this once" shows nothing; when it fails, why is in `~/.arp/share-log.jsonl`.
 
 ## Privacy
 
