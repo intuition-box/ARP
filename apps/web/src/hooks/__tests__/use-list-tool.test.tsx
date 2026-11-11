@@ -55,4 +55,35 @@ describe("useListTool", () => {
         expect(sent).toEqual([JSON.stringify({url: "https://github.com/a/b?skill=c"})]);
         vi.unstubAllGlobals();
     });
+    it("signs with the connected wallet, on testnet, and sends the signed request", async () => {
+        const account = {address: "0x000000000000000000000000000000000000c0DE"};
+        const switchChain = vi.fn(async () => {});
+        const signTypedData = vi.fn(async () => `0x${"5".repeat(130)}`);
+        connectedWalletClient.mockResolvedValueOnce({
+            account,
+            getChainId: async () => 1155,
+            switchChain,
+            signTypedData,
+        } as never); // The mock's declared type is a thrower; the hook reads only these four members.
+        const sent: unknown[] = [];
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async (_url: string, init: RequestInit) => {
+                sent.push(JSON.parse(String(init.body)));
+                return new Response(JSON.stringify({atomId: "0xabc", created: true}), {status: 200});
+            }),
+        );
+        const {result} = renderHook(() => useListTool(), {wrapper});
+        act(() => result.current.submit("https://mcp.example.com/mcp"));
+        await waitFor(() => expect(result.current.result).not.toBeNull());
+        expect(switchChain).toHaveBeenCalledWith({id: 13579});
+        expect(signTypedData).toHaveBeenCalledWith(expect.objectContaining({account}));
+        expect(sent).toEqual([
+            expect.objectContaining({
+                url: "https://mcp.example.com/mcp",
+                request: expect.objectContaining({chainId: 13579, signature: `0x${"5".repeat(130)}`}),
+            }),
+        ]);
+        vi.unstubAllGlobals();
+    });
 });
