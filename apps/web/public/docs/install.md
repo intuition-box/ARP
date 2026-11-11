@@ -47,7 +47,7 @@ What you get, the full feature set of this round:
 - one question, once: after the first skill result, the agent asks whether to share it, with three answers, "yes, this once", "always" and "no". Nothing is shared before you answer. "Always" sends that result and each later one in the background when its session ends, nothing kept before ([Sharing](/docs/local-memory#sharing));
 - five commands you type yourself: `/arp:share`, `/arp:share-on`, `/arp:share-off`, `/arp:share-send`, `/arp:line`. The last two need a sponsoring service: ARP's is hosted at `https://sponsor.arp.intuition.box`, the default from 0.0.4. 0.0.3 cannot write a line through it once it checks line request v5 (task 122), which 0.0.3 does not sign, so update to 0.0.5 (0.0.5 also asks once whether to share). The send after "always" or "yes, this once" goes through the same service; when it fails, why is written down in `~/.arp/share-log.jsonl`, not shown.
 
-Checked on 2026-11-11 in a clean `node:22-bookworm` container with Claude Code 2.1.322: both install commands succeeded, `claude plugin list` showed `arp@arp`, version 0.0.5, enabled, the update commands answered `arp is already at the latest version (0.0.5)`, and `claude mcp list` showed `plugin:arp:arp … ✔ Connected`.
+Checked on 2026-11-11 in a clean `node:22-bookworm` container with Claude Code 2.1.322: both install commands succeeded, `claude plugin list` showed `arp@arp`, version 0.0.5, enabled, both update commands succeeded and `claude plugin update arp@arp` answered `arp is already at the latest version (0.0.5)`, and `claude mcp list` showed `plugin:arp:arp … ✔ Connected`.
 
 ## Claude Desktop, today: an MCP entry by hand
 
@@ -145,7 +145,7 @@ With the `skills` CLI, the same file installs as a skill:
 npx skills add intuition-box/ARP --skill arp
 ```
 
-`npx skills add intuition-box/ARP --list` found the `arp` skill on 2026-11-11, beside four the repository keeps for its own work (`arp-contributing`, `intuition`, `mms-gator-cli`, `mms-smart-accounts-kit`); `--skill arp` installs only ARP's. ARP's skill is not listed on skills.sh: its search for `intuition-box` returned one other skill of the organisation that day.
+`npx skills add intuition-box/ARP --list` found the `arp` skill on 2026-11-11, beside four the repository keeps for its own work (`arp-contributing`, `intuition`, `mms-gator-cli`, `mms-smart-accounts-kit`); `--skill arp` installs only ARP's. ARP's skill is not listed on skills.sh: on 2026-11-10 its search for `intuition-box` returned one other skill of the organisation.
 
 ## An isolated test in Docker
 
@@ -171,4 +171,4 @@ docker start -ai arp-test
 docker rm -f arp-test
 ```
 
-The install half was run non-interactively on 2026-11-10 (see the plugin above); the interactive session was not.
+The install half was run non-interactively on 2026-11-11 (see the plugin above); the interactive session was not.
