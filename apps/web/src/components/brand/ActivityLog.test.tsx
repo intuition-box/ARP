@@ -1,6 +1,6 @@
 import {screen, waitFor} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {beforeEach, describe, expect, it} from "vitest";
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 
 import {ActivityLog as Panel} from "./ActivityLog";
 import {ActivityLog as Store} from "../../services/activity-log";
@@ -38,7 +38,21 @@ function withEntries(fill: (store: Store) => void) {
     return store;
 }
 
+/**
+ * Opening the panel starts the chain-activity poll, which reaches the indexer through happy-dom's
+ * real `fetch`. No test here is about that read, so the network boundary refuses every request.
+ */
+const network = vi.fn(async () => {
+    throw new TypeError("no network in unit tests");
+});
+
+afterEach(() => {
+    vi.unstubAllGlobals();
+});
+
 beforeEach(() => {
+    network.mockClear();
+    vi.stubGlobal("fetch", network);
     try {
         window.localStorage.clear();
     } catch {
