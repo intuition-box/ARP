@@ -47894,7 +47894,7 @@ init_node2();
 import { dirname as dirname9 } from "node:path";
 import { fileURLToPath } from "node:url";
 // package.json
-var version2 = "0.0.5";
+var version2 = "0.0.6";
 
 // src/cli.ts
 var USAGE = `arp ${version2} — ARP's agent-side programs

@@ -9,7 +9,7 @@ Every way to install ARP, and the state of each on 2026-11-11. This page is the 
 | Claude Desktop, claude.ai | [a custom connector to ARP's hosted endpoint](#claude-desktop-and-claude-ai-a-hosted-connector) | live at `https://mcp.arp.intuition.box/mcp`; not yet added as a connector in Claude | three read tools, no hook, your words reach ARP's server |
 | Claude Desktop | [the extension, one `.mcpb` file](#claude-desktop-the-extension) | **not published** | sponsored tools, nothing to sign |
 | Cursor, Gemini CLI, Codex, Copilot, Grok Build | [`arp init`](#other-runtimes-arp-init) | works | the full tool set; the hook in Claude Code and Grok Build only |
-| the runtimes `arp init` finds, sponsored | [`arp init --sponsored`](#arp-init---sponsored) | **soon to be released**: `arp_get_skill` and `arp_declare_used` wait for 0.0.6 and ARP's hosted content server (task 131) | tools that sign nothing for you |
+| the runtimes `arp init` finds, sponsored | [`arp init --sponsored`](#arp-init---sponsored) | works from 0.0.6, with ARP's hosted sponsor and content server | tools that sign nothing for you |
 | any MCP client | [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry) | published, 0.0.5 on npm (2026-11-11) | what the client's entry starts |
 | nothing installed | [the skill file](#nothing-installed-the-skill-file) | works | the procedure, as public reads and calls you sign |
 | a throwaway machine | [a Docker container](#an-isolated-test-in-docker) | works | the plugin, away from your own files |
@@ -118,7 +118,7 @@ A Gemini CLI extension is built in the repository (`packaging/gemini/arp/`) but 
 npx -y @arp-protocol/cli init --sponsored
 ```
 
-**Soon to be released.** `arp_get_skill` and `arp_declare_used` fetch a skill through ARP's content server, which signs the receipt the sponsor pays against. Up to 0.0.5 they look for it on your own machine (`http://127.0.0.1:3002`) and fail unless you run one; 0.0.6 points them at ARP's hosted one (task 131). The other sponsored tools work.
+`arp_get_skill` and `arp_declare_used` fetch a skill through ARP's content server, which signs the receipt the sponsor pays against. From 0.0.6 that is ARP's hosted one, `https://content.arp.intuition.box` (task 131); up to 0.0.5 they looked for one on your own machine (`http://127.0.0.1:3002`) and failed unless you ran one.
 
 The same install with `ARP_TOOLS=sponsored`: tools that walk the loop with nothing for you to sign, because ARP's sponsoring service pays, plus `arp_get_skill`, which installs a skill you accept into the project's `.claude/skills/`. It holds a local agent key, on testnet. From 0.0.4 the calls that send something reach ARP's hosted sponsoring service, `https://sponsor.arp.intuition.box`, testnet 13579. 0.0.3 cannot write a line through it once it checks line request v5 (task 122), which 0.0.3 does not sign. When it does not answer, they fail and name it.
 
