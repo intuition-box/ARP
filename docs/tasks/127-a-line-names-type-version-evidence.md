@@ -6,6 +6,7 @@
 **Line request version 6.** CLI 0.0.6 and the sponsoring service ship together: a v6 sponsor refuses a 0.0.5
 line (401), a v5 sponsor a 0.0.6 one.
 **Decided 2026-11-11 (the user, relayed by arp-c1), section 2:** the version is V = (skill, `version`, X), a triple from the subject with the `version` predicate atom, and the line is T1 = (agent, uses, V). « has type pour le versionning » meant "a triple from the subject, like has type", not the `has type` predicate itself.
+**Confirmed 2026-11-11 (the user, after a call with the HOL adapter's side):** `uses` points at the versioned object V = (skill, `version`, digest), never at the digest alone, as built; a graph walk goes skill → its version triples → their `uses` lines.
 **ADR:** one, amending ADR `0185` on where the version hangs, and recording the two evidence modules.
 **Rules:** `code.md`, `security.md` (two signing sites: a new one for the MCP response, the content
 receipt's reuse as line evidence), `portability.md`, `claims.md`, `workflow.md`.
