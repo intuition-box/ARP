@@ -3,7 +3,18 @@
 `@arp-protocol/cli`. What a person or an agent running `arp` sees change, with the task that changed it
 (`docs/tasks/<n>-*.md` in the repository). Everything writes on Intuition testnet 13579 only.
 
-## 0.0.4 — unreleased
+## 0.0.5 — unreleased
+
+- **Sharing is asked once** (task 126, ADR `0191`). After the first skill result (worked or failed) on a
+  machine where sharing was never chosen, the agent asks: "yes, this once", "always" or "no". Nothing
+  leaves without a yes. "Always" turns sharing on and sends lines in the background at the end of each
+  session (`arp share send --auto`, a lock, failures in `~/.arp/share-log.jsonl`), counting only results
+  kept after the choice. "No" is kept and the question does not come back. `ARP_SHARE_AUTO=off` stops
+  both the question and the background send.
+- Sharing turned on any other way (`arp init`, `/arp:share-on`) now also sends at the end of a session.
+- `arp share` prints when and how sharing was chosen.
+
+## 0.0.4 — published 2026-11-11
 
 - **The sponsoring service is hosted** (task 117): `ARP_SPONSOR` defaults to
   `https://sponsor.arp.intuition.box` instead of `http://127.0.0.1:3200`, so `arp line`, `arp share send`
