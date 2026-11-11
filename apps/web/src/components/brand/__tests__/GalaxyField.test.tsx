@@ -2,7 +2,7 @@ import {act, render} from "@testing-library/react";
 import type {ReactNode} from "react";
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 
-import {EMPTY_FIELD, type LandingField} from "../../../services/landing-field";
+import {type LandingField} from "../../../services/landing-field";
 import {SAMPLE_FIELD} from "../../../services/landing-sample";
 import {GalaxyField} from "../GalaxyField";
 import {DeckContext, type DeckState} from "../scene-context";
@@ -151,7 +151,7 @@ function Deck({deck, children}: {deck: DeckState; children: ReactNode}) {
 
 function galaxy(
     deck: DeckState,
-    field: LandingField | null = SAMPLE_FIELD,
+    field: LandingField = SAMPLE_FIELD,
     options: {beats?: number; readRow?: (index: number) => HTMLElement | null} = {},
 ) {
     const readRow = options.readRow ?? (() => null);
@@ -162,7 +162,7 @@ function galaxy(
     );
     return {
         ...view,
-        to(next: DeckState, nextField: LandingField | null = field) {
+        to(next: DeckState, nextField: LandingField = field) {
             view.rerender(
                 <Deck deck={next}>
                     <GalaxyField field={nextField} beats={options.beats ?? 0} readRow={readRow} />
@@ -318,18 +318,6 @@ describe("GalaxyField", () => {
         const fg = paint.fills.filter((colour) => colour === "rgb(230,232,230)");
         expect(fg).toHaveLength(SAMPLE_FIELD.agents);
         expect(paint.written().size).toBe(0);
-    });
-
-    it("an answered but empty field draws one dashed ring, and no field draws none", () => {
-        const {to} = galaxy(still(1), EMPTY_FIELD);
-        frames(3);
-        frame();
-        expect(paint.dashes).toContainEqual([3, 4]);
-        expect(paint.written().size).toBe(0);
-        to(still(1, 0), null);
-        frames(19);
-        frame();
-        expect(paint.dashes).toHaveLength(0);
     });
 
     it("scene 1 in motion names each of the line's words while it is written, then lets it go", () => {

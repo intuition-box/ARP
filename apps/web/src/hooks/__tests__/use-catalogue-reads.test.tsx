@@ -1,5 +1,11 @@
 import {renderHook, waitFor} from "@testing-library/react";
-import {DomainTree, type AgentLines, type HierarchyTriple, type PulseUsage, type TaggedTool} from "@arp-protocol/core";
+import {
+    DomainTree,
+    type AgentLines,
+    type HierarchyTriple,
+    type PulseUsage,
+    type TaggedTool,
+} from "@arp-protocol/core";
 import {afterEach, describe, expect, it, vi} from "vitest";
 
 import {useAgentContents} from "../use-agent-contents";
@@ -7,7 +13,6 @@ import {useAgentEndpoints} from "../use-agent-endpoints";
 import {useAgentLines} from "../use-agent-lines";
 import {useDoc} from "../use-doc";
 import {useDomainTree} from "../use-domain-tree";
-import {useLandingField} from "../use-landing-field";
 import {useOutsideSignals} from "../use-outside-signals";
 import {usePulse} from "../use-pulse";
 import {useSkillContents} from "../use-skill-contents";
@@ -50,12 +55,6 @@ vi.mock("../../services/pulse", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../../services/pulse")>()),
     ...pulse,
 }));
-const landing = vi.hoisted(() => ({readPaidWords: vi.fn(), readVocabularyIds: vi.fn()}));
-vi.mock("../../services/landing-field", async (importOriginal) => ({
-    ...(await importOriginal<typeof import("../../services/landing-field")>()),
-    ...landing,
-}));
-
 const TESTNET_GRAPHQL = "https://testnet.intuition.sh/v1/graphql";
 
 afterEach(() => {
@@ -143,15 +142,25 @@ describe("useSkillContents", () => {
 
     it("says not read, with the reading's date, for a skill it did not read", async () => {
         const {wrapper} = hookProviders();
-        const {result} = renderHook(() => useSkillContents("github.com/nobody/nothing?skill=none"), {wrapper});
+        const {result} = renderHook(
+            () => useSkillContents("github.com/nobody/nothing?skill=none"),
+            {wrapper},
+        );
         await waitFor(() => expect(result.current.status).toBe("not-read"));
-        expect(result.current).toHaveProperty("measuredAt", expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/));
+        expect(result.current).toHaveProperty(
+            "measuredAt",
+            expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+        );
     });
 });
 
 describe("usePulse", () => {
     it("is pending, then ok with no contents when no file was read", async () => {
-        pulse.loadPulse.mockResolvedValue({pulse: {status: "not_github"}, atomId: null, usage: null});
+        pulse.loadPulse.mockResolvedValue({
+            pulse: {status: "not_github"},
+            atomId: null,
+            usage: null,
+        });
         pulse.pulseContentsEntry.mockReturnValue(null);
         const {wrapper} = hookProviders();
         const {result} = renderHook(() => usePulse("owner/repo", "skill"), {wrapper});
@@ -201,7 +210,9 @@ describe("useAgentLines", () => {
             byOthers: [],
             truncated: false,
         };
-        const getAgentLines = vi.fn(async (): Promise<AgentLines> => ({usedBy, used: [], truncated: true}));
+        const getAgentLines = vi.fn(
+            async (): Promise<AgentLines> => ({usedBy, used: [], truncated: true}),
+        );
         const reads = {
             getAgentLines,
             hiddenAtomIds: async () => new Set<string>(),
@@ -213,7 +224,11 @@ describe("useAgentLines", () => {
         expect(result.current.data).toEqual({usedBy: [], used: [], contexts: [], truncated: true});
         expect(getAgentLines).toHaveBeenCalledWith(
             "0xagent",
-            expect.objectContaining({graphqlUrl: TESTNET_GRAPHQL, hasOutcome: "0xo", because: "0xb"}),
+            expect.objectContaining({
+                graphqlUrl: TESTNET_GRAPHQL,
+                hasOutcome: "0xo",
+                because: "0xb",
+            }),
         );
     });
 });
@@ -222,10 +237,22 @@ function triple(child: string, parent: string): HierarchyTriple {
     return {tripleId: `${child}-${parent}`, child, parent, positions: 1, shares: 1n};
 }
 
-const TREE = DomainTree.from("tool", [triple("payment", "tool"), triple("card", "payment"), triple("search", "tool")]);
+const TREE = DomainTree.from("tool", [
+    triple("payment", "tool"),
+    triple("card", "payment"),
+    triple("search", "tool"),
+]);
 
 function tagged(atomId: string, domain: string): TaggedTool {
-    return {atomId, domain, hostedAt: null, label: null, tripleId: `t-${atomId}`, positions: 1, attestorBacked: true};
+    return {
+        atomId,
+        domain,
+        hostedAt: null,
+        label: null,
+        tripleId: `t-${atomId}`,
+        positions: 1,
+        attestorBacked: true,
+    };
 }
 
 describe("useDomainTree", () => {
@@ -235,7 +262,11 @@ describe("useDomainTree", () => {
         const {result} = renderHook(() => useDomainTree(), {wrapper});
         expect(result.current.options).toEqual([]);
         await waitFor(() => expect(result.current.tree).toBe(TREE));
-        expect(result.current.options.map((option) => option.label)).toEqual(["card", "payment", "search"]);
+        expect(result.current.options.map((option) => option.label)).toEqual([
+            "card",
+            "payment",
+            "search",
+        ]);
         expect(result.current.error).toBeNull();
     });
 
@@ -260,7 +291,12 @@ describe("useTagIndex", () => {
         core.toolsInDomain.mockResolvedValue({
             domains: [],
             truncated: false,
-            tools: [tagged("0xAAA", "payment"), tagged("0xBBB", "card"), tagged("0xCCC", "search"), tagged("0xDDD", "card")],
+            tools: [
+                tagged("0xAAA", "payment"),
+                tagged("0xBBB", "card"),
+                tagged("0xCCC", "search"),
+                tagged("0xDDD", "card"),
+            ],
         });
         const {wrapper} = hookProviders();
         const {result} = renderHook(() => useTagIndex(TREE), {wrapper});
@@ -269,7 +305,11 @@ describe("useTagIndex", () => {
         expect(index.countFor("payment", TREE)).toBe(3);
         expect(index.countFor("payment", undefined)).toBe(1);
         expect(index.idsUnder([], TREE)).toBeNull();
-        expect([...(index.idsUnder(["card", "search"], TREE) ?? [])].sort()).toEqual(["0xbbb", "0xccc", "0xddd"]);
+        expect([...(index.idsUnder(["card", "search"], TREE) ?? [])].sort()).toEqual([
+            "0xbbb",
+            "0xccc",
+            "0xddd",
+        ]);
         expect(index.byDomain.get("card")).toEqual(new Set(["0xbbb", "0xddd"]));
         expect(result.current.error).toBeNull();
     });
@@ -279,24 +319,5 @@ describe("useTagIndex", () => {
         const {wrapper} = hookProviders();
         const {result} = renderHook(() => useTagIndex(TREE), {wrapper});
         await waitFor(() => expect(result.current.error?.message).toBe("indexer down"));
-    });
-});
-
-describe("useLandingField", () => {
-    it("is pending, then falls back to the sample while no tool has a line", async () => {
-        core.listTools.mockResolvedValue({tools: []});
-        const {wrapper} = hookProviders();
-        const {result} = renderHook(() => useLandingField(), {wrapper});
-        expect(result.current).toEqual({status: "pending"});
-        await waitFor(() => expect(result.current.status).toBe("ok"));
-        expect(landing.readPaidWords).not.toHaveBeenCalled();
-        expect(core.listTools).toHaveBeenCalledWith({graphqlUrl: TESTNET_GRAPHQL, order: "declarations"});
-    });
-
-    it("says failed when the listing cannot be read", async () => {
-        core.listTools.mockRejectedValue(new Error("indexer down"));
-        const {wrapper} = hookProviders();
-        const {result} = renderHook(() => useLandingField(), {wrapper});
-        await waitFor(() => expect(result.current).toEqual({status: "failed"}));
     });
 });

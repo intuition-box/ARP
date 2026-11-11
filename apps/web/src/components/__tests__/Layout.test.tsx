@@ -46,8 +46,10 @@ describe("Layout", () => {
     it("frames the page with the nav, the footer and the side galaxy", () => {
         renderAt("/tools");
         expect(screen.getByRole("main")).toHaveTextContent("the page");
-        for (const tab of ["Agents", "Tools", "Activity", "Search"])
+        for (const tab of ["Tools", "Activity", "Search"])
             expect(screen.getAllByRole("link", {name: tab}).length).toBeGreaterThan(0);
+        // No Agents tab since 2026-11-11 (task 133).
+        expect(screen.queryByRole("link", {name: "Agents"})).toBeNull();
         expect(screen.getByRole("contentinfo")).toHaveTextContent(/Intuition Testnet/i);
         expect(screen.getByText("side galaxy")).toBeInTheDocument();
         // The nav sets its end slot twice, for the wide bar and the narrow one.
