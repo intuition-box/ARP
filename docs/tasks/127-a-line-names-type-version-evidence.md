@@ -1,6 +1,6 @@
 # Task 127 — A line names what its subject is, which version was used, and what backs it
 
-**Status:** sections 1 to 3 built 2026-11-11, branch `worktree-agent-afa63b92970a1ae3b`; section 4 deferred
+**Status:** verified 2026-11-11 (sections 1 to 3; `intuition-integrator` PASS in round 5, `task-verifier` PASS). Post-mortem `.claude/learning/115-a-line-names-type-version-evidence.md`. Section 4 deferred, and the 13579 write deferred to the v6 release
 (see "Built, and what was left" at the end). Spec written by arp-c1 for the orchestrator on the user's request
 (« je veux qu'on fasse ces preuves »). Task 127, ADR `0192`, post-mortem `115`, allocated by the orchestrator.
 **Line request version 6.** CLI 0.0.6 and the sponsoring service ship together: a v6 sponsor refuses a 0.0.5
@@ -105,6 +105,8 @@ own MCP server implements it first.
 - The type, version and evidence levels written on 13579 by `scripts/` against the sponsor, checked by
   `intuition-integrator`.
 - `task-verifier`.
+
+**Evidence ladder (as built):** the skill column, toward observed for access only, through the content receipt; the agent column is not served. Nothing moves until a versioned line exists on 13579. _(The spec's sentence below said skill and agent columns.)_
 
 **Evidence ladder:** skill and agent columns, from declared toward observed. A versioned line with a
 receipt says "these files, served to this key, at this time", which a stranger can check; it is still

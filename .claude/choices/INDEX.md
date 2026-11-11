@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-185 decisions. Newest last. `choices/README.md` says when to write one.
+186 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -41,7 +41,8 @@ Read these before relying on them.
 - **0164** (Accepted (the user saw both versions, 2026-11-10; on `feat/95-agent-lines`)) — The agent page leads with lines, and shows no payment yet
 - **0169** (Accepted. **Amended by ADR `0179`** (2026-11-10): asked when the skill loads, read at `Stop`, never continuing the turn; points 1, 2, the loop guard and the token cost below are superseded there.) — The model says whether a skill worked, at the end of a turn, once per skill
 - **0182** (Accepted (the user approved the design, 2026-11-10)) — Before you install answers the questions a person asks, in the content column
-- **0185** (Accepted (the decision). Not built: the code waits for the user's return.) — A skill's version is the digest of its directory, and a line will carry it
+- **0185** (Accepted (the decision). ~~Not built: the code waits for the user's return.~~ **Built by task 127, and amended by ADR `0192`** (2026-11-11): the version hangs from the skill, `(skill, version, sha256:<digest>)`, and the line uses that triple; it is not a level of the line, as item 1 below says.) — A skill's version is the digest of its directory, and a line will carry it
+- **0192** (Accepted. Amends ADR `0185` on where the version hangs; the digest stays `0185`'s.) — A line names what its subject is, which version was used, and what backs it
 
 ## All
 
@@ -221,13 +222,14 @@ Read these before relying on them.
 | [0179](0179-ask-whether-a-skill-worked-during-the-task.md) | 2026-11-10 | Accepted | Ask whether a skill worked during the task, not at Stop |
 | [0182](0182-before-you-install-answers-the-questions-a-person-asks.md) | 2026-11-10 | Accepted (the user approved the design, 2026-11-10) | Before you install answers the questions a person asks, in the content column |
 | [0183](0183-a-search-reads-a-dated-reading-and-the-packaged-skill-names-tools.md) | 2026-11-10 | Accepted | A search reads a dated reading for catalogued skills, caps what it reads, and the packaged skill names the tools |
-| [0185](0185-a-skill-version-is-its-directory-digest.md) | 2026-11-10 | Accepted (the decision). Not built: the code waits for the user's return. | A skill's version is the digest of its directory, and a line will carry it |
+| [0185](0185-a-skill-version-is-its-directory-digest.md) | 2026-11-10 | Accepted (the decision). ~~Not built: the code waits for the user's return.~~ **Built by task 127, and amended by ADR `0192`** (2026-11-11): the version hangs from the skill, `(skill, version, sha256:<digest>)`, and the line uses that triple; it is not a level of the line, as item 1 below says. | A skill's version is the digest of its directory, and a line will carry it |
 | [0186](0186-an-endpoint-url-is-written-without-its-values.md) | 2026-11-11 | Accepted | An x402 endpoint's URL is written without its values, reduced at the payer before signing |
 | [0187](0187-an-endpoints-last-purchase-is-read-on-demand-and-shown-beside-the-lines.md) | 2026-11-11 | Accepted | An endpoint's last purchase by nohumans.directory is read on demand, and shown beside the lines |
 | [0188](0188-the-signed-line-request-is-kept-by-the-sponsor-and-published-in-the-x402-feed.md) | 2026-11-11 | Accepted | An x402 line's signed request is kept by the sponsoring service and published in the x402 feed |
 | [0189](0189-an-x402-line-names-the-terms-it-paid-and-they-are-checked-against-the-endpoint.md) | 2026-11-11 | Accepted | An x402 line names the terms it paid against, and they are checked against the endpoint |
 | [0190](0190-a-tool-url-with-a-value-is-refused-wherever-it-is-listed.md) | 2026-11-11 | Accepted | A tool URL that carries a value is refused wherever it is listed, never stripped |
 | [0191](0191-ask-once-after-the-first-result-with-always.md) | 2026-11-11 | Accepted | Sharing is asked once, after the first skill result, with "always" |
+| [0192](0192-a-line-names-its-subjects-type-version-and-evidence.md) | 2026-11-11 | Accepted. Amends ADR `0185` on where the version hangs; the digest stays `0185`'s. | A line names what its subject is, which version was used, and what backs it |
 | [0193](0193-the-web-page-on-an-agent-offers-no-market.md) | 2026-11-11 | Accepted | the web page on an agent offers no market and no declaration |
 | [0194](0194-the-import-is-on-testnet-whatever-the-toggle.md) | 2026-11-11 | Accepted | The import is on testnet 13579, whatever the toggle says |
 | [0195](0195-the-hosted-surfaces-bound-their-load.md) | 2026-11-11 | Accepted | The hosted surfaces bound their load, and the server caches none of the words searched |

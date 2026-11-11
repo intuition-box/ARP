@@ -260,7 +260,7 @@ describe("getAtomStanding", () => {
     });
 
     it("reads a claim on a version of a skill as a claim about the skill, and no other version word (ADR 0192)", async () => {
-        const claim = (id: string, label: string, predicate = VERSION) => ({
+        const claim = (id: string, label: string, predicate: string = VERSION) => ({
             term_id: id,
             predicate: {term_id: USES, label: "uses"},
             object: null,
