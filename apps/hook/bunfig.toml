@@ -1,3 +1,16 @@
 [test]
 # No test reaches the real index: the hook's live read is off unless a test turns it on (ADR `0168`).
 preload = ["./test/setup.ts"]
+# Task 136, ADR `0198`: `bun run test` fails under 90 % of lines or functions. Bun measures no branches.
+coverage = true
+coverageThreshold = { lines = 0.9, functions = 0.9 }
+coveragePathIgnorePatterns = [
+  # The hook's own entrypoint: it reads stdin and calls process.exit at import, so no test can load it in-process;
+  # `hook.test.ts` and the other walks run it as the runtime does, in a child process bun does not measure.
+  "src/hook.ts",
+  # Other workspaces the hook imports by path: each is measured, and gated, by its own `test` script.
+  "../../packages/**",
+  "../../data/**",
+  # The test helpers themselves.
+  "test/**",
+]
