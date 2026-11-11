@@ -8,6 +8,8 @@ export const FAKE_MULTI_VAULT: Address = "0x000000000000000000000000000000000000
 export type FakeState = {
     /** Term ids the fake chain says exist, lower case. */
     existing?: Set<string>;
+    /** Every term exists, which is what a fully written line looks like. */
+    allExist?: boolean;
     /** `sharesOf` answer for every account and term. */
     shares?: bigint;
     chainId?: number;
@@ -25,7 +27,7 @@ export function fakeReads(state: FakeState = {}): MultiVaultReads {
         atomId: async (data: Hex) => keccak256(data),
         tripleId: async (s: Hex, p: Hex, o: Hex) => keccak256(encodePacked(["bytes32", "bytes32", "bytes32"], [s, p, o])),
         counterTripleId: async (t: Hex) => keccak256(t),
-        termExists: async (id: Hex) => existing.has(id.toLowerCase()),
+        termExists: async (id: Hex) => state.allExist === true || existing.has(id.toLowerCase()),
         atomCost: async () => 1_000n,
         tripleCost: async () => 2_000n,
         defaultCurveId: async () => 1n,
