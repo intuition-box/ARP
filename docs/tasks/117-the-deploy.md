@@ -86,3 +86,11 @@ and a client that only takes a URL had no URL to take.
   against the sponsor running now. So: merge, redeploy the sponsor, publish 0.0.4, all in one go.
 - The hosted connector has not been added in Claude Desktop or claude.ai; only `curl` has called it.
 - After 0.0.4 is on npm, `install.md`'s `@0.0.3` commands and its "0.0.4 prepared" become 0.0.4.
+
+## Completion note
+
+2026-11-11, verified, round 2 (`task-verifier`). Post-mortem: `.claude/learning/105-the-deploy.md`.
+Commit `1c4bb561` on `deploy/117-the-deploy`, on `1a291387` with task 122 merged (`3839cfd1`).
+
+**Evidence ladder:** skill column, declared tier. It lets a tester declare with nothing running locally,
+because the hosted sponsor writes the line. It does not move ARP to observed or corroborated by itself.

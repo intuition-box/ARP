@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-116 entries, one per completed task. Written by `task-verifier` on a pass.
+117 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -114,6 +114,7 @@
 | [102](102-fewer-requests-per-search.md) | `docs/tasks/113-fewer-requests-per-search.md` | PASS (second pass; the first failed on four claims, no code) | One search makes far too many requests |
 | [103](103-every-install-route.md) | `docs/tasks/114-every-install-route.md` | PASS | Every way to install ARP, listed in one place |
 | [104](104-the-hol-adapter.md) | `docs/tasks/115-the-hol-adapter.md` (A and B only; C, D, E wait for the user's return) | PASS (second pass; first failed on two one-line items) | The HOL adapter, deliverables A and B |
+| [105](105-the-deploy.md) | `docs/tasks/117-the-deploy.md` | PASS (second round) | The deploy: site, sponsor, MCP endpoint and demo seller on Coolify |
 | [106](106-x402-test-feed.md) | `docs/tasks/118-x402-test-feed.md` | PASS | A separate x402 test feed for Base Sepolia |
 | [107](107-an-endpoint-url-without-its-values.md) | `docs/tasks/119-an-endpoint-url-without-its-values.md` | PASS | An x402 endpoint's URL is written without its values |
 | [108](108-an-endpoints-last-purchase.md) | `docs/tasks/120-an-endpoints-last-purchase.md` | PASS (fourth pass | An endpoint's last purchase, checked by nohumans.directory, beside ARP's lines |
