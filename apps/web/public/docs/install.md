@@ -1,6 +1,6 @@
 # Install
 
-Every way to install ARP, and the state of each on 2026-11-10. This page is the one list: other pages point here instead of repeating it. Every install plans against Intuition testnet 13579 (the skill file reads either chain), and checking a skill needs no wallet, no key and no account.
+Every way to install ARP, and the state of each on 2026-11-11. This page is the one list: other pages point here instead of repeating it. Every install plans against Intuition testnet 13579 (the skill file reads either chain), and checking a skill needs no wallet, no key and no account.
 
 | where your agent runs | route | state, 2026-11-11 | what you get |
 | --- | --- | --- | --- |
@@ -9,7 +9,7 @@ Every way to install ARP, and the state of each on 2026-11-10. This page is the 
 | Claude Desktop, claude.ai | [a custom connector to ARP's hosted endpoint](#claude-desktop-and-claude-ai-a-hosted-connector) | live at `https://mcp.arp.intuition.box/mcp`; not yet added as a connector in Claude | three read tools, no hook, your words reach ARP's server |
 | Claude Desktop | [the extension, one `.mcpb` file](#claude-desktop-the-extension) | **not published** | sponsored tools, nothing to sign |
 | Cursor, Gemini CLI, Codex, Copilot, Grok Build | [`arp init`](#other-runtimes-arp-init) | works | the full tool set; the hook in Claude Code and Grok Build only |
-| the runtimes `arp init` finds, sponsored | [`arp init --sponsored`](#arp-init---sponsored) | works; the hosted sponsor is the default from 0.0.4 | tools that sign nothing for you |
+| the runtimes `arp init` finds, sponsored | [`arp init --sponsored`](#arp-init---sponsored) | **soon to be released**: `arp_get_skill` and `arp_declare_used` wait for 0.0.6 and ARP's hosted content server (task 131) | tools that sign nothing for you |
 | any MCP client | [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry) | published, 0.0.5 on npm (2026-11-11) | what the client's entry starts |
 | nothing installed | [the skill file](#nothing-installed-the-skill-file) | works | the procedure, as public reads and calls you sign |
 | a throwaway machine | [a Docker container](#an-isolated-test-in-docker) | works | the plugin, away from your own files |
@@ -47,7 +47,7 @@ What you get, the full feature set of this round:
 - one question, once: after the first skill result, the agent asks whether to share it, with three answers, "yes, this once", "always" and "no". Nothing is shared before you answer. "Always" sends that result and each later one in the background when its session ends, nothing kept before ([Sharing](/docs/local-memory#sharing));
 - five commands you type yourself: `/arp:share`, `/arp:share-on`, `/arp:share-off`, `/arp:share-send`, `/arp:line`. The last two need a sponsoring service: ARP's is hosted at `https://sponsor.arp.intuition.box`, the default from 0.0.4. 0.0.3 cannot write a line through it once it checks line request v5 (task 122), which 0.0.3 does not sign, so update to 0.0.5 (0.0.5 also asks once whether to share). The send after "always" or "yes, this once" goes through the same service; when it fails, why is written down in `~/.arp/share-log.jsonl`, not shown.
 
-Checked on 2026-11-10 in a clean `node:22-bookworm` container with Claude Code 2.1.322: both install commands succeeded, `claude plugin list` showed `arp@arp`, version 0.0.3, enabled, and the update commands answered `arp is already at the latest version (0.0.3)`.
+Checked on 2026-11-11 in a clean `node:22-bookworm` container with Claude Code 2.1.322: both install commands succeeded, `claude plugin list` showed `arp@arp`, version 0.0.5, enabled, the update commands answered `arp is already at the latest version (0.0.5)`, and `claude mcp list` showed `plugin:arp:arp … ✔ Connected`.
 
 ## Claude Desktop, today: an MCP entry by hand
 
@@ -76,7 +76,7 @@ Node.js 22 or later must be installed: Desktop starts `npx` itself. Both variabl
 
 What you get: the plugin's three read tools. **Claude Desktop runs no hooks**, so nothing of the hook happens there: no record of what failed on your machine (`failed_on_this_machine` stays empty), no check before an install, no answer when a skill fails, no question whether a skill worked, so no worked line to share, and no question whether to share.
 
-State: the command was run on Linux with Node 22.21.1 on 2026-11-10, outside Desktop. It answered `initialize` and listed `arp_pulse, arp_tool_reputation, arp_agent_endpoints` on chain 13579. This entry has not yet been run inside Claude Desktop, on macOS or on Windows.
+State: the command, with `@arp-protocol/cli@0.0.5`, was run in a clean `node:22-bookworm` container on 2026-11-11, outside Desktop. It answered `initialize` and listed `arp_pulse, arp_tool_reputation, arp_agent_endpoints` on chain 13579. This entry has not yet been run inside Claude Desktop, on macOS or on Windows.
 
 ## Claude Desktop and claude.ai: a hosted connector
 
@@ -86,7 +86,7 @@ ARP runs its MCP server read-only as a hosted endpoint, with nothing installed o
 https://mcp.arp.intuition.box/mcp
 ```
 
-Streamable HTTP, no sign-in, testnet 13579. Add it as a custom connector (untested in Claude, see below), or point any MCP client that takes a URL at it. It is also the `remotes` entry of the MCP Registry listing from 0.0.4.
+Streamable HTTP, no sign-in, testnet 13579. Add it as a custom connector (untested in Claude, see below), or point any MCP client that takes a URL at it. It is also the `remotes` entry of the MCP Registry listing from 0.0.4 (see [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry)).
 
 State: live since 2026-11-11. That day `tools/list` answered `arp_pulse, arp_tool_reputation, arp_agent_endpoints` and a search came back, both by `curl`. It has not yet been added as a connector in Claude Desktop or claude.ai.
 
@@ -118,6 +118,8 @@ A Gemini CLI extension is built in the repository (`packaging/gemini/arp/`) but 
 npx -y @arp-protocol/cli init --sponsored
 ```
 
+**Soon to be released.** `arp_get_skill` and `arp_declare_used` fetch a skill through ARP's content server, which signs the receipt the sponsor pays against. Up to 0.0.5 they look for it on your own machine (`http://127.0.0.1:3002`) and fail unless you run one; 0.0.6 points them at ARP's hosted one (task 131). The other sponsored tools work.
+
 The same install with `ARP_TOOLS=sponsored`: tools that walk the loop with nothing for you to sign, because ARP's sponsoring service pays, plus `arp_get_skill`, which installs a skill you accept into the project's `.claude/skills/`. It holds a local agent key, on testnet. From 0.0.4 the calls that send something reach ARP's hosted sponsoring service, `https://sponsor.arp.intuition.box`, testnet 13579. 0.0.3 cannot write a line through it once it checks line request v5 (task 122), which 0.0.3 does not sign. When it does not answer, they fail and name it.
 
 ## The npm package and the MCP Registry
@@ -127,11 +129,11 @@ The CLI is on npm as [`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-pr
 Check both yourself:
 
 ```bash
-npm view @arp-protocol/cli version mcpName
+npm view @arp-protocol/cli version mcpName dist-tags.latest
 curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Wieedze/arp"
 ```
 
-On 2026-11-10 the first printed `version = '0.0.3'` and `mcpName = 'io.github.Wieedze/arp'` (dist-tag `latest`: 0.0.3). The second returned one entry, `io.github.Wieedze/arp` version 0.0.3, status `active`, `isLatest: true`, published `2026-11-10T13:21:55Z`, with the npm package over stdio and those two variables.
+On 2026-11-11 the first printed `version = '0.0.5'`, `mcpName = 'io.github.Wieedze/arp'` and `dist-tags.latest = '0.0.5'`. The second returned three entries, one per version, all `active`: 0.0.3 (published `2026-11-10T13:21:55Z`, no `remotes`), 0.0.4 (`2026-11-11T15:29:46Z`) and 0.0.5 (`2026-11-11T17:07:29Z`, `isLatest: true`), the last two with the remote `https://mcp.arp.intuition.box/mcp`. The entries come in that order, so a client that shows the first one shows 0.0.3: read `isLatest`.
 
 ## Nothing installed: the skill file
 
@@ -143,7 +145,7 @@ With the `skills` CLI, the same file installs as a skill:
 npx skills add intuition-box/ARP --skill arp
 ```
 
-`npx skills add intuition-box/ARP --list` found the `arp` skill on 2026-11-10. ARP's skill is not listed on skills.sh: its search for `intuition-box` returned one other skill of the organisation that day.
+`npx skills add intuition-box/ARP --list` found the `arp` skill on 2026-11-11, beside four the repository keeps for its own work (`arp-contributing`, `intuition`, `mms-gator-cli`, `mms-smart-accounts-kit`); `--skill arp` installs only ARP's. ARP's skill is not listed on skills.sh: its search for `intuition-box` returned one other skill of the organisation that day.
 
 ## An isolated test in Docker
 

@@ -221,6 +221,8 @@ Served only with `ARP_TOOLS=desktop` or `sponsored`. The person signs nothing an
 
 ### arp_get_skill
 
+**Soon to be released**, with `arp_declare_used` below: up to 0.0.5 both need a content server on your own machine (`ARP_CONTENT`, `http://127.0.0.1:3002`), and 0.0.6 points them at ARP's hosted one ([Install](/docs/install#arp-init---sponsored)).
+
 Fetch a skill found with `arp_find_tools` and return its `SKILL.md`. It may ask you to run commands, so tell the person what it will do first. Where the skill would be installed in the project, the person is asked first, and nothing is written unless they accept. ARP keeps a note that the skill was served, which the sponsored `arp_declare_used` needs. The source comes from ARP's catalogue, never from the request, and nothing fetched is executed.
 
 | Input | Type | Description |
