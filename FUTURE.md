@@ -728,11 +728,10 @@ Not a task yet; he decides when.
 
 **What it buys.**
 
-- The cost no longer grows with the number of lines. On mainnet 1155, read 2026-11-11,
-  `getTripleCost()` and `getAtomCost()` are both 0.1 TRUST. A line is about 4 triples, so about
-  0.4 TRUST, and 100,000 lines about 40,000 TRUST, against about 0.2 TRUST per batch. On testnet 13579
-  the sponsor would pay one write per day instead of one per line. Costs are read from the chain at
-  call time; these are one reading (`portability.md`).
+- One by one, the cost grows with every line; in a batch, it is one write per period plus storage.
+  Not measured: a line's real cost depends on how many of its atoms and triples already exist
+  (`docs/28` measures a level on 13579 at about twice `getTripleCost()`), and a batch's on what else
+  it writes on chain.
 - Writing becomes free for the agent: no funded wallet and no fee, which may be what raises the number
   of lines testers write.
 
