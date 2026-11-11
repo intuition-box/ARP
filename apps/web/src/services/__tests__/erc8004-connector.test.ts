@@ -5,7 +5,7 @@ import {
     INTUITION_MAINNET_CHAIN_ID,
     INTUITION_MAINNET_MULTIVAULT,
 } from "../../lib/intuition-mainnet";
-import {ERC8004_GRAPHQL_URL, erc8004Client} from "../erc8004-connector";
+import {ERC8004_GRAPHQL_URL, erc8004Client, erc8004GraphClient} from "../erc8004-connector";
 
 /**
  * The panel reads mainnet while every ARP contract stays on testnet. These
@@ -37,5 +37,14 @@ describe("erc8004 connector configuration", () => {
 
     it("reuses one client rather than rebuilding a transport per read", () => {
         expect(erc8004Client()).toBe(erc8004Client());
+    });
+});
+
+describe("the graph-only client (task 129)", () => {
+    it("keeps one client per graph, so a testnet read never reuses mainnet's", () => {
+        const testnet = "https://testnet.intuition.sh/v1/graphql";
+        expect(erc8004GraphClient()).toBe(erc8004GraphClient(ERC8004_GRAPHQL_URL));
+        expect(erc8004GraphClient(testnet)).toBe(erc8004GraphClient(testnet));
+        expect(erc8004GraphClient(testnet)).not.toBe(erc8004GraphClient());
     });
 });

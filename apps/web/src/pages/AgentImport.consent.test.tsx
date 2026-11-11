@@ -246,3 +246,21 @@ describe("AgentImport after a mint on Base (task 129)", () => {
         expect(screen.getByLabelText("Token id")).toHaveValue("");
     });
 });
+
+describe("AgentImport with the toggle on mainnet (ADR 0194)", () => {
+    it("still names Intuition Testnet as the chain the link lands on", async () => {
+        render(
+            <MemoryRouter>
+                <ChainChoiceContext.Provider
+                    value={{choice: choiceFor(true), setMainnet: () => {}}}
+                >
+                    <AgentImport />
+                </ChainChoiceContext.Provider>
+            </MemoryRouter>,
+        );
+        await proveToken("1");
+        expect(
+            screen.getByText(/One public link on Intuition Testnet, paid in tTRUST/),
+        ).toBeInTheDocument();
+    });
+});

@@ -10,7 +10,8 @@ follows the toggle.
 ## Why
 
 Walked on 2026-11-11 against https://arp.intuition.box with a throwaway wallet on testnet 13579: the
-mint works (agent `13579:40`, tx `0x863481…1928`), then "Now link your agent wallet →" opens the
+mint works (agent `13579:40`, tx
+`0x863481539a61d6129f8e51123a2c6876c4d35cd675db463670aaea4ad70c1928`), then "Now link your agent wallet →" opens the
 import, which offered Base, BSC and Ethereum only. The agent just minted could not be named there.
 The user: fix the link after the mint; the import of an agent from another chain is "soon".
 
@@ -35,20 +36,26 @@ Fixing the chain list exposed two more stops on the same path, both found by run
    agent's record is never priced or written on mainnet (ui-reviewer, round 1). A mint link naming a
    chain the import does not offer opens an empty form, never a token id read on the wrong chain.
 6. `skills/arp-listing-test/`: a skill that does nothing, with `metadata.internal: true` so
-   `npx skills add intuition-box/ARP` does not offer it. It exists to test adding a skill to the
+   `npx skills add intuition-box/ARP` does not offer it (`skills` 1.8.1 from npm,
+   `dist/_chunks/remove.mjs:2503-2511`). It exists to test adding a skill to the
    index without listing somebody else's work (the user, same day). It needs to be on `main` before
    that test can run.
 7. `apps/web/public/docs/web-app.md` says which chain the import takes.
 
 ## Checked
 
+- Tests: the page with the toggle on mainnet still names testnet; the hook reads a 13579 agent in the
+  testnet graph and prices on testnet under a mainnet toggle; one graph client per URL.
+
 - Gates from `apps/web`: `tsc -b`, `lint`, `test`, `check:tokens`; root `bun run check`;
   `bun run --cwd apps/cli packages --check`.
 - The whole path on testnet 13579, against this branch's dev server, with the test wallet
   `0xeB959a6B87D77A6AD77f8cf0C4ffC5e650CCCcB3`: ownership of `13579:40` proved, statement signed,
-  identity record written (5 txs, 0.01 tTRUST), link published (`0xba55c1…a380`, 0.004 tTRUST).
-- After the round-1 fixes, a fresh agent end to end in one pass: mint `13579:41` (`0x41f512…196f`),
-  record written (5 txs), read back, link published (`0xd667e0…91b4`).
+  identity record written (5 txs, 0.01 tTRUST), link published
+  (`0xba55c135495a59e5a54cdaba2d4624fb90e7d91778f22f207ada92ceec47a380`, 0.004 tTRUST).
+- After the round-1 fixes, a fresh agent end to end in one pass: mint `13579:41`
+  (`0x41f512de8c44f06b51ade207bf7a66bbcdd183b7d912d21894eb3eab0a21196f`), record written (5 txs), read
+  back, link published (`0xd667e02fed75bda81ebdf56ed0b74d1f5f119a01ee78e43fb2156208610191b4`).
 
 ## Do not do in this task
 
