@@ -29,6 +29,7 @@
   "devDependencies": {
     "@arp-protocol/core": "workspace:*",
     "@types/bun": "^1.4.4",
+    "@vitest/coverage-v8": "4.1.8",
     "typescript": "~6.0.2",
     "vitest": "^4.1.8"
   },

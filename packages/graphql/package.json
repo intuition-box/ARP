@@ -25,6 +25,7 @@
         "prepublishOnly": "bun run build"
     },
     "devDependencies": {
+        "@vitest/coverage-v8": "4.1.8",
         "typescript": "~6.0.2",
         "vitest": "^4.1.8"
     },

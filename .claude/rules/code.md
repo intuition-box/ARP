@@ -81,6 +81,11 @@ NatSpec on Solidity public/external functions is the exception (it generates ABI
 
 A function shipped without tests is not done. Coverage targets:
 
+- **Every workspace: 90 %, enforced.** Its `test` script fails under 90 % — lines, branches,
+  functions and statements under vitest; lines and functions under `bun test`, which measures no
+  branches. A file left out of the measurement carries its reason in the config (ADR `0198`).
+  `scripts/` is outside this gate.
+
 - Contracts: 100% line + branch coverage on the public surface. Fuzz where inputs are unbounded.
 - Services: every public function has a unit test. Mock at the network boundary only.
 - Hooks and components: tested behaviourally, not by checking implementation details. React Testing
