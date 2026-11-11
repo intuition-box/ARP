@@ -70,3 +70,6 @@ docs/reference/integration8004.txt
 
 # Third parties' stated contacts, for the user to decide on (task 87). Never committed: the repo is public.
 data/outreach/
+
+# the Claude Desktop extension, built by `bun run --cwd apps/cli mcpb` (task 135)
+apps/cli/dist-mcpb/

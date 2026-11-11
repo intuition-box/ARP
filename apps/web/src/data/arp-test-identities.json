@@ -1,9 +1,9 @@
 {
   "why": "ARP tested its own loop on testnet 13579 before anyone else used it: agents it minted for itself, and wallets it signed with. Their lines are rehearsals, not anybody's use of a skill, so this site does not show them. Nothing is deleted: everything stays on the chain, and anyone can read it there. The catalogue of tools ARP listed is shown; only who used what, and who supported what, is filtered.",
-  "measured": "2026-11-09, owners read with ownerOf on ARP's registry; agents 39 to 43 and their owners added 2026-11-11, read the same way (44 did not exist)",
+  "measured": "2026-11-09, owners read with ownerOf on ARP's registry; agents 39 to 44 and their owners added 2026-11-11, read the same way (45 did not exist)",
   "chainId": 13579,
   "registry": "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
-  "agents": {"from": 1, "to": 43},
+  "agents": {"from": 1, "to": 44},
   "addresses": [
     {"address": "0xE596096F4176b682E300d73963e7B04B383C1AA1", "role": "ARP's deployer, and its sponsoring service until 2026-11-09"},
     {"address": "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f", "role": "ARP's operator"},
@@ -12,6 +12,7 @@
     {"address": "0x6B020238f65628F289D04C950CFD0261FD75cB19", "role": "a test wallet of ARP's, owner of agent 39 (the sponsor's mint-gas check, 2026-11-11)"},
     {"address": "0xeB959a6B87D77A6AD77f8cf0C4ffC5e650CCCcB3", "role": "a test wallet of ARP's, owner of agents 40 and 41 (the site's mint and link, task 129)"},
     {"address": "0x61F4f0822540f42532178Cf1cbd336d006a09550", "role": "a test wallet of ARP's, owner of agent 42 (a sponsored run, 2026-11-11)"},
-    {"address": "0xE422Fd91726fcd791bcD3e1Eaf3F8950A5Dd3C24", "role": "a test wallet of ARP's, owner of agent 43 (the hosted content server's end-to-end check, task 131)"}
+    {"address": "0xE422Fd91726fcd791bcD3e1Eaf3F8950A5Dd3C24", "role": "a test wallet of ARP's, owner of agent 43 (the hosted content server's end-to-end check, task 131)"},
+    {"address": "0x0B2bF0E8E60A5e90ED905fE65b63A53834023C7d", "role": "a test wallet of ARP's, owner of agent 44 (the Desktop extension's check, task 135)"}
   ]
 }

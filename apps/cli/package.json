@@ -33,9 +33,11 @@
     "prepublishOnly": "bun run build",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json",
     "check:node": "bun run build && bash scripts/check-node.sh",
-    "packages": "bun run build && bun scripts/packages.ts"
+    "packages": "bun run build && bun scripts/packages.ts",
+    "mcpb": "bun run packages && bun scripts/mcpb.ts"
   },
   "devDependencies": {
+    "@anthropic-ai/mcpb": "2.1.2",
     "@arp-protocol/core": "workspace:*",
     "@arp/hook": "workspace:*",
     "@arp/mcp": "workspace:*",
