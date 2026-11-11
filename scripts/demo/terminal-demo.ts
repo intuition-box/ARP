@@ -305,7 +305,7 @@ function stepShare(): Promise<void> {
         wrapped(arp("share").includes("would be public")
             ? "\nThat line is all that would leave: the skill's public URL, a domain, `failed`, and a reason from a closed list. No session, date, path, command or output. A skill with no known public source stays on the machine."
             : "\nNothing would leave: this failure has no known public source, so it stays on the machine.");
-        wrapped("This demo stops here and does not run `arp share send` with sharing on: that writes a permanent line on testnet, through a sponsoring service that runs only on our own machine.");
+        wrapped("This demo stops here and does not run `arp share send` with sharing on: that writes a permanent line on testnet, through ARP's sponsoring service.");
     });
 }
 

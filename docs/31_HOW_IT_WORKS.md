@@ -21,7 +21,7 @@ flowchart TB
         github["GitHub: the skill's files"]
     end
 
-    subgraph ours["ARP's sponsoring service, on our machine today"]
+    subgraph ours["ARP's sponsoring service, hosted since 2026-11-11"]
         sponsor["apps/sponsor: pays, testnet 13579 only"]
     end
 
@@ -149,10 +149,12 @@ Beside the score, each result shows what its files name: commands, keys, a login
 | --- | --- |
 | The MCP server and the hook | The person's machine. The plugin passes `claude plugin validate`. The plugin carries the program, so it installs from a checkout or `owner/repo`. Other runtimes install `@arp-protocol/cli` from npm |
 | `arp share`, `arp line` | The person's machine, one call at a time. They load `~/.arp/agent-key`, made once a line's domain is known and the sponsor answers |
-| `apps/sponsor`, the sponsoring service | **Local only**, on our machine, port 3200. Testnet 13579 only. Without it, `arp share send` names the service and fails |
+| `apps/sponsor`, the sponsoring service | **Hosted** at `https://sponsor.arp.intuition.box` since 2026-11-11 (task 117), the CLI's default from 0.0.4. Testnet 13579 only. Without it, `arp share send` names the service and fails. _Amended 2026-11-11: read "Local only, on our machine, port 3200"._ |
+| `apps/mcp`, hosted and read-only | `https://mcp.arp.intuition.box/mcp` since 2026-11-11: the three read tools, no key. Nothing installed uses it |
+| `scripts/demo/x402-seller`, the demo seller | `https://seller.arp.intuition.box` since 2026-11-11: takes 0.001 test USDC on Base Sepolia and delivers nothing (task 118) |
 | `arp mcp --http`, the content server | **Local only**, port 3002. Used by the sponsored setup, not by the plugin |
 | `arp node` | The operator's machine, on 127.0.0.1 behind a tunnel they rent. Only our test agents run one so far |
-| `apps/web`, the web app | **Local only**, `bun run dev` |
+| `apps/web`, the web app | **Hosted** at `https://arp.intuition.box` since 2026-11-11 (task 117), testnet only. _Amended 2026-11-11: read "Local only, `bun run dev`"._ |
 | `apps/probe`, `apps/api`, Workers | **Local only**, with no public deployment (`docs/27`) |
 | MultiVault and the index | Intuition's, public, testnet 13579 |
 | skills.sh, GitHub | Third parties. Without a token, GitHub allows 60 requests an hour per address, and a new search takes about 5 (`docs/tasks/70`) |
@@ -161,7 +163,7 @@ Beside the score, each result shows what its files name: commands, keys, a login
 
 - **No third party has reported a result on a skill yet.** The result lines so far are ours: `bun run scripts/measure/proof-of-work.ts` counts them and says so. Other wallets did write `uses` edges, which say a use and report no result.
 - **A line proves nothing about use.** Whether a line shown moves anybody's choice is open (`docs/tasks/71`).
-- **The sponsor is not hosted.** `@arp-protocol/cli` 0.0.1 is on npm since 2026-11-06, and `claude plugin marketplace add intuition-box/ARP` then `claude plugin install arp@arp` worked in a clean home on 2026-11-09 (an install audit, in a container). The sponsoring service still runs only on our machine, so a line can be written only where it runs, unless the writer pays for it directly. _Amended 2026-11-09: these two points read "Nothing is published or hosted" and "remain to be run for real"._ _Amended 2026-11-10 (task 114): 0.0.3 is the latest on npm, and every install route with its state is in [`apps/web/public/docs/install.md`](../apps/web/public/docs/install.md)._
+- **The sponsor is hosted since 2026-11-11** (task 117): `https://sponsor.arp.intuition.box`, testnet 13579, the CLI's default from 0.0.4. `@arp-protocol/cli` 0.0.1 is on npm since 2026-11-06, and `claude plugin marketplace add intuition-box/ARP` then `claude plugin install arp@arp` worked in a clean home on 2026-11-09 (an install audit, in a container). ~~The sponsoring service still runs only on our machine, so a line can be written only where it runs, unless the writer pays for it directly.~~ _Amended 2026-11-11 (task 117): this point read "The sponsor is not hosted", and the struck sentence was true until then._ _Amended 2026-11-09: these two points read "Nothing is published or hosted" and "remain to be run for real"._ _Amended 2026-11-10 (task 114): 0.0.3 is the latest on npm, and every install route with its state is in [`apps/web/public/docs/install.md`](../apps/web/public/docs/install.md)._
 - **One search, one vendor.** When `npx skills` does not run, the plugin has no other search and says so.
 - **The plugin does not pay.** A paid call needs a wallet outside it.
 - **Mainnet.** A port stays blocked until a writer's control of the agent is proven (ADR `0135`), and until the price of a line held on deposits is answered (ADR `0138`). `docs/27` is the checklist.

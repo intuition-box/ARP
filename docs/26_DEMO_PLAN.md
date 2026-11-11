@@ -215,7 +215,7 @@ Enter moves to the next step, and Ctrl-C cleans up too. `--no-pause` runs it str
 - "Ranked by real use" or "it shows who used it." A line is a declaration, and nothing says a use happened.
 - "It costs a fee, so it means something." The fee buys the right to write a line.
 - "Rank is not for sale." Say instead that a bigger deposit buys no rank. Several wallets can still buy several lines.
-- "It's live" or "it's on mainnet." It is testnet 13579, on test money, and the sponsoring service runs only on our machine.
+- "It's live" or "it's on mainnet." It is testnet 13579, on test money. _Amended 2026-11-11: this also said the sponsoring service runs only on our machine; it is hosted since task 117._
 - "This proves the skill is bad." `web2md` is absent from this machine, which is all the line says.
 - Anything about spending limits: delegations were set aside on 2026-11-03.
 

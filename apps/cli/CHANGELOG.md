@@ -3,8 +3,13 @@
 `@arp-protocol/cli`. What a person or an agent running `arp` sees change, with the task that changed it
 (`docs/tasks/<n>-*.md` in the repository). Everything writes on Intuition testnet 13579 only.
 
-## Unreleased
+## 0.0.4 — unreleased
 
+- **The sponsoring service is hosted** (task 117): `ARP_SPONSOR` defaults to
+  `https://sponsor.arp.intuition.box` instead of `http://127.0.0.1:3200`, so `arp line`, `arp share send`
+  and the plugin reach it with nothing set. Set `ARP_SPONSOR` to use another one. Testnet 13579 only.
+- The MCP Registry entry names the hosted read-only endpoint, `https://mcp.arp.intuition.box/mcp`
+  (streamable HTTP, `arp_pulse`, `arp_tool_reputation`, `arp_agent_endpoints`), beside the npm package.
 - **Breaking: the line request is version 5** (task 122). `arp line --payment-tx` now also takes the
   terms the endpoint's `402` gave and you paid against: `--pay-to`, `--asset`, `--price` (the
   `PaymentRequirements` `payTo`, `asset` and `amount`) and `--terms-at` (when the `402` came, unix
@@ -22,7 +27,7 @@
   session's result is the real answer again (task 109). `arp init` registers `PostToolUse` twice:
   every tool but `Skill` in the background, `Skill` waited on (5 s).
 
-## 0.0.3 — unreleased
+## 0.0.3 — published 2026-11-10
 
 The first release since 0.0.1 (published 2026-11-06 07:59 UTC). 0.0.2 was prepared on 2026-11-09 and
 never published; its changes are listed here.

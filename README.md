@@ -61,8 +61,8 @@ In Claude Code, with Node 22: `claude plugin marketplace add intuition-box/ARP`,
 [`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-protocol/cli) 0.0.3 and in the official MCP
 Registry as `io.github.Wieedze/arp`.
 
-**Every other route, and the state of each** (Claude Desktop by hand, the hosted connector and the
-`.mcpb` extension that are not live yet, `arp init` for Cursor, Gemini CLI, Codex and Copilot,
+**Every other route, and the state of each** (Claude Desktop by hand, the hosted connector at
+`https://mcp.arp.intuition.box/mcp`, the `.mcpb` extension that is not published yet, `arp init` for Cursor, Gemini CLI, Codex and Copilot,
 `arp init --sponsored`, nothing installed, a Docker test) is in one place:
 [Install](apps/web/public/docs/install.md). Install one ARP per runtime, not two.
 

@@ -3,7 +3,7 @@
   "name": "io.github.Wieedze/arp",
   "title": "ARP",
   "description": "Check a skill, MCP server or agent before your agent installs or pays it. Reads only.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "websiteUrl": "https://github.com/intuition-box/ARP",
   "repository": {
     "url": "https://github.com/intuition-box/ARP",
@@ -15,7 +15,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@arp-protocol/cli",
-      "version": "0.0.3",
+      "version": "0.0.4",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
@@ -32,16 +32,26 @@
           "description": "The chain ARP reads: testnet (Intuition testnet 13579) until the tester round ends",
           "isRequired": true,
           "default": "testnet",
-          "choices": ["testnet"]
+          "choices": [
+            "testnet"
+          ]
         },
         {
           "name": "ARP_TOOLS",
           "description": "The tool set: read serves the public reads only, holds no key and signs nothing",
           "isRequired": true,
           "default": "read",
-          "choices": ["read"]
+          "choices": [
+            "read"
+          ]
         }
       ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.arp.intuition.box/mcp"
     }
   ]
 }

@@ -2,15 +2,15 @@
 
 Every way to install ARP, and the state of each on 2026-11-10. This page is the one list: other pages point here instead of repeating it. Every install plans against Intuition testnet 13579 (the skill file reads either chain), and checking a skill needs no wallet, no key and no account.
 
-| where your agent runs | route | state, 2026-11-10 | what you get |
+| where your agent runs | route | state, 2026-11-11 | what you get |
 | --- | --- | --- | --- |
 | Claude Code | [the plugin](#claude-code-the-plugin) | works | three read tools, the hook, five commands you type |
 | Claude Desktop | [an MCP entry you add by hand](#claude-desktop-today-an-mcp-entry-by-hand) | works outside Desktop; not yet run inside it | three read tools, no hook |
-| Claude Desktop, claude.ai | [a custom connector to ARP's hosted endpoint](#claude-desktop-and-claude-ai-a-hosted-connector) | **not live**: the endpoint is not deployed | three read tools, no hook, your words reach ARP's server |
+| Claude Desktop, claude.ai | [a custom connector to ARP's hosted endpoint](#claude-desktop-and-claude-ai-a-hosted-connector) | live at `https://mcp.arp.intuition.box/mcp`; not yet added as a connector in Claude | three read tools, no hook, your words reach ARP's server |
 | Claude Desktop | [the extension, one `.mcpb` file](#claude-desktop-the-extension) | **not published** | sponsored tools, nothing to sign |
 | Cursor, Gemini CLI, Codex, Copilot, Grok Build | [`arp init`](#other-runtimes-arp-init) | works | the full tool set; the hook in Claude Code and Grok Build only |
-| the runtimes `arp init` finds, sponsored | [`arp init --sponsored`](#arp-init---sponsored) | works; sending waits for a hosted sponsor | tools that sign nothing for you |
-| any MCP client | [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry) | published, 0.0.3 | what the client's entry starts |
+| the runtimes `arp init` finds, sponsored | [`arp init --sponsored`](#arp-init---sponsored) | works; the hosted sponsor is the default from 0.0.4 | tools that sign nothing for you |
+| any MCP client | [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry) | published, 0.0.3; 0.0.4 prepared | what the client's entry starts |
 | nothing installed | [the skill file](#nothing-installed-the-skill-file) | works | the procedure, as public reads and calls you sign |
 | a throwaway machine | [a Docker container](#an-isolated-test-in-docker) | works | the plugin, away from your own files |
 
@@ -44,7 +44,7 @@ What you get, the full feature set of this round:
 
 - the MCP server with three read tools: `arp_pulse`, `arp_tool_reputation`, `arp_agent_endpoints` ([MCP tools](/docs/mcp-tools));
 - the hook ([Local memory and sharing](/docs/local-memory)): it keeps a local memory of what failed, shows what a skill contains before `npx skills add` runs, shows what others wrote when a skill fails, and asks once per skill whether it did its job;
-- five commands you type yourself: `/arp:share`, `/arp:share-on`, `/arp:share-off`, `/arp:share-send`, `/arp:line`. The last two need a sponsoring service, which is not hosted yet.
+- five commands you type yourself: `/arp:share`, `/arp:share-on`, `/arp:share-off`, `/arp:share-send`, `/arp:line`. The last two need a sponsoring service: ARP's is hosted at `https://sponsor.arp.intuition.box`, the default from 0.0.4. 0.0.3 cannot write a line through it: it checks line request v5 (task 122), which 0.0.3 does not sign, so update to 0.0.4.
 
 Checked on 2026-11-10 in a clean `node:22-bookworm` container with Claude Code 2.1.322: both install commands succeeded, `claude plugin list` showed `arp@arp`, version 0.0.3, enabled, and the update commands answered `arp is already at the latest version (0.0.3)`.
 
@@ -79,9 +79,17 @@ State: the command was run on Linux with Node 22.21.1 on 2026-11-10, outside Des
 
 ## Claude Desktop and claude.ai: a hosted connector
 
-ARP's MCP server can run read-only as a hosted endpoint, `https://<host>/mcp`, that you add as a custom connector, with nothing installed on your machine. **It is not live**: the endpoint is prepared but not deployed, so there is no address to give yet. This page will name it once it is deployed.
+ARP runs its MCP server read-only as a hosted endpoint, with nothing installed on your machine:
 
-Once live, it will serve the same three read tools, with no hook. One difference with every other route: the words of a search reach ARP's server, because the server runs there, not on your machine.
+```
+https://mcp.arp.intuition.box/mcp
+```
+
+Streamable HTTP, no sign-in, testnet 13579. Add it as a custom connector (untested in Claude, see below), or point any MCP client that takes a URL at it. It is also the `remotes` entry of the MCP Registry listing from 0.0.4.
+
+State: live since 2026-11-11. That day `tools/list` answered `arp_pulse, arp_tool_reputation, arp_agent_endpoints` and a search came back, both by `curl`. It has not yet been added as a connector in Claude Desktop or claude.ai.
+
+It serves the same three read tools, with no hook. One difference with every other route: the words of a search reach ARP's server, because the server runs there, not on your machine.
 
 ## Claude Desktop: the extension
 
@@ -109,7 +117,7 @@ A Gemini CLI extension is built in the repository (`packaging/gemini/arp/`) but 
 npx -y @arp-protocol/cli init --sponsored
 ```
 
-The same install with `ARP_TOOLS=sponsored`: tools that walk the loop with nothing for you to sign, because ARP's sponsoring service pays, plus `arp_get_skill`, which installs a skill you accept into the project's `.claude/skills/`. It holds a local agent key, on testnet. **The sponsoring service is not hosted yet**, so the calls that send something fail and name the service they could not reach.
+The same install with `ARP_TOOLS=sponsored`: tools that walk the loop with nothing for you to sign, because ARP's sponsoring service pays, plus `arp_get_skill`, which installs a skill you accept into the project's `.claude/skills/`. It holds a local agent key, on testnet. From 0.0.4 the calls that send something reach ARP's hosted sponsoring service, `https://sponsor.arp.intuition.box`, testnet 13579. 0.0.3 cannot write a line through it: it checks line request v5 (task 122), which 0.0.3 does not sign. When it does not answer, they fail and name it.
 
 ## The npm package and the MCP Registry
 

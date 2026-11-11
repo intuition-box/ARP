@@ -32,8 +32,8 @@ is code on your machine, the graph it reads is Intuition's, and the files it fet
 GitHub. That property is the whole of ADR `0045` and it is the reason this is installed rather than
 hosted.
 
-_Amended 2026-11-10 (ADR `0161`):_ ARP also runs this server, read-only, as a hosted endpoint, at the
-URL its deployment configures, for a caller who would rather point at a URL than install anything.
+_Amended 2026-11-10 (ADR `0161`):_ ARP also runs this server, read-only, as a hosted endpoint, at
+`https://mcp.arp.intuition.box/mcp` since 2026-11-11, for a caller who would rather point at a URL than install anything.
 Nothing installed uses it. A caller who chooses it sends its tool arguments, the words of a search
 among them, to ARP's server, which logs and keeps none of them, holds no key and reads testnet 13579
 only (`ARP_HOSTED`, below). Everything else in this document is about the server on your machine.
@@ -360,7 +360,8 @@ ARP_SKILLS_DIR         also read by the hook, to find a skill's SKILL.md and dec
                        working directory, refusing (and writing nothing) when a different file is
                        already at one of those paths, and appends the receipt to ARP_RECEIPTS
 ARP_CONTENT            desktop/sponsored only: the content server. Default http://127.0.0.1:3002
-ARP_SPONSOR            desktop/sponsored, arp line, arp share send: the sponsoring service. Default http://127.0.0.1:3200
+ARP_SPONSOR            desktop/sponsored, arp line, arp share send: the sponsoring service. Default https://sponsor.arp.intuition.box since 0.0.4
+                       (http://127.0.0.1:3200 in 0.0.3 and from a checkout)
 ARP_ACTIVITY_DIR       session-log.ts --serve only: the directory it tails. Default .arp
 ARP_ACTIVITY_PORT      session-log.ts --serve only: its port. Default 3003, on 127.0.0.1
 ARP_ACTIVITY_ORIGINS   session-log.ts --serve only: comma-separated origins added to the CORS list

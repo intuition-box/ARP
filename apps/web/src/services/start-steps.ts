@@ -37,7 +37,7 @@ export type StartSignals = {
  */
 export const EXAMPLE_PROMPT = "Find me a skill for a YouTube thumbnail with ARP.";
 
-/** The published CLI (task 74). Nothing on this page needs ARP's sponsor, which is not hosted. */
+/** The published CLI (task 74). Nothing on this page needs ARP's sponsor. */
 const CLI = "npx -y @arp-protocol/cli";
 
 // No "Free for now" step: it read as a selling point the user does not want to push yet

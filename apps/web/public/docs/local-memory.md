@@ -113,7 +113,7 @@ stays on this machine:
 
 A skill stays local when it has no known public source, or when several sources carry its name. Each line is sent once; a line that failed to send is tried again next time.
 
-`arp share send` needs ARP's sponsoring service, which pays for the line. Its address is `ARP_SPONSOR`, `http://127.0.0.1:3200` by default. When it is not running, the command fails and names it.
+`arp share send` needs ARP's sponsoring service, which pays for the line. Its address is `ARP_SPONSOR`, `https://sponsor.arp.intuition.box` by default since 0.0.4 (`http://127.0.0.1:3200` in 0.0.3). When it does not answer, the command fails and names it.
 
 ## What stays and what leaves
 

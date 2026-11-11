@@ -64,13 +64,13 @@ flowchart TB
 | Probe | Sends one `initialize` to each listed MCP endpoint every five minutes and keeps the result. Not deployed yet | No. Its readings are never written on chain |
 | Web app | The index you are reading: tools, agents, activity, search | No. A human signs in their own wallet |
 
-The sponsoring service's hosting is not settled. When it is unavailable, `arp line` and `arp share send` name the service and fail; reading is unaffected.
+ARP hosts the sponsoring service at `https://sponsor.arp.intuition.box`, testnet 13579 only (since 2026-11-11). When it is unavailable, `arp line` and `arp share send` name the service and fail; reading is unaffected.
 
 ### Default local addresses
 
 | Service | Default | Setting |
 | --- | --- | --- |
-| Sponsoring service | `http://127.0.0.1:3200` | `SPONSOR_PORT` (service side), `ARP_SPONSOR` (client side) |
+| Sponsoring service, run locally | `http://127.0.0.1:3200` | `SPONSOR_PORT` (service side), `ARP_SPONSOR` (client side; the CLI 0.0.4 defaults to the hosted one) |
 | Content server, `arp mcp --http` | `http://127.0.0.1:3002` | `PORT` (server side), `ARP_CONTENT` (client side) |
 | Agent node | `http://127.0.0.1:3100` | `AGENT_NODE_PORT` |
 

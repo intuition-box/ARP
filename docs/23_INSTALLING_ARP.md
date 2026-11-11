@@ -131,7 +131,7 @@ One npm package holds the code. Each native package but Claude Code's is a thin 
 generated at release so the two never disagree.
 
 _Added 2026-11-10 (task 92, ADR `0161`):_ one more way needs nothing installed. ARP runs the MCP server
-read-only as a hosted endpoint, at the URL its deployment configures (`apps/web/DEPLOY.md`, "The MCP
+read-only as a hosted endpoint, `https://mcp.arp.intuition.box/mcp` since 2026-11-11 (`apps/web/DEPLOY.md`, "The MCP
 endpoint"), for a marketplace or an agent that points at a URL. None of the installs above uses it. A
 caller who chooses it sends its search words to ARP's server, which keeps none of them.
 

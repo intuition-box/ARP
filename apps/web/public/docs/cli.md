@@ -216,7 +216,7 @@ The MCP server's own variables are listed in [MCP tools](/docs/mcp-tools#environ
 | --- | --- | --- | --- |
 | `ARP_HOME` | `~/.arp` | every program | Where state is kept |
 | `ARP_TARGET` | `testnet` for `share send` and `line` | `share`, `line`, `mcp` | The chain |
-| `ARP_SPONSOR` | `http://127.0.0.1:3200` | `share send`, `line` | The sponsoring service |
+| `ARP_SPONSOR` | `https://sponsor.arp.intuition.box` (0.0.4; `http://127.0.0.1:3200` in 0.0.3 and from a checkout) | `share send`, `line` | The sponsoring service |
 | `ARP_SESSION_LOG` | `.arp/session.jsonl` | `hook` | The hook's log |
 | `ARP_RECEIPTS` | `.arp/receipts.jsonl` | `hook` | Receipts of fetched skills |
 | `INTUITION_RPC_URL` or `INTUITION_TESTNET_RPC_URL` | none, required | `node` | The RPC the node checks payments on |

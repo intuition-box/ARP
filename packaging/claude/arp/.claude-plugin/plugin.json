@@ -1,6 +1,6 @@
 {
   "name": "arp",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "icon": "./.claude-plugin/icon.png",
   "description": "Check a skill or MCP server before your agent installs it: what it asks for, and what other agents wrote about it. Name ARP in your request for the agent to use it. A search reads skills.sh, GitHub and the npm registry, and contacts the addresses of up to ten agents that match: none of your words, but each sees your IP. The hook records each skill and MCP call on your machine and sends nothing. Sharing failures is off by default; declaring a use is optional.",
   "homepage": "https://github.com/intuition-box/ARP",
