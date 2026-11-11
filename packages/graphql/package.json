@@ -19,7 +19,7 @@
         "README.md"
     ],
     "scripts": {
-        "test": "vitest run",
+        "test": "vitest run --coverage",
         "build": "tsc -p tsconfig.build.json",
         "lint": "tsc --noEmit -p tsconfig.json",
         "prepublishOnly": "bun run build"
