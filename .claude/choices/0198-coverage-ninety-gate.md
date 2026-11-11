@@ -7,16 +7,17 @@
 ## Context
 
 `code.md` asked for 100 % on contracts and "every public function has a unit test" elsewhere, and
-nothing measured the second. On 2026-11-11 the four vitest workspaces could not be measured at all, and
-the measured ones ranged from 52 % (`packages/graphql`) to 99 % (`apps/node`) of lines — task 136 holds
+nothing measured the second. On 2026-11-11 the four vitest workspaces could not be measured at all; once
+measured, the workspaces ranged from 52 % (`packages/graphql`) to 99 % (`apps/node`) of lines — task 136 holds
 the table. The user decided: 90 % everywhere, CI blocks, unit tests only.
 
 ## Decision
 
 Each workspace's `test` script runs with coverage and fails under 90 %. Vitest workspaces gate lines,
 branches, functions and statements over `src/**`. Bun workspaces gate lines and functions — bun measures
-no branches — and carry one test importing every `src/` module, because bun otherwise ignores a file no
-test loads. Contracts keep their 100 % rule. A file excluded from the measurement carries its reason in
+no branches, and applies the threshold to each file rather than to the total, which is stricter — and
+carry one test importing every `src/` module, because bun otherwise ignores a file no test loads. Each
+bun workspace also ignores `../../packages/**`, which it imports and which its own workspace gates. Contracts keep their 100 % rule. A file excluded from the measurement carries its reason in
 the config.
 
 ## Alternatives considered

@@ -25,6 +25,19 @@ export default defineConfig({
     plugins: [react()],
     test: {
         globals: false,
+        coverage: {
+            provider: "v8",
+            include: ["src/**"],
+            exclude: [
+                // Mounts React into the page and does nothing else; there is no behaviour to assert.
+                "src/main.tsx",
+                // Test helpers, not product code.
+                "src/test/**",
+                "src/**/__tests__/**",
+                "src/**/*.test.{ts,tsx}",
+            ],
+            thresholds: {lines: 90, branches: 90, functions: 90, statements: 90},
+        },
         projects: [
             {
                 plugins: [react()],

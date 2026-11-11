@@ -51,6 +51,44 @@ enforced any figure.
 4. `code.md`'s coverage targets state the 90 % gate. ADR `0198`.
 5. CI unchanged in shape: `bun run test` already runs every workspace, so the threshold makes it block.
 
+## Outcome
+
+Measured 2026-11-11 on the merged branch, each workspace's own `bun run test`:
+
+| workspace | lines before → after | branches before → after | excluded, with the reason in the config |
+| --- | --- | --- | --- |
+| `packages/protocol` | 94.2 → 98.7 % | 82.0 → 91.3 % | none |
+| `packages/graphql` | 52.1 → 100 % | 66.9 → 94.6 % | none |
+| `apps/mcp` | 62.4 → 97.9 % | 50.4 → 91.7 % | `src/fetch-skill.ts`, `src/session-log.ts` (run at import) |
+| `apps/web` | 74.7 → 99.2 % | 63.5 → 94.4 % | `src/main.tsx` (mounts React only), test helpers under `src/` |
+| `apps/hook` | 67 → 98.7 % | not measured | `src/hook.ts` (reads stdin, exits at import; run as a child process by its tests) |
+| `apps/sponsor` | 84.7 → 99.2 % | not measured | `src/main.ts` (reads the key file, binds a port) |
+| `apps/api` | 92.8 → 98.9 % | not measured | none |
+| `apps/cli` | 97.6 → 97.9 % | not measured | `src/cli.ts` (runs a command at import; tested as the built binary) |
+| `apps/node` | 99.7 % | not measured | `src/node.ts` (calls the RPC at import) |
+| `apps/probe` | 74.0 → 100 % | not measured | none |
+
+The bun "before" figures include a test importing every module, so they differ from the table above
+where an unloaded file was invisible. Every bun workspace ignores `../../packages/**`, gated in its own
+workspace. No test file or test was removed; no product code changed.
+
+Found and **not fixed** (product behaviour, out of this task's scope):
+
+1. `packages/graphql` `RECENT_QUERY` uses `$curveId` without declaring it; its one caller
+   (`packages/protocol/src/recent.ts`) adds the declaration by `.replace`. Latent: nothing breaks today.
+2. `packages/protocol/src/skill-requires.ts` `shellLinesRun` ignores backslashes: an escaped `\"` in a
+   shell fence opens a quote and hides every later line of the fence from `runs`.
+3. `publishableToolUrl("https://github.com/a/b#readme")` refuses with "its query repeats skill"; the
+   cause is the fragment.
+4. `apps/web/src/pages/AtomPanel.test.tsx` and `components/brand/ActivityLog.test.tsx` made real
+   requests through happy-dom's `fetch`. Fixed here: both stub it.
+
+Known weaknesses: under `apps/mcp` about half the new tests mock `@arp-protocol/core`'s readers, and
+five mock an ARP module that does the I/O, rather than `fetch`, as its existing tests already did.
+`apps/hook`'s tests read the real `~/.agents` and `~/.claude/skills` (bun's `homedir()` ignores `HOME`)
+and use `zq-` names to avoid a match. `intuition-source.test.ts` timed out once under three parallel
+coverage runs.
+
 ## Do not do in this task
 
 - No live test: no request to the chain, Intuition's GraphQL, IPFS or a deployed service.
