@@ -14,6 +14,7 @@ export function BeforeSection({
     aside,
     summary,
     children,
+    folded = false,
 }: {
     id: string;
     label: string;
@@ -22,7 +23,10 @@ export function BeforeSection({
     /** The answers in one line; `null` while the reading loads, which keeps the line's height. */
     summary: React.ReactNode;
     children?: React.ReactNode;
+    /** The rows behind one click, the summary line standing for them (an agent, 2026-11-11). */
+    folded?: boolean;
 }) {
+    const rows = children === undefined ? null : <dl className="m-0 mt-3">{children}</dl>;
     return (
         <section aria-labelledby={id} className="border-t border-[color:var(--color-rule-strong)] pt-3.5">
             <div className="flex flex-wrap items-center gap-2">
@@ -34,7 +38,16 @@ export function BeforeSection({
             <p className="mt-2.5 min-h-[1.5em] max-sm:min-h-[3em] font-mono text-[15px] leading-[1.5] text-[color:var(--color-fg)] [overflow-wrap:anywhere]">
                 {summary ?? <span className={steel}>…</span>}
             </p>
-            {children === undefined ? null : <dl className="m-0 mt-3">{children}</dl>}
+            {rows === null || !folded ? (
+                rows
+            ) : (
+                <details>
+                    <summary className={`cursor-pointer text-[13px] ${steel} hover:text-[color:var(--color-silver)]`}>
+                        Details
+                    </summary>
+                    {rows}
+                </details>
+            )}
         </section>
     );
 }

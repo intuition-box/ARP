@@ -1,6 +1,5 @@
 import {useChainChoice} from "../../lib/chain-choice";
 import {chainNameOf} from "../../lib/chain-name";
-import {gatewayUrl} from "../../services/agent-endpoints";
 import {sigilModulesOf} from "../../services/agent-sigil";
 import type {TrustPanelView} from "../../services/agent-trust";
 import {
@@ -49,9 +48,9 @@ import {Sigil} from "../brand/Sigil";
  * and `rules/ui.md` says so first: hierarchy comes from type weight and size, not from boxes.
  *
  * The split is by consequence, not by taste. **Owner** decides who may declare for this agent —
- * `services/declare-use.ts` refuses every other wallet. **Registration file** decides whether
- * anything it claims can be checked at all. Those two change what a reader can do. A CAIP-19 and a
- * registry address are true, necessary, and never the first question.
+ * `services/declare-use.ts` refuses every other wallet. The registry address is true, necessary,
+ * and never the first question. The registration file and the CAIP-19 left the card (the user,
+ * 2026-11-11): Before you call reads the file, and an agent reads both through the MCP server.
  */
 function LeadField({label, hint, children}: {label: string; hint?: string; children: React.ReactNode}) {
     return (
@@ -82,13 +81,6 @@ function Field({label, children}: {label: string; children: React.ReactNode}) {
             </dd>
         </div>
     );
-}
-
-function registrationFileSummary(uri: string): string {
-    if (uri.startsWith("data:")) {
-        return `inline data URI · ${uri.length.toLocaleString("en-US")} chars`;
-    }
-    return truncateMiddle(uri, 28, 12);
 }
 
 /**
@@ -156,7 +148,7 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
 
     return (
         <dl>
-            {/* The two facts that decide something, above the reference and at body size rather
+            {/* The fact that decides something, above the reference and at body size rather
                 than the label size everything else here uses. */}
             <div className="grid gap-y-5">
                 <LeadField
@@ -170,17 +162,6 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
                     ) : (
                         <a href={ownerUrl} target="_blank" rel="noreferrer">
                             {truncateMiddle(view.owner, 10, 8)} ↗
-                        </a>
-                    )}
-                </LeadField>
-                <LeadField label="Registration file">
-                    {view.registrationFile === null ? (
-                        <span className="text-[color:var(--color-steel)]">none published</span>
-                    ) : view.registrationFile.startsWith("data:") ? (
-                        registrationFileSummary(view.registrationFile)
-                    ) : (
-                        <a href={gatewayUrl(view.registrationFile)} target="_blank" rel="noreferrer">
-                            {registrationFileSummary(view.registrationFile)} ↗
                         </a>
                     )}
                 </LeadField>
@@ -227,7 +208,6 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
                         </a>
                     </Field>
                 ) : null}
-                <Field label="CAIP-19">{view.caip19}</Field>
             </div>
         </dl>
     );

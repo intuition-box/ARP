@@ -7,7 +7,6 @@ import {Block, Panel} from "../components/atom/AtomPageParts";
 import {BackLink} from "../components/brand/BackLink";
 import {useNavTrail} from "../components/brand/nav-trail";
 import {chainNameOf} from "../lib/chain-name";
-import {AtomMarket} from "../components/market/AtomMarket";
 import {AgentIdentityPanel, AgentSigil} from "../components/agent/AgentIdentityPanel";
 import {RatingRow} from "../components/agent/RatingRow";
 import {CapabilitySection} from "../components/agent/CapabilitySection";
@@ -15,12 +14,11 @@ import {initialSectionOf, panelDomId, tabDomId} from "../components/agent/tab-id
 import {TrustPanelTabs} from "../components/agent/TrustPanelTabs";
 import {UnreadSources} from "../components/agent/UnreadSources";
 import {identityRegistryFor} from "../lib/deployments";
-import {AgentClaims, AgentDeclareCard} from "../components/agent/AgentClaims";
+import {AgentClaims} from "../components/agent/AgentClaims";
 import {SectionTabs} from "../components/agent/SectionTabs";
 import {AgentEndpoints} from "../components/agent/AgentEndpoints";
 import {BeforeYouCall} from "../components/agent/BeforeYouCall";
 import {useAgentLines} from "../hooks/use-agent-lines";
-import {actionCardClass} from "../lib/surface-class";
 import {useAgentProfile} from "../hooks/use-agent-profile";
 import {isHiddenAgent} from "../services/test-identities";
 import {useStakeSession} from "../hooks/use-stake-session";
@@ -43,11 +41,11 @@ import {asStakeTermId, type StakeSession} from "../services/trust-stake";
  * which providers could not be reached at all, and how thin the market on each
  * claim really is.
  *
- * Laid out like the skill page (ADR `0104`): Before you call, the agent's own words and
- * the tabs on the left, its identity in a card on the right, then the market, the
- * declaration card, and the relations. Identity belongs to no provider, so it sits
- * outside the tabs and does not vanish when a reader opens one. Before you call leads the
- * content column as Before you install leads a skill's (task 112, ADR `0182`).
+ * Laid out like the skill page (ADR `0104`): the agent's own words, Before you call and the tabs
+ * on the left, its identity in a card on the right, then the relations. No market and no
+ * declaration card (the user, 2026-11-11): support stays on skills and tools. Identity
+ * belongs to no provider, so it sits outside the tabs and does not vanish when a reader opens one.
+ * An agent writes its own line after a call, through the MCP server or the hook.
  *
  * Every read follows the chain toggle (`lib/chain-choice.ts`). It used to be mainnet whatever
  * the toggle said, which hid ARP's own testnet edges behind an empty panel.
@@ -136,7 +134,7 @@ function AgentTrustPanelBody() {
     const [searchParams, setSearchParams] = useSearchParams();
     const baseId = useId();
 
-    // The market numbers and the vault a stake lands in must be the same curve.
+    // The ratings' stake control and the vault it lands in must be the same curve.
     // Until the chain read resolves this is undefined and the package default is
     // used, which is correct on mainnet today; if the chain ever reports another
     // curve the query key changes and the profile refetches against it.
@@ -187,9 +185,7 @@ function AgentTrustPanelBody() {
     /**
      * Whether the connected wallet holds a position here, for the sigil's core.
      *
-     * The same query key `AtomMarket` uses, so react-query serves one request for both rather
-     * than two: the alternative was threading the answer up out of a child, which would have made
-     * the identity column depend on the market section's render.
+     * A position taken elsewhere still lights the sigil's core, though this page no longer offers one.
      */
     const viewerVault = useTermVault({
         termId: backingAtomId,
@@ -283,8 +279,8 @@ function AgentTrustPanelBody() {
                 <>
                     {/* **The skill page's layout** (ADR `0104`, task 46b): an eyebrow, the sigil
                         and the name, then what the agent says about itself on the left and the
-                        facts about it in a card on the right. The market runs full width below, the
-                        declaration card under it, and the relations close the page as the field.
+                        facts about it in a card on the right. The relations close the page as the
+                        field.
                         It followed the atom page's 18rem identity rail until 2026-11-02. */}
                     <header className="pt-6">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[12px] text-[color:var(--color-steel)]">
@@ -329,14 +325,26 @@ function AgentTrustPanelBody() {
                         ) : null}
                     </header>
 
-                    {/* **Before you call and the description, Identity, tabs, in that DOM order**
-                        (user, 2026-11-02; task 112): stacked on a phone, what a caller decides on
+                    {/* **The description and Before you call, Identity, tabs, in that DOM order**
+                        (user, 2026-11-02, 2026-11-11; task 112): stacked on a phone, what a caller decides on
                         comes first and the identity before a tab that can hold 35 rows. From `lg`
                         the grid puts Identity in the right column across both rows. Two cards and
                         no third: the x402 Trust Index is Before you call's Payment row, and nothing
                         in the right column appears or vanishes with a reading (ADR `0182`). */}
                     <div className="mt-8 grid items-start gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:grid-rows-[auto_1fr]">
                         <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+                            {/* What the agent does, first: a person reads that before how to
+                                reach it (the user, 2026-11-11). */}
+                            {view.isFallbackMetadata ? (
+                                <p className="mb-8 inline-flex max-w-[64ch] rounded-[var(--radius-tag)] border border-dashed border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-label)] text-[color:var(--color-silver)]">
+                                    Name and URL are the indexer&rsquo;s stand-in — no source
+                                    published a name for this agent
+                                </p>
+                            ) : view.description !== null ? (
+                                <p className="mb-8 max-w-[62ch] text-[17px] text-[color:var(--color-silver)]">
+                                    {view.description}
+                                </p>
+                            ) : null}
                             <BeforeYouCall
                                 agent={{
                                     registrationFile: view.registrationFile,
@@ -344,16 +352,6 @@ function AgentTrustPanelBody() {
                                     tokenId: view.tokenId,
                                 }}
                             />
-                            {view.isFallbackMetadata ? (
-                                <p className="mt-8 inline-flex max-w-[64ch] rounded-[var(--radius-tag)] border border-dashed border-[color:var(--color-rule-strong)] px-3 py-1.5 font-mono text-[length:var(--text-label)] text-[color:var(--color-silver)]">
-                                    Name and URL are the indexer&rsquo;s stand-in — no source
-                                    published a name for this agent
-                                </p>
-                            ) : view.description !== null ? (
-                                <p className="mt-8 max-w-[62ch] text-[17px] text-[color:var(--color-silver)]">
-                                    {view.description}
-                                </p>
-                            ) : null}
                         </div>
 
                         <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
@@ -412,30 +410,11 @@ function AgentTrustPanelBody() {
                         </div>
                     </div>
 
-                    {/* The market on **this agent**, full width, in an action card like the skill
-                        page's. The ratings are one provider's opinion, which runs beside this
-                        rather than feeding it (ADR `0056`). Absent when the graph has no atom:
-                        there is nothing to support. */}
+                    {/* No market on an agent: support stays on skills and tools (the user,
+                        2026-11-11, reversing ADR `0056`'s market on agents). Absent when the graph
+                        has no atom: nothing can point at it. */}
                     {backingAtomId === null ? null : (
                         <>
-                            {/* The same string the `h1` uses, so the confirmation names the same
-                                subject the heading does (ADR `0017` safeguard 4). */}
-                            <div className={`mt-14 ${actionCardClass}`}>
-                                <AtomMarket
-                                    atomTermId={backingAtomId}
-                                    name={view.name ?? `Token ${view.tokenId}`}
-                                    nameIsId={view.name === null}
-                                    heading={null}
-                                />
-                            </div>
-                            {/* One of the page's two writes, so not behind a tab. `(my agent) uses
-                                (this agent)` is a real declaration — ADR `0056` §2. */}
-                            <div className="mt-10 max-w-[48rem]">
-                                <AgentDeclareCard
-                                    atomId={backingAtomId}
-                                    name={view.name ?? `Token ${view.tokenId}`}
-                                />
-                            </div>
                             <Block title="Relations" label="Every declaration about this agent">
                                 <AgentClaims
                                     atomId={backingAtomId}

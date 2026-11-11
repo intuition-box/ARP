@@ -47,7 +47,9 @@ describe("BeforeYouCall", () => {
         ).toBeInTheDocument();
         expect(row("Endpoints")).toHaveTextContent("mcp.example");
         expect(row("Endpoints")).toHaveTextContent("1 no probe can reach");
-        expect(row("Speaks")).toHaveTextContent("A2A, MCP");
+        // The summary names the protocols, so no row repeats them; the rows sit folded under it.
+        expect(screen.queryByText("Speaks")).toBeNull();
+        expect(row("Endpoints").closest("details")?.querySelector("summary")).toHaveTextContent("Details");
         expect(row("Answered")).toHaveTextContent("answered · mcp");
         expect(row("Payment")).toHaveTextContent("x402 asked");
         expect(row("Auth")).toHaveTextContent("none named");
@@ -56,7 +58,7 @@ describe("BeforeYouCall", () => {
     it("keeps every row when the document declares nothing, and says what is missing", () => {
         data = {status: "read", url: agent.registrationFile, contents: readAgentContents({}, null)};
         open();
-        for (const term of ["Endpoints", "Speaks", "Answered", "Payment", "Auth"]) expect(row(term)).toBeInTheDocument();
+        for (const term of ["Endpoints", "Answered", "Payment", "Auth"]) expect(row(term)).toBeInTheDocument();
         expect(row("Endpoints")).toHaveTextContent("none declared");
         expect(row("Answered")).toHaveTextContent("not in the reading");
         expect(row("Payment")).toHaveTextContent("none declared");

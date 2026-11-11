@@ -9,7 +9,7 @@ import {linkClass} from "../../lib/control-class";
 import {beforeCallSummary, type AgentKey} from "../../services/agent-contents";
 
 /**
- * "Before you call", under the agent's name (task 112, ADR `0182`): the agent-side twin of a
+ * "Before you call", under the agent's description (task 112, ADR `0182`): the agent-side twin of a
  * skill's Before you install. An agent is called or hired, not installed, so the questions are
  * whether it can be reached, what it speaks, whether it answered when the directory was read, and
  * what it asks for: a payment (with x402 Doctor's word on its endpoints when its reading covered
@@ -18,8 +18,9 @@ import {beforeCallSummary, type AgentKey} from "../../services/agent-contents";
  *
  * Every row is always there, from the first paint, holding "…" while the document loads and "—" when
  * there is none or it cannot be read; the x402 Trust Index is one line in the Payment row whatever it
- * says. So the description and the tabs below do not move. The endpoint-by-endpoint detail is the
- * Endpoints tab's; this names the hosts and stops.
+ * says. The rows are folded behind the summary line, which already names the protocols, so there is
+ * no Speaks row (the user, 2026-11-11). The endpoint-by-endpoint detail is the Endpoints tab's; this
+ * names the hosts and stops.
  */
 export function BeforeYouCall({agent}: {agent: AgentKey}) {
     const query = useAgentContents(agent);
@@ -33,6 +34,7 @@ export function BeforeYouCall({agent}: {agent: AgentKey}) {
         <BeforeSection
             id="before-you-call"
             label="Before you call"
+            folded
             aside={
                 read === undefined ? null : (
                     <>
@@ -74,7 +76,7 @@ export function BeforeYouCall({agent}: {agent: AgentKey}) {
 }
 
 /** Every row a read document shows. */
-const ALWAYS = ["Endpoints", "Speaks", "Answered", "Payment", "Auth"];
+const ALWAYS = ["Endpoints", "Answered", "Payment", "Auth"];
 
 function Rows({contents, registrationFile}: {contents: AgentContents; registrationFile: string | null}) {
     const hosts = [...new Set(contents.endpoints.flatMap((endpoint) => (endpoint.host === null ? [] : [endpoint.host])))];
@@ -98,13 +100,6 @@ function Rows({contents, registrationFile}: {contents: AgentContents; registrati
                             />
                         )}
                     </>
-                )}
-            </QuestionRow>
-            <QuestionRow term="Speaks">
-                {contents.protocols.length === 0 ? (
-                    <span className={steel}>no MCP or A2A declared</span>
-                ) : (
-                    contents.protocols.map((protocol) => protocol.toUpperCase()).join(", ")
                 )}
             </QuestionRow>
             <QuestionRow term="Answered">
