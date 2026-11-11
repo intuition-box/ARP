@@ -4,6 +4,9 @@
 **Date:** 2026-10-27
 **Triggered by:** user request — _« si c'est du trust on paye en trust, si c'est sur testnet il n'y a que du tTRUST, car on lit **et agit** sur testnet obligatoirement, sinon aucun intérêt d'avoir un toggle »_
 
+> **Narrowed by ADR `0194`, 2026-11-11.** The agent import writes on testnet 13579 whatever the
+> toggle says; every other write still follows it.
+
 ## Context
 
 A mainnet/testnet toggle was added on 2026-10-27 for **reads only**, and **without an ADR** — there

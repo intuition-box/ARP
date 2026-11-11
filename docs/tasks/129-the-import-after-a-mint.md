@@ -1,8 +1,9 @@
 # Task 129 — The import after a mint
 
 **Status:** done 2026-11-11, branch `fix/129-import-after-mint`, written by arp-97. Task 129,
-post-mortem `117`, allocated by the orchestrator. No ADR: no decision on the import is reversed
-(ADR `0062` is about the mint, which already follows the chain toggle); the user's decision is here.
+post-mortem `117`, ADR `0194`, allocated by the orchestrator. ADR `0194` narrows ADR `0061`: the
+import writes on 13579 whatever the toggle says. ADR `0062` is about the mint, which already
+follows the toggle.
 **Rules:** `ui.md`, `code.md`, `portability.md`, `claims.md`, `workflow.md`.
 **Required skills:** `arp-contributing`. Agent `ui-reviewer` before `task-verifier`.
 
