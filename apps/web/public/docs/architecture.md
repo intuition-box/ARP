@@ -71,7 +71,7 @@ ARP hosts the sponsoring service at `https://sponsor.arp.intuition.box`, testnet
 | Service | Default | Setting |
 | --- | --- | --- |
 | Sponsoring service, run locally | `http://127.0.0.1:3200` | `SPONSOR_PORT` (service side), `ARP_SPONSOR` (client side; the CLI 0.0.4 defaults to the hosted one) |
-| Content server, `arp mcp --http` | `http://127.0.0.1:3002` | `PORT` (server side), `ARP_CONTENT` (client side) |
+| Content server, `arp mcp --http` | `http://127.0.0.1:3002` | `PORT` (server side), `ARP_CONTENT` (client side; the CLI 0.0.6 defaults to ARP's hosted one, `https://content.arp.intuition.box`) |
 | Agent node | `http://127.0.0.1:3100` | `AGENT_NODE_PORT` |
 
 ## What happens on a write

@@ -50,7 +50,7 @@ const pkg = JSON.parse(readFileSync(join(CLI, 'package.json'), 'utf8')) as {
   version: string;
   description: string;
   license: string;
-  config?: { sponsorDefault?: string };
+  config?: { sponsorDefault?: string; contentDefault?: string };
 };
 
 /** Text, or the icon's bytes. */
@@ -99,7 +99,11 @@ async function bundledCli(): Promise<string> {
     banner: '#!/usr/bin/env node',
     // The sponsoring service's default, from `package.json`'s `config.sponsorDefault` as its build inlines it
     // (task 105, ADR `0175`). Always defined, empty for the loopback, so the bundle never reads it at run time.
-    define: { 'process.env.ARP_SPONSOR_DEFAULT': JSON.stringify(pkg.config?.sponsorDefault ?? '') },
+    // The content server's, from `config.contentDefault`, the same way (task 131, ADR `0196`).
+    define: {
+      'process.env.ARP_SPONSOR_DEFAULT': JSON.stringify(pkg.config?.sponsorDefault ?? ''),
+      'process.env.ARP_CONTENT_DEFAULT': JSON.stringify(pkg.config?.contentDefault ?? ''),
+    },
   });
   const [only, ...others] = built.outputs;
   if (only === undefined || others.length > 0) {

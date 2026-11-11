@@ -4,6 +4,9 @@
 **Date:** 2026-11-10
 **Triggered by:** the user, 2026-11-10, task 92 (`docs/tasks/92-a-hosted-read-only-mcp-endpoint.md`)
 
+> **Amended by ADR `0196`, 2026-11-11.** The CLI names one hosted URL from 0.0.6: the content server,
+> a separate process that serves no MCP and no search and signs receipts. This endpoint is unchanged.
+
 ## Context
 
 The user decided on 2026-11-10 that ARP offers a hosted MCP endpoint: a marketplace or an agent points at a

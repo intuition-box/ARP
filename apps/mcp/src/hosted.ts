@@ -24,6 +24,11 @@ const REFUSED_WHEN_HOSTED = [
 
 type Env = Readonly<Record<string, string | undefined>>;
 
+/** Whether `name` is a bare DNS name, the shape `ARP_PUBLIC_HOST` takes. */
+export function isBareHostName(name: string): boolean {
+  return HOST_NAME.test(name);
+}
+
 export function isHosted(env: Env = process.env): boolean {
   return env[HOSTED_FLAG] === '1';
 }

@@ -252,7 +252,7 @@ Read by the server at start. Your install sets the first two.
 | `ARP_PROJECT_DIR` | the working directory | The project that relative paths resolve against |
 | `ARP_SKILLS_DIR` | unset | Where `arp_get_skill` installs a skill. `arp init --sponsored` sets `.claude/skills` |
 | `ARP_SPONSOR` | `https://sponsor.arp.intuition.box` (0.0.4; `http://127.0.0.1:3200` in 0.0.3 and from a checkout) | The sponsoring service |
-| `ARP_CONTENT` | `http://127.0.0.1:3002` | The content server |
+| `ARP_CONTENT` | `https://content.arp.intuition.box` from 0.0.6 (task 131); `http://127.0.0.1:3002` in 0.0.5 and earlier and from a checkout | The content server |
 | `ARP_DOMAIN_ATTESTOR` | ARP's published addresses | Whose index of domains to read. Comma-separated. Blank disables domain search |
 | `ARP_ACCEPTED_SIGNERS` | empty | Receipt signers this server trusts, comma-separated |
 | `ARP_NO_RECEIPTS` | unset | `1` runs with no receipt key |

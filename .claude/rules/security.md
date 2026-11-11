@@ -42,7 +42,7 @@ Walk through each item for every contract change. Document the result (clean pas
   Delegation Framework delegations (EIP-712, signed in the app, verified by `apps/sponsor` before
   it publishes one); the operator's EIP-712 statement on import
   (`apps/web/src/services/agent-import.ts`); the MCP server's content receipt
-  (`packages/protocol/src/receipt.ts`); the node's hire receipt
+  (`packages/protocol/src/receipt.ts`), signed since task 131 also by ARP's hosted content server with a key of its own (ADR `0196`); the node's hire receipt
   (`packages/protocol/src/hire-receipt.ts`, ADR `0083`); the agent's sponsor request
   (`packages/protocol/src/sponsor/request.ts`, ADR `0096`); the address's mint-gas request
   (`packages/protocol/src/sponsor/mint-gas.ts`, ADR `0116`), which carries no verifying contract

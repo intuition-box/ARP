@@ -74,7 +74,13 @@ export function inProject(path: string, projectDir: string | undefined = process
 }
 export const SKILLS_DIR = process.env['ARP_SKILLS_DIR'] === undefined ? undefined : inProject(process.env['ARP_SKILLS_DIR']);
 export const READ_ONLY = process.env['ARP_TOOLS'] === 'read' || DESKTOP;
-export const CONTENT_URL = process.env['ARP_CONTENT'] ?? 'http://127.0.0.1:3002';
+/**
+ * The content server when `ARP_CONTENT` is unset: ARP's hosted one in a release (task 131, ADR `0196`),
+ * inlined from `apps/cli`'s `package.json` `config.contentDefault` like the sponsor's (ADR `0175`). Empty,
+ * the loopback, which is where `arp mcp --http` listens. Dot access on purpose: bun inlines `process.env.X`.
+ */
+const CONTENT_DEFAULT = process.env.ARP_CONTENT_DEFAULT || 'http://127.0.0.1:3002';
+export const CONTENT_URL = process.env['ARP_CONTENT'] ?? CONTENT_DEFAULT;
 /**
  * The sponsoring service when `ARP_SPONSOR` is unset (task 105, ADR `0175`). `apps/cli`'s builds inline
  * `ARP_SPONSOR_DEFAULT` from its `package.json` `config.sponsorDefault`, so a release names the hosted service

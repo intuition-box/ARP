@@ -21,13 +21,14 @@
     "LICENSE"
   ],
   "config": {
-    "sponsorDefault": "https://sponsor.arp.intuition.box"
+    "sponsorDefault": "https://sponsor.arp.intuition.box",
+    "contentDefault": "https://content.arp.intuition.box"
   },
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "build": "bun run --cwd ../../packages/protocol build && rm -rf dist && ARP_SPONSOR_DEFAULT=$npm_package_config_sponsorDefault bun build src/cli.ts --env 'ARP_SPONSOR_DEFAULT*' --outdir dist --target=node --format=esm --splitting --entry-naming '[name].js' --chunk-naming 'chunks/[name]-[hash].js' --external ./hook.js --external @metamask/smart-accounts-kit --banner '#!/usr/bin/env node' && bun build ../hook/src/hook.ts --outfile dist/hook.js --target=node --format=esm --external viem --external 'viem/*'",
+    "build": "bun run --cwd ../../packages/protocol build && rm -rf dist && ARP_SPONSOR_DEFAULT=$npm_package_config_sponsorDefault bun build src/cli.ts --env 'ARP_SPONSOR_DEFAULT*' --define process.env.ARP_CONTENT_DEFAULT=\\\"$npm_package_config_contentDefault\\\" --outdir dist --target=node --format=esm --splitting --entry-naming '[name].js' --chunk-naming 'chunks/[name]-[hash].js' --external ./hook.js --external @metamask/smart-accounts-kit --banner '#!/usr/bin/env node' && bun build ../hook/src/hook.ts --outfile dist/hook.js --target=node --format=esm --external viem --external 'viem/*'",
     "test": "bun run build && bun test",
     "prepublishOnly": "bun run build",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json",

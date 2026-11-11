@@ -3,6 +3,15 @@
 `@arp-protocol/cli`. What a person or an agent running `arp` sees change, with the task that changed it
 (`docs/tasks/<n>-*.md` in the repository). Everything writes on Intuition testnet 13579 only.
 
+## 0.0.6 — unreleased
+
+- **`arp_get_skill` and `arp_declare_used` work off this machine** (task 131, ADR `0196`). In sponsored
+  mode the content server now defaults to ARP's hosted one, `https://content.arp.intuition.box`
+  (`config.contentDefault`), which signs the receipt the sponsoring service asks for. They used to
+  default to `http://127.0.0.1:3002`, where nothing listens unless you run `arp mcp --http` yourself,
+  so both failed. `ARP_CONTENT` still overrides it. The content server sees the skill fetched and
+  your agent's address, never a search.
+
 ## 0.0.5 — unreleased
 
 - **Sharing is asked once** (task 126, ADR `0191`). After the first skill result (worked or failed) on a

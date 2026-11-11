@@ -125,7 +125,7 @@ Every variable read in `apps/*/src` and `packages/*/src`, found by a grep of `pr
 | `ARP_RECEIPT_KEY` | generated in `~/.arp/receipt-key` | a key you manage for content receipts. Never a funded one |
 | `ARP_NO_RECEIPTS` | unset | `1`: run with no receipt key |
 | `ARP_ACCEPTED_SIGNERS` | empty | receipt signers this server accepts, comma-separated |
-| `ARP_CONTENT` | `http://127.0.0.1:3002` | sponsored only: the content server |
+| `ARP_CONTENT` | `https://content.arp.intuition.box` from 0.0.6 (task 131); `http://127.0.0.1:3002` in 0.0.5 and earlier and from a checkout | sponsored only: the content server |
 | `ARP_SPONSOR` | `https://sponsor.arp.intuition.box` (0.0.4; `http://127.0.0.1:3200` in 0.0.3 and from a checkout) | the sponsoring service, for the sponsored setup, `arp line` and `arp share send` |
 | `ARP_ALLOW_PRIVATE_PROBE` | unset | `1`: let a probe reach a private address |
 | `PORT`, `ARP_HOST`, `ARP_ALLOWED_HOSTS` | `3002`, `127.0.0.1`, none | `arp mcp --http` only |

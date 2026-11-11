@@ -1,10 +1,11 @@
-# Deploying the site, the sponsor and the MCP endpoint on Coolify
+# Deploying the site, the sponsor, the MCP endpoint and the content server on Coolify
 
-One Coolify project, three applications: the web app, a static build served by nginx from
+One Coolify project, four applications: the web app, a static build served by nginx from
 `apps/web/Dockerfile` (task 74), ARP's sponsoring service from `apps/sponsor/Dockerfile` (task
-78, ADR `0149`), and the hosted read-only MCP endpoint from `apps/mcp/Dockerfile` (task 92, ADR
-`0161`). The last two have their own sections, [The sponsor](#the-sponsor) and
-[The MCP endpoint](#the-mcp-endpoint).
+78, ADR `0149`), the hosted read-only MCP endpoint from `apps/mcp/Dockerfile` (task 92, ADR
+`0161`), and the content server from `apps/mcp/Dockerfile.content` (task 131, ADR `0196`). The last
+three have their own sections, [The sponsor](#the-sponsor), [The MCP endpoint](#the-mcp-endpoint)
+and [The content server](#the-content-server).
 
 ## Before it goes online
 
@@ -221,9 +222,79 @@ docker run --rm -p 3002:3002 -e ARP_PUBLIC_HOST=mcp.example.org arp-mcp
 curl -s http://127.0.0.1:3002/ -H 'Host: mcp.example.org' | head -c 300
 ```
 
+## The content server
+
+`apps/mcp/src/content-server.ts` (task 131, ADR `0196`): `GET /content/:atomId` and `GET /`, nothing
+else. It fetches a skill from its origin, passes the bytes through and signs a receipt naming the
+agent that asked. The sponsoring service pays for a declaration only against such a receipt, so the
+sponsored setup's `arp_get_skill` and `arp_declare_used` need this server. No MCP, no tool, no search:
+it sees which skill an agent fetched and the agent's address, never a search's words. Testnet 13579
+only.
+
+### Its key
+
+A key of its own, that signs receipts and nothing else (ADR `0080`). It never holds funds; do not
+fund its address. Create it on your machine; the command writes it to a file of mode 600 and prints
+only its address:
+
+```bash
+cd apps/mcp && bun -e "import {loadOrCreateKeyFile} from '@arp-protocol/core/node'; import {privateKeyToAccount} from 'viem/accounts'; const {key, created} = loadOrCreateKeyFile(process.env.HOME + '/.arp/content-hosted.key'); console.log(created ? 'created' : 'exists', privateKeyToAccount(key).address)"
+```
+
+The address goes on the sponsor, in its `SPONSOR_CONTENT_SIGNERS` (comma-separated, after any value
+already there), and the sponsor is redeployed. Without it the sponsor refuses every receipt this
+server signs, with `unknown-signer`.
+
+### Coolify settings
+
+| Setting | Value |
+| --- | --- |
+| Source | the Git repository, branch `main` |
+| Build pack | **Dockerfile** |
+| Base directory | `/`. The Dockerfile's path goes in Dockerfile location, never here |
+| Dockerfile location | `/apps/mcp/Dockerfile.content` |
+| Ports exposes | `3003` |
+| Domain | `https://content.arp.intuition.box` (the `*.arp.intuition.box` wildcard already points at the server) |
+| Health check | **off** in Coolify. The image has its own `HEALTHCHECK` on `/` |
+| Persistent storage, file mount | destination `/run/secrets/receipt.key`, content: the key file's one line. Coolify strips a leading `0x`; the reader accepts the 64 hex characters either way |
+| Replicas | one |
+
+The mounted file must be readable by the container's user, uid 1000. Unless it is mode 600 and owned
+by that user, the entrypoint (`apps/mcp/content-entrypoint.sh`) copies it to `/dev/shm` with mode 600
+and the server reads the copy, as the sponsor's does.
+
+### Variables
+
+Set at run time, marked **Available at Runtime**, not at Buildtime. The image already sets
+`ARP_TARGET=testnet`, `ARP_HOST=0.0.0.0` and `PORT=3003`; leave them.
+
+| Variable | Required | What it is |
+| --- | --- | --- |
+| `ARP_PUBLIC_HOST` | **yes** | `content.arp.intuition.box`: no scheme, no port. The server answers that `Host` and its loopback names, and refuses any other with a 403 |
+| `ARP_RECEIPT_KEY_FILE` | **yes** | `/run/secrets/receipt.key`, the file mount's destination |
+
+It refuses to start with `ARP_RECEIPT_KEY` or `ARP_AGENT_PRIVATE_KEY` set, or with `ARP_TARGET` other
+than `testnet`. Check it once deployed: `/` names the signer, and an MCP call is refused.
+
+```bash
+curl -s https://content.arp.intuition.box/
+curl -s -o /dev/null -w '%{http_code}\n' -X POST https://content.arp.intuition.box/mcp \
+  -H 'content-type: application/json' -d '{}'
+# the first prints {"name":"ARP content server", … "signer":"0x…" …}; the second prints 405
+```
+
+Locally, with a throwaway key file:
+
+```bash
+docker build -f apps/mcp/Dockerfile.content -t arp-content .
+docker run --rm -p 127.0.0.1:3003:3003 -v /path/to/receipt.key:/run/secrets/receipt.key:ro \
+  -e ARP_PUBLIC_HOST=content.example.org -e ARP_RECEIPT_KEY_FILE=/run/secrets/receipt.key arp-content
+curl -s http://127.0.0.1:3003/
+```
+
 ## What the site does not run
 
 Since 2026-11-11 the site, the sponsor and the MCP endpoint run at `https://arp.intuition.box`,
-`https://sponsor.arp.intuition.box` and `https://mcp.arp.intuition.box` (task 117). The content server and the activity feed run on one machine and are not hosted. Nothing on the site
+`https://sponsor.arp.intuition.box` and `https://mcp.arp.intuition.box` (task 117). The activity feed runs on one machine and is not hosted; the content server has its own section below (task 131). Nothing on the site
 needs them: steps that would are hidden while their variable is unset. The sponsor and the MCP
 endpoint are above.

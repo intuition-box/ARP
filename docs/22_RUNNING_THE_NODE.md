@@ -377,7 +377,8 @@ ARP_SKILLS_DIR         also read by the hook, to find a skill's SKILL.md and dec
                        install question, arp_get_skill writes <dir>/<name>/**, relative to the
                        working directory, refusing (and writing nothing) when a different file is
                        already at one of those paths, and appends the receipt to ARP_RECEIPTS
-ARP_CONTENT            desktop/sponsored only: the content server. Default http://127.0.0.1:3002
+ARP_CONTENT            desktop/sponsored only: the content server. Default https://content.arp.intuition.box from 0.0.6
+                       (task 131; http://127.0.0.1:3002 in 0.0.5 and earlier and from a checkout)
 ARP_SPONSOR            desktop/sponsored, arp line, arp share send: the sponsoring service. Default https://sponsor.arp.intuition.box since 0.0.4
                        (http://127.0.0.1:3200 in 0.0.3 and from a checkout)
 ARP_ACTIVITY_DIR       session-log.ts --serve only: the directory it tails. Default .arp

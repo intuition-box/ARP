@@ -34780,7 +34780,7 @@ function domainWalk() {
     attestor: DOMAIN_ATTESTORS
   };
 }
-var refusedHosting, HOSTED, PORT, RECEIPT_SIGNER, DESKTOP, SKILLS_DIR, READ_ONLY, CONTENT_URL, SPONSOR_DEFAULT = "https://sponsor.arp.intuition.box", SPONSOR_URL, SESSION_LOG, RECEIPTS_LOG, TARGETS, targetName, chainId, recorded, record, sessionCatalogue, accepted = null, GRAPHQL_URL, RPC_URL, MULTI_VAULT_RAW, GRAPHQL, SKILLS_INDEX, RPC, MULTI_VAULT, reads, toolAtoms, DOMAIN_ROOT = "tool", REACHABLE_ATOM = "0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805", DOMAIN_ATTESTORS, directory, IN_CONTEXT_OF, LINE_PAYERS;
+var refusedHosting, HOSTED, PORT, RECEIPT_SIGNER, DESKTOP, SKILLS_DIR, READ_ONLY, CONTENT_DEFAULT = "https://content.arp.intuition.box", CONTENT_URL, SPONSOR_DEFAULT = "https://sponsor.arp.intuition.box", SPONSOR_URL, SESSION_LOG, RECEIPTS_LOG, TARGETS, targetName, chainId, recorded, record, sessionCatalogue, accepted = null, GRAPHQL_URL, RPC_URL, MULTI_VAULT_RAW, GRAPHQL, SKILLS_INDEX, RPC, MULTI_VAULT, reads, toolAtoms, DOMAIN_ROOT = "tool", REACHABLE_ATOM = "0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805", DOMAIN_ATTESTORS, directory, IN_CONTEXT_OF, LINE_PAYERS;
 var init_config = __esm(() => {
   init_dist2();
   init__esm();
@@ -34807,7 +34807,7 @@ var init_config = __esm(() => {
   DESKTOP = process.env["ARP_TOOLS"] === "desktop" || process.env["ARP_TOOLS"] === "sponsored";
   SKILLS_DIR = process.env["ARP_SKILLS_DIR"] === undefined ? undefined : inProject(process.env["ARP_SKILLS_DIR"]);
   READ_ONLY = process.env["ARP_TOOLS"] === "read" || DESKTOP;
-  CONTENT_URL = process.env["ARP_CONTENT"] ?? "http://127.0.0.1:3002";
+  CONTENT_URL = process.env["ARP_CONTENT"] ?? CONTENT_DEFAULT;
   SPONSOR_URL = process.env["ARP_SPONSOR"] ?? SPONSOR_DEFAULT;
   SESSION_LOG = inProject(process.env["ARP_SESSION_LOG"] ?? ".arp/session.jsonl");
   RECEIPTS_LOG = inProject(process.env["ARP_RECEIPTS"] ?? ".arp/receipts.jsonl");

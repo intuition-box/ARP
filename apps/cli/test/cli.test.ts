@@ -174,3 +174,13 @@ test("the sponsoring service's default is fixed when the bundle is built, never 
   const expected = pkg.config.sponsorDefault || 'http://127.0.0.1:3200';
   expect(bundle).toContain(`SPONSOR_DEFAULT = ${JSON.stringify(expected)}`);
 });
+
+test("the content server's default is fixed when the bundle is built, like the sponsor's (task 131)", () => {
+  const chunks = join(import.meta.dir, '..', 'dist', 'chunks');
+  const bundle = [CLI, ...readdirSync(chunks).map((file) => join(chunks, file))]
+    .map((file) => readFileSync(file, 'utf8'))
+    .join('\n');
+  expect(bundle).not.toContain('ARP_CONTENT_DEFAULT');
+  const expected = pkg.config.contentDefault || 'http://127.0.0.1:3002';
+  expect(bundle).toContain(`CONTENT_DEFAULT = ${JSON.stringify(expected)}`);
+});
