@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-120 entries, one per completed task. Written by `task-verifier` on a pass.
+121 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -126,3 +126,4 @@
 | [114](114-ask-once-to-share.md) | `docs/tasks/126-ask-once-to-share.md` | PASS (second pass; the first failed because "always" published every result already kept) | Ask once whether to share, with "always" |
 | [116](116-the-agent-page-is-for-reading.md) | `docs/tasks/128-the-agent-page-is-for-reading.md` | PASS (round 2) | The agent page is for reading |
 | [117](117-the-import-after-a-mint.md) | `docs/tasks/129-the-import-after-a-mint.md` | PASS (round 2; round 1 failed on missing tests and an uncited third-party claim) | The import after a mint |
+| [118](118-load-on-the-hosted-surfaces.md) | `docs/tasks/130-load-on-the-hosted-surfaces.md` | PASS (second pass; the first failed on one claim and flagged one gate defect) | The hosted surfaces under a crowd |

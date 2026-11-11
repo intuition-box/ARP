@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-183 decisions. Newest last. `choices/README.md` says when to write one.
+184 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -230,3 +230,4 @@ Read these before relying on them.
 | [0191](0191-ask-once-after-the-first-result-with-always.md) | 2026-11-11 | Accepted | Sharing is asked once, after the first skill result, with "always" |
 | [0193](0193-the-web-page-on-an-agent-offers-no-market.md) | 2026-11-11 | Accepted | the web page on an agent offers no market and no declaration |
 | [0194](0194-the-import-is-on-testnet-whatever-the-toggle.md) | 2026-11-11 | Accepted | The import is on testnet 13579, whatever the toggle says |
+| [0195](0195-the-hosted-surfaces-bound-their-load.md) | 2026-11-11 | Accepted | The hosted surfaces bound their load, and the server caches none of the words searched |

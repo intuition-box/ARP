@@ -361,6 +361,9 @@ ARP_CLI                the CLI script the hook runs as `arp share send --auto`. 
                        cli.js beside the hook, then ~/.arp/bin/send.json
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
 ARP_PULSE_SEARCH       off: arp_pulse runs no package, and takes search_output only
+ARP_SEARCH_CONCURRENCY how many search packages run at once, across every caller. Default 4
+ARP_SEARCH_QUEUE       how many more may wait for a turn, each no longer than the search's own
+                       limit; past it a phrase answers that the server is busy. Default 64
 ARP_SKILLS_INDEX_URL   off: arp_find_tools searches ARP's catalogue alone and sends your words nowhere.
                        Another base URL is read instead of https://skills.sh
 ARP_TOOLS              read: the plugin's set, arp_pulse, arp_agent_endpoints and arp_tool_reputation, and

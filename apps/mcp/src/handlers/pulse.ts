@@ -44,6 +44,7 @@ import { searchDomainTree } from '../domain-tree.js';
 import { LINE_WORDS, lineWordIds } from '../line-words.js';
 import { datedPulse } from '../pulse-readings.js';
 import { diskListingCache, processFileCache } from '../pulse-cache.js';
+import { createSearchGate, positiveSetting } from '../search-gate.js';
 import { agentsForDomain, offersForNeed } from './agents.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 
@@ -172,20 +173,38 @@ function searchIsCached(): boolean {
   return existsSync(join(searchHome(), '.npm', '_npx'));
 }
 
+/** One server, many callers: how many searches run at once, and how many may wait for a turn. */
+const searchGate = createSearchGate({
+  maxRunning: positiveSetting(process.env['ARP_SEARCH_CONCURRENCY'], 4),
+  maxWaiting: positiveSetting(process.env['ARP_SEARCH_QUEUE'], 64),
+});
+
 async function search(query: string, timeoutMs: number, stop: AbortSignal, firstDownload = false): Promise<{ output: string } | { error: string }> {
   if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env['ARP_PULSE_SEARCH'] })) {
     return { error: 'this server does not run the search package' };
   }
+  const home = searchHome();
   try {
-    const home = searchHome();
     mkdirSync(home, { recursive: true, mode: 0o700 });
     chmodSync(home, 0o700); // `mode` above does not tighten a directory that already exists
     // Logs an earlier version let npm write, each with the words of one search.
     rmSync(join(home, '.npm', '_logs'), { recursive: true, force: true });
-    return { output: await runSearch(searchInvocation(query, process.env['PATH'], home, firstDownload), { timeoutMs, stop }) };
   } catch (error) {
     return { error: withoutPaths(error instanceof Error ? (error.message.split('\n')[0] ?? 'failed') : String(error)) };
   }
+  const invocation = searchInvocation(query, process.env['PATH'], home, firstDownload);
+  // The words alone are not the key: an answer is what one package, on one PATH, printed for them.
+  return searchGate.run(
+    JSON.stringify([invocation.env['PATH'] ?? '', home, query.trim()]),
+    (shared) =>
+      runSearch(invocation, { timeoutMs, stop: shared }).then(
+        (output) => ({ output }),
+        (error: unknown) => ({ error: withoutPaths(error instanceof Error ? (error.message.split('\n')[0] ?? 'failed') : String(error)) }),
+      ),
+    stop,
+    // Nobody waits in line longer than a search would take; the run keeps its own limit.
+    timeoutMs,
+  );
 }
 
 type Constraints = {

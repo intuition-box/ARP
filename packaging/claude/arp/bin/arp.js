@@ -42059,6 +42059,101 @@ var init_pulse_cache = __esm(() => {
   processFileCache = memoryFileCache();
 });
 
+// ../mcp/src/search-gate.ts
+function createSearchGate(options) {
+  const inFlight = new Map;
+  const waiting = [];
+  let running = 0;
+  const release = () => {
+    running -= 1;
+    const next = waiting.shift();
+    if (next !== undefined)
+      next();
+  };
+  const acquire = (stop, waitMs) => {
+    if (running < options.maxRunning) {
+      running += 1;
+      return Promise.resolve(true);
+    }
+    if (waiting.length >= options.maxWaiting)
+      return Promise.resolve(false);
+    return new Promise((resolve3) => {
+      const turn = () => {
+        clearTimeout(timer);
+        stop.removeEventListener("abort", leave);
+        running += 1;
+        resolve3(true);
+      };
+      const leave = () => {
+        clearTimeout(timer);
+        stop.removeEventListener("abort", leave);
+        const at = waiting.indexOf(turn);
+        if (at !== -1)
+          waiting.splice(at, 1);
+        resolve3(false);
+      };
+      const timer = setTimeout(leave, waitMs);
+      waiting.push(turn);
+      stop.addEventListener("abort", leave, { once: true });
+    });
+  };
+  return {
+    async run(key, task, stop, waitMs) {
+      if (stop.aborted)
+        return { error: CANCELLED };
+      let shared2 = inFlight.get(key);
+      if (shared2 === undefined) {
+        const controller = new AbortController;
+        const outcome = (async () => {
+          if (!await acquire(controller.signal, waitMs))
+            return { error: BUSY };
+          try {
+            if (controller.signal.aborted)
+              return { error: CANCELLED };
+            return await task(controller.signal);
+          } finally {
+            release();
+          }
+        })();
+        const entry = { outcome, callers: 0, stop: controller };
+        inFlight.set(key, entry);
+        outcome.finally(() => {
+          if (inFlight.get(key) === entry)
+            inFlight.delete(key);
+        });
+        shared2 = entry;
+      }
+      const joined = shared2;
+      joined.callers += 1;
+      let onStop = () => {};
+      const left = new Promise((resolve3) => {
+        onStop = () => {
+          joined.callers -= 1;
+          if (joined.callers === 0) {
+            if (inFlight.get(key) === joined)
+              inFlight.delete(key);
+            joined.stop.abort();
+          }
+          resolve3({ error: CANCELLED });
+        };
+        stop.addEventListener("abort", onStop, { once: true });
+      });
+      try {
+        return await Promise.race([joined.outcome, left]);
+      } finally {
+        if (!stop.aborted)
+          joined.callers -= 1;
+        stop.removeEventListener("abort", onStop);
+      }
+    }
+  };
+}
+function positiveSetting(raw2, fallback2) {
+  const value = raw2 === undefined ? Number.NaN : Number(raw2);
+  return Number.isInteger(value) && value > 0 ? value : fallback2;
+}
+var BUSY = "the server is running as many searches as it can; try again in a moment", CANCELLED = "the call was cancelled";
+
 // ../mcp/src/handlers/pulse.ts
 import { chmodSync as chmodSync3, existsSync as existsSync6, mkdirSync as mkdirSync8, readFileSync as readFileSync7, rmSync as rmSync2 } from "node:fs";
 import { homedir as homedir4 } from "node:os";
@@ -42133,16 +42228,18 @@ async function search(query, timeoutMs, stop, firstDownload = false) {
   if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env["ARP_PULSE_SEARCH"] })) {
     return { error: "this server does not run the search package" };
   }
+  const home = searchHome();
   try {
-    const home = searchHome();
     mkdirSync8(home, { recursive: true, mode: 448 });
     chmodSync3(home, 448);
     rmSync2(join11(home, ".npm", "_logs"), { recursive: true, force: true });
-    return { output: await runSearch(searchInvocation(query, process.env["PATH"], home, firstDownload), { timeoutMs, stop }) };
   } catch (error) {
     return { error: withoutPaths(error instanceof Error ? error.message.split(`
 `)[0] ?? "failed" : String(error)) };
   }
+  const invocation = searchInvocation(query, process.env["PATH"], home, firstDownload);
+  return searchGate.run(JSON.stringify([invocation.env["PATH"] ?? "", home, query.trim()]), (shared2) => runSearch(invocation, { timeoutMs, stop: shared2 }).then((output) => ({ output }), (error) => ({ error: withoutPaths(error instanceof Error ? error.message.split(`
+`)[0] ?? "failed" : String(error)) })), stop, timeoutMs);
 }
 function readConstraints(raw2) {
   const given = typeof raw2 === "object" && raw2 !== null ? raw2 : {};
@@ -42565,7 +42662,7 @@ async function answer(id, args, budget, cancelled) {
     ...await agentsWithin(domain)
   });
 }
-var DEFAULT_LIMIT3 = 5, MAX_LIMIT = 20, MAX_PHRASES = 4, SKILLS_CLI = "skills@1.7.6", PULSE_BUDGET, PROBE_MS = 3000, CONTAINS_PER_LIST = 4, bounded2 = (words) => words.slice(0, 30).map((word) => word.slice(0, 80));
+var DEFAULT_LIMIT3 = 5, MAX_LIMIT = 20, MAX_PHRASES = 4, SKILLS_CLI = "skills@1.7.6", PULSE_BUDGET, PROBE_MS = 3000, searchGate, CONTAINS_PER_LIST = 4, bounded2 = (words) => words.slice(0, 30).map((word) => word.slice(0, 80));
 var init_pulse2 = __esm(() => {
   init_dist2();
   init_node2();
@@ -42586,6 +42683,10 @@ var init_pulse2 = __esm(() => {
     agentsMs: 8000,
     filesMs: 1e4
   };
+  searchGate = createSearchGate({
+    maxRunning: positiveSetting(process.env["ARP_SEARCH_CONCURRENCY"], 4),
+    maxWaiting: positiveSetting(process.env["ARP_SEARCH_QUEUE"], 64)
+  });
 });
 
 // ../mcp/src/server.ts
@@ -44924,11 +45025,11 @@ var init_check = __esm(() => {
 
 // ../hook/src/classify.ts
 function isCancelled(text2) {
-  return CANCELLED.test(text2);
+  return CANCELLED2.test(text2);
 }
-var CANCELLED;
+var CANCELLED2;
 var init_classify = __esm(() => {
-  CANCELLED = /\b(interrupted|cancel(l)?ed|aborted) by (the )?user\b|\buser (rejected|denied|declined)\b|\bpermission denied by user\b|\buser doesn't want to (proceed|take this action)\b/i;
+  CANCELLED2 = /\b(interrupted|cancel(l)?ed|aborted) by (the )?user\b|\buser (rejected|denied|declined)\b|\bpermission denied by user\b|\buser doesn't want to (proceed|take this action)\b/i;
 });
 
 // ../hook/src/append.ts
