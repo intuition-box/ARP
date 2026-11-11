@@ -42,9 +42,9 @@ user chose to keep the rule (2026-11-11). So the server keeps no response, on ei
 
 **Whether a response holds anything user-specific:** the server caches nothing. The proxy's response
 is skills.sh's answer to the words, the same for any visitor; the visitor's cookies are not forwarded
-and `Set-Cookie` is hidden (task 82), so it holds nothing about the visitor. It still carries
-`Cache-Control: public, max-age=300`, unchanged by this task, so the visitor's browser may keep it
-five minutes. A `429` carries no such header: `add_header` without `always` does not apply to it.
+and `Set-Cookie` is hidden (task 82), so it holds nothing about the visitor. It carries
+`Cache-Control: private, max-age=300` since the follow-up below, so the visitor's browser may keep it
+five minutes and no shared cache in between may. A `429` carries no such header: `add_header` without `always` does not apply to it.
 What the proxy sends upstream is unchanged: the path and the query string.
 
 ## Do not do in this task
@@ -60,3 +60,11 @@ What the proxy sends upstream is unchanged: the path and the query string.
 test && bun run check:tokens`; `bun run check`; `cd apps/cli && bun run test && bun run packages
 --check`; `docker build` of `apps/web/Dockerfile` and `apps/mcp/Dockerfile`, and the web image run
 locally to see the `429`.
+
+## Follow-up, 2026-11-11
+
+The user chose `private` over `public` on the proxy's `Cache-Control` (task 82 had `public`), relayed
+by the orchestrator: only the visitor's browser may keep the answer to their words. In
+`apps/web/nginx.conf`, the header says `private`, and skills.sh's own `Cache-Control: public, max-age=0,
+must-revalidate`, which the proxy passed through beside ours, is hidden (seen on the local image
+before the fix: two `Cache-Control` headers on one response); gates `apps/web` tsc, lint, test and a `docker build` of `apps/web`.

@@ -49,4 +49,6 @@ in-memory cache, 2026-11-11.
 **Neutral (worth knowing):**
 - The proxy's `Cache-Control: public, max-age=300` (task 82) is unchanged, so a visitor's browser
   may keep skills.sh's answer five minutes. That is the visitor's machine, not ARP's server.
+  **Amended 2026-11-11:** the user chose `private` in its place, so no shared cache between the
+  browser and the site may keep it (task 130, follow-up).
 - The gate is per process: two replicas would each run four.
