@@ -207,7 +207,7 @@ describe('arp_find_agents with a domain', () => {
   });
 
   describe('a need in its own words, from the run that found nobody (docs/tasks/70, step 6)', () => {
-    // The offer `scripts/demo/agent-call-handler.ts` serves, copied because apps import no script.
+    // The offer `scripts/demo/agent-call-handler.ts` served (on the `future/hire-loop` branch since task 139), copied because apps import no script.
     const offer = {
       description: 'Answers from a private collection of internal project notes that are published nowhere else.',
       input: '{"note": "<the note id>"}',

@@ -393,8 +393,7 @@ describe("the import path mints nothing", () => {
     it("does not reach the mint service, the pin service or any identity registry", () => {
         // A static check, because the regression it guards against is an
         // import someone adds later, not a call this suite would happen to run.
-        expect(source).not.toMatch(/from "\.\/agent-identity"/);
-        expect(source).not.toMatch(/from "\.\/intuition-pin"/);
+        expect(source).not.toMatch(/from "\.\/identity-mint"/);
         expect(source).not.toMatch(/identity-registry/);
         expect(source).not.toMatch(/pinThing/);
         expect(source).not.toMatch(/registerAgent/);

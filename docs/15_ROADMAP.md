@@ -124,7 +124,7 @@ rather than a reader's assumption that Phase 0 handled it.
   to call it.
 - An operator signs a delegation scoped by domain and capped; the agent declares and deposits.
   **The agent half is built** — `toDelegatedCalls` wraps the plan for redemption, one call per
-  redemption. **The operator half is not**: nothing in this repo yet asks a third-party operator to
+  redemption (on the `future/hire-loop` branch since task 139, ADR `0199`). **The operator half is not**: nothing in this repo yet asks a third-party operator to
   sign a delegation, and the domain scoping has no mainnet mechanism (Phase 3, gap 4).
 
 **Gate**: a tool's reputation changes because an agent ARP does not control staked on it.

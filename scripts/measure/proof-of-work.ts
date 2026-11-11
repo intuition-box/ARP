@@ -147,7 +147,6 @@ const SUITES: {dir: string; runner: "vitest" | "bun"}[] = [
     {dir: "apps/web", runner: "vitest"},
     {dir: "apps/cli", runner: "bun"},
     {dir: "apps/hook", runner: "bun"},
-    {dir: "apps/node", runner: "bun"},
     {dir: "apps/sponsor", runner: "bun"},
     {dir: "apps/probe", runner: "bun"},
     {dir: "apps/api", runner: "bun"},

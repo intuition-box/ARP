@@ -2,7 +2,7 @@
   "name": "arp",
   "version": "0.0.0",
   "private": true,
-  "description": "ARP — Agent Reputation Protocol: the web app, the MCP server, the node, the protocol packages and the contracts.",
+  "description": "ARP — Agent Reputation Protocol: the web app, the MCP server, the hook, the sponsor, the protocol packages and the contracts.",
   "engines": {
     "node": ">=20",
     "bun": ">=1.2"
@@ -10,7 +10,6 @@
   "workspaces": [
     "apps/web",
     "apps/mcp",
-    "apps/node",
     "apps/hook",
     "apps/cli",
     "apps/api",

@@ -181,8 +181,8 @@ Say plainly what the demos show and what they do not:
 - **Claude Code** adds the runtime's record of the invocation, which is written by a hook and not
   by the model.
 - **Proof of an action** is a fact the chain records: a payment from one agent to another, with the
-  paid agent's signed receipt (tasks 43 and 44, `ReceiptEnforcer`). It is built, but not wired into
-  either demo. It is the next demo to plan if this question keeps coming.
+  paid agent's signed receipt (tasks 43 and 44, `ReceiptEnforcer`). It was built and never wired into
+  either demo; the node and the enforcer are on the `future/hire-loop` branch since task 139. It is the next demo to plan if this question keeps coming.
 
 ---
 

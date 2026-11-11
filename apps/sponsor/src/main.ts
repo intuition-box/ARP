@@ -76,7 +76,7 @@ import { categoryLog, categoryTree, compoundsFrom, lineSubjectCheck, lineToolUrl
 import { resolveOnGitHubCached, skillDigestOnGitHub, skillMarkdownOnGitHub } from './github.ts';
 import { DEFAULT_ENDPOINT_CHECKS_PER_HOUR, pinnedAsk, toolAdmitter } from './admit-tool.ts';
 import { repoSpellingsOnGraph } from './indexer.ts';
-import { intuitionJsonPinner, intuitionPinner } from './pin.ts';
+import { intuitionPinner } from './pin.ts';
 import {
   addressList,
   createSponsor,
@@ -119,7 +119,7 @@ const PORT = count('SPONSOR_PORT', 3200);
 const listening = listenFrom(PORT, process.env.SPONSOR_LISTEN, process.env.SPONSOR_PUBLIC_HOST);
 if ('error' in listening) fail(listening.error);
 const LISTEN: Listen = listening;
-// Optional: unset, the routes that pin (`/identity`, `/publish`, the listing) answer 503. Never printed.
+// Optional: unset, the routes that pin (`/identity`, the listing) answer 503. Never printed.
 const PIN_KEY = (process.env.INTUITION_PIN_API_KEY ?? '').trim();
 // `~/.arp/` (or `ARP_HOME`), never the working directory: started anywhere else, a ledger resolved
 // against it is empty, and an empty ledger sponsors every proof a second time (ADR `0116`).
@@ -212,10 +212,6 @@ const limits: SponsorLimits = {
     (process.env.SPONSOR_DEPOSITS_PER_AGENT_PER_DAY ?? '').trim() === ''
       ? null
       : count('SPONSOR_DEPOSITS_PER_AGENT_PER_DAY', 1),
-  publicationsPerDelegatorPerDay: count(
-    'SPONSOR_PUBLICATIONS_PER_DELEGATOR_PER_DAY',
-    ADR_0092_LIMITS.publicationsPerDelegatorPerDay,
-  ),
   // A mainnet rule (ADR `0094` as amended): leave it unset on testnet.
   withdrawalThresholdBps:
     threshold === undefined
@@ -423,24 +419,6 @@ const service = createSponsor({
   limits,
   ledger,
   acceptedContentSigners,
-  // Task 37c: on when the pinning key is set. The predicates are the ones the graph already
-  // carries (`data/deployments/13579.json`, `arp.delegationRegister`), read before this was wired.
-  publish:
-    PIN_KEY === ''
-      ? null
-      : {
-          delegationManager: getAddress(deployments.metamaskDelegationFramework.delegationManager),
-          predicates: {
-            delegateTo: deployments.arp.delegationRegister.delegateTo as Hex, // 32-byte ids, recorded.
-            inContextOf: deployments.arp.delegationRegister.inContextOf as Hex,
-          },
-          // EIP-1271 and EIP-6492 included: a delegator is a smart account.
-          verify: (args) => publicClient.verifyTypedData(args),
-          pin: intuitionJsonPinner({
-            apiKey: PIN_KEY,
-            headerName: process.env.INTUITION_PIN_API_KEY_HEADER ?? 'apikey',
-          }),
-        },
   pinThing:
     PIN_KEY === ''
       ? null
@@ -492,9 +470,6 @@ export async function main(): Promise<void> {
   process.stderr.write(`  requests   ${LINE_REQUESTS}\n`);
   process.stderr.write(`  receipts   ${LINE_RECEIPTS}\n`);
   process.stderr.write(`  x402 terms ${PROBE_URL === '' ? 'live read only (no ARP_PROBE_URL)' : `probe ${PROBE_URL}, then a live read`}\n`);
-  process.stderr.write(
-    `  publish    ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : 'on (delegation register, task 37c)'}\n`,
-  );
 }
 
 if (import.meta.main) await main();

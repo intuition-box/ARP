@@ -7,7 +7,7 @@ An agent that does a job for others can be found in the same search as a skill, 
 | you are | you need | you use |
 | --- | --- | --- |
 | **looking for an agent** to do a job | nothing to read; a wallet of your own to pay | `arp_pulse`, `arp_agent_endpoints`, and `arp_find_agents` in the full tool set from `arp init` |
-| **an agent offering a job** | an ERC-8004 identity and a machine that runs `arp node` | `arp node`, `arp init --node` |
+| **an agent offering a job** | an ERC-8004 identity and an endpoint you run | an endpoint of your own; the CLI carries no node after 0.0.6 |
 
 An **agent** here is an ERC-8004 identity: a token id in an identity registry on a given chain, written `eip155:<chainId>:<registry>` plus an `agentId`. Its owner publishes a registration document that lists where the agent can be reached.
 
@@ -57,75 +57,9 @@ A receipt that holds shows that the wallet that paid controls the agent the line
 
 To ask one address directly, `arp_probe_endpoint` (in the full tool set) returns `confirmed` with a code (`live`, `dead`, `serves-declared-protocol`, `declared-protocol-not-served`), `not-checkable`, or `inconclusive`. A timeout is a verdict about the agent; a TLS or DNS failure is not, because it could be the network in between; a `429` is never a verdict. Each confirmed result carries the request, so anyone can reproduce it with one `curl`. See [MCP tools](/docs/mcp-tools).
 
-## Being hired: the node
+## Being hired
 
-`arp node` makes an agent hireable. It listens at the address the agent publishes, checks on the network that the requester paid, runs the job, and returns a signed receipt. **It signs receipts and never transactions.**
-
-```bash
-AGENT_REGISTRY=eip155:13579:0x… AGENT_ID=2 \
-  INTUITION_RPC_URL=https://testnet.rpc.intuition.systems/http \
-  arp node
-curl -s localhost:3100/healthz
-```
-
-The node listens on `127.0.0.1` only. If `cloudflared` or `ngrok` is installed, it starts a tunnel and prints the public `https://` address. With neither installed and no `ARP_NODE_PUBLIC_URL`, it refuses to start unless `ARP_NODE_TUNNEL=none`. A `cloudflared` quick tunnel needs no account but gives a new address on every start; a stable address is a tunnel you run yourself, given as `ARP_NODE_PUBLIC_URL`. ARP relays none of the traffic.
-
-### What it serves
-
-| request | answer |
-| --- | --- |
-| `GET /healthz` | `{ ok, agent, minBudgetWei }` |
-| `GET /` | the agent's address, its one endpoint (`POST /task`), the minimum payment, and the `offer` if there is one |
-| `POST /task` | the job. Body: `paymentTxHash`, `requesterAddress`, `verifier`, `termId`, `payload` |
-
-### What it checks before working
-
-```mermaid
-flowchart TD
-    R["POST /task"] --> S{"Well-formed hash and address?"}
-    S -- "no" --> E1["400"]
-    S -- "yes" --> L{"Payment never used before?"}
-    L -- "no" --> E3["409"]
-    L -- "yes" --> P{"Payment mined, sent to this agent, from the declared requester, at least the minimum?"}
-    P -- "no" --> E2["402"]
-    P -- "yes" --> J["Runs the handler"]
-    J --> Q["Result and a signed receipt"]
-```
-
-One payment buys one job. Every accepted payment is kept in a ledger (`~/.arp/node-payments.jsonl`), so the same payment presented twice gets a `409`. Requests are also limited per client per minute, paid or not.
-
-### The work is yours
-
-`ARP_NODE_HANDLER` names a module that exports `handle(payload, context)`. Without one, the node echoes the payload back. The same module may export an `offer`: three short strings, `description`, `input` and `output`, served at `GET /` so a caller can read what it sells before paying.
-
-### Settings
-
-| variable | default | what it is |
-| --- | --- | --- |
-| `INTUITION_RPC_URL` | required | the network payments are read on, and the receipt's chain |
-| `AGENT_REGISTRY` + `AGENT_ID` | unset | the agent's ERC-8004 identity; both or neither |
-| `AGENT_NODE_PORT` | `3100` | |
-| `AGENT_NODE_MIN_BUDGET` | `0.001` | the smallest payment accepted, in the network's native unit |
-| `ARP_NODE_TUNNEL` | `auto` | `auto`, `cloudflared`, `ngrok`, `configured` or `none` |
-| `ARP_NODE_PUBLIC_URL` | unset | the `https` address of a tunnel you run |
-| `ARP_NODE_HANDLER` | unset | the module that does the job |
-| `ARP_NODE_KEY_FILE` | `~/.arp/node.key` | the node key, created on first start, readable only by you |
-| `AGENT_NODE_LEDGER` | `~/.arp/node-payments.jsonl` | payments already used |
-| `AGENT_NODE_RATE_LIMIT` | `30` | `POST /task` per client per minute |
-| `AGENT_NODE_RECEIPT_TTL` | `86400` | seconds a receipt stays usable |
-
-The full list, with body size and handler timeout, is in [Running the MCP server, the node and the hook](https://github.com/intuition-box/ARP/blob/main/docs/22_RUNNING_THE_NODE.md).
-
-## Binding the node to the agent
-
-`arp init --node` proves that this node speaks for this agent. The node sends a directory the agent's id, its public key and its address; the directory reads who owns the token and returns a message; the **owner signs it in their own wallet** and pastes the signature; the node key signs it too.
-
-```bash
-arp init --node --agent-registry eip155:13579:0x… --agent-id 2 \
-  --endpoint https://<your tunnel> --directory https://<a handshake service>
-```
-
-The binding is saved to `~/.arp/node-binding.json`. Once it is published on Intuition, signed by your wallet or by the sponsoring service, `signed_endpoints` reads it. Anyone can re-check it against the registry without asking ARP, and transferring the token cancels it. This is the only request the node makes to a directory, once, at install. No directory is hosted yet, so `--directory` names one you run.
+An agent is hired at an address it publishes and runs itself. ARP's own hire endpoint, `arp node`, and the handshake that bound it to an agent, `arp init --node`, were in the CLI up to 0.0.6 and are no longer in it; they are kept on the repository's [`future/hire-loop`](https://github.com/intuition-box/ARP/tree/future/hire-loop) branch. A node started from 0.0.6 or earlier keeps running, and its signed address and receipts are read as before.
 
 ## The receipt
 

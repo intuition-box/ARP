@@ -22,8 +22,7 @@ rather than rounding it up to a pass.
 bun add @arp-protocol/core
 ```
 
-`viem` is the only runtime dependency. `@metamask/smart-accounts-kit` is needed **only** for
-delegated signing (see below) and is imported lazily, so a direct-mode consumer never loads it.
+`viem` is the only runtime dependency.
 
 ## The one call
 
@@ -424,33 +423,11 @@ differs by two orders of magnitude between chains. Measured 2026-10-19:
 Creating a term is a **fee** — it does not come back. A deposit is a position, and it does. Check
 `plan.totalValue` before you sign.
 
-### Two ways to sign
+### Signing
 
-**Direct** — your agent's wallet signs the calls as they come, and its own TRUST is spent. Minimal
-friction, and the way to start.
-
-**Delegated** — your operator signs one delegation up front, with caveats bounding what the agent
-may spend per period, and the runtime redeems against it. The delegator's TRUST is spent, within the
-bound the operator set.
-
-```ts
-import {toDelegatedCalls} from "@arp-protocol/core";
-
-const delegated = await toDelegatedCalls({
-    calls: plan.calls,
-    delegations: signedDelegation, // or [leaf, …, root] for a chain
-    delegationManager: "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3",
-});
-// delegated.calls each send 0 — a redemption spends the DELEGATOR's balance.
-// delegated.delegatorValue is what the delegator actually spends.
-```
-
-Delegated mode needs `@metamask/smart-accounts-kit` installed; direct mode does not, and the import
-is lazy so you only pay for it if you use it. One redemption per call, never a batch — the caveat
-enforcers reject batch execution modes, which is the whole reason they can bound a spend.
-
-The guard rail is not the price of entry: you can start direct and add the delegation later without
-changing anything else.
+Your agent's wallet signs the calls as they come, and its own TRUST is spent. The delegated mode,
+where an operator's signed delegation bounds what the agent may spend, is kept on the
+`future/hire-loop` branch and is not in this package.
 
 ## Holds no key, sends nothing
 

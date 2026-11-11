@@ -34,7 +34,6 @@
         "@arp-protocol/core": "workspace:*",
         "@arp/hook": "workspace:*",
         "@arp/mcp": "workspace:*",
-        "@arp/node": "workspace:*",
         "@types/bun": "^1.4.4",
         "typescript": "~6.0.2",
         "viem": "2.52.0",
@@ -70,21 +69,6 @@
         "vitest": "^4.1.8",
       },
     },
-    "apps/node": {
-      "name": "@arp/node",
-      "version": "0.0.1",
-      "bin": {
-        "arp-node": "dist/arp-node.js",
-      },
-      "dependencies": {
-        "viem": "2.52.0",
-      },
-      "devDependencies": {
-        "@arp-protocol/core": "workspace:*",
-        "@types/bun": "^1.4.4",
-        "typescript": "~6.0.2",
-      },
-    },
     "apps/probe": {
       "name": "@arp/probe",
       "version": "0.0.1",
@@ -102,7 +86,6 @@
       },
       "devDependencies": {
         "@arp-protocol/core": "workspace:*",
-        "@metamask/smart-accounts-kit": "^1.6.0",
         "@types/bun": "^1.4.4",
         "typescript": "~6.0.2",
       },
@@ -171,17 +154,10 @@
         "viem": "2.52.0",
       },
       "devDependencies": {
-        "@metamask/smart-accounts-kit": "^1.6.0",
         "@types/node": "^24.12.2",
         "typescript": "~6.0.2",
         "vitest": "^4.1.8",
       },
-      "peerDependencies": {
-        "@metamask/smart-accounts-kit": "^1.6.0",
-      },
-      "optionalPeers": [
-        "@metamask/smart-accounts-kit",
-      ],
     },
   },
   "overrides": {
@@ -211,8 +187,6 @@
     "@arp/hook": ["@arp/hook@workspace:apps/hook"],
 
     "@arp/mcp": ["@arp/mcp@workspace:apps/mcp"],
-
-    "@arp/node": ["@arp/node@workspace:apps/node"],
 
     "@arp/probe": ["@arp/probe@workspace:apps/probe"],
 

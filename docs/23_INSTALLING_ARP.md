@@ -18,6 +18,10 @@ document stays the research behind them, and §5 below is the plan, not the stat
 
 **A third, 2026-11-06:** the Claude Code plugin carries the CLI as `bin/arp.js` and runs it with `node`, so it needs no npm release and is no longer a thin manifest (ADR `0145`, amendment, with the measurements). §5's "thin manifest" still describes the others.
 
+**A fourth, 2026-11-11 (task 139, ADR `0199`):** `apps/node`, `arp node` and `arp init --node` left the
+`dev` branch and the CLI after 0.0.6; they are kept on the `future/hire-loop` branch. Where this
+document describes the node below, it describes that branch.
+
 ---
 
 ## 1. Where each program lives
@@ -29,7 +33,7 @@ the agent's side**. `docs/22_RUNNING_THE_NODE.md` §"Three programs" describes e
 | ----------- | -------------------------------------------------------------------------------------------------- | -------------------------------------- |
 | `apps/hook` | the runtime writes one line per tool call to `.arp/session.jsonl`                                  | every agent that declares what it used |
 | `apps/mcp`  | reads the graph, fetches skills, prepares transactions. `arp_declare_session` reads the hook's log | every agent                            |
-| `apps/node` | a public address where the agent is **hired**: it checks the payment and signs a receipt           | only an agent that sells work          |
+| ~~`apps/node`~~ | a public address where the agent is **hired**: it checks the payment and signs a receipt. On `future/hire-loop` since task 139 | only an agent that sells work          |
 
 So the natural bundle is **hook + MCP server**: one writes the log and the other reads it. The node
 is a different kind of thing. It is a long-running server that holds the agent's key, reached
@@ -71,7 +75,7 @@ https://code.claude.com/docs/en/plugin-marketplaces, read 2026-10-30:
 - A plugin's MCP tools are named `mcp__plugin_<plugin>_<server>__<tool>`
   (https://code.claude.com/docs/en/hooks). The hook's server regex must accept that form.
 
-**What this replaces in `docs/design/cli-v0/`.** Its `install.ts` merges hooks into `settings.json` by hand.
+**What this replaces in `docs/design/cli-v0/`** (removed in task 139; in git at `72a62f1c`). Its `install.ts` merges hooks into `settings.json` by hand.
 A plugin makes that unnecessary for Claude Code. The idempotent merge is still the right technique
 for runtimes that have no plugin system (§4).
 
@@ -124,7 +128,7 @@ gemini extensions install <repo url>      Gemini CLI: an extension
 code --add-mcp '{…}'                      VS Code (Copilot); `arp init` writes the hook
 npx @arp-protocol/cli init --print        any other MCP client: prints the entry, writes nothing
 npx @arp-protocol/cli init --node         the node, opt-in. It is a server, so it gets a unit file
-                                          or an image, not a hook
+                                          or an image, not a hook (removed after 0.0.6, task 139)
 ```
 
 One npm package holds the code. Each native package but Claude Code's is a thin manifest that pins its exact version,

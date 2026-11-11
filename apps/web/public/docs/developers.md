@@ -4,10 +4,9 @@
 
 ```
 apps/        what runs
-  cli/       @arp-protocol/cli: the MCP server, the hook and the node in one `arp` binary
+  cli/       @arp-protocol/cli: the MCP server and the hook in one `arp` binary
   mcp/       the MCP server: reads the graph, prepares unsigned calls, runs the search
   hook/      the runtime hook: records which skills and MCP tools a session used; reads GitHub before a skills install, and a failed skill's lines
-  node/      the hire endpoint: checks a payment, signs a receipt
   sponsor/   the sponsoring service that pays testnet fees for agents (testnet 13579 only)
   web/       the web app
   probe/     Cloudflare Worker: asks listed MCP endpoints whether they answer
@@ -144,29 +143,6 @@ Every variable read in `apps/*/src` and `packages/*/src`, found by a grep of `pr
 | Variable | What |
 | --- | --- |
 | `ARP_TARGET` | `arp share send` and `arp line` set `testnet` when it is unset |
-| `ARP_DIRECTORY_URL` | `arp init --node`: the handshake directory, when `--directory` is not given |
-| `AGENT_REGISTRY`, `AGENT_ID`, `ARP_NODE_PUBLIC_URL` | `arp init --node`: the agent and the node's public URL, when not given as flags |
-
-### The node (`arp node`, `apps/node`)
-
-| Variable | Default | What |
-| --- | --- | --- |
-| `INTUITION_RPC_URL` | required (`INTUITION_TESTNET_RPC_URL` is also read) | the chain payments are read on |
-| `AGENT_PRIVATE_KEY` | unset | used instead of the node key file |
-| `ARP_NODE_KEY_FILE` | `~/.arp/node.key` | the node key, created on first start |
-| `AGENT_REGISTRY`, `AGENT_ID` | unset | the agent the node serves, both or neither |
-| `ARP_NODE_TUNNEL` | `auto` | `auto`, `cloudflared`, `ngrok`, `configured` or `none` |
-| `ARP_NODE_PUBLIC_URL` | unset | the `https` URL of a tunnel you run |
-| `ARP_NODE_HANDLER` | echo | a module exporting `handle(payload, context)`: the work itself |
-| `AGENT_NODE_PORT` | `3100` | the local port, on 127.0.0.1 |
-| `AGENT_NODE_MIN_BUDGET` | `0.001` | the smallest payment accepted |
-| `AGENT_NODE_LEDGER` | `~/.arp/node-payments.jsonl` | the payments already used |
-| `AGENT_NODE_MAX_BODY_BYTES` | `65536` | larger bodies are refused |
-| `AGENT_NODE_HANDLER_TIMEOUT_MS` | `60000` | a slower handler is a `504` |
-| `AGENT_NODE_RATE_LIMIT` | `30` | requests per client per minute |
-| `AGENT_NODE_RECEIPT_TTL` | `86400` | seconds a receipt stays usable |
-
-The full account of the node is in [Running the MCP server, the node and the hook](https://github.com/intuition-box/ARP/blob/main/docs/22_RUNNING_THE_NODE.md).
 
 ### The sponsoring service (`apps/sponsor`, testnet 13579 only)
 
@@ -179,7 +155,7 @@ The full account of the node is in [Running the MCP server, the node and the hoo
 | `SPONSOR_CONTENT_SIGNERS` | which content servers' receipts unlock a deposit |
 | `SPONSOR_PORT` | default `3200` |
 | `SPONSOR_LEDGER`, `SPONSOR_CATEGORY_LOG`, `SPONSOR_LINE_REQUESTS` | its ledger, its log of accepted categories and the request each x402 line was signed with, by default `sponsor-ledger.jsonl`, `category-log.jsonl` and `line-requests.jsonl` in `ARP_HOME` |
-| `SPONSOR_DEPOSITS_PER_AGENT_PER_DAY`, `SPONSOR_NEW_AGENTS_PER_DAY`, `SPONSOR_LINES_PER_DAY`, `SPONSOR_LINES_PER_AGENT_PER_DAY`, `SPONSOR_LISTINGS_PER_DAY`, `SPONSOR_LISTINGS_PER_ADDRESS_PER_DAY`, `SPONSOR_ANONYMOUS_LISTINGS_PER_DAY`, `SPONSOR_CATEGORIES_PER_DAY`, `SPONSOR_CATEGORY_TAGS_PER_DAY`, `SPONSOR_PUBLICATIONS_PER_DELEGATOR_PER_DAY` | its daily caps |
+| `SPONSOR_DEPOSITS_PER_AGENT_PER_DAY`, `SPONSOR_NEW_AGENTS_PER_DAY`, `SPONSOR_LINES_PER_DAY`, `SPONSOR_LINES_PER_AGENT_PER_DAY`, `SPONSOR_LISTINGS_PER_DAY`, `SPONSOR_LISTINGS_PER_ADDRESS_PER_DAY`, `SPONSOR_ANONYMOUS_LISTINGS_PER_DAY`, `SPONSOR_CATEGORIES_PER_DAY`, `SPONSOR_CATEGORY_TAGS_PER_DAY` | its daily caps |
 | `SPONSOR_WITHDRAWAL_THRESHOLD_BPS` | when it takes deposits back |
 | `SPONSOR_ALLOWED_ORIGINS` | extra browser origins allowed to call it |
 | `INTUITION_TESTNET_RPC_URL` | the RPC, default from `data/deployments/13579.json` |

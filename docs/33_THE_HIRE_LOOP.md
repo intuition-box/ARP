@@ -4,6 +4,10 @@
 cette boucle… éviter de refaire quelque chose qui est déjà fait par tout le monde »). Nothing here is
 built. It is the hire column of `docs/32`.
 
+**Since 2026-11-11 (task 139, ADR `0199`)** the code this concept cites for the hire — `apps/node`,
+the delegation flow, `ReceiptEnforcer`, the hire demos — is on the `future/hire-loop` branch, not on
+`dev`.
+
 **What it answers:** which actors and which actions it takes for one agent to hire another for a
 specialised task, how they pay each other, and which parts already exist elsewhere so ARP does not
 rebuild them.

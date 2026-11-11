@@ -54,7 +54,6 @@ export {
 } from "./queries/atom-standing.js";
 export {FIND_AGENTS_QUERY} from "./queries/discover.js";
 export {ALL_HIERARCHY_QUERY, OUR_HIERARCHY_QUERY, TAGGED_QUERY} from "./queries/domains.js";
-export {ATOM_LABELS_QUERY} from "./queries/atom-labels.js";
 export {SAME_AS_SUBJECTS_QUERY} from "./queries/same-as-subjects.js";
 export {RECENT_QUERY, RECENT_STAKES_QUERY} from "./queries/recent.js";
 export {REGISTERED_TOOLS_QUERY} from "./queries/registered-tools.js";

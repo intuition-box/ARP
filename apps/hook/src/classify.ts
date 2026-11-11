@@ -28,7 +28,8 @@ import type { ToolCall } from './payload.ts';
  *
  * The failure's text is read to pick a category and **never returned**. The result carries an
  * outcome and at most a status code. Taken from the `arp-cli-v0` patch
- * (`docs/design/cli-v0/files-packages-cli/src/classify.ts`), adapted to {@link ToolCall}.
+ * (`docs/design/cli-v0/files-packages-cli/src/classify.ts`, removed in task 139; in git at `72a62f1c`),
+ * adapted to {@link ToolCall}.
  */
 export type Outcome =
   | 'ok'

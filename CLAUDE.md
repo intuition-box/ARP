@@ -174,7 +174,7 @@ ARP/
 │   ├── design/                      design handoffs, one folder per thing designed — its
 │   │                                `README.md` says what each is and whether it is built:
 │   │                                `brand/` (ADR `0057`), `motion/`, `claim-field/`, `pages/`,
-│   │                                `cli-surfaces/`, `cli-v0/`, `readme-badges/`
+│   │                                `cli-surfaces/`, `nav-coin/`, `landing-galaxy/`
 │   └── reference/                   third-party material kept for reading, not citing
 ├── contracts/                         Solidity (Foundry)
 ├── apps/                              what RUNS (ADR 0082)
@@ -183,10 +183,11 @@ ARP/
 │   │                                  sponsored mode (`ARP_TOOLS=desktop` in the Desktop extension,
 │   │                                  `sponsored` from `arp init --sponsored`) holds a local agent
 │   │                                  key that signs `register()` and one approval (ADR 0110)
-│   ├── node/                          the agent node — listens, checks a payment, signs a receipt
 │   ├── hook/                          the runtime hook — records locally; reads GitHub before a skills install (ADR 0167) and the index on a skill failure (ADR 0168); when a skill loads it asks for one closed line at the end of the reply, and on Stop it records that line, never continuing the turn (ADR 0169, 0179); undecided, it asks once whether to share, and with a yes starts `arp share send` detached at SessionEnd (ADR 0191)
-│   ├── cli/                           `@arp-protocol/cli` — the MCP server, the hook and the node in
-│   │                                  one binary; `bun run packages` writes `packaging/`
+│   ├── cli/                           `@arp-protocol/cli` — the MCP server and the hook in one
+│   │                                  binary; `bun run packages` writes `packaging/`. The hire node
+│   │                                  (`apps/node`), the web delegation flow and `ReceiptEnforcer`
+│   │                                  are on the `future/hire-loop` branch (ADR 0199)
 │   ├── sponsor/                       the sponsoring service, testnet 13579 only — holds ARP's
 │   │                                  treasury key, calls the MultiVault and nothing else (ADR 0092, 0094)
 │   ├── probe/                         Cloudflare Worker — asks each catalogued MCP endpoint whether

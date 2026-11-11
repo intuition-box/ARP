@@ -33,7 +33,7 @@ export const DOC_SECTIONS: readonly DocSection[] = [
             {slug: "search-and-score", title: "Search and score", summary: "How a search is ranked, and what moves the order."},
             {slug: "local-memory", title: "Local memory and sharing", summary: "What the hook records on your machine, and what leaves only if you share."},
             {slug: "what-arp-publishes", title: "What ARP publishes about you", summary: "What goes on the public graph, what stays on your machine, and how an endpoint's URL loses its values."},
-            {slug: "agents-and-nodes", title: "Agents and nodes", summary: "Finding an agent, checking its address, and being hired through a node."},
+            {slug: "agents-and-nodes", title: "Agents and nodes", summary: "Finding an agent, checking its address before paying it, and reading its receipts."},
             {slug: "the-sieve", title: "The 8004 sieve", summary: "Which ERC-8004 agents exist, which answer, which speak, and how each is checked."},
             {slug: "x402-feed", title: "The x402 outcomes feed", summary: "Outcomes of paid x402 calls, each tied to a payment checked on its own chain."},
             {slug: "skill-lines-feed", title: "The skill lines feed", summary: "Every public line about a skill, for a registry to read beside its own listing."},

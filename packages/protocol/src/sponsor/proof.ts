@@ -235,7 +235,7 @@ async function checkHire(
     if (getAddress(tx.from) !== receiver) {
         return refused(`payment came from ${tx.from}, not from ${receiver}`);
     }
-    // The node's payee and its receipt key are one account (`apps/node/src/task.ts`), so a payment
+    // The node's payee and its receipt key are one account (`apps/node/src/task.ts`, on `future/hire-loop`), so a payment
     // to anyone else is not the payment this receipt is about.
     if (tx.to === null || getAddress(tx.to) !== callee) {
         return refused(

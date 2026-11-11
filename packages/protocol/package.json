@@ -36,16 +36,7 @@
         "@arp-protocol/graphql": "workspace:*",
         "viem": "2.52.0"
     },
-    "peerDependencies": {
-        "@metamask/smart-accounts-kit": "^1.6.0"
-    },
-    "peerDependenciesMeta": {
-        "@metamask/smart-accounts-kit": {
-            "optional": true
-        }
-    },
     "devDependencies": {
-        "@metamask/smart-accounts-kit": "^1.6.0",
         "@types/node": "^24.12.2",
         "typescript": "~6.0.2",
         "vitest": "^4.1.8"

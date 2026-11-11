@@ -28,7 +28,7 @@ import {waitAndRecord} from "./tx-record";
 
 /**
  * Importing an ERC-8004 agent that already exists — the second door, beside the
- * mint in `agent-identity.ts`, which this module does not touch.
+ * mint in `identity-mint.ts`, which this module does not touch.
  *
  * 28,648 agents already hold an ERC-8004 identity. None of them needs another
  * one, and ARP has no business issuing one: `docs/12` is explicit that a

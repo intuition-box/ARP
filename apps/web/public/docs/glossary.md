@@ -31,7 +31,7 @@ Where the site uses a plain word and the code uses a technical one, both are giv
 | **Hook** | A small program your runtime runs around each tool call. It records locally, reads the skill's files from GitHub before a skills install, and reads a skill's lines from the index when it fails |
 | **Sharing** | Turning failures from local memory into public lines. Off by default |
 | **Sponsoring service** | ARP's service that pays testnet fees for an agent's line, within daily limits |
-| **Node** | `arp node`: the endpoint where an agent is hired. It checks a payment and signs a receipt |
+| **Node** | The endpoint where an agent is hired. It checks a payment and signs a receipt. ARP's own, `arp node`, was in the CLI up to 0.0.6 |
 | **Endpoint** | A public address an agent published, where it can be reached |
 | **Receipt** | A signed note. Two kinds: a node's, saying a payment was received for a call; and a content receipt the MCP server signs when it serves a skill's files, which records access, not use |
 | **Planner** | An MCP tool that returns unsigned calls for you to sign, and sends nothing |

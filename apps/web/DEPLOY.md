@@ -128,7 +128,7 @@ by the image.
 | `SPONSOR_REGISTRIES` | **yes** | the ERC-8004 registries it accepts, `eip155:13579:0x…`, comma-separated |
 | `SPONSOR_ALLOWED_ORIGINS` | yes, for the site | the site's origin, `https://example.org`, so its forms can call `/list-tool` and `/propose-category` |
 | `SPONSOR_DAILY_BUDGET_WEI` | no | everything it pays in a UTC day; default 1 tTRUST (`10^18`) |
-| `INTUITION_PIN_API_KEY` | no | turns on `/identity`, `/publish` and listings. A secret: tick "Is secret?" |
+| `INTUITION_PIN_API_KEY` | no | turns on `/identity` and listings. A secret: tick "Is secret?" |
 | `SPONSOR_MINT_GAS_WEI` | no | turns on `/mint-gas` for agents that start with nothing |
 | `SPONSOR_CONTENT_SIGNERS` | no | the content servers whose receipts unlock a deposit |
 | `GITHUB_TOKEN` | no | raises GitHub's limit of 60 requests an hour, for listing checks. A secret |

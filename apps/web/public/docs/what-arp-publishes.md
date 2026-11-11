@@ -45,7 +45,7 @@ None of these is on the graph. Each lets the server see your IP address and the 
 - When a skill fails, the hook reads that skill's lines from Intuition's index, naming the skill and nothing else: the index can infer that it just failed somewhere. `ARP_FAILURE_LINES=off` stops it.
 - `arp line` reads the payment on its own chain, and ARP's sponsoring service reads it again, before anything is written.
 
-The full list of files and connections: [Running the MCP server, the node and the hook](https://github.com/intuition-box/ARP/blob/main/docs/22_RUNNING_THE_NODE.md).
+The full list of files and connections: [Running the MCP server and the hook](https://github.com/intuition-box/ARP/blob/main/docs/22_RUNNING_THE_NODE.md).
 
 ## An endpoint's URL, with its values removed
 

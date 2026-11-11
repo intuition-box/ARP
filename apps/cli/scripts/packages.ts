@@ -95,7 +95,7 @@ async function bundledCli(): Promise<string> {
     root: CLI,
     target: 'node',
     format: 'esm',
-    external: ['./hook.js', '@metamask/smart-accounts-kit'],
+    external: ['./hook.js'],
     banner: '#!/usr/bin/env node',
     // The sponsoring service's default, from `package.json`'s `config.sponsorDefault` as its build inlines it
     // (task 105, ADR `0175`). Always defined, empty for the loopback, so the bundle never reads it at run time.

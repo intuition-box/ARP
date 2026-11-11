@@ -5,6 +5,12 @@
 
 ## Unreleased
 
+- **Removed: `arp node` and `arp init --node`** (task 139). The hire endpoint, which listened on
+  127.0.0.1 behind a tunnel you rent and signed a receipt for a paid call, and the handshake that bound
+  it to an ERC-8004 agent, are no longer in the CLI. `arp node` now answers `unknown command`, and
+  `arp init --node` is refused as an unknown flag. Both are kept on the repository's `future/hire-loop`
+  branch. A node started from 0.0.6 or earlier keeps running; nothing in this release reads or changes
+  its files (`~/.arp/node.key`).
 - **Claude Desktop's share setting no longer overwrites a choice made in Claude Code** (task 137). It
   writes `~/.arp/sharing.json` only when nothing is on file, when the file is the extension's own, or
   when the setting changed since the last start, which it keeps in `~/.arp/desktop-share.json`. Left as

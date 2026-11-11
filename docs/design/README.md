@@ -14,10 +14,12 @@ not the same as invented: `landing-galaxy/`'s sample agent ids are real agents o
 | `claim-field/`    | the shared `ClaimField`: `v1-handoff.md`, `v2/` (loupe), `v2-ring-names/` (no legend)   | built, `53c022c`; the repo is ahead of `v2-ring-names/`                                          |
 | `pages/`          | the atom pages `tool/`, `skill/`, `repo/`, and `agent/` (docs/16's order)               | skill and repo built; tool and agent not — `docs/tasks/34`                                       |
 | `cli-surfaces/`   | `arp status`, `arp init`, the session line, the badge spec                              | not built — `docs/tasks/34`                                                                      |
-| `cli-v0/`         | `packages/cli` week 1: hook, SQLite, `arp status`, as a patch and as plain files        | not applied — `docs/tasks/34`, and task 33 names the same package                                |
-| `readme-badges/`  | the README badge SVG generator, tested                                                  | deferred to the production release                                                               |
 | `nav-coin/`       | the nav: the mark in a coin at the bar's left, tabs centred, path line. `NAV-COIN.md`   | built, task 80, ADR `0151` (replaces ADR `0057` §3's centred mark)                               |
 | `landing-galaxy/` | the landing as one camera through a galaxy, six scenes. `LANDING-GALAXY.md` + reference | built, task 81, ADR `0152`; its sample shows only while the chain has nothing, unmarked since 2026-11-10 |
 
-`claim-field/*/` and `cli-v0/` were built against `feat/agent-panel-tabs` at `b5682d9`, before
-`app/` became `apps/web/`: their patches do not apply to the current tree as they are.
+`claim-field/*/` was built against `feat/agent-panel-tabs` at `b5682d9`, before `app/` became
+`apps/web/`: its patches do not apply to the current tree as they are.
+
+**Removed in task 139** (2026-11-11, the user's decision): `cli-v0/`, the `packages/cli` week-1 patch
+never applied, and `readme-badges/`, the README badge generator deferred to the production release.
+Both are on the `future/hire-loop` branch and in git history at `72a62f1c`.

@@ -2,7 +2,7 @@
   "name": "@arp-protocol/cli",
   "version": "0.0.6",
   "mcpName": "io.github.Wieedze/arp",
-  "description": "ARP's agent-side programs in one binary: the MCP server, the runtime hook that records what an agent used, and the opt-in hire node. Runs on Node 22 or later.",
+  "description": "ARP's agent-side programs in one binary: the MCP server and the runtime hook that records what an agent used. Runs on Node 22 or later.",
   "homepage": "https://github.com/intuition-box/ARP",
   "repository": {
     "type": "git",
@@ -28,7 +28,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "bun run --cwd ../../packages/protocol build && rm -rf dist && ARP_SPONSOR_DEFAULT=$(bun -e 'console.log(require(\"./package.json\").config.sponsorDefault)') bun build src/cli.ts --env 'ARP_SPONSOR_DEFAULT*' --define process.env.ARP_CONTENT_DEFAULT=\\\"$(bun -e 'console.log(require(\"./package.json\").config.contentDefault)')\\\" --define process.env.ARP_PACKAGE_VERSION=\\\"$(bun -e 'console.log(require(\"./package.json\").version)')\\\" --outdir dist --target=node --format=esm --splitting --entry-naming '[name].js' --chunk-naming 'chunks/[name]-[hash].js' --external ./hook.js --external @metamask/smart-accounts-kit --banner '#!/usr/bin/env node' && bun build ../hook/src/hook.ts --outfile dist/hook.js --target=node --format=esm --external viem --external 'viem/*'",
+    "build": "bun run --cwd ../../packages/protocol build && rm -rf dist && ARP_SPONSOR_DEFAULT=$(bun -e 'console.log(require(\"./package.json\").config.sponsorDefault)') bun build src/cli.ts --env 'ARP_SPONSOR_DEFAULT*' --define process.env.ARP_CONTENT_DEFAULT=\\\"$(bun -e 'console.log(require(\"./package.json\").config.contentDefault)')\\\" --define process.env.ARP_PACKAGE_VERSION=\\\"$(bun -e 'console.log(require(\"./package.json\").version)')\\\" --outdir dist --target=node --format=esm --splitting --entry-naming '[name].js' --chunk-naming 'chunks/[name]-[hash].js' --external ./hook.js --banner '#!/usr/bin/env node' && bun build ../hook/src/hook.ts --outfile dist/hook.js --target=node --format=esm --external viem --external 'viem/*'",
     "test": "bun run build && bun test",
     "prepublishOnly": "bun run build",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json",
@@ -41,7 +41,6 @@
     "@arp-protocol/core": "workspace:*",
     "@arp/hook": "workspace:*",
     "@arp/mcp": "workspace:*",
-    "@arp/node": "workspace:*",
     "@types/bun": "^1.4.4",
     "typescript": "~6.0.2",
     "viem": "2.52.0"

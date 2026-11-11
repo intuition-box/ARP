@@ -14,7 +14,6 @@ export function info(ctx: SponsorContext): Record<string, unknown> {
     limits: {
       depositAmountWei: limits.depositAmount,
       depositsPerAgentPerDay: limits.depositsPerAgentPerDay ?? 'off',
-      publicationsPerDelegatorPerDay: limits.publicationsPerDelegatorPerDay,
       dailyBudgetWei: limits.dailyBudget,
       approvalGasWei: limits.approvalGas,
       mintGasWei: limits.mintGas ?? 'off',
@@ -43,7 +42,6 @@ export function info(ctx: SponsorContext): Record<string, unknown> {
             : 'verified, but refused until a fetch is bound to its payment (docs/tasks/41)',
     },
     approve: planDepositApproval({ multiVault, chainId, sponsor: wallet.address }),
-    publish: options.publish === null ? 'disabled' : 'enabled',
     identity: (options.pinThing ?? null) === null ? 'disabled' : 'enabled',
     proposeCategory: (options.categories ?? null) === null ? 'disabled' : 'enabled',
     listTool:

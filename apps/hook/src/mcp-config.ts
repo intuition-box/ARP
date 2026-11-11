@@ -5,7 +5,7 @@ import { join } from 'node:path';
 /**
  * What a configured MCP server **is**, so `mcp__github__create_issue` can be tied to a URL anybody
  * else can name too. Taken from the `arp-cli-v0` patch
- * (`docs/design/cli-v0/files-packages-cli/src/mcp-config.ts`).
+ * (`docs/design/cli-v0/files-packages-cli/src/mcp-config.ts`, removed in task 139; in git at `72a62f1c`).
  *
  * Sources, later ones winning for the same name, which is how Claude Code scopes them:
  *

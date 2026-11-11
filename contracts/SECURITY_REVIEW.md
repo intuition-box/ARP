@@ -9,13 +9,16 @@ corrections are struck through in place, never rewritten (`.claude/rules/claims.
 | Contract                | File                                       | Deployed                                                                                                                                               | Sections                                                    |
 | ----------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
 | `TrustStakeCapEnforcer` | `src/enforcers/TrustStakeCapEnforcer.sol` | ~~testnet 13579 and mainnet 1155, **both the v1 code from before ADR `0118`**~~ **Corrected 2026-11-03:** testnet 13579 runs **v2** at `0x19e07280F1483Aa9aCDb1a7F8C61bfd20c7879Bc` (bytecode checked, reviewer pass below); mainnet 1155 and the superseded testnet `trustStakeCapEnforcerV1` run v1 — `data/deployments/<chainId>.json` | "Task 60" below; Task 02b for v1                            |
-| `ReceiptEnforcer`       | `src/enforcers/ReceiptEnforcer.sol`        | **not deployed**                                                                                                                                       | Task 43, Task 44, "Task 60"                                 |
 | `IdentityRegistry`      | `src/erc8004/IdentityRegistry.sol`         | testnet 13579 only (`data/deployments/13579.json`)                                                                                                     | "Task 60: `IdentityRegistry`" below — it had no review here |
 
 **Removed from `src/` in `59ac83a`** ("one contract, not five", ADR `0055`): `ModuleRegistry` and
 `DomainScopeEnforcer`. Their addresses stay in `data/deployments/`, and their reviews stay below
 under **Historical** headings. `DomainScopeEnforcer`'s mainnet copy is still deployed and inert: it
 gates `ModuleRegistry.registerModule`, and no `ModuleRegistry` is on 1155.
+
+**Removed from `src/` in task 139** (2026-11-11, ADR `0199`): `ReceiptEnforcer`, never deployed. Its
+source and test are on the `future/hire-loop` branch; its reviews below (Task 43, Task 44, "Task 60")
+are the record of what that code was.
 
 ---
 

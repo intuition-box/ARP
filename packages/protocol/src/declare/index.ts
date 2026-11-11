@@ -64,13 +64,6 @@ export {
     type StrictIdentityAtom,
 } from "./resolve-subject.js";
 
-export {
-    SmartAccountsKitMissingError,
-    toDelegatedCalls,
-    type DelegatedPlan,
-    type DelegationLike,
-} from "./delegated.js";
-
 export type {DeclarePlan, PlannedStake, PlannedTool, PreparedCall, StakePlan} from "./types.js";
 
 export {
@@ -121,14 +114,6 @@ export {
     type CategoryRefusal,
     type CategoryRule,
 } from "./category.js";
-
-/** The endpoint binding on Intuition (task 39c): the claim and the signed handshake attached to it. */
-export {
-    AgentAtomMismatchError,
-    MissingAgentAtomError,
-    prepareEndpointBinding,
-    type EndpointBindingPlan,
-} from "./endpoint-binding-plan.js";
 
 export {
     BECAUSE_LABEL,

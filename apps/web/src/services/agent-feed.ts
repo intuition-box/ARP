@@ -392,7 +392,7 @@ export function traceInvocations(
     return [...byKey.values()].sort((a, b) => b.lastAt.localeCompare(a.lastAt));
 }
 
-/** What a term is called, as `getTermLabels` returns it. */
+/** What a term is called: an atom's label, or a triple's three labels. */
 export type TermName =
     | {kind: "atom"; label: string}
     | {kind: "triple"; subject: string; predicate: string; object: string};

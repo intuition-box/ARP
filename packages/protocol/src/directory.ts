@@ -61,7 +61,7 @@ const BINDINGS_QUERY = `query EndpointBindings($subject: String!, $hasEndpoint: 
  *
  * One field per claim, oldest first, each with its own `limit`: junk attached after the genuine proof
  * cannot push it out of the window, and junk on one claim cannot crowd out another claim's proof. Junk
- * attached before it can, when the claim reached the chain before its proof. `prepareEndpointBinding`
+ * attached before it can, when the claim reached the chain before its proof. `prepareEndpointBinding` (on `future/hire-loop`)
  * writes the owner's two triples in one call so that their own write never opens that gap (ADR `0095` §7).
  *
  * The fields are aliases of one document, so every claim's proofs come in one request (task 113: one agent's
@@ -178,7 +178,7 @@ export async function getAgentEndpoints(
         if (!isRecord(row)) continue;
         const tripleId = readString(row, "term_id");
         const object = readRecord(row, "object");
-        // The atom's data is the endpoint string itself (`prepareEndpointBinding`).
+        // The atom's data is the endpoint string itself (`prepareEndpointBinding`, on `future/hire-loop` since task 139).
         const endpoint =
             object === null ? null : (readString(object, "data") ?? readString(object, "label"));
         if (tripleId === null || endpoint === null) continue;

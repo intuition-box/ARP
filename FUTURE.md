@@ -383,7 +383,9 @@ The receipt proves a skill was served, and the hook proves it was invoked. Neith
 action. A payment the chain records does: one agent hires another and pays its node, and the paid
 agent signs a hire receipt that `apps/sponsor` and `ReceiptEnforcer` verify (tasks 43 and 44,
 ADRs `0083`, `0098`, `0101`). That path is built, but it is not wired into either demo. Check what
-the node needs running end to end on testnet before planning it.
+the node needs running end to end on testnet before planning it. **Since task 139 (2026-11-11, ADR
+`0199`) the node, `ReceiptEnforcer` and the hire demos are on the `future/hire-loop` branch**; the
+sponsor's hire-receipt proof stays on `dev`. Start from that branch.
 
 ## Who may speak for an agent's identity
 
@@ -396,9 +398,10 @@ design is in ADR `0113`:
 
 ## Who pays on mainnet: a delegation, or the agent's own wallet
 
-**Asked 2026-11-02**, left open: « on vera ». `/account` signs and revokes delegations, but no
-runtime redeems one. `grep -rli delegation apps/mcp/src apps/node/src` finds only two comments, and
-`packages/protocol/src/declare/delegated.ts` has no caller in either app. In sponsored mode
+**Asked 2026-11-02**, left open: « on vera ». `/account` signed and revoked delegations, but no
+runtime redeemed one, and `packages/protocol/src/declare/delegated.ts` had no caller in any app.
+Since task 139 (ADR `0199`) the delegation services, `delegated.ts` and `apps/node` are on the
+`future/hire-loop` branch, not on `dev`. In sponsored mode
 (ADR `0110`) the agent pays from its own wallet, so the operator's delegation is never used.
 
 Sponsoring is testnet 13579 only (`rules/security.md`), so on mainnet the operator pays, in one of
@@ -408,8 +411,8 @@ two ways:
 2. **A delegation.** The funds stay on the operator's account, with a cap per period, allowed
    targets and methods, and a one-click revoke. `docs/12` point 5 names this as the guard rail.
 
-Decide before the mainnet port. If (1), `/account` has no purpose and goes. If (2), the MCP server
-has to redeem through `delegated.ts`.
+Decide before the mainnet port. If (1), nothing more. If (2), bring `delegated.ts` back from
+`future/hire-loop` and the MCP server has to redeem through it.
 
 ## `/list-tool` records what it lists
 
@@ -462,7 +465,8 @@ back yet:
    revoke it, see it marked disabled.
 
 It depends on "Who pays on mainnet" above: if the operator funds the agent's wallet, nothing redeems
-a delegation and this read has no user.
+a delegation and this read has no user. Since task 139 the write side (`POST /publish`,
+`packages/protocol/src/delegation/register.ts` and `state.ts`) is on the `future/hire-loop` branch.
 
 ## A market on whether it worked
 
@@ -544,7 +548,8 @@ but no route for those reports is in the OpenAPI.
 
 **What blocks it today.**
 
-- ARP's node is paid in native tTRUST, not x402 (`apps/node/src/task.ts`, `verifyPayment`), and
+- ARP's node was paid in native tTRUST, not x402 (`apps/node/src/task.ts`, `verifyPayment`, on the
+  `future/hire-loop` branch since task 139), and
   x402 waits for the mainnet port (ADR `0102`, `docs/tasks/41`). So Doctor cannot preflight an ARP
   node yet.
 - Task 65 §8 showed what a check before paying does not answer: whether the node holds the
@@ -710,7 +715,8 @@ held the Smart Account, the delegation form, the signed delegations and the agen
 "Yours" on `/activity` held the wallet's positions, its own public rows and the local runtime's
 feed. Both pages are in git history before the removal. The delegation services and hooks
 (`services/delegation*.ts`, `hooks/use-account-delegations.ts`, `components/account/DelegationForm.tsx`)
-stay in the tree, tested, with no page reading them, for when delegations come back. Item 37d above
+stayed in the tree, tested, with no page reading them, until task 139 (2026-11-11, ADR `0199`) moved
+them to the `future/hire-loop` branch, where they wait for delegations to come back. Item 37d above
 ("`/account` lists the published delegations") now needs a page first.
 
 ## Lines in batches

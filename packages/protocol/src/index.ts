@@ -320,10 +320,8 @@ export type {
  * A third party needs a funded wallet and an ERC-8004 identity. No API key: a tool's atom derives
  * from its URI (ADR `0008`) and the identity atom already exists for the mirrored cohort.
  *
- * Two modes. **Direct** — sign `plan.calls` as they come; the signer's own TRUST is spent.
- * **Delegated** — pass them through `toDelegatedCalls` with the operator's signed delegation; the
- * delegator's TRUST is spent, bounded by the caveats the operator signed. The guard rail is not
- * the price of entry.
+ * The signer signs `plan.calls` as they come, and its own TRUST is spent. The delegated mode, which
+ * spent an operator's TRUST under caveats it signed, is on the `future/hire-loop` branch (task 139).
  */
 export {
     AmbiguousToolAtomError,
@@ -354,8 +352,6 @@ export {
     resolveDeclarationSubject,
     resolveIdentityAtomStrict,
     type StrictIdentityAtom,
-    SmartAccountsKitMissingError,
-    toDelegatedCalls,
     toolAtomUri,
     thingDocument,
     thingUri,
@@ -378,8 +374,6 @@ export type {
     DeclarePlan,
     MarketExitPlan,
     MarketPositionPlan,
-    DelegatedPlan,
-    DelegationLike,
     IdentityAtomPlan,
     MultiVaultReads,
     MultiVaultReadsConfig,
@@ -637,9 +631,6 @@ export {
     type DecodedCall,
     type InvocationOutcome,
 } from "./activity.js";
-
-/** What the indexer calls a term — an atom's label or a triple's three — for naming raw ids. */
-export {getTermLabels, type TermLabel, type TermLabelsConfig} from "./term-labels.js";
 
 /**
  * Which file inside a repository a tool's atom refers to — read from the repository's own listing,
@@ -923,8 +914,9 @@ export {
 
 /**
  * The receipt an agent's node signs when it is hired — EIP-712, the agent named the way ERC-8004
- * names it, the payment as the nonce, and (v2, task 44) the one verifier it is for. `apps/node`
- * signs it; `ReceiptEnforcer`, `apps/sponsor` and `scripts/demo/demo-hire.ts` verify it.
+ * names it, the payment as the nonce, and (v2, task 44) the one verifier it is for. `apps/sponsor`
+ * and the agent pulse verify it. The node that signed it and `ReceiptEnforcer`, which verified it on
+ * chain, are on the `future/hire-loop` branch since task 139.
  */
 export {
     HIRE_RECEIPT_TYPES,
@@ -986,7 +978,6 @@ export {
     type HandshakeVerifierOptions,
     type PendingChallenge,
 } from "./handshake.js";
-export {handshakeFetchHandler, handshakeStatusOf} from "./handshake-http.js";
 export {
     DEFAULT_MAX_PROOFS_PER_CLAIM,
     getAgentEndpoints,
@@ -996,12 +987,6 @@ export {
     type EndpointProof,
     type ListedEndpoint,
 } from "./directory.js";
-export {
-    AgentAtomMismatchError,
-    MissingAgentAtomError,
-    prepareEndpointBinding,
-    type EndpointBindingPlan,
-} from "./declare/endpoint-binding-plan.js";
 
 /**
  * ARP's sponsoring service, as plans and checks (ADR `0094` §2-§3, `docs/tasks/40`): the agent's
@@ -1122,7 +1107,6 @@ export {
     checkLineLimits,
     checkListToolLimits,
     checkMintGasLimits,
-    checkPublishLimits,
     spentOnDay,
     sponsoredPositions,
     utcDay,
@@ -1140,38 +1124,6 @@ export {
     type SponsoredDepositPlan,
 } from "./sponsor/plan.js";
 
-/**
- * The delegation register's write side (`docs/tasks/37` 37b): the pinned document, the signature
- * check (EIP-1271 through an injected verifier), and the plan that indexes it the way Hourglass does.
- */
-export {
-    caip10AccountUri,
-    DELEGATION_DOCUMENT_NAME,
-    DELEGATION_TYPES,
-    delegationDocument,
-    delegationHash,
-    delegationTypedData,
-    parseDelegation,
-    planPublishDelegation,
-    PredicateMissingError,
-    verifyDelegationSignature,
-    type DelegationDomain,
-    type DelegationJson,
-    type DelegationPredicates,
-    type PublishDelegationPlan,
-    type TypedDataVerifier,
-} from "./delegation/register.js";
-
-/**
- * Whether a delegation is revoked (`docs/tasks/37` 37a's `isDisabled`): a failed read is
- * `"unknown"`, never `"enabled"`.
- */
-export {
-    DISABLED_DELEGATIONS_ABI,
-    readDelegationState,
-    type DelegationOnChainState,
-    type DisabledDelegationsReader,
-} from "./delegation/state.js";
 export {
     parseSkillsIndex,
     searchSkillsIndex,

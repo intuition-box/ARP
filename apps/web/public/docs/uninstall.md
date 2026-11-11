@@ -102,8 +102,8 @@ Every ARP program keeps its state here. `ARP_HOME` moves most of it: if you set 
 | `agent.json` | the same | your agent's id, once registered |
 | `receipts.jsonl` | the sponsored setup | every skill served to the agent, with its receipt |
 | `captures/` | `arp init --capture` | hook payloads kept to teach the hook a new runtime |
-| `node.key`, `node-payments.jsonl` | `arp node` | the node's key and the payments it has used |
-| `node-binding.json`, `node-binding.document.json`, `handshake-message.txt` | `arp init --node` | the binding between your node and your agent |
+| `node.key`, `node-payments.jsonl` | `arp node`, up to 0.0.6 | the node's key and the payments it has used |
+| `node-binding.json`, `node-binding.document.json`, `handshake-message.txt` | `arp init --node`, up to 0.0.6 | the binding between your node and your agent |
 
 All of it is safe to delete. Two things to know first:
 

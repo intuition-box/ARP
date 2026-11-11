@@ -18,7 +18,7 @@ import {TrustStakeCapEnforcer} from "../src/enforcers/TrustStakeCapEnforcer.sol"
 ///         (`CLAUDE.md`). Every other chain is refused.
 ///
 ///         `DomainScopeEnforcer` used to be deployed here and was removed with `ModuleRegistry` in
-///         `59ac83a` (ADR `0055`). `ReceiptEnforcer` is not deployed (task 43). One enforcer is left
+///         `59ac83a` (ADR `0055`). `ReceiptEnforcer`, never deployed, left `src/` in task 139. One enforcer is left
 ///         because a cumulative cap over a fixed period is what MetaMask's stock `valueLte` does
 ///         not give: that bounds one redemption, not a budget.
 contract DeployEnforcers is Script {

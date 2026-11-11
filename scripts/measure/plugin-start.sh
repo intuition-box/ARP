@@ -47,7 +47,7 @@ git clone --quiet --shared "$root" "$work/old"
 git -C "$work/old" checkout --quiet "$(git -C "$root" rev-parse "$older")"
 ( cd "$work/old" && bun install --frozen-lockfile >/dev/null 2>&1 && bun run --cwd packages/protocol build >/dev/null 2>&1 \
   && cd apps/cli && bun build src/cli.ts --outfile "$work/old.js" --target=node --format=esm \
-    --external ./hook.js --external @metamask/smart-accounts-kit --banner '#!/usr/bin/env node' >/dev/null )
+    --external ./hook.js --banner '#!/usr/bin/env node' >/dev/null )
 git init --quiet "$work/repo"
 packed() { git -C "$work/repo" gc --quiet --aggressive --prune=now; git -C "$work/repo" count-objects -v | awk '/size-pack/ {print $2}'; }
 commit() { cp "$1" "$work/repo/arp.js"; git -C "$work/repo" add arp.js; git -C "$work/repo" -c user.name=m -c user.email=m@m commit --quiet -m v; }

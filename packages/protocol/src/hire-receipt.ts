@@ -38,8 +38,8 @@
  * - **EAS off-chain attestations** sign EIP-712 under a domain that names the EAS contract as
  *   `verifyingContract`. Not taken when v1 was fixed, for the reason `receipt.ts` gives: no
  *   contract checked this signature. **Taken in v2** (task 44, user decision 2026-10-30, ADR
- *   `0098`): two verifiers now consume this receipt, `contracts/src/enforcers/ReceiptEnforcer.sol`
- *   and the sponsoring service (`apps/sponsor`), and a receipt that names neither could be
+ *   `0098`): two verifiers consumed this receipt, `ReceiptEnforcer` (never deployed, on the
+ *   `future/hire-loop` branch since task 139) and the sponsoring service (`apps/sponsor`), and a receipt that names neither could be
  *   sponsored once by each. A v2 receipt names the one verifier it is for, and each verifier
  *   accepts only receipts that name it.
  *
@@ -56,7 +56,7 @@
  *
  * `verifyingContract` is the enforcer's address when the receipt is for the enforcer, and the
  * sponsoring account's address when it is for the service. The hirer asks for one when it hires
- * (`apps/node`'s `POST /task` takes `verifier` and `termId`), and the node signs what was asked.
+ * (`apps/node`'s `POST /task`, on `future/hire-loop`, takes `verifier` and `termId`), and the node signs what was asked.
  * `termId` is the term the hirer will deposit on, `(hirer, uses, agent)`. `expiresAt` is the
  * node's own bound on the receipt's life, in unix seconds.
  *
@@ -64,7 +64,7 @@
  *
  * `.claude/rules/security.md` asks for nonce + chainId + verifying contract. The chain and, in v2,
  * the verifying contract are in the domain, and the nonce is `payment`: the node refuses a payment
- * it has already been paid with (`apps/node/src/task.ts`, `PaymentLedger`), so one transaction hash
+ * it has already been paid with (`apps/node/src/task.ts`, `PaymentLedger`, on `future/hire-loop`), so one transaction hash
  * is one receipt, and that receipt names one verifier. Two receipts naming one payment are evidence
  * against the node that signed both.
  *

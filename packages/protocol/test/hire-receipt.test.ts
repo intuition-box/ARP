@@ -78,9 +78,9 @@ describe("hireDigest", () => {
 });
 
 /**
- * The cross-implementation vectors. `contracts/test/enforcers/ReceiptEnforcer.t.sol` checks the
- * same digests and signatures in Solidity, so a drift in the struct, its field order or the domain
- * fails on both sides, not only on the contract's. Anvil's publicly documented account #0, a test
+ * The cross-implementation vectors. `ReceiptEnforcer.t.sol` checked the same digests and
+ * signatures in Solidity; it is on the `future/hire-loop` branch since task 139, and these vectors
+ * stay so a drift in the struct, its field order or the domain fails here. Anvil's publicly documented account #0, a test
  * key that holds nothing.
  */
 describe("the vector ReceiptEnforcer.t.sol holds", () => {

@@ -3,7 +3,7 @@
  *  **Not a database, and not memory alone.** Task 37 asked for no database, and a record held in
  *  memory is reset by a restart, which is the cheapest thing an attacker can wait for: every proof
  *  would sponsor a second deposit and every agent would get its gas twice. So one JSONL file, the
- *  same device as the node's `PaymentLedger` (`apps/node/src/task.ts`). The day's counts and the
+ *  device the hire node's `PaymentLedger` used (on the `future/hire-loop` branch). The day's counts and the
  *  budget are derived from it, and the service's balance stays the hard limit behind it.
  *
  *  **Written before the send, settled after it.** A spend is reserved as a `pending` row before the

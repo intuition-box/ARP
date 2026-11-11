@@ -19725,66 +19725,6 @@ var init_verifyMessage2 = __esm(() => {
   init_recoverMessageAddress();
 });
 
-// ../../node_modules/.bun/viem@2.52.0+e016764623ac6761/node_modules/viem/_esm/errors/unit.js
-var InvalidDecimalNumberError;
-var init_unit2 = __esm(() => {
-  init_base();
-  InvalidDecimalNumberError = class InvalidDecimalNumberError extends BaseError {
-    constructor({ value }) {
-      super(`Number \`${value}\` is not a valid decimal number.`, {
-        name: "InvalidDecimalNumberError"
-      });
-    }
-  };
-});
-
-// ../../node_modules/.bun/viem@2.52.0+e016764623ac6761/node_modules/viem/_esm/utils/unit/parseUnits.js
-function parseUnits2(value, decimals) {
-  if (!/^(-?)([0-9]*)\.?([0-9]*)$/.test(value))
-    throw new InvalidDecimalNumberError({ value });
-  let [integer, fraction = "0"] = value.split(".");
-  const negative = integer.startsWith("-");
-  if (negative)
-    integer = integer.slice(1);
-  fraction = fraction.replace(/(0+)$/, "");
-  if (decimals === 0) {
-    if (Math.round(Number(`.${fraction}`)) === 1)
-      integer = `${BigInt(integer) + 1n}`;
-    fraction = "";
-  } else if (fraction.length > decimals) {
-    const [left, unit, right] = [
-      fraction.slice(0, decimals - 1),
-      fraction.slice(decimals - 1, decimals),
-      fraction.slice(decimals)
-    ];
-    const rounded = Math.round(Number(`${unit}.${right}`));
-    if (rounded > 9)
-      fraction = `${BigInt(left) + BigInt(1)}0`.padStart(left.length + 1, "0");
-    else
-      fraction = `${left}${rounded}`;
-    if (fraction.length > decimals) {
-      fraction = fraction.slice(1);
-      integer = `${BigInt(integer) + 1n}`;
-    }
-    fraction = fraction.slice(0, decimals);
-  } else {
-    fraction = fraction.padEnd(decimals, "0");
-  }
-  return BigInt(`${negative ? "-" : ""}${integer}${fraction}`);
-}
-var init_parseUnits = __esm(() => {
-  init_unit2();
-});
-
-// ../../node_modules/.bun/viem@2.52.0+e016764623ac6761/node_modules/viem/_esm/utils/unit/parseEther.js
-function parseEther2(ether, unit = "wei") {
-  return parseUnits2(ether, etherUnits[unit]);
-}
-var init_parseEther = __esm(() => {
-  init_unit();
-  init_parseUnits();
-});
-
 // ../../node_modules/.bun/viem@2.52.0+e016764623ac6761/node_modules/viem/_esm/index.js
 var init__esm = __esm(() => {
   init_exports();
@@ -19807,8 +19747,6 @@ var init__esm = __esm(() => {
   init_recoverMessageAddress();
   init_recoverTypedDataAddress();
   init_verifyMessage2();
-  init_formatEther();
-  init_parseEther();
 });
 
 // ../../node_modules/.bun/viem@2.52.0+e016764623ac6761/node_modules/viem/_esm/op-stack/contracts.js
@@ -25985,17 +25923,6 @@ function hireReceiptV1TypedData(receipt, chainId) {
     message: v1Message(receipt)
   };
 }
-async function signHireReceipt(receipt, domain, signer) {
-  const verifyingContract = getAddress(domain.verifyingContract);
-  return {
-    format: "eip712",
-    receipt,
-    chainId: domain.chainId,
-    verifyingContract,
-    agent: getAddress(signer.address),
-    signature: await signer.signTypedData(hireReceiptTypedData(receipt, domain.chainId, verifyingContract))
-  };
-}
 function malformed2(reason) {
   return { status: "malformed", reason };
 }
@@ -26071,7 +25998,7 @@ async function verifyHireReceipt(signed) {
     return { status: "mismatch", declared, recovered };
   return { status: "valid", signer: recovered };
 }
-var HIRE_RECEIPT_VERSION = 2, HIRE_RECEIPT_V1_TYPES, HIRE_RECEIPT_TYPES;
+var HIRE_RECEIPT_V1_TYPES, HIRE_RECEIPT_TYPES;
 var init_hire_receipt = __esm(() => {
   init__esm();
   init_canonicalize();
@@ -27121,15 +27048,6 @@ function asEndpointBinding(value) {
       return null;
   return record;
 }
-function endpointBindingDocument(binding) {
-  return canonicalizeRfc8785({
-    "@context": "https://schema.org",
-    "@type": "Thing",
-    name: `ARP endpoint binding: agent ${binding.agentId} of ${binding.agentRegistry}`,
-    url: binding.endpoint,
-    binding
-  });
-}
 function bindingFromDocument(document) {
   if (typeof document !== "object" || document === null)
     return null;
@@ -27140,7 +27058,6 @@ var init_handshake = __esm(() => {
   init__esm();
   init_accounts();
   init_siwe();
-  init_canonicalize();
   init_identifiers();
 });
 
@@ -27647,8 +27564,6 @@ var init_dist2 = __esm(() => {
   init_before_install();
   init_outside_signals();
   init_receipt();
-  init_hire_receipt();
-  init_handshake();
   init_directory();
   init_approval();
   init_request2();
@@ -27661,286 +27576,6 @@ var init_dist2 = __esm(() => {
   init_sieve();
 });
 
-// ../node/src/node-key.ts
-import { homedir as homedir2 } from "node:os";
-import { join as join3 } from "node:path";
-function nodeKeyPath(env, home = homedir2()) {
-  return env["ARP_NODE_KEY_FILE"] ?? join3(arpHome(env, home), "node.key");
-}
-function asPrivateKey(raw, where) {
-  const trimmed = raw.trim();
-  const key = trimmed.startsWith("0x") ? trimmed : `0x${trimmed}`;
-  if (!isHex(key) || key.length !== 66)
-    throw new Error(`${where} is not a 32-byte hex private key`);
-  return key;
-}
-function loadOrCreateNodeKey(path, options = {}) {
-  const { key, created } = loadOrCreateKeyFile(path, options);
-  return { account: privateKeyToAccount(key), source: "file", path, created };
-}
-function resolveNodeKey(env, options = {}) {
-  const raw = env["AGENT_PRIVATE_KEY"];
-  if (raw !== undefined && raw.trim() !== "") {
-    return {
-      account: privateKeyToAccount(asPrivateKey(raw, "AGENT_PRIVATE_KEY")),
-      source: "env",
-      path: null,
-      created: false
-    };
-  }
-  return loadOrCreateNodeKey(nodeKeyPath(env, options.home), options);
-}
-var init_node_key = __esm(() => {
-  init_node2();
-  init__esm();
-  init_accounts();
-});
-
-// ../node/src/register.ts
-async function post(fetchLike, url, body) {
-  const response = await fetchLike(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  let parsed = null;
-  try {
-    parsed = await response.json();
-  } catch {
-    parsed = null;
-  }
-  return { status: response.status, ok: response.ok, body: parsed };
-}
-function refusal(status, body) {
-  if (typeof body === "object" && body !== null) {
-    const { error, reason } = body;
-    if (typeof error === "string")
-      return typeof reason === "string" ? `${error}: ${reason}` : error;
-  }
-  return `HTTP ${status}`;
-}
-function isChallenge(value) {
-  if (typeof value !== "object" || value === null)
-    return false;
-  const record = value;
-  return typeof record["nonce"] === "string" && typeof record["message"] === "string" && typeof record["owner"] === "string" && typeof record["nodeAddress"] === "string";
-}
-async function register(options) {
-  const fetchLike = options.fetch ?? fetch;
-  const base2 = options.directoryUrl.replace(/\/$/, "");
-  const request = {
-    ...options.agent,
-    nodePublicKey: options.node.publicKey,
-    endpoint: options.endpoint
-  };
-  const valid = validateHandshakeRequest(request);
-  if (!valid.ok) {
-    return {
-      ok: false,
-      step: "request",
-      reason: valid.error.code === "malformed" ? valid.error.reason : valid.error.code
-    };
-  }
-  let answer;
-  try {
-    answer = await post(fetchLike, `${base2}/challenge`, request);
-  } catch (error) {
-    return {
-      ok: false,
-      step: "challenge",
-      reason: error instanceof Error ? error.message : String(error)
-    };
-  }
-  if (!answer.ok)
-    return { ok: false, step: "challenge", reason: refusal(answer.status, answer.body) };
-  if (!isChallenge(answer.body))
-    return { ok: false, step: "challenge", reason: "not a challenge" };
-  const challenge2 = answer.body;
-  if (challenge2.nodeAddress.toLowerCase() !== options.node.address.toLowerCase()) {
-    return { ok: false, step: "challenge", reason: "the challenge names another node key" };
-  }
-  let ownerSignature;
-  try {
-    ownerSignature = await options.signAsOwner(challenge2);
-  } catch (error) {
-    return {
-      ok: false,
-      step: "owner",
-      reason: error instanceof Error ? error.message : String(error)
-    };
-  }
-  if (!isHex(ownerSignature))
-    return { ok: false, step: "owner", reason: "the signature is not hex" };
-  const nodeSignature = await options.node.signMessage({ message: challenge2.message });
-  let done;
-  try {
-    done = await post(fetchLike, `${base2}/complete`, {
-      nonce: challenge2.nonce,
-      ownerSignature,
-      nodeSignature
-    });
-  } catch (error) {
-    return {
-      ok: false,
-      step: "complete",
-      reason: error instanceof Error ? error.message : String(error)
-    };
-  }
-  if (!done.ok)
-    return { ok: false, step: "complete", reason: refusal(done.status, done.body) };
-  const binding = asEndpointBinding(done.body);
-  if (binding === null || binding.message !== challenge2.message) {
-    return { ok: false, step: "complete", reason: "the directory did not return this binding" };
-  }
-  return { ok: true, binding, challenge: challenge2 };
-}
-var init_register = __esm(() => {
-  init_dist2();
-  init__esm();
-  init_node_key();
-});
-
-// src/node-init.ts
-var exports_node_init = {};
-__export(exports_node_init, {
-  parseNodeInitFlags: () => parseNodeInitFlags,
-  nodeInit: () => nodeInit,
-  NODE_INIT_EXIT: () => NODE_INIT_EXIT
-});
-import { mkdirSync as mkdirSync2, writeFileSync as writeFileSync2 } from "node:fs";
-import { dirname as dirname2, join as join4 } from "node:path";
-function parseNodeInitFlags(args) {
-  const flags = {
-    agentRegistry: null,
-    agentId: null,
-    endpoint: null,
-    directory: null,
-    noInput: false
-  };
-  for (let i = 0;i < args.length; i += 1) {
-    const arg = args[i] ?? "";
-    if (arg === "--node")
-      continue;
-    if (arg === "--no-input") {
-      flags.noInput = true;
-      continue;
-    }
-    const [name, inline] = arg.includes("=") ? [arg.slice(0, arg.indexOf("=")), arg.slice(arg.indexOf("=") + 1)] : [arg, null];
-    if (name in VALUE_FLAGS) {
-      const value = inline ?? args[i + 1];
-      if (inline === null)
-        i += 1;
-      if (value === undefined || value.length === 0 || value.startsWith("--")) {
-        return new Error(`${name} needs a value`);
-      }
-      flags[VALUE_FLAGS[name]] = value;
-      continue;
-    }
-    return new Error(`unknown option '${arg}' for init --node`);
-  }
-  return flags;
-}
-function writePrivate(path, text) {
-  mkdirSync2(dirname2(path), { recursive: true, mode: 448 });
-  writeFileSync2(path, text, { mode: 384 });
-}
-async function nodeInit(flags, io) {
-  const agentRegistry = flags.agentRegistry ?? io.env["AGENT_REGISTRY"] ?? null;
-  const agentId = flags.agentId ?? io.env["AGENT_ID"] ?? null;
-  const endpointRaw = flags.endpoint ?? io.env["ARP_NODE_PUBLIC_URL"] ?? null;
-  const directory = flags.directory ?? io.env["ARP_DIRECTORY_URL"] ?? null;
-  const missing = [];
-  if (agentRegistry === null)
-    missing.push("--agent-registry (or AGENT_REGISTRY)");
-  if (agentId === null)
-    missing.push("--agent-id (or AGENT_ID)");
-  if (endpointRaw === null)
-    missing.push("--endpoint (or ARP_NODE_PUBLIC_URL)");
-  if (directory === null)
-    missing.push("--directory (or ARP_DIRECTORY_URL)");
-  if (missing.length > 0 || agentRegistry === null || agentId === null || endpointRaw === null || directory === null) {
-    io.err(`arp init --node: missing ${missing.join(", ")}`);
-    return NODE_INIT_EXIT.usage;
-  }
-  if (parseAgentRegistry(agentRegistry) === null || !/^(0|[1-9][0-9]*)$/.test(agentId)) {
-    io.err("arp init --node: the agent is eip155:<chainId>:<registry> plus a decimal token id");
-    return NODE_INIT_EXIT.usage;
-  }
-  const endpoint = normaliseEndpoint(endpointRaw);
-  if (endpoint === null) {
-    io.err(`arp init --node: the endpoint must be the tunnel's https URL, got ${endpointRaw}`);
-    return NODE_INIT_EXIT.usage;
-  }
-  if (flags.noInput || !io.interactive) {
-    io.err("arp init --node: the owner signs the handshake in their wallet, which needs a terminal");
-    return NODE_INIT_EXIT.refused;
-  }
-  let key;
-  try {
-    key = resolveNodeKey(io.env, { home: io.home });
-  } catch (error) {
-    io.err(`arp init --node: ${error instanceof Error ? error.message : String(error)}`);
-    return NODE_INIT_EXIT.failed;
-  }
-  io.err(`node key   ${key.account.address}  (${key.source === "env" ? "AGENT_PRIVATE_KEY" : key.path})`);
-  const messagePath = join4(io.home, ".arp", "handshake-message.txt");
-  const result = await register({
-    directoryUrl: directory,
-    agent: { agentRegistry, agentId },
-    endpoint,
-    node: key.account,
-    ...io.fetch === undefined ? {} : { fetch: io.fetch },
-    async signAsOwner(challenge2) {
-      writePrivate(messagePath, challenge2.message);
-      io.err("");
-      io.err(`Sign this message as ${challenge2.owner}, the token's owner, before ${challenge2.expiresAt}:`);
-      io.err("");
-      for (const line of challenge2.message.split(`
-`))
-        io.err(`  ${line}`);
-      io.err("");
-      io.err(`It is also in ${messagePath}. With Foundry, for example:`);
-      io.err(`  cast wallet sign --interactive "$(cat ${messagePath})"`);
-      io.err("");
-      const answer = (await io.readLine("owner signature (0x…): ")).trim();
-      if (!isHex(answer) || answer.length < 132)
-        throw new Error("that is not a signature");
-      return answer;
-    }
-  });
-  if (!result.ok) {
-    io.err(`arp init --node: ${result.step} refused: ${result.reason}`);
-    return NODE_INIT_EXIT.failed;
-  }
-  const bindingPath = join4(io.home, ".arp", "node-binding.json");
-  const documentPath = join4(io.home, ".arp", "node-binding.document.json");
-  writePrivate(bindingPath, `${JSON.stringify(result.binding, null, 2)}
-`);
-  writePrivate(documentPath, endpointBindingDocument(result.binding));
-  io.out(`bound      node ${result.binding.nodeAddress} to agent ${agentId} of ${agentRegistry}`);
-  io.out(`endpoint   ${result.binding.endpoint}`);
-  io.out(`saved      ${bindingPath}`);
-  io.out(`document   ${documentPath}`);
-  io.out("");
-  io.out("Next: pin the document to IPFS, then write the binding on Intuition testnet with");
-  io.out("`prepareEndpointBinding`. This command signs no transaction.");
-  io.out("A transfer of the token voids the binding until you run this again.");
-  return NODE_INIT_EXIT.ok;
-}
-var NODE_INIT_EXIT, VALUE_FLAGS;
-var init_node_init = __esm(() => {
-  init_dist2();
-  init_register();
-  init__esm();
-  NODE_INIT_EXIT = { ok: 0, usage: 2, refused: 3, failed: 6 };
-  VALUE_FLAGS = {
-    "--agent-registry": "agentRegistry",
-    "--agent-id": "agentId",
-    "--endpoint": "endpoint",
-    "--directory": "directory"
-  };
-});
-
 // src/share.ts
 var exports_share = {};
 __export(exports_share, {
@@ -27951,11 +27586,11 @@ __export(exports_share, {
   describe: () => describe,
   decide: () => decide
 });
-import { appendFileSync as appendFileSync2, existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3, rmSync, writeFileSync as writeFileSync3 } from "node:fs";
-import { join as join5 } from "node:path";
+import { appendFileSync as appendFileSync2, existsSync as existsSync2, mkdirSync as mkdirSync2, readFileSync as readFileSync3, rmSync, writeFileSync as writeFileSync2 } from "node:fs";
+import { join as join3 } from "node:path";
 function shared(env) {
   const keys = new Set;
-  for (const row of (read(join5(env.arpHome, "shared-failures.jsonl")) ?? "").split(`
+  for (const row of (read(join3(env.arpHome, "shared-failures.jsonl")) ?? "").split(`
 `)) {
     if (row.trim() === "")
       continue;
@@ -27969,7 +27604,7 @@ function shared(env) {
 }
 function onceGrants(env) {
   const grants = [];
-  for (const row of (read(join5(env.arpHome, "share-once.jsonl")) ?? "").split(`
+  for (const row of (read(join3(env.arpHome, "share-once.jsonl")) ?? "").split(`
 `)) {
     try {
       const { session, skill } = JSON.parse(row);
@@ -27996,20 +27631,20 @@ function granted(text, grants, since = null) {
 `);
 }
 function decide(env) {
-  const choice = sharingChoiceOf(read(join5(env.arpHome, "sharing.json")));
-  const on = isSharingOn(read(join5(env.arpHome, "sharing.json")));
+  const choice = sharingChoiceOf(read(join3(env.arpHome, "sharing.json")));
+  const on = isSharingOn(read(join3(env.arpHome, "sharing.json")));
   const since = on && choice?.how === "asked-always" && choice.at !== null ? choice.at : null;
   const grants = on && since === null ? [] : onceGrants(env);
-  const failuresAll = read(join5(env.arpHome, "failures.jsonl")) ?? "";
-  const outcomesAll = read(join5(env.arpHome, "outcomes.jsonl")) ?? "";
+  const failuresAll = read(join3(env.arpHome, "failures.jsonl")) ?? "";
+  const outcomesAll = read(join3(env.arpHome, "outcomes.jsonl")) ?? "";
   const failuresText = since === null ? failuresAll : granted(failuresAll, grants, since);
   const outcomesText = since === null ? outcomesAll : granted(outcomesAll, grants, since);
   const earlier = rowCount(failuresAll) + rowCount(outcomesAll) - rowCount(failuresText) - rowCount(outcomesText);
   const installed = [
-    ...installedFromSkillLock(read(join5(env.home, ".agents", ".skill-lock.json"))),
-    ...installedFromSkillLock(read(join5(env.cwd, "skills-lock.json"))),
-    ...installedFromReceipts(read(join5(env.arpHome, "receipts.jsonl"))),
-    ...installedFromReceipts(read(join5(env.cwd, ".arp", "receipts.jsonl")))
+    ...installedFromSkillLock(read(join3(env.home, ".agents", ".skill-lock.json"))),
+    ...installedFromSkillLock(read(join3(env.cwd, "skills-lock.json"))),
+    ...installedFromReceipts(read(join3(env.arpHome, "receipts.jsonl"))),
+    ...installedFromReceipts(read(join3(env.cwd, ".arp", "receipts.jsonl")))
   ];
   const alreadyShared = shared(env);
   const all = decideShare({
@@ -28033,15 +27668,15 @@ function decide(env) {
   return { lines: once2.lines, keptLocal: [...once2.keptLocal, ...stillOff], on, choice, once: once2.lines.length > 0, earlier: 0 };
 }
 function setSharing(env, on, how = "command", now = new Date) {
-  mkdirSync3(env.arpHome, { recursive: true });
-  writeFileSync3(join5(env.arpHome, "sharing.json"), sharingFileText(on, how, now));
+  mkdirSync2(env.arpHome, { recursive: true });
+  writeFileSync2(join3(env.arpHome, "sharing.json"), sharingFileText(on, how, now));
 }
 async function withSendLock(env, send3, now = Date.now) {
-  mkdirSync3(env.arpHome, { recursive: true });
-  const path = join5(env.arpHome, LOCK);
+  mkdirSync2(env.arpHome, { recursive: true });
+  const path = join3(env.arpHome, LOCK);
   const take = () => {
     try {
-      writeFileSync3(path, `${JSON.stringify({ pid: process.pid, at: new Date(now()).toISOString() })}
+      writeFileSync2(path, `${JSON.stringify({ pid: process.pid, at: new Date(now()).toISOString() })}
 `, { flag: "wx" });
       return true;
     } catch {
@@ -28068,9 +27703,9 @@ async function withSendLock(env, send3, now = Date.now) {
   }
 }
 function logSend(env, result, now = new Date) {
-  mkdirSync3(env.arpHome, { recursive: true });
+  mkdirSync2(env.arpHome, { recursive: true });
   const row = { at: now.toISOString(), sent: result.sent, failed: result.failed, ...result.firstError === null ? {} : { error: result.firstError } };
-  appendFileSync2(join5(env.arpHome, "share-log.jsonl"), `${JSON.stringify(row)}
+  appendFileSync2(join3(env.arpHome, "share-log.jsonl"), `${JSON.stringify(row)}
 `);
 }
 async function sendShared(env, write) {
@@ -28083,7 +27718,7 @@ async function sendShared(env, write) {
   for (const line of lines) {
     try {
       await write(line);
-      appendFileSync2(join5(env.arpHome, "shared-failures.jsonl"), `${JSON.stringify(line)}
+      appendFileSync2(join3(env.arpHome, "shared-failures.jsonl"), `${JSON.stringify(line)}
 `);
       sent += 1;
     } catch (error) {
@@ -34612,8 +34247,8 @@ var init_data2 = __esm(() => {
 });
 
 // ../mcp/src/content.ts
-import { existsSync as existsSync3, writeFileSync as writeFileSync4 } from "node:fs";
-import { dirname as dirname3, join as join6 } from "node:path";
+import { existsSync as existsSync3, writeFileSync as writeFileSync3 } from "node:fs";
+import { dirname as dirname2, join as join4 } from "node:path";
 function catalogueFor(chainId) {
   const held = catalogues.get(chainId);
   if (held !== undefined)
@@ -34638,13 +34273,13 @@ function pinFor(chainId) {
   return (repo) => repos[repo]?.commit ?? null;
 }
 function ignoreOwnDirectory(keyPath) {
-  const ignore = join6(dirname3(keyPath), ".gitignore");
+  const ignore = join4(dirname2(keyPath), ".gitignore");
   try {
     if (!existsSync3(ignore))
-      writeFileSync4(ignore, `*
+      writeFileSync3(ignore, `*
 `);
   } catch (error) {
-    console.error(`${ignore} cannot be written (${String(error)}): keep ${dirname3(keyPath)} out of any commit.`);
+    console.error(`${ignore} cannot be written (${String(error)}): keep ${dirname2(keyPath)} out of any commit.`);
   }
 }
 function receiptSigner() {
@@ -34723,7 +34358,7 @@ async function requester(atomId, params, chainId) {
   }
   return { to: recovered, nonce };
 }
-function refusal2(answer, chainId) {
+function refusal(answer, chainId) {
   switch (answer.status) {
     case "too-many-files":
       return { code: 413, reason: `${answer.path} holds ${answer.files} files, over the ${answer.cap} file cap` };
@@ -34782,7 +34417,7 @@ async function serveContentRequest(atomId, params, chainId, signer) {
     return Response.json({ error: "upstream", reason: String(error).slice(0, 200) }, { status: 502 });
   }
   if (answer.status !== "served") {
-    const { code, reason } = refusal2(answer, chainId);
+    const { code, reason } = refusal(answer, chainId);
     return Response.json({ error: answer.status, reason }, { status: code });
   }
   const headers = {
@@ -34818,7 +34453,7 @@ async function serveBundleRequest(atomId, chainId, signer, to, nonce) {
     return Response.json({ error: "upstream", reason: String(error).slice(0, 200) }, { status: 502 });
   }
   if (answer.status !== "served") {
-    const { code, reason } = refusal2(answer, chainId);
+    const { code, reason } = refusal(answer, chainId);
     return Response.json({ error: answer.status, reason }, { status: code });
   }
   const headers = {
@@ -35449,15 +35084,15 @@ var init_tool_search = __esm(() => {
 });
 
 // ../mcp/src/desktop/agent-key.ts
-import { homedir as homedir3 } from "node:os";
-import { join as join7 } from "node:path";
-function agentKeyPath(home = homedir3()) {
-  return join7(arpHome(process.env, home), "agent-key");
+import { homedir as homedir2 } from "node:os";
+import { join as join5 } from "node:path";
+function agentKeyPath(home = homedir2()) {
+  return join5(arpHome(process.env, home), "agent-key");
 }
 function loadOrCreateAgentKey(path = agentKeyPath(), options = {}) {
   return privateKeyToAccount(loadOrCreateKeyFile(path, options).key);
 }
-function refusal3(call2, permitted) {
+function refusal2(call2, permitted) {
   if (call2.chainId !== DESKTOP_CHAIN_ID)
     return `chain ${call2.chainId} is not testnet ${DESKTOP_CHAIN_ID}`;
   if (call2.value !== 0n)
@@ -35475,7 +35110,7 @@ function agentSender(account, rpcUrl) {
     account,
     client,
     async send(call2, permitted) {
-      const why = refusal3(call2, permitted);
+      const why = refusal2(call2, permitted);
       if (why !== null)
         throw new Error(`refused: ${why}`);
       const hash3 = await wallet.sendTransaction({ to: call2.to, data: call2.data, value: 0n });
@@ -35539,8 +35174,8 @@ async function submitCategory(request, deps) {
 }
 
 // ../mcp/src/desktop/skill-gate.ts
-import { existsSync as existsSync4, mkdirSync as mkdirSync4, readFileSync as readFileSync4, writeFileSync as writeFileSync5, appendFileSync as appendFileSync3 } from "node:fs";
-import { dirname as dirname4, join as join8 } from "node:path";
+import { existsSync as existsSync4, mkdirSync as mkdirSync3, readFileSync as readFileSync4, writeFileSync as writeFileSync4, appendFileSync as appendFileSync3 } from "node:fs";
+import { dirname as dirname3, join as join6 } from "node:path";
 function installPrompt(receipt, files, installPath, context) {
   const ref = skillRefFromUrl(receipt.receipt.url);
   const prompt = renderSkillPrompt(reviewSkill({
@@ -35559,22 +35194,22 @@ function installPrompt(receipt, files, installPath, context) {
 function installFiles(skillsDir, skill, files) {
   if (!SAFE_SKILL_NAME.test(skill))
     throw new Error(`${skill} is not a plain directory name; nothing was installed`);
-  const dir = join8(skillsDir, skill);
+  const dir = join6(skillsDir, skill);
   const clash = files.find((file) => {
-    const path = join8(dir, file.path);
+    const path = join6(dir, file.path);
     return existsSync4(path) && !Buffer.from(readFileSync4(path)).equals(Buffer.from(file.bytes));
   });
   if (clash !== undefined) {
-    throw new Error(`${join8(dir, clash.path)} already exists with different contents; nothing was installed. ` + `Remove ${dir} to install this skill there.`);
+    throw new Error(`${join6(dir, clash.path)} already exists with different contents; nothing was installed. ` + `Remove ${dir} to install this skill there.`);
   }
   for (const file of files) {
-    mkdirSync4(dirname4(join8(dir, file.path)), { recursive: true });
-    writeFileSync5(join8(dir, file.path), file.bytes);
+    mkdirSync3(dirname3(join6(dir, file.path)), { recursive: true });
+    writeFileSync4(join6(dir, file.path), file.bytes);
   }
-  return join8(dir, "SKILL.md");
+  return join6(dir, "SKILL.md");
 }
 function recordInstall(projectReceipts, skill, receipt) {
-  mkdirSync4(dirname4(projectReceipts), { recursive: true });
+  mkdirSync3(dirname3(projectReceipts), { recursive: true });
   const at = new Date(receipt.receipt.servedAt * 1000).toISOString();
   appendFileSync3(projectReceipts, `${JSON.stringify({ skill, atom: receipt.receipt.atom, url: receipt.receipt.url, at, receipt })}
 `);
@@ -35586,8 +35221,8 @@ var init_skill_gate = __esm(() => {
 });
 
 // ../mcp/src/desktop/loop.ts
-import { appendFileSync as appendFileSync4, existsSync as existsSync5, mkdirSync as mkdirSync5, readFileSync as readFileSync5, writeFileSync as writeFileSync6 } from "node:fs";
-import { join as join9 } from "node:path";
+import { appendFileSync as appendFileSync4, existsSync as existsSync5, mkdirSync as mkdirSync4, readFileSync as readFileSync5, writeFileSync as writeFileSync5 } from "node:fs";
+import { join as join7 } from "node:path";
 async function json(response) {
   return await response.json().catch(() => ({}));
 }
@@ -35601,7 +35236,7 @@ async function reach(config, service, url, init) {
     throw new Error(`${service.name} did not answer at ${service.url}. Is it running? Its address is set by ${service.setting}. (${error.message})`, { cause: error });
   }
 }
-async function post2(config, path, body) {
+async function post(config, path, body) {
   const response = await reach(config, sponsoring(config), `${config.sponsorUrl}${path}`, {
     method: "POST",
     signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS),
@@ -35611,16 +35246,16 @@ async function post2(config, path, body) {
   return { status: response.status, body: await json(response) };
 }
 function readAgent(config) {
-  const file = join9(config.stateDir, "agent.json");
+  const file = join7(config.stateDir, "agent.json");
   return existsSync5(file) ? JSON.parse(readFileSync5(file, "utf8")) : null;
 }
 function writeAgent(config, state) {
-  mkdirSync5(config.stateDir, { recursive: true, mode: 448 });
-  writeFileSync6(join9(config.stateDir, "agent.json"), `${JSON.stringify(state)}
+  mkdirSync4(config.stateDir, { recursive: true, mode: 448 });
+  writeFileSync5(join7(config.stateDir, "agent.json"), `${JSON.stringify(state)}
 `, { mode: 384 });
 }
 function receiptFor(config, atom) {
-  const file = join9(config.stateDir, "receipts.jsonl");
+  const file = join7(config.stateDir, "receipts.jsonl");
   if (!existsSync5(file))
     return null;
   const lines = readFileSync5(file, "utf8").split(`
@@ -35628,7 +35263,7 @@ function receiptFor(config, atom) {
   return lines.reverse().find((line) => line.atom.toLowerCase() === atom.toLowerCase()) ?? null;
 }
 function receiptOver(config, atom, digest, agent) {
-  const file = join9(config.stateDir, "receipts.jsonl");
+  const file = join7(config.stateDir, "receipts.jsonl");
   if (!existsSync5(file))
     return null;
   const rows = readFileSync5(file, "utf8").split(`
@@ -35678,15 +35313,15 @@ async function getSkill(config, agent, atom) {
   if (skillMd === undefined)
     throw new Error("the skill came without its SKILL.md");
   const ref = skillRefFromUrl(signed.receipt.url);
-  mkdirSync5(config.stateDir, { recursive: true, mode: 448 });
+  mkdirSync4(config.stateDir, { recursive: true, mode: 448 });
   const line = { atom: signed.receipt.atom, url: signed.receipt.url, skill: ref?.skill ?? null, receipt: signed };
-  appendFileSync4(join9(config.stateDir, "receipts.jsonl"), `${JSON.stringify(line)}
+  appendFileSync4(join7(config.stateDir, "receipts.jsonl"), `${JSON.stringify(line)}
 `);
   const contains = contentsLines(readSkillContents(files.map((file) => contentsFileOf(file.path, file.bytes))));
   const served = { atom: signed.receipt.atom, url: signed.receipt.url, name: ref?.skill ?? signed.receipt.url, text: new TextDecoder().decode(skillMd.bytes), contains };
   if (config.skillsDir === undefined || ref === null || !SAFE_SKILL_NAME.test(ref.skill))
     return served;
-  const prompt = installPrompt(signed, files, join9(config.skillsDir, ref.skill), config.reviewContext?.(signed.receipt.url) ?? { committedAt: null, thirdParty: [] });
+  const prompt = installPrompt(signed, files, join7(config.skillsDir, ref.skill), config.reviewContext?.(signed.receipt.url) ?? { committedAt: null, thirdParty: [] });
   const answer = config.ask === undefined ? "unavailable" : await config.ask(prompt);
   if (answer !== "accepted")
     return { ...served, notInstalled: answer, files: files.length };
@@ -35704,11 +35339,11 @@ async function ensureAgent(config, agent) {
     nonce: keccak256(stringToBytes(`mint-gas-${agent.address}-${Date.now()}`)),
     expiresAt: Math.floor(Date.now() / 1000) + 600
   }, DESKTOP_CHAIN_ID, agent.account);
-  const gas = await post2(config, "/mint-gas", { request });
+  const gas = await post(config, "/mint-gas", { request });
   if (gas.status !== 200)
     throw new Error(`no gas to register (${gas.status}): ${String(gas.body["error"] ?? "")}`);
-  const register2 = { to: config.registry, data: encodeFunctionData({ abi: registryAbi, functionName: "register" }) };
-  const receipt = await agent.send({ ...register2, value: 0n, chainId: DESKTOP_CHAIN_ID }, [register2]);
+  const register = { to: config.registry, data: encodeFunctionData({ abi: registryAbi, functionName: "register" }) };
+  const receipt = await agent.send({ ...register, value: 0n, chainId: DESKTOP_CHAIN_ID }, [register]);
   for (const log of receipt.logs) {
     if (log.address.toLowerCase() !== config.registry.toLowerCase())
       continue;
@@ -35728,7 +35363,7 @@ async function ensureAgent(config, agent) {
 async function ensureIdentity(config, state) {
   if (state.identityAtom !== undefined)
     return state.identityAtom;
-  const made = await post2(config, "/identity", { agentRegistry: registryRef(config), agentId: state.agentId });
+  const made = await post(config, "/identity", { agentRegistry: registryRef(config), agentId: state.agentId });
   if (made.status !== 200 || typeof made.body["identityAtom"] !== "string") {
     throw new Error(`the identity could not be created (${made.status}): ${String(made.body["error"] ?? "")}`);
   }
@@ -35745,7 +35380,7 @@ async function sponsorApproval(config) {
   return { to: multiVault, data: encodeApproveDeposit(getAddress(String(info["sponsor"]))) };
 }
 async function approveSponsor(config, agent, ref, approval) {
-  const gas = await post2(config, "/gas", ref);
+  const gas = await post(config, "/gas", ref);
   if (gas.status !== 200)
     throw new Error(`no gas for the approval (${gas.status}): ${String(gas.body["error"] ?? "")}`);
   const next = gas.body["next"];
@@ -35762,7 +35397,7 @@ async function writeLine(config, agent, asked) {
   const approval = await sponsorApproval(config);
   const expiresAt = () => Math.floor(Date.now() / 1000) + 600;
   const listing2 = await signListToolRequest({ address: agent.address, url: input.toolUrl, nonce: keccak256(stringToBytes(`list-${input.toolUrl}-${Date.now()}`)), expiresAt: expiresAt() }, DESKTOP_CHAIN_ID, agent.account);
-  const listed = await post2(config, "/list-tool", { url: input.toolUrl, request: listing2 });
+  const listed = await post(config, "/list-tool", { url: input.toolUrl, request: listing2 });
   if (listed.status !== 200 || typeof listed.body["atomId"] !== "string") {
     const rule = typeof listed.body["rule"] === "string" ? `, ${listed.body["rule"]}` : "";
     throw new Error(`the sponsor would not list ${input.toolUrl} (${listed.status}${rule}): ${String(listed.body["error"] ?? "")}`);
@@ -35779,7 +35414,7 @@ async function writeLine(config, agent, asked) {
       nonce: keccak256(stringToBytes(`category-${tool}-${input.domain}-${Date.now()}`)),
       expiresAt: expiresAt()
     }, DESKTOP_CHAIN_ID, agent.account);
-    const filed = await post2(config, "/propose-category", { request: category });
+    const filed = await post(config, "/propose-category", { request: category });
     if (filed.status !== 200) {
       throw new Error(`the domain "${input.domain}" could not be added (${filed.status}): ${String(filed.body["error"] ?? "")}`);
     }
@@ -35811,7 +35446,7 @@ async function writeLine(config, agent, asked) {
       nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
       expiresAt: expiresAt()
     }, DESKTOP_CHAIN_ID, agent.account);
-    const answer = await post2(config, "/line", receipt === null ? { request } : { request, receipt });
+    const answer = await post(config, "/line", receipt === null ? { request } : { request, receipt });
     if (answer.status === 200) {
       return {
         toolUrl: String(listed.body["url"]),
@@ -35876,7 +35511,7 @@ async function declareUsed(config, agent, atom) {
       nonce: keccak256(stringToBytes(`${termId}-${Date.now()}`)),
       expiresAt: Math.floor(Date.now() / 1000) + 600
     }, DESKTOP_CHAIN_ID, agent.account);
-    const answer = await post2(config, "/deposit", { request, proof, triple });
+    const answer = await post(config, "/deposit", { request, proof, triple });
     if (answer.status === 200) {
       return { skill: served.skill ?? served.url, created: typeof answer.body["created"] === "string", sent: answer.body["sent"] };
     }
@@ -36246,13 +35881,13 @@ var init_line2 = __esm(() => {
 });
 
 // ../mcp/src/share-ask.ts
-import { existsSync as existsSync6, mkdirSync as mkdirSync6, readFileSync as readFileSync6, writeFileSync as writeFileSync7 } from "node:fs";
-import { join as join10 } from "node:path";
+import { existsSync as existsSync6, mkdirSync as mkdirSync5, readFileSync as readFileSync6, writeFileSync as writeFileSync6 } from "node:fs";
+import { join as join8 } from "node:path";
 function readOrNull(path) {
   return existsSync6(path) ? readFileSync6(path, "utf8") : null;
 }
 function lastSeen(arpHome2) {
-  const text2 = readOrNull(join10(arpHome2, DESKTOP_SEEN));
+  const text2 = readOrNull(join8(arpHome2, DESKTOP_SEEN));
   if (text2 === null)
     return false;
   try {
@@ -36266,14 +35901,14 @@ function applyDesktopShare(value, arpHome2, now = new Date) {
   if (value !== "true" && value !== "false")
     return null;
   const ticked = value === "true";
-  const choice = sharingChoiceOf(readOrNull(join10(arpHome2, "sharing.json")));
+  const choice = sharingChoiceOf(readOrNull(join8(arpHome2, "sharing.json")));
   const changed = ticked !== lastSeen(arpHome2);
-  mkdirSync6(arpHome2, { recursive: true });
-  writeFileSync7(join10(arpHome2, DESKTOP_SEEN), `${JSON.stringify({ share: ticked })}
+  mkdirSync5(arpHome2, { recursive: true });
+  writeFileSync6(join8(arpHome2, DESKTOP_SEEN), `${JSON.stringify({ share: ticked })}
 `);
   if (choice !== null && choice.how !== "desktop" && !changed)
     return null;
-  writeFileSync7(join10(arpHome2, "sharing.json"), sharingFileText(ticked, "desktop", now));
+  writeFileSync6(join8(arpHome2, "sharing.json"), sharingFileText(ticked, "desktop", now));
   return ticked;
 }
 var DESKTOP_SEEN = "desktop-share.json";
@@ -42236,10 +41871,10 @@ var init_pulse_readings2 = __esm(() => {
 
 // ../mcp/src/pulse-cache.ts
 import { createHash as createHash2 } from "node:crypto";
-import { chmodSync as chmodSync2, mkdirSync as mkdirSync7, readFileSync as readFileSync8, writeFileSync as writeFileSync8 } from "node:fs";
-import { join as join11 } from "node:path";
+import { chmodSync as chmodSync2, mkdirSync as mkdirSync6, readFileSync as readFileSync8, writeFileSync as writeFileSync7 } from "node:fs";
+import { join as join9 } from "node:path";
 function diskListingCache(directory2, now = Date.now) {
-  const pathOf = (repo) => join11(directory2, `${createHash2("sha256").update(repo).digest("hex")}.json`);
+  const pathOf = (repo) => join9(directory2, `${createHash2("sha256").update(repo).digest("hex")}.json`);
   return {
     async get(repo) {
       let stored;
@@ -42265,7 +41900,7 @@ function diskListingCache(directory2, now = Date.now) {
     async set(repo, listing2) {
       if (listing2.files.length > MAX_FILES2)
         return;
-      mkdirSync7(directory2, { recursive: true, mode: 448 });
+      mkdirSync6(directory2, { recursive: true, mode: 448 });
       chmodSync2(directory2, 448);
       const stored = {
         readAt: new Date(now()).toISOString(),
@@ -42274,7 +41909,7 @@ function diskListingCache(directory2, now = Date.now) {
         trees: [...listing2.trees],
         truncated: listing2.truncated
       };
-      writeFileSync8(pathOf(repo), JSON.stringify(stored), { mode: 384 });
+      writeFileSync7(pathOf(repo), JSON.stringify(stored), { mode: 384 });
     }
   };
 }
@@ -42411,9 +42046,9 @@ function positiveSetting(raw2, fallback2) {
 var BUSY = "the server is running as many searches as it can; try again in a moment", CANCELLED = "the call was cancelled";
 
 // ../mcp/src/handlers/pulse.ts
-import { chmodSync as chmodSync3, existsSync as existsSync7, mkdirSync as mkdirSync8, readFileSync as readFileSync9, rmSync as rmSync2 } from "node:fs";
-import { homedir as homedir4 } from "node:os";
-import { join as join12, delimiter } from "node:path";
+import { chmodSync as chmodSync3, existsSync as existsSync7, mkdirSync as mkdirSync7, readFileSync as readFileSync9, rmSync as rmSync2 } from "node:fs";
+import { homedir as homedir3 } from "node:os";
+import { join as join10, delimiter } from "node:path";
 function within(work, ms, stop) {
   return new Promise((resolve3, reject) => {
     const quit = () => reject(new Error("no answer in time"));
@@ -42475,10 +42110,10 @@ function canSearch(env) {
   return !env.holdsAgentKey && env.setting !== "off";
 }
 function searchHome() {
-  return join12(arpHome(process.env, homedir4()), "skills-cli");
+  return join10(arpHome(process.env, homedir3()), "skills-cli");
 }
 function searchIsCached() {
-  return existsSync7(join12(searchHome(), ".npm", "_npx"));
+  return existsSync7(join10(searchHome(), ".npm", "_npx"));
 }
 async function search(query, timeoutMs, stop, firstDownload = false) {
   if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env["ARP_PULSE_SEARCH"] })) {
@@ -42486,9 +42121,9 @@ async function search(query, timeoutMs, stop, firstDownload = false) {
   }
   const home = searchHome();
   try {
-    mkdirSync8(home, { recursive: true, mode: 448 });
+    mkdirSync7(home, { recursive: true, mode: 448 });
     chmodSync3(home, 448);
-    rmSync2(join12(home, ".npm", "_logs"), { recursive: true, force: true });
+    rmSync2(join10(home, ".npm", "_logs"), { recursive: true, force: true });
   } catch (error) {
     return { error: withoutPaths(error instanceof Error ? error.message.split(`
 `)[0] ?? "failed" : String(error)) };
@@ -42588,7 +42223,7 @@ function usageLine(usage, domain) {
 }
 function readYourFailures() {
   try {
-    const path = join12(arpHome(process.env, homedir4()), "failures.jsonl");
+    const path = join10(arpHome(process.env, homedir3()), "failures.jsonl");
     return existsSync7(path) ? parseLocalFailures(readFileSync9(path, "utf8")) : [];
   } catch {
     return [];
@@ -42855,7 +42490,7 @@ async function answer(id, args, budget, cancelled) {
   const source = githubPulseSource({
     ...token === undefined ? { withRepository: false } : { token },
     signal: filesStop,
-    cache: diskListingCache(join12(arpHome(process.env, homedir4()), "pulse-listings")),
+    cache: diskListingCache(join10(arpHome(process.env, homedir3()), "pulse-listings")),
     files: processFileCache
   });
   const pulses = await readWindow(ordered, source, {
@@ -45208,7 +44843,7 @@ __export(exports_check, {
 });
 import { createHash as createHash3 } from "node:crypto";
 import { existsSync as existsSync8, statSync as statSync2 } from "node:fs";
-import { delimiter as delimiter2, join as join13 } from "node:path";
+import { delimiter as delimiter2, join as join11 } from "node:path";
 function skillRefOf(arg) {
   const part = /^[\w.-]+$/;
   const fromUrl = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/?\?skill=([^&#]+)$/.exec(arg.trim());
@@ -45239,7 +44874,7 @@ function thisMachine(env = process.env, platform = process.platform) {
   const exts = platform === "win32" ? (env["PATHEXT"] ?? ".EXE;.CMD;.BAT").split(";") : [""];
   return {
     hasProgram: (name) => dirs.some((dir) => exts.some((ext) => {
-      const path = join13(dir, name + ext);
+      const path = join11(dir, name + ext);
       try {
         return existsSync8(path) && statSync2(path).isFile();
       } catch {
@@ -45335,10 +44970,10 @@ var init_classify = __esm(() => {
 
 // ../hook/src/append.ts
 import { closeSync as closeSync2, constants, lstatSync as lstatSync2, openSync as openSync2, writeSync as writeSync2 } from "node:fs";
-import { dirname as dirname5 } from "node:path";
+import { dirname as dirname4 } from "node:path";
 function appendOwn(path, text2) {
-  if (lstatSync2(dirname5(path)).isSymbolicLink())
-    throw new Error(`${dirname5(path)} is a symbolic link`);
+  if (lstatSync2(dirname4(path)).isSymbolicLink())
+    throw new Error(`${dirname4(path)} is a symbolic link`);
   const flags = constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | (constants.O_NOFOLLOW ?? 0);
   const fd = openSync2(path, flags, 384);
   try {
@@ -46137,9 +45772,9 @@ var init_skill_nodes_13579 = __esm(() => {
 });
 
 // ../hook/src/skill-failure.ts
-import { existsSync as existsSync9, mkdirSync as mkdirSync9, readFileSync as readFileSync10 } from "node:fs";
-import { homedir as homedir5 } from "node:os";
-import { dirname as dirname6, join as join14 } from "node:path";
+import { existsSync as existsSync9, mkdirSync as mkdirSync8, readFileSync as readFileSync10 } from "node:fs";
+import { homedir as homedir4 } from "node:os";
+import { dirname as dirname5, join as join12 } from "node:path";
 function failureReason(text2) {
   if (MISSING_PROGRAM.test(text2))
     return "missing-program";
@@ -46178,24 +45813,24 @@ function contextOf(words, skill) {
   return domainInText2(words, WORDS) ?? SKILL_NODE[skill.split(":").pop() ?? skill] ?? null;
 }
 function skillDirectory(name, cwd) {
-  const roots = [join14(cwd, ".claude", "skills"), join14(homedir5(), ".claude", "skills")];
+  const roots = [join12(cwd, ".claude", "skills"), join12(homedir4(), ".claude", "skills")];
   const given = process.env["ARP_SKILLS_DIR"];
   if (given !== undefined && given !== "")
     roots.unshift(given);
-  return roots.map((root2) => join14(root2, name)).find((dir) => existsSync9(join14(dir, "SKILL.md"))) ?? null;
+  return roots.map((root2) => join12(root2, name)).find((dir) => existsSync9(join12(dir, "SKILL.md"))) ?? null;
 }
 function arpHome2() {
   const given = process.env["ARP_HOME"]?.trim();
-  return given !== undefined && given !== "" ? given : join14(homedir5(), ".arp");
+  return given !== undefined && given !== "" ? given : join12(homedir4(), ".arp");
 }
 function appendFailure(line) {
-  const path = join14(arpHome2(), "failures.jsonl");
+  const path = join12(arpHome2(), "failures.jsonl");
   const seen = existsSync9(path) ? readFileSync10(path, "utf8") : "";
   const key = `"session":${JSON.stringify(line.session)},"skill":${JSON.stringify(line.skill)},`;
   if (seen.split(`
 `).some((row) => row.includes(key) && row.includes(`"reason":"${line.reason}"`)))
     return false;
-  mkdirSync9(dirname6(path), { recursive: true });
+  mkdirSync8(dirname5(path), { recursive: true });
   appendOwn(path, `${JSON.stringify(line)}
 `);
   return true;
@@ -46225,8 +45860,8 @@ __export(exports_backfill, {
   backfill: () => backfill
 });
 import { readdirSync as readdirSync2, readFileSync as readFileSync11, statSync as statSync3 } from "node:fs";
-import { homedir as homedir6 } from "node:os";
-import { basename, join as join15 } from "node:path";
+import { homedir as homedir5 } from "node:os";
+import { basename, join as join13 } from "node:path";
 function blocksOf(content2) {
   return Array.isArray(content2) ? content2 : [];
 }
@@ -46239,7 +45874,7 @@ function textOf(content2) {
 function fromDisk(name, cwd) {
   try {
     const directory2 = skillDirectory(name, cwd);
-    return directory2 === null ? null : { name, directory: directory2, markdown: readFileSync11(join15(directory2, "SKILL.md"), "utf8") };
+    return directory2 === null ? null : { name, directory: directory2, markdown: readFileSync11(join13(directory2, "SKILL.md"), "utf8") };
   } catch {
     return null;
   }
@@ -46339,7 +45974,7 @@ function transcripts(root2) {
     return found2;
   }
   for (const name of names) {
-    const path = join15(root2, name);
+    const path = join13(root2, name);
     try {
       if (statSync3(path).isDirectory())
         found2.push(...transcripts(path));
@@ -46351,7 +45986,7 @@ function transcripts(root2) {
   }
   return found2;
 }
-function backfill(root2 = join15(homedir6(), ".claude", "projects")) {
+function backfill(root2 = join13(homedir5(), ".claude", "projects")) {
   const files = transcripts(root2);
   let uses = 0;
   let added = 0;
@@ -46368,585 +46003,13 @@ function backfill(root2 = join15(homedir6(), ".claude", "projects")) {
       if (appendFailure(failure))
         added += 1;
   }
-  return { transcripts: files.length, uses, added, file: join15(arpHome2(), "failures.jsonl") };
+  return { transcripts: files.length, uses, added, file: join13(arpHome2(), "failures.jsonl") };
 }
 var BODY, lastPart = (name) => name.split(":").pop() ?? name;
 var init_backfill = __esm(() => {
   init_classify();
   init_skill_failure();
   BODY = /^Base directory for this skill: ([^\n]+)/;
-});
-
-// ../node/src/env.ts
-function portFrom(raw2, fallback2) {
-  if (raw2 === undefined || raw2.trim() === "")
-    return fallback2;
-  const port = Number(raw2);
-  if (!/^[0-9]+$/.test(raw2.trim()) || port < 1 || port > 65535) {
-    throw new Error(`AGENT_NODE_PORT must be a port between 1 and 65535, got ${raw2}`);
-  }
-  return port;
-}
-function minBudgetFrom(raw2, fallback2) {
-  const value = raw2 === undefined || raw2.trim() === "" ? fallback2 : raw2.trim();
-  if (!/^(0|[1-9][0-9]*)(\.[0-9]{1,18})?$/.test(value)) {
-    throw new Error(`AGENT_NODE_MIN_BUDGET must be a decimal amount such as 0.001, got ${value}`);
-  }
-  return parseEther2(value);
-}
-var init_env = __esm(() => {
-  init__esm();
-});
-
-// ../node/src/task.ts
-function readOffer(value) {
-  if (typeof value !== "object" || value === null)
-    return null;
-  const { description, input, output } = value;
-  const fields = [description, input, output];
-  if (!fields.every((field) => typeof field === "string" && field.length > 0 && field.length <= MAX_OFFER_FIELD2)) {
-    return null;
-  }
-  return { description, input, output };
-}
-
-class PaymentLedger {
-  path;
-  spent = new Set;
-  pending = new Set;
-  constructor(path) {
-    this.path = path;
-    if (path === null)
-      return;
-    for (const row of readJsonLines(path)) {
-      const hash3 = row?.paymentTxHash;
-      if (typeof hash3 === "string")
-        this.spent.add(hash3.toLowerCase());
-    }
-  }
-  isSpent(hash3) {
-    const key = hash3.toLowerCase();
-    return this.spent.has(key) || this.pending.has(key);
-  }
-  claim(hash3) {
-    if (this.isSpent(hash3))
-      return false;
-    this.pending.add(hash3.toLowerCase());
-    return true;
-  }
-  release(hash3) {
-    this.pending.delete(hash3.toLowerCase());
-  }
-  commit(hash3, record2) {
-    const key = hash3.toLowerCase();
-    if (this.path !== null)
-      appendJsonLine(this.path, { paymentTxHash: key, ...record2 });
-    this.pending.delete(key);
-    this.spent.add(key);
-  }
-}
-function withTimeout3(work, ms) {
-  let timer;
-  const expiry = new Promise((_resolve, reject) => {
-    timer = setTimeout(() => reject(new Timeout), ms);
-  });
-  return Promise.race([work, expiry]).finally(() => clearTimeout(timer));
-}
-function createNode(options) {
-  const { account, publicClient, chainId: chainId2, identity: identity2, minBudget, handle, offer = null, ledger } = options;
-  const limits = { ...DEFAULT_LIMITS, ...options.limits };
-  const now = options.now ?? Date.now;
-  const windows = new Map;
-  function overLimit(client) {
-    const at = now();
-    if (windows.size > RATE_SWEEP_AT) {
-      for (const [key, window2] of windows) {
-        if (at - window2.start >= RATE_WINDOW_MS)
-          windows.delete(key);
-      }
-    }
-    const window = windows.get(client);
-    if (window === undefined || at - window.start >= RATE_WINDOW_MS) {
-      windows.set(client, { start: at, count: 1 });
-      return false;
-    }
-    window.count += 1;
-    return window.count > limits.requestsPerMinute;
-  }
-  async function verifyPayment(hash3, requester3) {
-    const tx = await publicClient.getTransaction({ hash: hash3 }).catch(() => null);
-    if (tx === null)
-      return { error: `payment tx ${hash3} not found` };
-    const receipt = await publicClient.getTransactionReceipt({ hash: hash3 }).catch(() => null);
-    if (receipt === null)
-      return { error: `payment tx ${hash3} is not mined yet` };
-    if (receipt.status !== "success")
-      return { error: `payment tx ${hash3} reverted` };
-    if (!tx.to || tx.to.toLowerCase() !== account.address.toLowerCase()) {
-      return { error: `payment recipient ${tx.to ?? "none"} is not this agent ${account.address}` };
-    }
-    if (tx.value < minBudget) {
-      return {
-        error: `payment ${formatEther(tx.value)} is below this agent's minimum ${formatEther(minBudget)}`
-      };
-    }
-    if (tx.from.toLowerCase() !== requester3.toLowerCase()) {
-      return { error: `payment came from ${tx.from}, not from the declared requester` };
-    }
-    return { requester: requester3, paid: tx.value, paymentTxHash: hash3, agent: account.address };
-  }
-  async function readBody(request) {
-    const declared = Number(request.headers.get("content-length") ?? "0");
-    if (declared > limits.maxBodyBytes) {
-      return json2({ error: `body over ${limits.maxBodyBytes} bytes` }, 413);
-    }
-    const text2 = await request.text();
-    if (new TextEncoder().encode(text2).byteLength > limits.maxBodyBytes) {
-      return json2({ error: `body over ${limits.maxBodyBytes} bytes` }, 413);
-    }
-    try {
-      const parsed = JSON.parse(text2);
-      if (typeof parsed !== "object" || parsed === null) {
-        return json2({ error: "body is not a JSON object" }, 400);
-      }
-      return parsed;
-    } catch {
-      return json2({ error: "body is not JSON" }, 400);
-    }
-  }
-  return {
-    async fetch(request, client = "unknown") {
-      const url = new URL(request.url);
-      if (request.method === "GET" && url.pathname === "/healthz") {
-        return json2({ ok: true, agent: account.address, minBudgetWei: minBudget.toString() });
-      }
-      if (request.method === "GET" && url.pathname === "/") {
-        return json2({
-          agent: account.address,
-          endpoints: [{ path: "/task", method: "POST", description: "hire this agent" }],
-          minBudgetWei: minBudget.toString(),
-          offer
-        });
-      }
-      if (request.method !== "POST" || url.pathname !== "/task") {
-        return json2({ error: "POST /task, or GET /healthz" }, 404);
-      }
-      if (overLimit(client)) {
-        return json2({ error: `more than ${limits.requestsPerMinute} requests a minute` }, 429);
-      }
-      const body = await readBody(request);
-      if (body instanceof Response)
-        return body;
-      const { paymentTxHash: hash3, requesterAddress: requester3 } = body;
-      if (typeof hash3 !== "string" || !TX_HASH2.test(hash3)) {
-        return json2({ error: "paymentTxHash must be a 32-byte 0x-prefixed hex hash" }, 400);
-      }
-      if (typeof requester3 !== "string" || !isAddress(requester3)) {
-        return json2({ error: "requesterAddress must be an address" }, 400);
-      }
-      const { verifier, termId } = body;
-      if (typeof verifier !== "string" || !isAddress(verifier)) {
-        return json2({ error: "verifier must be the address the receipt is for (an enforcer or a service)" }, 400);
-      }
-      if (typeof termId !== "string" || !TX_HASH2.test(termId)) {
-        return json2({ error: "termId must be the 32-byte term the requester will deposit on" }, 400);
-      }
-      const payment = hash3;
-      const spentError = () => json2({ error: `payment tx ${payment} was already used for a job` }, 409);
-      if (ledger.isSpent(payment))
-        return spentError();
-      const verified = await verifyPayment(payment, requester3);
-      if ("error" in verified)
-        return json2(verified, 402);
-      if (!ledger.claim(payment))
-        return spentError();
-      let result2;
-      let requestHash;
-      let resultHash;
-      const abort = new AbortController;
-      const work = Promise.resolve().then(() => handle(body.payload, { ...verified, signal: abort.signal }));
-      try {
-        const answer2 = await withTimeout3(work, limits.handlerTimeoutMs);
-        result2 = JSON.parse(JSON.stringify(answer2 ?? null, bigintSafe));
-        requestHash = hireDigest(body.payload ?? null);
-        resultHash = hireDigest(result2);
-      } catch (error) {
-        if (error instanceof Timeout) {
-          abort.abort();
-          work.then(() => ledger.release(payment), () => ledger.release(payment));
-          return json2({ error: `handler did not answer within ${limits.handlerTimeoutMs} ms` }, 504);
-        }
-        ledger.release(payment);
-        return json2({ error: `handler failed: ${String(error).slice(0, 300)}` }, 500);
-      }
-      const issuedAt = Math.floor(now() / 1000);
-      const receipt = {
-        version: HIRE_RECEIPT_VERSION,
-        agentRegistry: identity2?.agentRegistry ?? "",
-        agentId: (identity2?.agentId ?? 0n).toString(),
-        requester: verified.requester,
-        payment,
-        paid: verified.paid.toString(),
-        requestHash,
-        resultHash,
-        issuedAt,
-        termId,
-        expiresAt: issuedAt + limits.receiptTtlSeconds
-      };
-      try {
-        ledger.commit(payment, {
-          requester: verified.requester,
-          requestHash,
-          at: new Date(now()).toISOString()
-        });
-      } catch (error) {
-        ledger.release(payment);
-        return json2({ error: `could not record the payment: ${String(error).slice(0, 300)}` }, 500);
-      }
-      const signed = await signHireReceipt(receipt, { chainId: chainId2, verifyingContract: verifier }, {
-        address: account.address,
-        signTypedData: (data) => account.signTypedData(data)
-      });
-      return json2({ result: result2, receipt: signed });
-    }
-  };
-}
-var MAX_OFFER_FIELD2 = 500, echo = async (payload, context) => ({
-  echoed: payload,
-  note: "No handler configured, so this node proves the protocol and nothing about the agent. Set " + "ARP_NODE_HANDLER to a module exporting `handle(payload, context)`.",
-  paidWei: context.paid.toString()
-}), DEFAULT_LIMITS, TX_HASH2, RATE_WINDOW_MS = 60000, RATE_SWEEP_AT = 1e4, json2, Timeout;
-var init_task = __esm(() => {
-  init_dist2();
-  init_node2();
-  init__esm();
-  DEFAULT_LIMITS = {
-    maxBodyBytes: 64 * 1024,
-    handlerTimeoutMs: 60000,
-    requestsPerMinute: 30,
-    receiptTtlSeconds: 86400
-  };
-  TX_HASH2 = /^0x[0-9a-fA-F]{64}$/;
-  json2 = jsonResponse;
-  Timeout = class Timeout extends Error {
-  };
-});
-
-// ../node/src/tunnel.ts
-import { spawn as spawnChild } from "node:child_process";
-import { accessSync, constants as constants2, statSync as statSync4 } from "node:fs";
-import { delimiter as delimiter3, join as join16 } from "node:path";
-import { createInterface } from "node:readline";
-function isExecutable(path) {
-  try {
-    if (!statSync4(path).isFile())
-      return false;
-    accessSync(path, constants2.X_OK);
-    return true;
-  } catch {
-    return false;
-  }
-}
-function findOnPath(name, path, executable) {
-  for (const dir of (path ?? "").split(delimiter3)) {
-    if (dir.length === 0)
-      continue;
-    const candidate = join16(dir, name);
-    if (executable(candidate))
-      return candidate;
-  }
-  return null;
-}
-function chooseTunnel(env, executable = isExecutable) {
-  const mode2 = (env["ARP_NODE_TUNNEL"] ?? "auto").trim().toLowerCase();
-  const configured = () => {
-    const raw2 = env["ARP_NODE_PUBLIC_URL"];
-    if (raw2 === undefined || raw2.trim() === "") {
-      return new Error("ARP_NODE_TUNNEL=configured needs ARP_NODE_PUBLIC_URL");
-    }
-    const publicUrl = normaliseEndpoint(raw2);
-    if (publicUrl === null) {
-      return new Error(`ARP_NODE_PUBLIC_URL must be an https URL without credentials, got ${raw2}`);
-    }
-    return { kind: "configured", publicUrl };
-  };
-  const binary = (kind) => {
-    const found2 = findOnPath(kind, env["PATH"], executable);
-    return found2 === null ? new Error(`${kind} is not on PATH`) : { kind, binary: found2 };
-  };
-  switch (mode2) {
-    case "none":
-      return { kind: "none" };
-    case "configured":
-      return configured();
-    case "cloudflared":
-    case "ngrok":
-      return binary(mode2);
-    case "auto": {
-      if (env["ARP_NODE_PUBLIC_URL"] !== undefined && env["ARP_NODE_PUBLIC_URL"].trim() !== "") {
-        return configured();
-      }
-      const cloudflared = binary("cloudflared");
-      if (!(cloudflared instanceof Error))
-        return cloudflared;
-      const ngrok = binary("ngrok");
-      if (!(ngrok instanceof Error))
-        return ngrok;
-      return new Error("no tunnel: install cloudflared or ngrok, or set ARP_NODE_PUBLIC_URL to a tunnel you run. " + "ARP_NODE_TUNNEL=none serves localhost only.");
-    }
-    default:
-      return new Error(`ARP_NODE_TUNNEL must be auto, cloudflared, ngrok, configured or none, got ${mode2}`);
-  }
-}
-function tunnelArgs(kind, localUrl) {
-  return kind === "cloudflared" ? ["tunnel", "--no-autoupdate", "--url", localUrl] : ["http", localUrl, "--log", "stdout", "--log-format", "json"];
-}
-function publicUrlFrom(kind, line) {
-  if (kind === "cloudflared")
-    return QUICK_TUNNEL.exec(line)?.[0] ?? null;
-  let parsed;
-  try {
-    parsed = JSON.parse(line);
-  } catch {
-    return null;
-  }
-  if (typeof parsed !== "object" || parsed === null)
-    return null;
-  const url = parsed["url"];
-  return typeof url === "string" ? normaliseEndpoint(url) : null;
-}
-function clientAddress(request, socketIp, tunnel) {
-  if (!LOOPBACK.has(socketIp))
-    return socketIp;
-  if (tunnel === "cloudflared") {
-    const cloudflare = request.headers.get("cf-connecting-ip")?.trim();
-    if (cloudflare !== undefined && cloudflare !== "")
-      return cloudflare;
-  }
-  if (tunnel === "ngrok") {
-    const forwarded = request.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim();
-    if (forwarded !== undefined && forwarded !== "")
-      return forwarded;
-  }
-  return socketIp;
-}
-function startTunnel(spec, localUrl, options = {}) {
-  if (spec.kind === "none") {
-    return Promise.resolve({ spec, publicUrl: null, stable: false, stop: () => {} });
-  }
-  if (spec.kind === "configured") {
-    return Promise.resolve({ spec, publicUrl: spec.publicUrl, stable: true, stop: () => {} });
-  }
-  const { kind } = spec;
-  const child = (options.spawn ?? spawnProcess)(spec.binary, tunnelArgs(kind, localUrl));
-  const timeoutMs = options.timeoutMs ?? DEFAULT_TUNNEL_TIMEOUT_MS;
-  return new Promise((resolve3, reject) => {
-    let state = "pending";
-    const fail2 = (message) => {
-      if (state !== "pending")
-        return;
-      state = "failed";
-      clearTimeout(timer);
-      child.kill();
-      reject(new Error(message));
-    };
-    const timer = setTimeout(() => fail2(`${kind} printed no public URL within ${timeoutMs} ms`), timeoutMs);
-    child.onLine((line) => {
-      if (state !== "pending")
-        return;
-      const publicUrl = publicUrlFrom(kind, line);
-      if (publicUrl === null)
-        return;
-      state = "up";
-      clearTimeout(timer);
-      const stop = () => {
-        state = "stopped";
-        child.kill();
-      };
-      resolve3({ spec, publicUrl, stable: false, stop });
-    });
-    child.onExit((code) => {
-      if (state === "up")
-        options.onDown?.(code);
-      else
-        fail2(`${kind} exited (${code ?? "signal"}) before printing a public URL`);
-    });
-  });
-}
-var DEFAULT_TUNNEL_TIMEOUT_MS = 30000, QUICK_TUNNEL, LOOPBACK, spawnProcess = (command, args) => {
-  const child = spawnChild(command, [...args], { stdio: ["ignore", "pipe", "pipe"] });
-  const lineListeners = [];
-  for (const stream of [child.stdout, child.stderr]) {
-    createInterface({ input: stream }).on("line", (line) => {
-      for (const listener of lineListeners)
-        listener(line);
-    });
-  }
-  return {
-    onLine: (listener) => lineListeners.push(listener),
-    onExit: (listener) => child.on("exit", (code) => listener(code)),
-    kill: () => child.kill("SIGTERM")
-  };
-};
-var init_tunnel = __esm(() => {
-  init_dist2();
-  QUICK_TUNNEL = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/;
-  LOOPBACK = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
-});
-
-// ../node/src/node.ts
-var exports_node2 = {};
-__export(exports_node2, {
-  main: () => main2
-});
-function positive(name, fallback2) {
-  const raw2 = process.env[name];
-  if (raw2 === undefined)
-    return fallback2;
-  const value = Number(raw2);
-  if (!Number.isInteger(value) || value <= 0) {
-    console.error(`${name} must be a positive integer, got ${raw2}`);
-    process.exit(1);
-  }
-  return value;
-}
-function identityFromEnv() {
-  const registry = process.env.AGENT_REGISTRY;
-  const id = process.env.AGENT_ID;
-  if (registry === undefined && id === undefined)
-    return null;
-  if (registry === undefined || id === undefined) {
-    console.error("set AGENT_REGISTRY and AGENT_ID together, or neither");
-    process.exit(1);
-  }
-  if (!ERC8004_REGISTRY.test(registry) || !/^(0|[1-9][0-9]*)$/.test(id)) {
-    console.error("AGENT_REGISTRY must be eip155:<chainId>:<address> and AGENT_ID a decimal token id");
-    process.exit(1);
-  }
-  return { agentRegistry: registry, agentId: BigInt(id) };
-}
-async function main2() {
-  const tunnel = chooseTunnel(process.env);
-  if (tunnel instanceof Error) {
-    process.stderr.write(`${tunnel.message}
-`);
-    process.exit(1);
-  }
-  await serveFetch({ port: PORT2, hostname: "127.0.0.1", maxBodyBytes: LIMITS.maxBodyBytes }, (request, ip) => node.fetch(request, clientAddress(request, ip, tunnel.kind)));
-  const local = `http://127.0.0.1:${PORT2}`;
-  let running;
-  try {
-    running = await startTunnel(tunnel, local, {
-      onDown: (code) => process.stderr.write(`tunnel exited (${code ?? "signal"}); the node is unreachable
-`)
-    });
-  } catch (error) {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}
-`);
-    process.exit(1);
-  }
-  for (const signal of ["SIGINT", "SIGTERM"]) {
-    process.on(signal, () => {
-      running.stop();
-      process.exit(0);
-    });
-  }
-  process.on("exit", () => running.stop());
-  process.stderr.write(`agent node on ${local}
-`);
-  process.stderr.write(`  public     ${running.publicUrl ?? "none (ARP_NODE_TUNNEL=none): localhost only"}${running.publicUrl !== null && !running.stable ? " — a new address on every start: run arp init --node again after a restart" : ""}
-`);
-  process.stderr.write(`  tunnel     ${tunnel.kind}
-`);
-  process.stderr.write(`  agent      ${account.address}
-`);
-  process.stderr.write(`  key        ${nodeKey.source === "env" ? "AGENT_PRIVATE_KEY" : `${nodeKey.path}${nodeKey.created ? " (created)" : ""}`}
-`);
-  process.stderr.write(`  min budget ${formatEther(MIN_BUDGET)}
-`);
-  process.stderr.write(`  handler    ${handlerPath ?? "echo (no handler configured)"}
-`);
-  process.stderr.write(`  chain      ${chainId2}
-`);
-  process.stderr.write(`  identity   ${identity2 === null ? "none (AGENT_REGISTRY / AGENT_ID unset)" : `${identity2.agentRegistry} #${identity2.agentId}`}
-`);
-  process.stderr.write(`  ledger     ${LEDGER}
-`);
-  process.stderr.write(`  limits     ${LIMITS.maxBodyBytes} B body, ${LIMITS.handlerTimeoutMs} ms handler, ${LIMITS.requestsPerMinute}/min per client
-`);
-  process.stderr.write(`
-It signs receipts and never transactions.
-`);
-}
-var PORT2, MIN_BUDGET, LEDGER, LIMITS, rpcUrl, nodeKey, account, identity2, handlerPath, handle, offer = null, publicClient, chainId2, node;
-var init_node3 = __esm(async () => {
-  init_node2();
-  init__esm();
-  init_env();
-  init_node_key();
-  init_task();
-  init_tunnel();
-  try {
-    PORT2 = portFrom(process.env.AGENT_NODE_PORT, 3100);
-    MIN_BUDGET = minBudgetFrom(process.env.AGENT_NODE_MIN_BUDGET, "0.001");
-  } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exit(1);
-  }
-  try {
-    LEDGER = stateFile(process.env.AGENT_NODE_LEDGER, "node-payments.jsonl");
-  } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exit(1);
-  }
-  LIMITS = {
-    maxBodyBytes: positive("AGENT_NODE_MAX_BODY_BYTES", DEFAULT_LIMITS.maxBodyBytes),
-    handlerTimeoutMs: positive("AGENT_NODE_HANDLER_TIMEOUT_MS", DEFAULT_LIMITS.handlerTimeoutMs),
-    requestsPerMinute: positive("AGENT_NODE_RATE_LIMIT", DEFAULT_LIMITS.requestsPerMinute),
-    receiptTtlSeconds: positive("AGENT_NODE_RECEIPT_TTL", DEFAULT_LIMITS.receiptTtlSeconds)
-  };
-  rpcUrl = process.env.INTUITION_RPC_URL ?? process.env.INTUITION_TESTNET_RPC_URL;
-  if (!rpcUrl) {
-    console.error("no RPC: set INTUITION_RPC_URL or INTUITION_TESTNET_RPC_URL");
-    process.exit(1);
-  }
-  try {
-    nodeKey = resolveNodeKey(process.env);
-  } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exit(1);
-  }
-  account = nodeKey.account;
-  identity2 = identityFromEnv();
-  handlerPath = process.env.ARP_NODE_HANDLER;
-  handle = echo;
-  if (handlerPath !== undefined) {
-    const module = await import(handlerPath);
-    if (typeof module.handle !== "function") {
-      console.error(`${handlerPath} does not export a \`handle\` function`);
-      process.exit(1);
-    }
-    handle = module.handle;
-    offer = readOffer(module.offer);
-    if (module.offer !== undefined && offer === null) {
-      console.error(`${handlerPath} exports an \`offer\` that is not three short strings, so none is served`);
-    }
-  }
-  publicClient = createPublicClient({ transport: http(rpcUrl) });
-  chainId2 = await publicClient.getChainId();
-  node = createNode({
-    account,
-    publicClient,
-    chainId: chainId2,
-    identity: identity2,
-    minBudget: MIN_BUDGET,
-    handle,
-    offer,
-    ledger: new PaymentLedger(LEDGER),
-    limits: LIMITS
-  });
-  if (false)
-    ;
 });
 
 // ../../packages/protocol/src/share-offer.ts
@@ -47155,7 +46218,7 @@ var init_edits = __esm(() => {
 
 // src/install/targets.ts
 import { existsSync as existsSync10, readFileSync as readFileSync12 } from "node:fs";
-import { dirname as dirname7, join as join17 } from "node:path";
+import { dirname as dirname6, join as join14 } from "node:path";
 function namesOurServer(text2, cliPath) {
   return text2.includes("@arp-protocol/cli") || text2.includes(cliPath) || /apps[\\/]cli[\\/]dist[\\/]cli\.js/.test(text2) || /[\\/]dist[\\/]cli\.js/.test(text2) && text2.includes("ARP_TARGET") || /(?:packaging[\\/]claude[\\/]arp|plugins[\\/]cache[\\/]arp[\\/]arp[\\/][^\\/]+)[\\/]bin[\\/]arp\.js/.test(text2);
 }
@@ -47186,7 +46249,7 @@ function npxLaunch(pkg, command = "mcp") {
   };
 }
 function commandsFor(env, cliPath, capture = false, sponsored = false, force = false) {
-  const hookFile = join17(env.home, ".arp", "bin", "hook.js");
+  const hookFile = join14(env.home, ".arp", "bin", "hook.js");
   const fromNpx = /[\\/]_npx[\\/]/.test(cliPath);
   const mcp = {
     ...fromNpx ? {
@@ -47196,7 +46259,7 @@ function commandsFor(env, cliPath, capture = false, sponsored = false, force = f
   };
   const hook = `"${env.node}" "${hookFile}"${capture ? " --capture" : ""}`;
   const send3 = fromNpx ? npxLaunch(`@arp-protocol/cli@${env.version}`, "share send --auto") : { command: env.node, args: [cliPath, "share", "send", "--auto"] };
-  return { mcp, hook, hookFile, sendFile: join17(dirname7(hookFile), "send.json"), send: send3, cliPath, capture, force };
+  return { mcp, hook, hookFile, sendFile: join14(dirname6(hookFile), "send.json"), send: send3, cliPath, capture, force };
 }
 function diffLines(before, after) {
   const lines = (value, sign3) => value === undefined || typeof value === "object" && value !== null && Object.keys(value).length === 0 ? [] : JSON.stringify(value, null, 2).split(`
@@ -47230,8 +46293,8 @@ function hasForeignServer(path, commands) {
 function claudeFiles(env, project) {
   const root2 = project ? env.cwd : env.home;
   return {
-    mcp: project ? join17(env.cwd, ".mcp.json") : join17(env.home, ".claude.json"),
-    settings: join17(root2, ".claude", "settings.json")
+    mcp: project ? join14(env.cwd, ".mcp.json") : join14(env.home, ".claude.json"),
+    settings: join14(root2, ".claude", "settings.json")
   };
 }
 function mcpEntry(server, typed) {
@@ -47345,17 +46408,17 @@ function hookStep(path, spec, commands, remove) {
 function jsonMcpRuntime(options) {
   const { id, name, dir, file, typed, binary, hook } = options;
   const root2 = (env, project) => project ? env.cwd : env.home;
-  const path = (env, project) => join17(root2(env, project), dir, file);
-  const hookPath = (env, project) => join17(root2(env, project), dir, hook.file);
+  const path = (env, project) => join14(root2(env, project), dir, file);
+  const hookPath = (env, project) => join14(root2(env, project), dir, hook.file);
   const mcpEdit = (commands) => (config) => withMcpServer(config, SERVER_NAME, commands === null ? null : mcpEntry(commands.mcp, typed));
   const steps = (env, commands, project, remove) => {
     const withHook = remove || commands.capture;
     const foreignHere = hasForeignServer(path(env, project), commands);
     if (!remove && !commands.force && foreignHere) {
-      const refusal4 = foreignRefusal(path(env, project));
+      const refusal3 = foreignRefusal(path(env, project));
       if (hook.file === file || !withHook)
-        return [refusal4];
-      return [refusal4, hookStep(hookPath(env, project), hook.spec, commands, false)];
+        return [refusal3];
+      return [refusal3, hookStep(hookPath(env, project), hook.spec, commands, false)];
     }
     const foreign = remove && foreignHere;
     const serverEdit = foreign ? (config) => config : mcpEdit(remove ? null : commands);
@@ -47375,7 +46438,7 @@ function jsonMcpRuntime(options) {
   return {
     id,
     name,
-    detect: (env) => env.which(binary) !== null || existsSync10(join17(env.home, dir)),
+    detect: (env) => env.which(binary) !== null || existsSync10(join14(env.home, dir)),
     install: (env, commands, project) => steps(env, commands, project, false),
     remove: (env, commands, project) => steps(env, commands, project, true),
     check: (env, _commands, project) => {
@@ -47386,7 +46449,7 @@ function jsonMcpRuntime(options) {
   };
 }
 function codexStep(env, entry, project, force = false) {
-  const path = join17(project ? env.cwd : env.home, ".codex", "config.toml");
+  const path = join14(project ? env.cwd : env.home, ".codex", "config.toml");
   const before = read2(path);
   const after = withCodexServer(before, entry, force);
   if (after instanceof Error) {
@@ -47426,7 +46489,7 @@ var init_targets = __esm(() => {
   claude = {
     id: "claude",
     name: "Claude Code",
-    detect: (env) => env.which("claude") !== null || existsSync10(join17(env.home, ".claude")),
+    detect: (env) => env.which("claude") !== null || existsSync10(join14(env.home, ".claude")),
     install: (env, commands, project) => [
       ...claudeMcpSteps(env, commands, project, false, true),
       claudeHookStep(env, commands, project, false)
@@ -47440,7 +46503,7 @@ var init_targets = __esm(() => {
   grok = {
     id: "grok",
     name: "Grok Build",
-    detect: (env) => env.which("grok") !== null || existsSync10(join17(env.home, ".grok")),
+    detect: (env) => env.which("grok") !== null || existsSync10(join14(env.home, ".grok")),
     install: (env, commands, project) => claude.detect(env) ? [{ kind: "skip", summary: "reads Claude Code's files, written above" }] : [
       ...claudeMcpSteps(env, commands, project, false, false),
       claudeHookStep(env, commands, project, false)
@@ -47478,17 +46541,17 @@ var init_targets = __esm(() => {
   codex2 = {
     id: "codex",
     name: "Codex",
-    detect: (env) => env.which("codex") !== null || existsSync10(join17(env.home, ".codex")),
+    detect: (env) => env.which("codex") !== null || existsSync10(join14(env.home, ".codex")),
     install: (env, commands, project) => [
       codexStep(env, commands.mcp, project, commands.force),
-      commands.capture ? hookStep(join17(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, false) : noHook(join17(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands)
+      commands.capture ? hookStep(join14(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, false) : noHook(join14(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands)
     ],
     remove: (env, commands, project) => [
       codexStep(env, null, project),
-      hookStep(join17(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, true)
+      hookStep(join14(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, true)
     ],
     check: (env, _commands, project) => {
-      const path = join17(project ? env.cwd : env.home, ".codex", "config.toml");
+      const path = join14(project ? env.cwd : env.home, ".codex", "config.toml");
       return [[`MCP server "arp" declared (${path})`, hasCodexServer(read2(path))]];
     }
   };
@@ -47521,7 +46584,7 @@ var init_targets = __esm(() => {
       file: "mcp-config.json",
       typed: true,
       binary: "copilot",
-      hook: { file: join17("hooks", "arp.json"), spec: COPILOT_HOOKS }
+      hook: { file: join14("hooks", "arp.json"), spec: COPILOT_HOOKS }
     })
   ];
 });
@@ -47539,14 +46602,14 @@ import {
   chmodSync as chmodSync4,
   copyFileSync,
   existsSync as existsSync11,
-  mkdirSync as mkdirSync10,
+  mkdirSync as mkdirSync9,
   readFileSync as readFileSync13,
   renameSync,
   rmSync as rmSync3,
-  statSync as statSync5,
-  writeFileSync as writeFileSync9
+  statSync as statSync4,
+  writeFileSync as writeFileSync8
 } from "node:fs";
-import { dirname as dirname8, join as join18 } from "node:path";
+import { dirname as dirname7, join as join15 } from "node:path";
 function parseFlags(args) {
   const flags = {
     yes: false,
@@ -47628,10 +46691,10 @@ function apply(env, step2) {
       rmSync3(step2.path, { force: true });
       return null;
     }
-    mkdirSync10(dirname8(step2.path), { recursive: true });
-    const mode2 = step2.before === null ? undefined : statSync5(step2.path).mode & 511;
+    mkdirSync9(dirname7(step2.path), { recursive: true });
+    const mode2 = step2.before === null ? undefined : statSync4(step2.path).mode & 511;
     const temp = `${step2.path}.arp-tmp`;
-    writeFileSync9(temp, step2.after, mode2 === undefined ? undefined : { mode: mode2 });
+    writeFileSync8(temp, step2.after, mode2 === undefined ? undefined : { mode: mode2 });
     if (mode2 !== undefined)
       chmodSync4(temp, mode2);
     renameSync(temp, step2.path);
@@ -47642,7 +46705,7 @@ function apply(env, step2) {
 }
 function hookFileStep(env, commands, remove) {
   const before = read3(commands.hookFile);
-  const after = remove ? null : read3(join18(env.dist, "hook.js"));
+  const after = remove ? null : read3(join15(env.dist, "hook.js"));
   if (!remove && after === null) {
     return {
       kind: "skip",
@@ -47755,11 +46818,11 @@ async function init(env, flags, cliPath) {
   return code;
 }
 async function offerSharing(env, flags) {
-  const home = env.arpHome ?? join18(env.home, ".arp");
-  const file = join18(home, "sharing.json");
+  const home = env.arpHome ?? join15(env.home, ".arp");
+  const file = join15(home, "sharing.json");
   const save = (on) => {
-    mkdirSync10(home, { recursive: true });
-    writeFileSync9(file, sharingFileText2(on, "init", env.now()));
+    mkdirSync9(home, { recursive: true });
+    writeFileSync8(file, sharingFileText2(on, "init", env.now()));
   };
   if (flags.share !== null) {
     save(flags.share);
@@ -47786,7 +46849,7 @@ async function uninstall(env, flags, cliPath) {
   }));
   plan.push({ runtime: "hook", steps: [hookFileStep(env, commands, true), sendFileStep(commands, true)] });
   const code = await change(env, flags, plan, "Remove");
-  const captures = join18(env.home, ".arp", "captures");
+  const captures = join15(env.home, ".arp", "captures");
   if (existsSync11(captures))
     env.out(`Captures kept in ${captures}. Delete them when you no longer need them.`);
   return code;
@@ -47803,7 +46866,7 @@ function doctor(env, flags, cliPath) {
   }
   if (installsHook(runtimes, false)) {
     const installed = read3(commands.hookFile);
-    const packaged = read3(join18(env.dist, "hook.js"));
+    const packaged = read3(join15(env.dist, "hook.js"));
     rows.push(["hook", `${commands.hookFile} present`, installed !== null]);
     if (installed !== null && packaged !== null) {
       rows.push([
@@ -47820,7 +46883,7 @@ function doctor(env, flags, cliPath) {
     `answers initialize (${commands.mcp.command} ${commands.mcp.args.join(" ")})`,
     answer2.stdout.includes('"name":"ARP"')
   ]);
-  const log = read3(join18(env.cwd, ".arp", "session.jsonl"));
+  const log = read3(join15(env.cwd, ".arp", "session.jsonl"));
   const last = log?.trim().split(`
 `).pop();
   let lastAt = null;
@@ -47833,7 +46896,7 @@ function doctor(env, flags, cliPath) {
   }
   for (const [where, what, ok] of rows)
     env.out(`${ok ? "ok  " : "FAIL"}  ${where.padEnd(12)} ${what}`);
-  env.out(`--    session log  ${lastAt === null ? `no call recorded in ${join18(env.cwd, ".arp")}` : `last call recorded ${lastAt}`}`);
+  env.out(`--    session log  ${lastAt === null ? `no call recorded in ${join15(env.cwd, ".arp")}` : `last call recorded ${lastAt}`}`);
   return rows.every(([, , ok]) => ok) ? EXIT.ok : EXIT.problems;
 }
 var EXIT, INITIALIZE;
@@ -47861,14 +46924,14 @@ __export(exports_env, {
 });
 import { spawnSync } from "node:child_process";
 import { existsSync as existsSync12 } from "node:fs";
-import { homedir as homedir7 } from "node:os";
-import { delimiter as delimiter4, join as join19 } from "node:path";
-import { createInterface as createInterface2 } from "node:readline/promises";
+import { homedir as homedir6 } from "node:os";
+import { delimiter as delimiter3, join as join16 } from "node:path";
+import { createInterface } from "node:readline/promises";
 function which(command) {
-  for (const dir of (process.env.PATH ?? "").split(delimiter4)) {
+  for (const dir of (process.env.PATH ?? "").split(delimiter3)) {
     if (dir.length === 0)
       continue;
-    const candidate = join19(dir, command);
+    const candidate = join16(dir, command);
     if (existsSync12(candidate))
       return candidate;
   }
@@ -47876,8 +46939,8 @@ function which(command) {
 }
 function processEnv(dist, version5) {
   return {
-    home: homedir7(),
-    arpHome: process.env["ARP_HOME"]?.trim() || join19(homedir7(), ".arp"),
+    home: homedir6(),
+    arpHome: process.env["ARP_HOME"]?.trim() || join16(homedir6(), ".arp"),
     cwd: process.cwd(),
     which,
     run: (argv, stdin, timeoutMs = 15000) => {
@@ -47891,7 +46954,7 @@ function processEnv(dist, version5) {
     },
     interactive: process.stdin.isTTY === true && process.stdout.isTTY === true,
     ask: async (question) => {
-      const rl = createInterface2({ input: process.stdin, output: process.stdout });
+      const rl = createInterface({ input: process.stdin, output: process.stdout });
       try {
         const answer2 = await rl.question(`${question} [y/N] `);
         return /^y(es)?$/i.test(answer2.trim());
@@ -47909,11 +46972,11 @@ function processEnv(dist, version5) {
     version: version5
   };
 }
-var init_env2 = () => {};
+var init_env = () => {};
 
 // src/cli.ts
 init_node2();
-import { dirname as dirname9 } from "node:path";
+import { dirname as dirname8 } from "node:path";
 import { fileURLToPath } from "node:url";
 // package.json
 var version2 = "0.0.6";
@@ -47936,8 +46999,6 @@ usage
   arp check <skill>  before you use a skill: what its files contain, what agents wrote about
                      it, and whether what it needed when it failed is on this machine.
                      <owner/repo/skill> or a github.com URL with ?skill=. Writes nothing
-  arp node           the hire endpoint. Opt-in: it listens on 127.0.0.1 and is reached through
-                     a tunnel you rent (cloudflared or ngrok, or ARP_NODE_PUBLIC_URL)
 
   arp line           write one public line on testnet 13579 through ARP's sponsor: --tool <url>
                      --outcome worked|failed [--domain <category>] [--reason <reason>]
@@ -47950,9 +47011,6 @@ usage
   arp init           add the MCP server and the hook to every runtime found here
   arp uninstall      remove them, and only them
   arp doctor         check what is installed and that the server answers
-  arp init --node    bind this node to your ERC-8004 agent: the token's owner signs once
-                     --agent-registry eip155:<chain>:<registry> --agent-id <id>
-                     --endpoint <https URL> --directory <handshake URL>
 
   options for init, uninstall, doctor
     --dry-run, -n        show the changes, write nothing
@@ -47979,40 +47037,12 @@ var ARGV = process.argv.slice(2);
 var asksHelp = (rest) => rest.some((arg) => arg === "--help" || arg === "-h");
 var WANTS_HELP = asksHelp(ARGV.slice(1));
 var STDIO_INPUT = ARGV[0] === "mcp" && !ARGV.includes("--http") && !WANTS_HELP ? bufferedCopy(process.stdin) : undefined;
-async function runNodeInit(rest) {
-  const { nodeInit: nodeInit2, parseNodeInitFlags: parseNodeInitFlags2 } = await Promise.resolve().then(() => (init_node_init(), exports_node_init));
-  const flags = parseNodeInitFlags2(rest);
-  if (flags instanceof Error) {
-    process.stderr.write(`arp init --node: ${flags.message}
-`);
-    return EXIT2.usage;
-  }
-  const { homedir: homedir8 } = await import("node:os");
-  const { createInterface: createInterface3 } = await import("node:readline/promises");
-  return nodeInit2(flags, {
-    env: process.env,
-    home: homedir8(),
-    interactive: process.stdin.isTTY === true,
-    readLine: async (prompt) => {
-      const rl = createInterface3({ input: process.stdin, output: process.stderr });
-      try {
-        return await rl.question(prompt);
-      } finally {
-        rl.close();
-      }
-    },
-    out: (line) => process.stdout.write(`${line}
-`),
-    err: (line) => process.stderr.write(`${line}
-`)
-  });
-}
 async function shareCommand(rest) {
   const { arpHome: arpHome3 } = await Promise.resolve().then(() => (init_node2(), exports_node));
-  const { homedir: homedir8 } = await import("node:os");
+  const { homedir: homedir7 } = await import("node:os");
   const share = await Promise.resolve().then(() => (init_share(), exports_share));
   const cwd = process.env["ARP_PROJECT_DIR"]?.trim() || process.cwd();
-  const env = { arpHome: arpHome3(process.env, homedir8()), home: homedir8(), cwd };
+  const env = { arpHome: arpHome3(process.env, homedir7()), home: homedir7(), cwd };
   if (rest[0] === "send") {
     const auto = rest.includes("--auto");
     const decision = share.decide(env);
@@ -48069,12 +47099,10 @@ async function run(argv) {
     process.stdout.write(USAGE);
     return EXIT2.ok;
   }
-  if (command === "init" && rest.includes("--node"))
-    return runNodeInit(rest);
   switch (command) {
     case "mcp": {
-      const { main: main3 } = await init_server().then(() => exports_server);
-      await main3(rest.includes("--http") ? rest : ["--stdio", ...rest], STDIO_INPUT);
+      const { main: main2 } = await init_server().then(() => exports_server);
+      await main2(rest.includes("--http") ? rest : ["--stdio", ...rest], STDIO_INPUT);
       return EXIT2.ok;
     }
     case "hook":
@@ -48163,23 +47191,18 @@ async function run(argv) {
 `);
       return EXIT2.ok;
     }
-    case "node": {
-      const { main: main3 } = await init_node3().then(() => exports_node2);
-      await main3();
-      return EXIT2.ok;
-    }
     case "init":
     case "uninstall":
     case "doctor": {
       const install = await Promise.resolve().then(() => (init_commands(), exports_commands));
-      const { processEnv: processEnv2 } = await Promise.resolve().then(() => (init_env2(), exports_env));
+      const { processEnv: processEnv2 } = await Promise.resolve().then(() => (init_env(), exports_env));
       const flags = install.parseFlags(rest);
       if (flags instanceof Error) {
         process.stderr.write(`arp ${command}: ${flags.message}
 `);
         return EXIT2.usage;
       }
-      const env = processEnv2(dirname9(CLI_PATH), version2);
+      const env = processEnv2(dirname8(CLI_PATH), version2);
       if (command === "doctor")
         return install.doctor(env, flags, CLI_PATH);
       return command === "init" ? install.init(env, flags, CLI_PATH) : install.uninstall(env, flags, CLI_PATH);

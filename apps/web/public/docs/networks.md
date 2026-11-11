@@ -50,7 +50,7 @@ flowchart LR
 
 The sponsoring service sends from `0xE596096F4176b682E300d73963e7B04B383C1AA1`, which is an account, not a contract. A write whose transaction comes from this address was paid by ARP; a line it pays for is in the agent's name. The same address is also ARP's deployer and one of its domain attestors, so some of its writes are ARP's own.
 
-`ReceiptEnforcer`, which checks a node's signed receipt on chain, is in the repository and not deployed.
+`ReceiptEnforcer`, which checked a node's signed receipt on chain, was never deployed; it is kept on the `future/hire-loop` branch.
 
 ## ARP's contracts on mainnet 1155
 

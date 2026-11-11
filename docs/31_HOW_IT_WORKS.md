@@ -31,7 +31,7 @@ flowchart TB
     end
 
     subgraph elsewhere["Another operator's machine"]
-        hired["arp node, behind a tunnel they rent"]
+        hired["the agent's own endpoint, behind a tunnel they rent"]
     end
 
     runtime -- "1. searches" --> pulse
@@ -50,7 +50,7 @@ flowchart TB
     runtime -. "12. pays on chain, then calls: from a wallet outside the plugin" .-> hired
 ```
 
-Step 12 is the one the plugin cannot do alone: it holds no key, so the payment comes from a wallet the operator runs. It was walked once, with `scripts/demo/agent-call-wallet.ts` as that wallet (`docs/tasks/70`, step 6). ARP is not in the call's path: the operator's tunnel carries it, and the node checks the payment and signs a receipt.
+Step 12 is the one the plugin cannot do alone: it holds no key, so the payment comes from a wallet the operator runs. It was walked once, with `scripts/demo/agent-call-wallet.ts` as that wallet (`docs/tasks/70`, step 6), against `arp node`. ARP is not in the call's path: the operator's tunnel carries it, and the endpoint checks the payment. `arp node` and that wallet script left the repository's `dev` branch with task 139 and are kept on `future/hire-loop`; the CLI after 0.0.6 no longer carries a node.
 
 ## The path of one failure
 
@@ -154,7 +154,7 @@ Beside the score, each result shows what its files name: commands, keys, a login
 | `apps/mcp`, hosted and read-only | `https://mcp.arp.intuition.box/mcp` since 2026-11-11: the three read tools, no key. Nothing installed uses it |
 | `scripts/demo/x402-seller`, the demo seller | `https://seller.arp.intuition.box` since 2026-11-11: takes 0.001 test USDC on Base Sepolia and delivers nothing (task 118) |
 | `arp mcp --http`, the content server | Local, port 3002, for a checkout. ARP's own runs as `apps/mcp/src/content-server.ts` at `https://content.arp.intuition.box` once task 131 is deployed, the CLI's default from 0.0.6. Used by the sponsored setup, not by the plugin. _Amended 2026-11-11: read "**Local only**, port 3002"._ |
-| `arp node` | The operator's machine, on 127.0.0.1 behind a tunnel they rent. Only our test agents run one so far |
+| `arp node` | Removed from the CLI after 0.0.6 (task 139), kept on the `future/hire-loop` branch. A node started from 0.0.6 or earlier still runs on its operator's machine. _Amended 2026-11-11: read "The operator's machine, on 127.0.0.1 behind a tunnel they rent. Only our test agents run one so far"._ |
 | `apps/web`, the web app | **Hosted** at `https://arp.intuition.box` since 2026-11-11 (task 117), testnet only. _Amended 2026-11-11: read "Local only, `bun run dev`"._ |
 | `apps/probe`, `apps/api`, Workers | **Local only**, with no public deployment (`docs/27`) |
 | MultiVault and the index | Intuition's, public, testnet 13579 |

@@ -33,7 +33,7 @@ test('--help prints the usage and exits 0', () => {
   expect(code).toBe(0);
   expect(out).toContain('arp mcp');
   expect(out).toContain('arp hook');
-  expect(out).toContain('arp node');
+  expect(out).not.toContain('arp node');
 });
 
 test('--version prints the package version', () => {
@@ -83,17 +83,6 @@ test('mcp speaks stdio by default', () => {
     { ARP_NO_RECEIPTS: '1' },
   );
   expect(out).toContain('"name":"ARP"');
-});
-
-test('the bundle leaves the optional delegation kit out: it is a peer, not 1 MB of payload', () => {
-  // `--external @metamask/smart-accounts-kit` in the build script. Without it the kit and its ABIs
-  // are bundled into a 1.1 MB chunk, measured 2026-10-30. Delegated mode imports the kit lazily and
-  // asks for it to be installed, as `@arp-protocol/core` declares it an optional peer.
-  const files = new Bun.Glob('**/*.js').scanSync(join(import.meta.dir, '..', 'dist'));
-  for (const file of files) {
-    const text = readFileSync(join(import.meta.dir, '..', 'dist', file), 'utf8');
-    expect(text.includes('node_modules/.bun/@metamask+delegation-abis')).toBe(false);
-  }
 });
 
 test('the packaged hook imports no dependency, as it has to start with none installed', () => {

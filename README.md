@@ -83,7 +83,7 @@ whether the skill did its job, and keeps that answer in `~/.arp/outcomes.jsonl` 
 nothing until you say yes: after the first result, the agent asks once whether to share it, and with
 "always" or "yes, this once" the hook starts `arp share send` when the session ends. `~/.arp/` also holds the keys ARP makes
 and the search package's cache. Every file, and every connection, is in
-[Running the node](docs/22_RUNNING_THE_NODE.md). Testing ARP for us: [for testers](apps/web/public/docs/testers.md).
+[Running the MCP server and the hook](docs/22_RUNNING_THE_NODE.md). Testing ARP for us: [for testers](apps/web/public/docs/testers.md).
 
 To remove it:
 
@@ -108,17 +108,16 @@ Each piece, and what each command leaves: [Uninstall](apps/web/public/docs/unins
 ARP/
 ├── apps/                     what runs
 │   ├── web/                  the web app — search, tools, agents, activity
-│   ├── cli/                  `arp` — MCP server, hook and node in one binary
+│   ├── cli/                  `arp` — MCP server and hook in one binary
 │   ├── mcp/                  the MCP server: reads the graph, prepares calls, serves skills
 │   ├── hook/                 records which tools a session used, locally; reads GitHub before a skills install, and a failed skill's lines
-│   ├── node/                 the hire endpoint: checks a payment, signs a receipt
 │   ├── sponsor/              the sponsoring service that pays testnet fees for agents
 │   ├── probe/                cron worker (every 5 min): which MCP endpoints answer
 │   └── api/                  cron worker (every 10 min): GitHub and skills.sh figures, cached
 ├── packages/                 what you import
 │   ├── protocol/             @arp-protocol/core — the protocol SDK
 │   └── graphql/              @arp-protocol/graphql — Intuition queries
-├── contracts/                Solidity — the spending-limit and receipt enforcers
+├── contracts/                Solidity — the spending-limit enforcer and a testnet ERC-8004 registry
 ├── skills/arp/               the publishable ARP skill
 ├── data/catalogue/           the curated tools, skills and domain tree
 └── docs/                     the mechanism, the guides, the roadmap
@@ -127,14 +126,13 @@ ARP/
 | piece                             | read more                                                                                     |
 | --------------------------------- | --------------------------------------------------------------------------------------------- |
 | Web app                           | [`apps/web/README.md`](apps/web/README.md)                                                    |
-| CLI (MCP server, hook, node)      | [`apps/cli/README.md`](apps/cli/README.md)                                                    |
+| CLI (MCP server, hook)            | [`apps/cli/README.md`](apps/cli/README.md)                                                    |
 | MCP server                        | [`apps/mcp/README.md`](apps/mcp/README.md)                                                    |
 | Hook                              | [`apps/hook/README.md`](apps/hook/README.md)                                                  |
-| Node                              | [`apps/node/README.md`](apps/node/README.md)                                                  |
 | Sponsor                           | [`apps/sponsor/README.md`](apps/sponsor/README.md)                                            |
 | Probe (cron)                      | [`apps/probe/README.md`](apps/probe/README.md)                                                |
 | API (cron)                        | [`apps/api/README.md`](apps/api/README.md)                                                    |
-| Everything the programs touch     | [Running the node](docs/22_RUNNING_THE_NODE.md)                                               |
+| Everything the programs touch     | [Running the MCP server and the hook](docs/22_RUNNING_THE_NODE.md)                            |
 | Protocol SDK                      | [`packages/protocol/README.md`](packages/protocol/README.md)                                  |
 | GraphQL layer                     | [`packages/graphql/README.md`](packages/graphql/README.md)                                    |
 | The ARP skill                     | [`skills/arp/SKILL.md`](skills/arp/SKILL.md)                                                  |

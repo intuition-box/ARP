@@ -39,7 +39,7 @@ flowchart TB
         vault["MultiVault: lines and support"]
         index["Index: GraphQL reads"]
     end
-    node["arp node: another operator's machine"]
+    node["an agent's own endpoint, on another operator's machine"]
     runtime --> mcp
     runtime --> hook
     hook --> mem
@@ -58,7 +58,6 @@ flowchart TB
 | MCP server (`arp mcp`) | Searches, reads lines and figures, returns unsigned calls for any write | No. In the sponsored setup it holds a local agent key that signs the agent's own registration and one approval |
 | Hook (`arp hook`) | Runs on every tool call, records what a session used and which skill commands failed | No. Two network calls: to GitHub before a skills install, to show what the skill contains, and to the index when a skill fails, to read that skill's lines, naming only the skill (ADR `0168`) |
 | `arp line`, `arp share send` | Send one signed request to the sponsoring service so a line is written in your agent's name | Your agent key, `~/.arp/agent-key`, signs requests, and on first use the agent's `register()` and one approval, with gas the service sends |
-| `arp node` | Listens for paid tasks, checks the payment, signs a receipt | The node key signs receipts, never transactions |
 | Sponsoring service | Pays for writes on testnet 13579, within daily caps and a budget, after checking each request's signature | Yes: ARP's treasury key, testnet only. It refuses to start on any other chain |
 | Facts cache | Reads GitHub and skills.sh on a schedule, and nohumans.directory's last purchase of an x402 endpoint when a page asks, and serves dated figures to the web app. Not deployed yet | No. A read-only GitHub token |
 | Probe | Sends one `initialize` to each listed MCP endpoint every five minutes and keeps the result. Not deployed yet | No. Its readings are never written on chain |
@@ -72,7 +71,6 @@ ARP hosts the sponsoring service at `https://sponsor.arp.intuition.box`, testnet
 | --- | --- | --- |
 | Sponsoring service, run locally | `http://127.0.0.1:3200` | `SPONSOR_PORT` (service side), `ARP_SPONSOR` (client side; the CLI 0.0.4 defaults to the hosted one) |
 | Content server, `arp mcp --http` | `http://127.0.0.1:3002` | `PORT` (server side), `ARP_CONTENT` (client side; the CLI 0.0.6 defaults to ARP's hosted one, `https://content.arp.intuition.box`) |
-| Agent node | `http://127.0.0.1:3100` | `AGENT_NODE_PORT` |
 
 ## What happens on a write
 
@@ -107,8 +105,7 @@ flowchart LR
         a1["web"]
         a2["mcp"]
         a3["hook"]
-        a4["node"]
-        a5["cli: the three above in one binary"]
+        a5["cli: mcp and hook in one binary"]
         a6["sponsor"]
         a7["api, probe: Workers"]
     end
@@ -128,14 +125,13 @@ flowchart LR
 | [`apps/web`](https://github.com/intuition-box/ARP/tree/main/apps/web) | This web app. React, Vite, Tailwind, wagmi. Testnet 13579 by default; a toggle switches Intuition reads and support to mainnet 1155. ARP's own contracts stay on 13579 |
 | [`apps/mcp`](https://github.com/intuition-box/ARP/tree/main/apps/mcp) | The MCP server, over stdio or HTTP. It signs no transaction |
 | [`apps/hook`](https://github.com/intuition-box/ARP/tree/main/apps/hook) | The runtime hook, wired on `PreToolUse`, `PostToolUse`, `PostToolUseFailure` and `Stop` |
-| [`apps/node`](https://github.com/intuition-box/ARP/tree/main/apps/node) | The agent node: listens, checks a payment, signs a receipt |
-| [`apps/cli`](https://github.com/intuition-box/ARP/tree/main/apps/cli) | `@arp-protocol/cli`: the MCP server, the hook and the node in one binary, plus `init`, `line`, `share`. It also generates the Claude Code and Gemini packages |
+| [`apps/cli`](https://github.com/intuition-box/ARP/tree/main/apps/cli) | `@arp-protocol/cli`: the MCP server and the hook in one binary, plus `init`, `line`, `share`. It also generates the Claude Code and Gemini packages |
 | [`apps/sponsor`](https://github.com/intuition-box/ARP/tree/main/apps/sponsor) | The sponsoring service, testnet 13579 only |
 | [`apps/api`](https://github.com/intuition-box/ARP/tree/main/apps/api) | Cloudflare Worker: GitHub's, skills.sh's and nohumans.directory's figures, cached and dated, never chain data |
 | [`apps/probe`](https://github.com/intuition-box/ARP/tree/main/apps/probe) | Cloudflare Worker: whether each listed MCP endpoint answers |
 | [`packages/protocol`](https://github.com/intuition-box/ARP/tree/main/packages/protocol) | `@arp-protocol/core`: identity, graph reads, the pulse score, plans for writes, receipts. It holds no key and sends nothing; it signs only through a signer the caller passes in. Only `src/arp/` names a chain |
 | [`packages/graphql`](https://github.com/intuition-box/ARP/tree/main/packages/graphql) | `@arp-protocol/graphql`: the HTTP transport and every query against Intuition's index |
-| [`contracts`](https://github.com/intuition-box/ARP/tree/main/contracts) | Foundry. `TrustStakeCapEnforcer`, `ReceiptEnforcer` (not deployed), and a testnet copy of the reference ERC-8004 `IdentityRegistry` |
+| [`contracts`](https://github.com/intuition-box/ARP/tree/main/contracts) | Foundry. `TrustStakeCapEnforcer` and a testnet copy of the reference ERC-8004 `IdentityRegistry` |
 | [`data`](https://github.com/intuition-box/ARP/tree/main/data) | The curated catalogue and domain tree, one deployment record per chain, and the raw output of measurements |
 | [`skills/arp`](https://github.com/intuition-box/ARP/tree/main/skills/arp) | The skill an agent reads to use ARP with nothing installed |
 

@@ -13,13 +13,9 @@
  *  agent's address so a revert surfaces before any TRUST is spent — which is how staking code is
  *  verified here, per `rules/security.md`.
  *
- *  The two signing modes, and where each one's TRUST comes from:
- *
- *    direct     the agent's wallet signs the calls as printed; its own TRUST is spent
- *    delegated  pass the calls through `toDelegatedCalls` with the operator's signed delegation;
- *               the delegator's TRUST is spent, bounded by the caveats the operator signed
- *
- *  Direct is the on-ramp and delegated is the guard rail. The guard rail is not the price of entry.
+ *  The agent's wallet signs the calls as printed, and its own TRUST is spent. The delegated mode,
+ *  where an operator's signed delegation bounded the spend, is on the `future/hire-loop` branch
+ *  since task 139.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';

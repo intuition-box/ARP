@@ -33,7 +33,6 @@ import {
   type SponsorProof,
   type StrictIdentityAtom,
 } from '@arp-protocol/core';
-import { signDelegation } from '@metamask/smart-accounts-kit';
 import {
   decodeFunctionData,
   getAddress,
@@ -52,13 +51,11 @@ import { assertSponsorChain, KeyFileError, readKeyFile } from '../src/key-file.t
 import { SponsorLedger } from '../src/ledger.ts';
 import { LineReceiptStore } from '../src/line-receipts.ts';
 import { LineRequestStore } from '../src/line-requests.ts';
-import { intuitionJsonPinner } from '../src/pin.ts';
 import { nullOnRevert } from '../src/routes/context.ts';
 import {
   addressList,
   createSponsor,
   registryList,
-  type PublishConfig,
   type SponsorWallet,
 } from '../src/service.ts';
 
@@ -75,7 +72,6 @@ const CHAIN = 13579;
 const MULTIVAULT: Address = '0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91';
 const REGISTRY_ADDRESS: Address = '0xC165A2ADc0000000000000000000000000000001';
 const REGISTRY = `eip155:${CHAIN}:${REGISTRY_ADDRESS}`;
-const DELEGATION_MANAGER: Address = '0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3';
 const USES: Hex = `0x${'0a'.repeat(32)}`;
 const SUBJECT: Hex = `0x${'5b'.repeat(32)}`;
 const OBJECT: Hex = `0x${'0b'.repeat(32)}`;
@@ -99,7 +95,6 @@ const LIMITS: SponsorLimits = {
   linesPerDay: 3,
   dailyBudget: 10n ** 18n,
   depositsPerAgentPerDay: 2,
-  publicationsPerDelegatorPerDay: 2,
   withdrawalThresholdBps: null,
   belowProofCost: false,
 };
@@ -256,7 +251,6 @@ function sponsor(w: World, over: Partial<Parameters<typeof createSponsor>[0]> = 
     limits: LIMITS,
     ledger: new SponsorLedger(null),
     acceptedContentSigners: [NODE.address],
-    publish: null,
     hosts: ['sponsor'],
     now: () => NOW,
     ...over,
@@ -346,7 +340,6 @@ describe('GET /', () => {
       receiptVerifier: string;
       limits: Record<string, unknown>;
       approve: { kind: string };
-      publish: string;
     };
     expect(info.chainId).toBe(CHAIN);
     expect(info.sponsor).toBe(SPONSOR);
@@ -357,7 +350,6 @@ describe('GET /', () => {
     expect(info.limits.depositsPerAgentPerDay).toBe(2);
     expect(info.limits.dailyBudgetWei).toBe((10n ** 18n).toString());
     expect(info.approve.kind).toBe('approve');
-    expect(info.publish).toBe('disabled');
   });
 });
 
@@ -903,146 +895,6 @@ describe('POST /gas', () => {
     expect(res.status).toBe(403);
     expect((await call(sponsor(w), '/gas', { agentRegistry: REGISTRY })).status).toBe(400);
     expect(w.gas).toHaveLength(0);
-  });
-});
-
-describe('POST /publish', () => {
-  const DELEGATE_TO: Hex = `0x${'d1'.repeat(32)}`;
-  const IN_CONTEXT_OF: Hex = `0x${'c1'.repeat(32)}`;
-
-  async function delegation(delegate: Address = AGENT.address) {
-    const unsigned = {
-      delegate,
-      delegator: CALLEE.address,
-      authority: `0x${'ff'.repeat(32)}` as Hex,
-      caveats: [
-        {
-          enforcer: '0x99921C234d4Ca518DC58ba63ff9bfD2Cc9435f34' as Address,
-          terms: '0x12' as Hex,
-          args: '0x' as Hex,
-        },
-      ],
-      salt: '0x01' as Hex,
-      signature: '0x' as Hex,
-    };
-    const signature = await signDelegation({
-      privateKey: `0x${'22'.repeat(32)}`,
-      delegation: unsigned,
-      delegationManager: DELEGATION_MANAGER,
-      chainId: CHAIN,
-    });
-    return { ...unsigned, signature };
-  }
-
-  function config(w: World): PublishConfig {
-    w.terms.add(DELEGATE_TO.toLowerCase());
-    w.terms.add(IN_CONTEXT_OF.toLowerCase());
-    return {
-      delegationManager: DELEGATION_MANAGER,
-      predicates: { delegateTo: DELEGATE_TO, inContextOf: IN_CONTEXT_OF },
-      verify: (args) => verifyTypedData(args),
-      pin: async (document) => {
-        w.pinned.push(document);
-        return `ipfs://bafy${w.pinned.length}`;
-      },
-    };
-  }
-
-  test('answers 503 when publication is not configured', async () => {
-    const res = await call(sponsor(world()), '/publish', { delegation: await delegation() });
-    expect(res.status).toBe(503);
-  });
-
-  test('pins nothing and sends nothing for a delegation whose signature does not verify', async () => {
-    const w = world();
-    const forged = {
-      ...(await delegation()),
-      caveats: [
-        { enforcer: '0x99921C234d4Ca518DC58ba63ff9bfD2Cc9435f34', terms: '0x99', args: '0x' },
-      ],
-    };
-    const res = await call(sponsor(w, { publish: config(w) }), '/publish', {
-      delegation: forged,
-      agentRegistry: REGISTRY,
-      agentId: '7',
-    });
-    expect(res.status).toBe(401);
-    expect(w.pinned).toHaveLength(0);
-    expect(w.sent).toHaveLength(0);
-  });
-
-  test('publishes a verified delegation to a registered agent: three atoms, two triples', async () => {
-    const w = world();
-    const res = await call(sponsor(w, { publish: config(w) }), '/publish', {
-      delegation: await delegation(),
-      agentRegistry: REGISTRY,
-      agentId: '7',
-    });
-    expect(res.status).toBe(200);
-    expect(res.body.published).toBe('now');
-    expect(w.pinned).toHaveLength(1);
-    expect(w.sent.map((c) => c.kind)).toEqual([
-      'create-atom',
-      'create-atom',
-      'create-atom',
-      'create-triple',
-      'create-triple',
-    ]);
-    expect(w.sent.every((c) => c.to === MULTIVAULT)).toBe(true);
-  });
-
-  test('pins nothing for a delegate that is not the registered agent, and returns the document', async () => {
-    const w = world();
-    const res = await call(sponsor(w, { publish: config(w) }), '/publish', {
-      delegation: await delegation(STRANGER.address),
-      agentRegistry: REGISTRY,
-      agentId: '7',
-    });
-    expect(res.status).toBe(403);
-    expect(typeof res.body.document).toBe('string');
-    expect(w.pinned).toHaveLength(0);
-  });
-
-  test('records what a publication spent when a send throws half way', async () => {
-    const w = world();
-    const publish = config(w);
-    const ledger = new SponsorLedger(null);
-    const wallet = fakeWallet(w);
-    let calls = 0;
-    const flaky: SponsorWallet = {
-      ...wallet,
-      send: async (c) => {
-        calls += 1;
-        if (calls === 2) {
-          w.sent.push(c);
-          throw new Error('timed out waiting for the receipt');
-        }
-        return wallet.send(c);
-      },
-    };
-    const res = await call(sponsor(w, { publish, ledger, wallet: flaky }), '/publish', {
-      delegation: await delegation(),
-      agentRegistry: REGISTRY,
-      agentId: '7',
-    });
-    expect(res.status).toBe(500);
-    // Both calls are counted: the one that landed and the one whose outcome is unknown.
-    expect(ledger.records).toHaveLength(1);
-    expect(ledger.records[0]?.value).toBe(w.sent[0]!.value + w.sent[1]!.value);
-  });
-
-  test('stops at two publications a day per delegator', async () => {
-    const w = world();
-    const ledger = new SponsorLedger(null);
-    for (const key of ['a', 'b'])
-      ledger.append({ kind: 'publish', subject: CALLEE.address, value: MILLI, at: NOW - 1, key });
-    const res = await call(sponsor(w, { publish: config(w), ledger }), '/publish', {
-      delegation: await delegation(),
-      agentRegistry: REGISTRY,
-      agentId: '7',
-    });
-    expect(res.status).toBe(429);
-    expect(w.sent).toHaveLength(0);
   });
 });
 
@@ -2287,25 +2139,6 @@ describe('POST /propose-category', () => {
     const w = fresh();
     expect((await call(sponsor(w), '/propose-category', proposal())).status).toBe(503);
     expect(w.sent).toHaveLength(0);
-  });
-});
-
-describe('intuitionJsonPinner', () => {
-  test('uploads the document as JSON and answers its ipfs URI', async () => {
-    const original = globalThis.fetch;
-    let sent: { query: string; variables: { json: unknown } } | null = null;
-    globalThis.fetch = (async (_url: string, init: RequestInit) => {
-      sent = JSON.parse(String(init.body)) as typeof sent;
-      return new Response(JSON.stringify({ data: { uploadJsonToIpfs: { hash: 'bafyabc' } } }));
-    }) as unknown as typeof fetch; // Only the call shape this pinner makes.
-    try {
-      const pin = intuitionJsonPinner({ apiKey: 'k', headerName: 'apikey' });
-      expect(await pin('{"b":1,"a":2}')).toBe('ipfs://bafyabc');
-      expect(sent!.query).toContain('uploadJsonToIpfs');
-      expect(sent!.variables.json).toEqual({ a: 2, b: 1 });
-    } finally {
-      globalThis.fetch = original;
-    }
   });
 });
 

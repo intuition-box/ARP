@@ -5,7 +5,7 @@
 #   TrustStakeCapEnforcer   always     contracts/script/DeployEnforcers.s.sol
 #   IdentityRegistry        with flag  contracts/script/DeployIdentityRegistry.s.sol (13579 only)
 #
-# ReceiptEnforcer is not deployed (task 43). ModuleRegistry and DomainScopeEnforcer were removed
+# ReceiptEnforcer, never deployed, left src/ in task 139 (on future/hire-loop). ModuleRegistry and DomainScopeEnforcer were removed
 # in 59ac83a; their addresses stay in data/deployments/.
 #
 # Usage:

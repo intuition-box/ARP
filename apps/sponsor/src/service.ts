@@ -5,13 +5,12 @@
  *  over the queue, the allow-list and the agent checks they share (`routes/context.ts`); this file
  *  holds the types, the guard every request passes first, and the dispatch.
  *
- *  **Eight routes that spend, and each checks before it spends** (ADR `0092` item 2, ADR `0094`):
+ *  **Seven routes that spend, and each checks before it spends** (ADR `0092` item 2, ADR `0094`):
  *
  *  | route           | what it pays for                                     | what it checks first                 |
  *  | --------------- | ---------------------------------------------------- | ------------------------------------ |
  *  | `POST /gas`     | the gas for the agent's one `approve`, once ever     | a registered ERC-8004 agent          |
  *  | `POST /deposit` | a deposit with `receiver = agent`                    | the signed request, the proof, limits |
- *  | `POST /publish` | the atoms and triples that index a signed delegation | the delegator's signature, limits    |
  *  | `POST /mint-gas`| the gas for an address's own `register()`, once ever | the address's signature, a daily cap |
  *  | `POST /identity`| the atoms and triples of an agent's identity        | a registered agent, the pins, the cap |
  *  | `POST /list-tool`| a tool's atom, and a skill's repository and `source` | the URL exists, the pins, a daily cap |
@@ -54,8 +53,8 @@
  *  pays the deposit. When the deposit's `uses` triple is not on chain yet, `/deposit` creates it
  *  first at `cost + minDeposit`, so the term is born with a sponsor-held position and the agent's
  *  position lands on top (« peu importe le créateur, c'est le stake qui compte », the user). Task
- *  40 §3 had refused that creation; ADR `0110` reverses it. `/publish` creates its terms the same
- *  way (task 37c, ADR `0053`). The cost-of-proof rule and the withdrawal threshold are mainnet
+ *  40 §3 had refused that creation; ADR `0110` reverses it. `POST /publish`, which indexed a signed
+ *  delegation (task 37c), is on the `future/hire-loop` branch since task 139. The cost-of-proof rule and the withdrawal threshold are mainnet
  *  rules, off here. A hire's payment is still the agent's own.
  *
  *  **A refusal always leaves the agent a way.** A 409 for a missing approval carries the approve
@@ -66,13 +65,11 @@ import type {
   AgentIdentityRef,
   AgentKeyReads,
   AgentThing,
-  DelegationPredicates,
   MultiVaultReads,
   PaymentReads,
   PreparedCall,
   SponsorLimits,
   StrictIdentityAtom,
-  TypedDataVerifier,
   X402NetworkPolicy,
   X402TermsReading,
   X402TransferReads,
@@ -95,7 +92,6 @@ import { mintGas } from './routes/mint-gas.ts';
 import { line, lineReceipt, lineRequest } from './routes/line.ts';
 import { listTool } from './routes/list-tool.ts';
 import { proposeCategory, type CategoryLogEntry } from './routes/propose-category.ts';
-import { publish } from './routes/publish.ts';
 
 /**
  * What a send came to. `unconfirmed` is a transaction that was broadcast and whose receipt did not
@@ -127,15 +123,6 @@ export type AgentIdentityAtoms = {
   identityAtom(agent: AgentIdentityRef): Promise<StrictIdentityAtom>;
 };
 
-/** The delegation register's part. Absent, `POST /publish` answers 503 and spends nothing. */
-export type PublishConfig = {
-  delegationManager: Address;
-  predicates: DelegationPredicates;
-  verify: TypedDataVerifier;
-  /** Pins the exact document string and returns its `ipfs://` URI. */
-  pin(document: string): Promise<string>;
-};
-
 export type SponsorOptions = {
   chainId: number;
   wallet: SponsorWallet;
@@ -154,7 +141,6 @@ export type SponsorOptions = {
   ledger: SponsorLedger;
   /** Content-receipt signers accepted as ARP's own nodes. */
   acceptedContentSigners: readonly Address[];
-  publish: PublishConfig | null;
   /**
    * Pins an identity Thing through Intuition's pinning API and returns its `ipfs://` URI. Absent,
    * `POST /identity` answers 503: an identity atom whose document is not pinned does not resolve
@@ -305,7 +291,7 @@ export function createSponsor(options: SponsorOptions): {
       return json(
         {
           error:
-            'GET /, GET /line-request, GET /receipt, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category, /line',
+            'GET /, GET /line-request, GET /receipt, or POST /gas, /mint-gas, /identity, /deposit, /list-tool, /propose-category, /line',
         },
         404,
       );
@@ -314,7 +300,6 @@ export function createSponsor(options: SponsorOptions): {
       '/mint-gas': mintGas,
       '/identity': identity,
       '/deposit': deposit,
-      '/publish': publish,
       '/list-tool': listTool,
       '/propose-category': proposeCategory,
       '/line': line,
@@ -323,7 +308,7 @@ export function createSponsor(options: SponsorOptions): {
       return json(
         {
           error:
-            'GET /, GET /line-request, GET /receipt, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category, /line',
+            'GET /, GET /line-request, GET /receipt, or POST /gas, /mint-gas, /identity, /deposit, /list-tool, /propose-category, /line',
         },
         404,
       );

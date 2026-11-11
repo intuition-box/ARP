@@ -33,7 +33,6 @@ import {
     checkGasLimits,
     checkIdentityLimits,
     checkMintGasLimits,
-    checkPublishLimits,
     spentOnDay,
     sponsoredPositions,
     utcDay,
@@ -536,7 +535,6 @@ describe("limits", () => {
 
     it("keeps ADR 0092's values, less the per-agent count ADR 0129 turned off", () => {
         expect(ADR_0092_LIMITS).toEqual({
-            publicationsPerDelegatorPerDay: 2,
             dailyBudget: 10n ** 18n,
         });
     });
@@ -652,12 +650,9 @@ describe("limits", () => {
         });
     });
 
-    it("allows two publications a day per delegator", () => {
-        const pub: SponsorRecord = {kind: "publish", subject: AGENT.address, value: MILLI, at};
-        const params = {delegator: AGENT.address, value: MILLI, now: at, limits};
-        expect(checkPublishLimits([pub], params).ok).toBe(true);
-        expect(checkPublishLimits([pub, pub], params).ok).toBe(false);
-        expect(checkPublishLimits([], {...params, value: 2n * 10n ** 18n}).ok).toBe(false);
+    it("counts a publication from a ledger written before task 139 against the daily budget", () => {
+        const pub: SponsorRecord = {kind: "publish", subject: AGENT.address, value: limits.dailyBudget, at};
+        expect(checkGasLimits([pub], {agent: AGENT.address, now: at, limits}).ok).toBe(false);
     });
 
     it("sends mint gas once per address, and to at most newAgentsPerDay addresses a day", () => {

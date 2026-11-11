@@ -91,30 +91,6 @@ clean node "$plugin/bin/arp.js" --version >/dev/null 2>&1 || fail "bin/arp.js re
 rm "$work/package.json"
 pass "bin/arp.js runs under a parent package.json that says commonjs"
 
-# The node over a real socket, against a local stub RPC that answers eth_chainId and nothing else.
-# The key is a throwaway constant, never funded; the node signs receipts and sends nothing.
-clean node -e '
-  require("node:http").createServer((q, s) => { let b = ""; q.on("data", (c) => (b += c));
-    q.on("end", () => { const r = JSON.parse(b); s.setHeader("content-type", "application/json");
-      s.end(JSON.stringify({ jsonrpc: "2.0", id: r.id, result: "0x350b" })); }); }).listen(31901);
-' >/dev/null 2>&1 &
-stub=$!
-(cd "$work/project" && exec env -i PATH="$node_bin:/usr/bin:/bin" HOME="$work/home" \
-  INTUITION_RPC_URL=http://127.0.0.1:31901 AGENT_NODE_PORT=31902 \
-  AGENT_PRIVATE_KEY=0x1111111111111111111111111111111111111111111111111111111111111111 \
-  "$arp" node) >/dev/null 2>&1 &
-node_pid=$!
-trap 'kill "$node_pid" "$stub" 2>/dev/null || true; rm -rf "$work"' EXIT
-health=""
-for _ in $(seq 1 50); do
-  health="$(curl -fs http://127.0.0.1:31902/healthz 2>/dev/null || true)"
-  [[ -n "$health" ]] && break
-  sleep 0.2
-done
-kill "$node_pid" "$stub" 2>/dev/null || true
-[[ -n "$health" ]] || fail "arp node did not answer /healthz"
-pass "arp node serves /healthz over a real socket"
-
 mkdir -p "$work/home/.claude"
 (cd "$work/project" && clean "$arp" init --yes --runtime claude >/dev/null) || fail "arp init"
 grep -q '"arp"' "$work/home/.claude.json" || fail "arp init wrote no MCP entry"

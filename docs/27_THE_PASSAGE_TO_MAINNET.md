@@ -60,7 +60,7 @@ read them again before signing (`rules/portability.md`).
 
 | # | Work | Unlocks | Effort | Cost on 1155 |
 | --- | --- | --- | --- | --- |
-| 1 | Find why `previewTripleCreate` reverts and fix its four callers: `declare/plan.ts:400`, `declare/identity-plan.ts:185`, `declare/endpoint-binding-plan.ts:179`, `delegation/register.ts:299`. Add a check that reads 1155 | every mainnet write | ½–1 day | 0 |
+| 1 | Find why `previewTripleCreate` reverts and fix its callers: `declare/plan.ts:400`, `declare/identity-plan.ts:185`, and on the `future/hire-loop` branch (task 139) `declare/endpoint-binding-plan.ts:179`, `delegation/register.ts:299`. Add a check that reads 1155 | every mainnet write | ½–1 day | 0 |
 | 2 | Write a small catalogue: about 20 chosen skills, not 662. Then confirm `arp_find_tools` returns them | search | ½ day | at most 6.6 TRUST without tags (20 × atom, repository and `source` edge) |
 | 3 | Port the loop: `arp_get_skill` without the sponsor, `skills-1155.json`, the hook and the installer on the right chain | receipts on 1155 | 1–2 days | 0 |
 | 4 | Decide how a content receipt works before x402 (§4) | receipts on 1155 | decision | 0 |

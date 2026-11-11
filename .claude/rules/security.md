@@ -37,28 +37,29 @@ Walk through each item for every contract change. Document the result (clean pas
 ### Signature replay
 
 - If signatures are used (EIP-712, EIP-1271), they include a nonce + chainId + verifying contract.
-- Signatures are in use, so this section applies. Twelve sites: `contracts/src/erc8004/IdentityRegistry.sol`
-  (ARP's testnet deployment of the reference registry, which verifies signatures); MetaMask
-  Delegation Framework delegations (EIP-712, signed in the app, verified by `apps/sponsor` before
-  it publishes one); the operator's EIP-712 statement on import
+- Signatures are in use, so this section applies. Ten sites: `contracts/src/erc8004/IdentityRegistry.sol`
+  (ARP's testnet deployment of the reference registry, which verifies signatures); the operator's EIP-712 statement on import
   (`apps/web/src/services/agent-import.ts`); the MCP server's content receipt
   (`packages/protocol/src/receipt.ts`), signed since task 131 also by ARP's hosted content server with a key of its own (ADR `0196`), and which since task 127 also backs a line: the sponsoring service accepts one
   as a line's evidence only from a node it accepts, served to the line's agent, for its tool and over the line's
   version digest (`checkReceiptEvidence`, `packages/protocol/src/line-evidence.ts`, ADR `0192`), and serves it at
   `GET /receipt?hash=`; the node's hire receipt
-  (`packages/protocol/src/hire-receipt.ts`, ADR `0083`); the agent's sponsor request
+  (`packages/protocol/src/hire-receipt.ts`, ADR `0083`), verified by `apps/sponsor` and the agent
+  pulse, its signer, `apps/node`, on the `future/hire-loop` branch since task 139; the agent's sponsor request
   (`packages/protocol/src/sponsor/request.ts`, ADR `0096`); the address's mint-gas request
   (`packages/protocol/src/sponsor/mint-gas.ts`, ADR `0116`), which carries no verifying contract
   because no contract checks it, and whose nonce the sponsoring service spends once; the address's
   list-tool request (`packages/protocol/src/sponsor/list-tool.ts`, ADR `0123`), the same shape
-  with the URL in the signed message; the agent's line request (`packages/protocol/src/sponsor/line.ts`, ADR `0144`), the same shape with the line in the signed message, since version 2 the x402 payment the line claims (ADR `0159`), since version 3 the exact URL that payment was for, which must reduce to the tool's canonical URL (ADR `0162`) and since task 119 carries no query value, fragment, credential or personal path segment (`redactEndpointUrl`, refused with `endpoint-private` otherwise; same version, ADR `0186`), and since version 4 the program's or environment variable's name a failure needed or a worked line added, which the service writes only when the skill's own SKILL.md names it (ADR `0166`; a version 3 request no longer verifies), and since version 5 the terms an x402 payment was made against (`payTo`, `asset`, `price`, `termsAt`, from the endpoint's `402`), which the transfer must match and a reading the payer does not control must name, with `no-delivery` refused without a payment (task 122, ADR `0189`; a version 4 request no longer verifies); since task 121 the service keeps an x402 line's signed request, the only copy, serves it read-only at `GET /line-request`, and the x402 feed republishes it so a reader recovers the signer itself — still EIP-712, with no EIP-191 form (ADR `0188`); and since version 6 the skill's directory digest the line is about and the EIP-712 hash of a content receipt over the same digest, the receipt sent beside the request, the digest written only when it is the skill's directory at `HEAD` or an accepted receipt's (task 127, ADR `0192`; a version 5 request no longer verifies at `/line`, and the x402 feed still reads one the service archived); the agent's category request (`packages/protocol/src/sponsor/category.ts`, ADR `0146`), the same shape with the category, its parent, the subject and the reason in the signed message; the agent's EIP-3009 `TransferWithAuthorization` on Base Sepolia (`scripts/demo/x402-e2e.ts`, task 91, ADR `0160`), signed by Coinbase's `@x402/evm` 2.28.0 with USDC's own EIP-712 domain (chain id and verifying contract) and a random 32-byte nonce the token spends once, demo only and refused for any network, asset, payee or amount but the fake seller's; and `ReceiptEnforcer`
-  (`contracts/src/enforcers/ReceiptEnforcer.sol`, task 43, not deployed), which verifies that hire
-  receipt on chain. The content receipt and the sponsor request carry no verifying contract. For the
+  with the URL in the signed message; the agent's line request (`packages/protocol/src/sponsor/line.ts`, ADR `0144`), the same shape with the line in the signed message, since version 2 the x402 payment the line claims (ADR `0159`), since version 3 the exact URL that payment was for, which must reduce to the tool's canonical URL (ADR `0162`) and since task 119 carries no query value, fragment, credential or personal path segment (`redactEndpointUrl`, refused with `endpoint-private` otherwise; same version, ADR `0186`), and since version 4 the program's or environment variable's name a failure needed or a worked line added, which the service writes only when the skill's own SKILL.md names it (ADR `0166`; a version 3 request no longer verifies), and since version 5 the terms an x402 payment was made against (`payTo`, `asset`, `price`, `termsAt`, from the endpoint's `402`), which the transfer must match and a reading the payer does not control must name, with `no-delivery` refused without a payment (task 122, ADR `0189`; a version 4 request no longer verifies); since task 121 the service keeps an x402 line's signed request, the only copy, serves it read-only at `GET /line-request`, and the x402 feed republishes it so a reader recovers the signer itself — still EIP-712, with no EIP-191 form (ADR `0188`); and since version 6 the skill's directory digest the line is about and the EIP-712 hash of a content receipt over the same digest, the receipt sent beside the request, the digest written only when it is the skill's directory at `HEAD` or an accepted receipt's (task 127, ADR `0192`; a version 5 request no longer verifies at `/line`, and the x402 feed still reads one the service archived); the agent's category request (`packages/protocol/src/sponsor/category.ts`, ADR `0146`), the same shape with the category, its parent, the subject and the reason in the signed message; the agent's EIP-3009 `TransferWithAuthorization` on Base Sepolia (`scripts/demo/x402-e2e.ts`, task 91, ADR `0160`), signed by Coinbase's `@x402/evm` 2.28.0 with USDC's own EIP-712 domain (chain id and verifying contract) and a random 32-byte nonce the token spends once, demo only and refused for any network, asset, payee or amount but the fake seller's.
+  **Two sites left `dev` with task 139 (ADR `0199`) and are kept on the `future/hire-loop` branch**:
+  MetaMask Delegation Framework delegations (EIP-712, signed in the app's account page, verified by
+  `apps/sponsor`'s `POST /publish` before it published one), and `ReceiptEnforcer` (task 43, never
+  deployed), which verified the hire receipt on chain. The content receipt and the sponsor request carry no verifying contract. For the
   content receipt the cause still holds: no contract checks it. The sponsor request's nonce is the
   proof it is bound to, which the service spends once. **The hire receipt names its verifier since
   v2** (task 44, user decision 2026-10-30, ADR `0098`, ADR `0101`): its domain carries
-  `verifyingContract`, and each verifier accepts only a receipt that names it — `ReceiptEnforcer`
-  its own address, `apps/sponsor` its sponsoring account — so one receipt unlocks one sponsorship,
+  `verifyingContract`, and each verifier accepts only a receipt that names it — `apps/sponsor` its
+  sponsoring account, as `ReceiptEnforcer` (on `future/hire-loop`) accepted its own address — so one receipt unlocks one sponsorship,
   at the verifier it names. One payment gets one receipt only as far as the signing node's ledger
   holds: a node that signs two receipts for one payment, naming two verifiers, gets both used.
   The v1 receipt, which named no verifier, still verifies in `hire-receipt.ts` and is accepted by
@@ -186,7 +187,8 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   the sponsor relay may publish an operator's **signed, verified** delegation to IPFS and index it
   on Intuition **testnet 13579**, paid by ARP's treasury key, within a per-delegator daily limit and
   a global daily budget. It verifies the signature before it pins or writes anything. Mainnet needs
-  a new ADR.
+  a new ADR. Since task 139 the route that used it, `POST /publish`, is on the `future/hire-loop`
+  branch, not on `dev`: the licence stands, and nothing on `dev` exercises it.
 
   ADR `0017` scopes _itself_ away from the second case — it says it does not authorise "any automated
   or agent-initiated stake". That makes agent-initiated staking **not yet authorised**, not

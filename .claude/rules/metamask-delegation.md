@@ -4,6 +4,11 @@ Load when a task touches the MetaMask Smart Accounts Kit, ERC-7710 delegation, o
 
 This rule supplements (not replaces) `solidity.md` for the on-chain enforcer side and `code.md` for the TypeScript SDK side.
 
+**Where the code is since task 139** (2026-11-11, ADR `0199`): the web delegation flow, `declare/delegated.ts`, the
+delegation register (`delegation/register.ts`, `state.ts`, the sponsor's `POST /publish`) and `ReceiptEnforcer` are on the
+`future/hire-loop` branch, not on `dev`. `TrustStakeCapEnforcer` stays on `dev`: it is deployed. Work in this surface
+starts from that branch.
+
 ## Authoritative sources
 
 Procedural references (vendored into this repo, read these first):

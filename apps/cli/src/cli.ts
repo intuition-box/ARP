@@ -1,15 +1,14 @@
 /**
- * `arp` — one binary for ARP's three agent-side programs (ADR `0089`).
+ * `arp` — one binary for ARP's agent-side programs (ADR `0089`).
  *
  * | command | program | trust surface |
  * | --- | --- | --- |
  * | `arp mcp` | the MCP server, over stdio; `--http` to serve on 127.0.0.1 | `apps/mcp` |
  * | `arp hook` | reads one payload on stdin, appends one line | `apps/hook` |
- * | `arp node` | the hire endpoint, opt-in, on 127.0.0.1 behind a rented tunnel | `apps/node` |
  *
  * **A shared binary, not a shared process.** Each program is imported only when its command runs,
- * so `arp hook` never loads the MCP server's configuration and `arp mcp` never reads the node's key
- * (ADR `0082`).
+ * so `arp hook` never loads the MCP server's configuration (ADR `0082`). `arp node`, the hire
+ * endpoint, left with task 139: it is on the `future/hire-loop` branch.
  *
  * **The hook is a separate file, `dist/hook.js`, built on its own.** It runs on every tool call, and
  * as a chunk of this bundle it shared one with the MCP server and loaded viem: 0.37 s per call under
@@ -17,8 +16,7 @@
  * resolved at run time so the bundler leaves it out of this file.
  *
  * `init`, `uninstall` and `doctor` install, remove and check the MCP server and the hook in each
- * runtime found on the machine (`src/install/`, task 33c). `init --node` is the other kind of
- * install: the handshake that binds the node to the agent (`src/node-init.ts`, task 39).
+ * runtime found on the machine (`src/install/`, task 33c).
  */
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -44,8 +42,6 @@ usage
   arp check <skill>  before you use a skill: what its files contain, what agents wrote about
                      it, and whether what it needed when it failed is on this machine.
                      <owner/repo/skill> or a github.com URL with ?skill=. Writes nothing
-  arp node           the hire endpoint. Opt-in: it listens on 127.0.0.1 and is reached through
-                     a tunnel you rent (cloudflared or ngrok, or ARP_NODE_PUBLIC_URL)
 
   arp line           write one public line on testnet 13579 through ARP's sponsor: --tool <url>
                      --outcome worked|failed [--domain <category>] [--reason <reason>]
@@ -58,9 +54,6 @@ usage
   arp init           add the MCP server and the hook to every runtime found here
   arp uninstall      remove them, and only them
   arp doctor         check what is installed and that the server answers
-  arp init --node    bind this node to your ERC-8004 agent: the token's owner signs once
-                     --agent-registry eip155:<chain>:<registry> --agent-id <id>
-                     --endpoint <https URL> --directory <handshake URL>
 
   options for init, uninstall, doctor
     --dry-run, -n        show the changes, write nothing
@@ -100,33 +93,6 @@ const asksHelp = (rest: readonly string[]) => rest.some((arg) => arg === '--help
 const WANTS_HELP = asksHelp(ARGV.slice(1));
 const STDIO_INPUT =
   ARGV[0] === 'mcp' && !ARGV.includes('--http') && !WANTS_HELP ? bufferedCopy(process.stdin) : undefined;
-
-/** `arp init --node`: the handshake, not the runtime installer. Kept apart so neither loads the other. */
-async function runNodeInit(rest: readonly string[]): Promise<number> {
-  const { nodeInit, parseNodeInitFlags } = await import('./node-init.ts');
-  const flags = parseNodeInitFlags(rest);
-  if (flags instanceof Error) {
-    process.stderr.write(`arp init --node: ${flags.message}\n`);
-    return EXIT.usage;
-  }
-  const { homedir } = await import('node:os');
-  const { createInterface } = await import('node:readline/promises');
-  return nodeInit(flags, {
-    env: process.env,
-    home: homedir(),
-    interactive: process.stdin.isTTY === true,
-    readLine: async (prompt) => {
-      const rl = createInterface({ input: process.stdin, output: process.stderr });
-      try {
-        return await rl.question(prompt);
-      } finally {
-        rl.close();
-      }
-    },
-    out: (line) => process.stdout.write(`${line}\n`),
-    err: (line) => process.stderr.write(`${line}\n`),
-  });
-}
 
 async function shareCommand(rest: readonly string[]): Promise<number> {
   const { arpHome } = await import('@arp-protocol/core/node');
@@ -186,7 +152,6 @@ async function run(argv: readonly string[]): Promise<number> {
     process.stdout.write(USAGE);
     return EXIT.ok;
   }
-  if (command === 'init' && rest.includes('--node')) return runNodeInit(rest);
   switch (command) {
     case 'mcp': {
       const { main } = await import('@arp/mcp/server');
@@ -276,11 +241,6 @@ async function run(argv: readonly string[]): Promise<number> {
       process.stdout.write(
         `read ${found.transcripts} transcripts: ${found.uses} skill uses, ${found.added} new failures in ${found.file}\n`,
       );
-      return EXIT.ok;
-    }
-    case 'node': {
-      const { main } = await import('@arp/node/node');
-      await main();
       return EXIT.ok;
     }
     case 'init':

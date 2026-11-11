@@ -28,7 +28,6 @@ export type SponsorLimits = {
      * {@link dailyBudget} is what protects the treasury. Mainnet decides it again.
      */
     depositsPerAgentPerDay: number | null;
-    publicationsPerDelegatorPerDay: number;
     /**
      * The `value` the service sends in one UTC day, in wei: deposits, the approval-gas transfers,
      * publication fees. The gas the service's own transactions burn is **not** counted; the
@@ -99,7 +98,6 @@ export type SponsorLimits = {
  * on testnet since ADR `0129`. The other values have no default on purpose.
  */
 export const ADR_0092_LIMITS = {
-    publicationsPerDelegatorPerDay: 2,
     /** "About 1 tTRUST a day overall." */
     dailyBudget: 10n ** 18n,
 } as const;
@@ -111,7 +109,9 @@ export type SponsorRecord = {
      * and triples that give an agent its identity; `create` a `uses` triple a deposit lands on
      * (ADR `0110`); `list-tool` the terms of a sponsored tool listing (ADR `0123`), whose subject
      * is the signing address, or {@link ANONYMOUS_LISTER} for an unsigned request; `line` every term and
-     * position of one sponsored line (ADR `0144`), whose subject is the agent.
+     * position of one sponsored line (ADR `0144`), whose subject is the agent. `publish` was a
+     * delegation's publication; the route is on `future/hire-loop` since task 139, and the kind stays
+     * so a ledger written before still reads and still counts against the daily budget.
      */
     kind:
         | "deposit"
@@ -256,21 +256,6 @@ export function checkGasLimits(
         return {ok: false, reason: "this agent already received its approval gas"};
     }
     return budget(records, limits.approvalGas, now, limits) ?? {ok: true};
-}
-
-/** Whether one more publication for `delegator`, costing `value`, fits. */
-export function checkPublishLimits(
-    records: readonly SponsorRecord[],
-    params: {delegator: Address; value: bigint; now: number; limits: SponsorLimits},
-): LimitDecision {
-    const {delegator, value, now, limits} = params;
-    if (countOnDay(records, "publish", delegator, now) >= limits.publicationsPerDelegatorPerDay) {
-        return {
-            ok: false,
-            reason: `${limits.publicationsPerDelegatorPerDay} sponsored publications a day per delegator, reached`,
-        };
-    }
-    return budget(records, value, now, limits) ?? {ok: true};
 }
 
 /**
