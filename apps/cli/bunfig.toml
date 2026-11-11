@@ -1,0 +1,13 @@
+[test]
+coverage = true
+coverageThreshold = { lines = 0.9, functions = 0.9 }
+coveragePathIgnorePatterns = [
+  # Other workspaces' sources, loaded through their packages: gated in their own workspace.
+  "../../packages/**",
+  "../hook/**",
+  "../mcp/**",
+  "../node/**",
+  "test/**",
+  # Entrypoint: reads process.argv and runs a command at import. test/cli.test.ts runs it built.
+  "src/cli.ts",
+]
