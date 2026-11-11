@@ -22141,7 +22141,7 @@ function publishableToolUrl(url) {
 function assertPublishableToolUrl(url) {
   const verdict = publishableToolUrl(url);
   if (!verdict.ok)
-    throw new ToolUrlCarriesValuesError(url, verdict.why, verdict.listable);
+    throw new ToolUrlCarriesValuesError(verdict.why, verdict.listable);
 }
 var GITHUB, ToolUrlCarriesValuesError;
 var init_tool_url_values = __esm(() => {
@@ -22149,12 +22149,10 @@ var init_tool_url_values = __esm(() => {
   init_endpoint_redaction();
   GITHUB = /^https?:\/\/(?:www\.)?github\.com(?:[/?#]|$)/i;
   ToolUrlCarriesValuesError = class ToolUrlCarriesValuesError extends Error {
-    url;
     listable;
-    constructor(url, why, listable) {
-      super(`${url} cannot be listed: ${why}. A tool's URL is written publicly and for good, so remove it` + (listable === null ? "." : ` and list ${listable}.`));
+    constructor(why, listable) {
+      super(`This tool URL cannot be listed: ${why}. A tool's URL is written publicly and for good, so remove it` + (listable === null ? "." : ` and list ${listable}.`));
       this.name = "ToolUrlCarriesValuesError";
-      this.url = url;
       this.listable = listable;
     }
   };

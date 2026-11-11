@@ -84,9 +84,11 @@ describe("the planners that create a tool's atom refuse a URL with a value", () 
                 return "0x00" as const;
             },
         };
-        await expect(
-            planToolListing({url: `https://example.com/mcp?api_key=${KEY}`, reads}),
-        ).rejects.toBeInstanceOf(ToolUrlCarriesValuesError);
+        const refused = await planToolListing({url: `https://example.com/mcp?api_key=${KEY}`, reads}).catch((error: unknown) => error);
+        expect(refused).toBeInstanceOf(ToolUrlCarriesValuesError);
+        // The message is what a caller logs or forwards, so it never holds the value it refused.
+        expect(String((refused as Error).message)).not.toContain(KEY);
+        expect((refused as ToolUrlCarriesValuesError).listable).toBe("https://example.com/mcp?api_key=");
         expect(read).toBe(false);
     });
 

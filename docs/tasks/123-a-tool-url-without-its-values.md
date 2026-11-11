@@ -1,6 +1,6 @@
 # Task 123 — A tool URL is never listed with a value in it
 
-**Status:** implemented 2026-11-11, awaiting `task-verifier`.
+**Status:** verified 2026-11-11, `task-verifier` PASS (round 1), post-mortem `.claude/learning/111-a-tool-url-without-its-values.md`; on the worktree branch, for the orchestrator to push. After the verdict, its non-blocking finding 1 was fixed: `ToolUrlCarriesValuesError`'s message no longer holds the URL (tested).
 **ADR:** `0190` (amends `.claude/rules/security.md`'s tool-listing row).
 **Rules:** `code.md`, `ui.md` (one message on the Add it form), `security.md`, `claims.md`, `workflow.md`,
 `portability.md`. Gates: `packages/protocol` test and lint, `apps/sponsor` test and lint, `apps/mcp` test

@@ -70,18 +70,19 @@ export function publishableToolUrl(url: string): ToolUrlVerdict {
     return {ok: false, why: `it carries ${parts.length === 0 ? "a value" : parts.join(" and ")}`, listable: redacted};
 }
 
-/** A tool URL that would write a value on chain. Thrown by every planner that would create its atom. */
+/**
+ * A tool URL that would write a value on chain. Thrown by every planner that would create its atom. The
+ * message never holds the URL: a caller that logs or forwards it would carry the value it refused.
+ */
 export class ToolUrlCarriesValuesError extends Error {
-    readonly url: string;
     readonly listable: string | null;
 
-    constructor(url: string, why: string, listable: string | null) {
+    constructor(why: string, listable: string | null) {
         super(
-            `${url} cannot be listed: ${why}. A tool's URL is written publicly and for good, so remove it` +
+            `This tool URL cannot be listed: ${why}. A tool's URL is written publicly and for good, so remove it` +
                 (listable === null ? "." : ` and list ${listable}.`),
         );
         this.name = "ToolUrlCarriesValuesError";
-        this.url = url;
         this.listable = listable;
     }
 }
@@ -89,5 +90,5 @@ export class ToolUrlCarriesValuesError extends Error {
 /** Throws {@link ToolUrlCarriesValuesError} when {@link publishableToolUrl} refuses `url`. */
 export function assertPublishableToolUrl(url: string): void {
     const verdict = publishableToolUrl(url);
-    if (!verdict.ok) throw new ToolUrlCarriesValuesError(url, verdict.why, verdict.listable);
+    if (!verdict.ok) throw new ToolUrlCarriesValuesError(verdict.why, verdict.listable);
 }
