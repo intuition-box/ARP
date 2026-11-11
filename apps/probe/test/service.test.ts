@@ -1,9 +1,9 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 
 import type { Reading } from '../src/probe.ts';
-import { memoryReadings, type D1Like } from '../src/store.ts';
+import { memoryReadings } from '../src/store.ts';
 import { TARGETS, type Target } from '../src/targets.ts';
-import worker, { handle, probeAnswer } from '../src/worker.ts';
+import { handle, probeAnswer } from '../src/service.ts';
 
 const NOW = Date.parse('2026-11-11T12:00:00.000Z');
 const clock = () => NOW;
@@ -15,35 +15,7 @@ function row(target: string, at: string, outcome: Reading['outcome'] = 'answers'
   return { target, kind: 'endpoint', at, outcome, http: 200, ms: 12, detail: 'kept out of the history' };
 }
 
-/** A D1 that records what it is asked and answers every SELECT with `results`. */
-function recordingD1(results: Reading[] = []): D1Like & { queries: string[]; binds: unknown[][]; batches: number } {
-  const queries: string[] = [];
-  const binds: unknown[][] = [];
-  const d1 = {
-    queries,
-    binds,
-    batches: 0,
-    prepare(query: string) {
-      queries.push(query);
-      return {
-        bind(...values: unknown[]) {
-          binds.push(values);
-          return {
-            run: async () => undefined,
-            // Every SELECT in the store reads `Reading` rows, which is what this hands back.
-            all: async <T>() => ({ results: results as T[] }),
-          };
-        },
-      };
-    },
-    async batch() {
-      d1.batches += 1;
-    },
-  };
-  return d1;
-}
-
-/** The worker's own JSON answer, read as the shape the assertion that follows checks. */
+/** The service's own JSON answer, read as the shape the assertion that follows checks. */
 async function body<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
@@ -52,7 +24,7 @@ describe('probeAnswer', () => {
   test('gives each target its latest reading and its history, without the detail', () => {
     const rows = [row(a.label, '2026-11-11T10:00:00.000Z'), row(a.label, '2026-11-11T11:00:00.000Z', 'no-answer')];
     const answer = probeAnswer([a, b], rows, 7);
-    expect(answer.measuredBy).toBe('ARP, from Cloudflare');
+    expect(answer.measuredBy).toBe('ARP, from its own server');
     expect(answer.window).toEqual({ days: 7 });
     expect(answer.targets[0]).toEqual({
       label: a.label,
@@ -97,24 +69,28 @@ describe('handle', () => {
     }
   });
 
-  test('/x402 serves no offers when the reading kept no detail', async () => {
+  test('/x402 skips a reading that kept no offers, taken while the switch was off (ADR 0200)', async () => {
     const store = memoryReadings();
-    await store.append([{ ...row(a.label, '2026-11-11T09:00:00.000Z', 'x402'), detail: null }]);
+    await store.append([
+      { ...row(a.label, '2026-11-11T08:00:00.000Z', 'x402'), detail: '{"offers":[{"payTo":"0x1"}]}' },
+      { ...row(a.label, '2026-11-11T09:00:00.000Z', 'x402'), detail: null },
+    ]);
     const response = await handle(
       new Request(`https://probe.test/x402?target=${encodeURIComponent(a.label)}&before=2026-11-11T10:00:00Z`),
       store,
       clock,
+      { x402: true },
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      measuredBy: 'ARP, from Cloudflare',
-      reading: { target: a.label, at: '2026-11-11T09:00:00.000Z', offers: [] },
+      measuredBy: 'ARP, from its own server',
+      reading: { target: a.label, at: '2026-11-11T08:00:00.000Z', offers: [{ payTo: '0x1' }] },
     });
   });
 
   test('/x402 refuses a request without a target or a date', async () => {
     for (const query of ['', 'target=a.test%2Fmcp', 'before=2026-11-11T10:00:00Z']) {
-      const response = await handle(new Request(`https://probe.test/x402?${query}`), memoryReadings(), clock);
+      const response = await handle(new Request(`https://probe.test/x402?${query}`), memoryReadings(), clock, { x402: true });
       expect(response.status).toBe(400);
       expect(await response.json()).toEqual({ error: 'GET /x402?target=<label>&before=<ISO 8601>' });
     }
@@ -125,6 +101,7 @@ describe('handle', () => {
       new Request('https://probe.test/x402?target=a.test%2Fmcp&before=2026-11-11T10:00:00Z'),
       memoryReadings(),
       clock,
+      { x402: true },
     );
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ error: 'no x402 reading of a.test/mcp before 2026-11-11T10:00:00.000Z' });
@@ -140,46 +117,16 @@ describe('handle', () => {
     expect((await body<{ lastReading: string | null }>(empty)).lastReading).toBeNull();
   });
 
-  test('any other route or method is a 404 that lists the routes', async () => {
-    for (const request of [new Request('https://probe.test/'), new Request('https://probe.test/probe', { method: 'POST' })]) {
-      const response = await handle(request, memoryReadings(), clock);
-      expect(response.status).toBe(404);
-      expect(await response.json()).toEqual({ error: 'GET /probe, GET /x402 or GET /healthz' });
+  test('any other route or method is a 404 that lists the routes, /x402 among them only when on', async () => {
+    const requests = () => [new Request('https://probe.test/'), new Request('https://probe.test/probe', { method: 'POST' })];
+    for (const request of requests()) {
+      const off = await handle(request, memoryReadings(), clock);
+      expect(off.status).toBe(404);
+      expect(await off.json()).toEqual({ error: 'GET /probe or GET /healthz' });
     }
-  });
-});
-
-describe('the Worker entry', () => {
-  const realFetch = globalThis.fetch;
-  afterEach(() => {
-    globalThis.fetch = realFetch;
-  });
-
-  test('fetch serves from the PROBES database', async () => {
-    const d1 = recordingD1([row(a.label, '2026-11-11T11:00:00.000Z')]);
-    const response = await worker.fetch(new Request('https://probe.test/healthz'), { PROBES: d1 });
-    expect((await body<{ lastReading: string }>(response)).lastReading).toBe('2026-11-11T11:00:00.000Z');
-    expect(d1.queries[0]).toContain('FROM readings WHERE at >= ?');
-  });
-
-  test('scheduled reads every bundled target once and writes them in one batch', async () => {
-    const asked: string[] = [];
-    // No live request: every read lands here and is refused.
-    globalThis.fetch = Object.assign(
-      async (input: string | URL | Request) => {
-        asked.push(String(input instanceof Request ? input.url : input));
-        return new Response('', { status: 503 });
-      },
-      { preconnect: realFetch.preconnect },
-    );
-    const d1 = recordingD1();
-    const waited: Promise<unknown>[] = [];
-    worker.scheduled(null, { PROBES: d1 }, { waitUntil: (promise) => waited.push(promise) });
-    expect(waited).toHaveLength(1);
-    await waited[0];
-    expect(asked).toHaveLength(TARGETS.length);
-    expect(d1.batches).toBe(1);
-    expect(d1.binds).toHaveLength(TARGETS.length);
-    expect(d1.binds.map((values) => values[0]).sort()).toEqual(TARGETS.map((target) => target.label).sort());
+    for (const request of requests()) {
+      const on = await handle(request, memoryReadings(), clock, { x402: true });
+      expect(await on.json()).toEqual({ error: 'GET /probe, GET /x402 or GET /healthz' });
+    }
   });
 });

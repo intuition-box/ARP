@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 
 import {
   REPOS as CATALOGUE_REPOS,
@@ -7,7 +7,7 @@ import {
 } from '../src/catalogue.ts';
 import { runSlice, unitsOf, type CycleState, type Store } from '../src/refresh.ts';
 import { readRepo, readSkillPage, readTree, shorten, type Fetch } from '../src/sources.ts';
-import worker, { handle, sameSecret, type Env } from '../src/worker.ts';
+import { everyHours, handle, sameSecret, type Env } from '../src/service.ts';
 
 function memoryStore(): Store & { data: Map<string, string>; writes: number } {
   const data = new Map<string, string>();
@@ -332,6 +332,44 @@ describe('the HTTP surface', () => {
     });
     expect((await handle(wrong, env(store, 'yes'))).status).toBe(401);
   });
+
+  test('POST /refresh?all=1 runs slices back to back until one reads nothing', async () => {
+    const store = memoryStore();
+    let calls = 0;
+    // One repository read answers, then GitHub says the quota is spent.
+    const fetcher = (async () => {
+      calls += 1;
+      return calls === 1
+        ? new Response(JSON.stringify({ stargazers_count: 1, pushed_at: null }))
+        : new Response('', { status: 429 });
+    }) as Fetch;
+    const right = new Request('http://api/refresh?all=1', {
+      method: 'POST',
+      headers: { authorization: 'Bearer yes' },
+    });
+    const response = await handle(right, env(store, 'yes'), fetcher);
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { ran: number; state: { cursor: number } };
+    // The second slice read nothing, which is what stopped the loop.
+    expect([body.ran, body.state.cursor, calls]).toEqual([0, 1, 3]);
+  });
+
+  test('GET /healthz says where the cycle is, and OPTIONS answers CORS', async () => {
+    const store = memoryStore();
+    const health = await handle(new Request('http://api/healthz'), env(store));
+    expect(await health.json()).toEqual({
+      ok: true,
+      state: { cycleStartedAt: null, completedAt: null, cursor: 0, lastErrors: [] },
+    });
+    const options = await handle(new Request('http://api/facts', { method: 'OPTIONS' }), env(store));
+    expect([options.status, options.headers.get('access-control-allow-origin')]).toEqual([204, '*']);
+  });
+
+  test('REFRESH_EVERY_HOURS falls back to 24 on anything that is not a positive number', () => {
+    expect(everyHours({ FACTS: memoryStore(), REFRESH_EVERY_HOURS: '6' })).toBe(6);
+    for (const value of [undefined, '0', '-1', 'soon'])
+      expect(everyHours({ FACTS: memoryStore(), REFRESH_EVERY_HOURS: value })).toBe(24);
+  });
 });
 
 describe('the rest of the HTTP surface', () => {
@@ -360,7 +398,7 @@ describe('the rest of the HTTP surface', () => {
     });
   });
 
-  test('an unknown route names the four that exist', async () => {
+  test('an unknown route names the routes that exist', async () => {
     const response = await handle(new Request('http://api/nope'), { FACTS: memoryStore() });
     expect(response.status).toBe(404);
     expect(((await response.json()) as { error: string }).error).toContain('GET /facts');
@@ -370,7 +408,7 @@ describe('the rest of the HTTP surface', () => {
     const failing: Fetch = async () => new Response('down', { status: 500 });
     const response = await handle(
       new Request(`http://api/x402/last-purchase?url=${encodeURIComponent('https://a.example/x')}`),
-      { FACTS: memoryStore() },
+      { FACTS: memoryStore(), ARP_X402_LAST_PURCHASE: 'on' },
       failing,
     );
     expect(response.status).toBe(502);
@@ -447,53 +485,5 @@ describe('the rest of the HTTP surface', () => {
     const body = (await due.json()) as { idle: boolean; state: CycleState };
     expect(body.idle).toBe(false);
     expect(body.state.cursor).toBe(0);
-  });
-});
-
-describe('the Worker entry', () => {
-  const realFetch = globalThis.fetch;
-  afterEach(() => {
-    globalThis.fetch = realFetch;
-  });
-  /** The entry uses the global fetch; any call here would be a live request, so it fails the test. */
-  const forbidNetwork = () => {
-    const calls: string[] = [];
-    globalThis.fetch = Object.assign(
-      async (input: string | URL | Request) => {
-        calls.push(String(input));
-        return new Response('no network in a test', { status: 500 });
-      },
-      { preconnect: realFetch.preconnect },
-    );
-    return calls;
-  };
-
-  test('fetch routes to the handler', async () => {
-    const calls = forbidNetwork();
-    const response = await worker.fetch(new Request('http://api/healthz'), {
-      FACTS: memoryStore(),
-    });
-    expect(((await response.json()) as { ok: boolean }).ok).toBe(true);
-    expect(calls).toEqual([]);
-  });
-
-  test('the cron hands one slice to waitUntil, which idles while a finished cycle is fresh', async () => {
-    const calls = forbidNetwork();
-    const store = memoryStore();
-    const now = new Date().toISOString();
-    await store.put(
-      'state',
-      JSON.stringify({
-        cycleStartedAt: now,
-        completedAt: now,
-        cursor: unitsOf(CATALOGUE_REPOS, CATALOGUE_SKILLS).length,
-        lastErrors: [],
-      } satisfies CycleState),
-    );
-    const handed: Promise<unknown>[] = [];
-    worker.scheduled(null, { FACTS: store }, { waitUntil: (promise) => handed.push(promise) });
-    expect(handed).toHaveLength(1);
-    expect(await handed[0]).toMatchObject({ ran: 0, idle: true });
-    expect(calls).toEqual([]);
   });
 });

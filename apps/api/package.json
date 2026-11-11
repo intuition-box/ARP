@@ -2,18 +2,17 @@
   "name": "@arp/api",
   "version": "0.0.1",
   "private": true,
-  "description": "A Cloudflare Worker that reads GitHub and skills.sh on a schedule, keeps the result in KV, and serves it to the web app. A cache, never a source: every answer says where it read and when.",
+  "description": "ARP's facts API: reads GitHub and skills.sh on a schedule, keeps the result in SQLite, and serves it to the web app. A cache, never a source: every answer says where it read and when. Runs as a container (ADR 0200).",
   "type": "module",
   "scripts": {
-    "dev": "bun run --cwd ../../packages/protocol build && wrangler dev --test-scheduled",
+    "start": "bun run src/main.ts",
     "test": "bun run --cwd ../../packages/protocol build && bun test",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
     "@arp-protocol/core": "workspace:*",
     "@types/bun": "^1.4.4",
-    "typescript": "~6.0.2",
-    "wrangler": "4.151.0"
+    "typescript": "~6.0.2"
   },
   "license": "MIT"
 }

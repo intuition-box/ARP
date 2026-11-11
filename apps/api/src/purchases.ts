@@ -33,7 +33,7 @@ export const PURCHASE_NETWORK = 'eip155:8453';
 /** One answer is kept this long: the scout buys a listing again over days, not minutes. */
 export const FRESH_FOR_MS = 6 * 60 * 60 * 1000;
 
-/** KV drops an entry nobody asked about for a week. */
+/** The store drops an entry nobody asked about for a week. */
 const EXPIRE_AFTER_S = 7 * 24 * 60 * 60;
 
 const MAX_URL = 2048;
@@ -129,8 +129,8 @@ export async function readLastPurchase(
 }
 
 /**
- * The KV key: a SHA-256 of the endpoint, not the endpoint. KV caps a key at 512 bytes and an
- * endpoint may be up to `MAX_URL` (2048) characters, so the URL itself would throw inside `handle`.
+ * The key: a SHA-256 of the endpoint, not the endpoint. KV capped a key at 512 bytes and an endpoint
+ * may be up to `MAX_URL` (2048) characters; the digest keeps every key short in SQLite too.
  */
 async function keyOf(endpoint: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(endpoint));
@@ -176,8 +176,9 @@ type WriteCount = { day: string; entries: number };
 const WRITES_KEY = 'nohumans-writes';
 
 /**
- * About this many answers are stored a UTC day, 200 KV writes with their count; soft, see above. The namespace is
- * shared with the facts cycle, which `refresh.ts` slices to stay under KV's daily write budget.
+ * About this many answers are stored a UTC day, 200 writes with their count; soft, see above. Set for
+ * KV's daily write budget, which the facts cycle shared; kept in SQLite (ADR `0200`) as the bound on
+ * how much a stranger's URLs can make this service store.
  */
 export const MAX_ENTRIES_PER_DAY = 100;
 

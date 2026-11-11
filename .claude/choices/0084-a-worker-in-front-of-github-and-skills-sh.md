@@ -1,5 +1,7 @@
 # 0084 — A Worker in front of GitHub and skills.sh, as a cache and never a source
 
+> **Amended by ADR `0200`, 2026-11-11.** It runs as a container on Coolify with a SQLite file, not a Worker on KV, and its `/x402/last-purchase` route is off unless `ARP_X402_LAST_PURCHASE=on`. Being a cache and never a source is unchanged.
+
 **Status:** Accepted
 **Date:** 2026-10-30
 **Triggered by:** the user, 2026-10-30. They asked why the GitHub data was a snapshot, and how it could

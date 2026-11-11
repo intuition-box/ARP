@@ -1,9 +1,9 @@
 /**
- * The facts ARP's Worker (`apps/api`) serves: GitHub's and skills.sh's figures, each with when it
+ * The facts ARP's API (`apps/api`) serves: GitHub's and skills.sh's figures, each with when it
  * was read. A cache in front of two sites a browser cannot read itself — skills.sh sends no CORS
  * header, and the GitHub API allows 60 requests an hour per visitor.
  *
- * The bundled copy in `src/data/` stays as the fallback: a Worker that is down or not configured
+ * The bundled copy in `src/data/` stays as the fallback: an API that is down or not configured
  * leaves the page with the last dated copy rather than with empty rows.
  */
 
@@ -49,9 +49,9 @@ export async function fetchFacts(
     ) {
         throw new Error("the facts API answered something that is not a facts document");
     }
-    // An empty cache is a Worker that has not finished its first cycle, not a set of facts.
+    // An empty cache is an API that has not finished its first cycle, not a set of facts.
     if (Object.keys(body.skills).length === 0) throw new Error("the facts API has nothing yet");
-    // Checked above to be the four records `FactsAnswer` names; their entries are the Worker's.
+    // Checked above to be the four records `FactsAnswer` names; their entries are the API's.
     return body as FactsAnswer;
 }
 

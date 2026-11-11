@@ -88,6 +88,14 @@ describe("last purchase", () => {
         ]);
     });
 
+    it("reads a 404 as no such route, so no card, and any other failure as a failure", async () => {
+        const status = (code: number) => async () => new Response("{}", {status: code});
+        expect(await fetchLastPurchase("https://api.arp.example", FAILED.endpoint, status(404))).toBeNull();
+        await expect(fetchLastPurchase("https://api.arp.example", FAILED.endpoint, status(502))).rejects.toThrow(
+            "502 from the API",
+        );
+    });
+
     it("asks only about an atom whose label is an endpoint, never a repository or a skill", () => {
         // A tool atom's label is its URL without the scheme.
         expect(endpointOfLabel("api.tickersfeed.net/econ/snapshot")).toBe(

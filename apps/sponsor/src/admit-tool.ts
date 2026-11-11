@@ -15,10 +15,6 @@
  *   followed, each request has a deadline, the body is capped, and only a verdict leaves this file —
  *   never what the host answered.
  */
-import { lookup as dnsLookup } from 'node:dns';
-import http from 'node:http';
-import https from 'node:https';
-
 import {
   githubRepoOf,
   isA2aCard,
@@ -27,43 +23,25 @@ import {
   isX402Answer,
   manifestForm,
   MCP_PROTOCOL_VERSION,
-  privateAddress,
-  privateProbeTarget,
   repositoryForms,
   skillRefFromUrl,
-  type HeaderLookup,
   type ToolForm,
   type ToolRefusalRule,
 } from '@arp-protocol/core';
+import {
+  pinnedAsk as pinnedRequest,
+  Refused,
+  type Answer,
+  type Ask,
+  type ResolveAll,
+} from '@arp-protocol/core/node';
 
 export type ToolAdmission =
   | { ok: true; form: ToolForm }
   | { ok: false; rule: ToolRefusalRule; reason: string };
 
-/** What one request answered: the status, the headers, and at most `maxBytes` of the body. */
-export type Answer = { status: number; header: HeaderLookup; body: string };
-export type AskInit = { method: 'GET' | 'POST'; headers: Record<string, string>; body?: string };
-/** One request to a URL a caller supplied. Throws {@link Refused} for a private target. */
-export type Ask = (url: string, init: AskInit) => Promise<Answer>;
-
-/** A target this process will not connect to, with the rule a caller is told. */
-export class Refused extends Error {
-  constructor(
-    readonly rule: ToolRefusalRule,
-    message: string,
-  ) {
-    super(message);
-  }
-}
-
-export type ResolveAll = (hostname: string) => Promise<{ address: string; family: number }[]>;
-
-const resolveWithDns: ResolveAll = (hostname) =>
-  new Promise((resolve, reject) =>
-    dnsLookup(hostname, { all: true }, (error, addresses) =>
-      error ? reject(error) : resolve(addresses),
-    ),
-  );
+export type { Answer, Ask, AskInit, ResolveAll } from '@arp-protocol/core/node';
+export { Refused } from '@arp-protocol/core/node';
 
 /** Per request. Three requests at most per URL, so a check takes fifteen seconds at worst. */
 export const ENDPOINT_TIMEOUT_MS = 5_000;
@@ -71,15 +49,10 @@ export const ENDPOINT_TIMEOUT_MS = 5_000;
 export const ENDPOINT_MAX_BYTES = 64 * 1024;
 const USER_AGENT = 'ARP-sponsor/0.1 (+https://github.com/intuition-box/ARP)';
 
-type LookupCallback = (
-  error: Error | null,
-  address: string | { address: string; family: number }[],
-  family?: number,
-) => void;
-
 /**
- * Requests that connect only to the addresses they checked. `allowPrivate` (`ARP_ALLOW_PRIVATE_PROBE=1`)
- * lets a private address through, for the task 91 demo whose seller listens on loopback.
+ * Requests that connect only to the addresses they checked (`@arp-protocol/core/node`, moved there
+ * by task 140 so the probe shares it). `allowPrivate` (`ARP_ALLOW_PRIVATE_PROBE=1`) lets a private
+ * address through, for the task 91 demo whose seller listens on loopback.
  */
 export function pinnedAsk(options: {
   allowPrivate: boolean;
@@ -87,112 +60,13 @@ export function pinnedAsk(options: {
   timeoutMs?: number;
   maxBytes?: number;
 }): Ask {
-  const resolve = options.resolve ?? resolveWithDns;
-  const timeoutMs = options.timeoutMs ?? ENDPOINT_TIMEOUT_MS;
-  const maxBytes = options.maxBytes ?? ENDPOINT_MAX_BYTES;
-  return (url, init) =>
-    new Promise<Answer>((settle, fail) => {
-      const parsed = new URL(url);
-      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-        fail(new Refused('not-a-tool', `${url} is not an http or https URL`));
-        return;
-      }
-      // A literal address, `localhost` or a `.internal` name is refused before any lookup: a
-      // connection to a literal never asks the resolver.
-      if (!options.allowPrivate && privateProbeTarget(url) !== null) {
-        fail(new Refused('private-address', `${parsed.hostname} is not a public address`));
-        return;
-      }
-      const lookup = (hostname: string, lookupOptions: { all?: boolean }, callback: LookupCallback) => {
-        resolve(hostname).then(
-          (addresses) => {
-            const bad = options.allowPrivate
-              ? undefined
-              : addresses.find((entry) => privateAddress(entry.address));
-            if (bad !== undefined) {
-              callback(
-                new Refused('private-address', `${hostname} resolves to ${bad.address}, not a public address`),
-                '',
-              );
-              return;
-            }
-            const first = addresses[0];
-            if (first === undefined) {
-              callback(new Error(`${hostname} has no address`), '');
-              return;
-            }
-            if (lookupOptions?.all) callback(null, addresses);
-            else callback(null, first.address, first.family);
-          },
-          (error: unknown) => callback(error instanceof Error ? error : new Error(String(error)), ''),
-        );
-      };
-
-      let done = false;
-      let request: http.ClientRequest;
-      const chunks: Buffer[] = [];
-      let size = 0;
-      let answered: Omit<Answer, 'body'> | null = null;
-      const finish = () => {
-        if (done || answered === null) return;
-        done = true;
-        clearTimeout(deadline);
-        settle({ ...answered, body: Buffer.concat(chunks).toString('utf8') });
-      };
-      const abort = (error: Error) => {
-        if (done) return;
-        done = true;
-        clearTimeout(deadline);
-        fail(error);
-      };
-      // A stream that never ends (MCP's older SSE transport) is read until the deadline, then kept.
-      const deadline = setTimeout(() => {
-        if (answered !== null) {
-          finish();
-          request.destroy();
-        } else {
-          request.destroy();
-          abort(new Error(`no answer within ${timeoutMs} ms`));
-        }
-      }, timeoutMs);
-
-      const client = parsed.protocol === 'https:' ? https : http;
-      request = client.request(
-        url,
-        {
-          method: init.method,
-          headers: { 'user-agent': USER_AGENT, ...init.headers },
-          // The `lookup` hook is how the connection uses the checked addresses; `node:http`'s type
-          // for it is the overloaded `dns.lookup`, which a single function cannot satisfy.
-          lookup: lookup as unknown as typeof dnsLookup,
-        },
-        (response) => {
-          const headers = response.headers;
-          answered = {
-            status: response.statusCode ?? 0,
-            header: (name) => {
-              const value = headers[name.toLowerCase()];
-              return Array.isArray(value) ? value.join(', ') : (value ?? null);
-            },
-          };
-          response.on('data', (chunk: Buffer) => {
-            size += chunk.length;
-            if (size > maxBytes) {
-              chunks.push(chunk.subarray(0, maxBytes - (size - chunk.length)));
-              finish();
-              request.destroy();
-              return;
-            }
-            chunks.push(chunk);
-          });
-          response.on('end', finish);
-          response.on('error', (error) => (answered === null ? abort(error) : finish()));
-        },
-      );
-      request.on('error', (error) => abort(error));
-      if (init.body !== undefined) request.write(init.body);
-      request.end();
-    });
+  return pinnedRequest({
+    allowPrivate: options.allowPrivate,
+    resolve: options.resolve,
+    timeoutMs: options.timeoutMs ?? ENDPOINT_TIMEOUT_MS,
+    maxBytes: options.maxBytes ?? ENDPOINT_MAX_BYTES,
+    userAgent: USER_AGENT,
+  });
 }
 
 const INITIALIZE = JSON.stringify({

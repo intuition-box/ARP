@@ -8,7 +8,7 @@ import {fetchSkillMd, rawSkillUrl, type SkillMd} from "../services/skill-md";
 /**
  * One skill's SKILL.md, read from its repository when its page opens.
  *
- * The path comes from ARP's Worker when one is configured, from the bundled `skill-paths.json`
+ * The path comes from ARP's API when one is configured, from the bundled `skill-paths.json`
  * otherwise, because it is not a function of the repository and the name: 19 layouts across 31 repositories. A skill with no
  * entry is one whose file is not in its repository, or whose several files differ, and the page
  * says it has none rather than reading somebody else's file.

@@ -112,8 +112,8 @@ ARP/
 │   ├── mcp/                  the MCP server: reads the graph, prepares calls, serves skills
 │   ├── hook/                 records which tools a session used, locally; reads GitHub before a skills install, and a failed skill's lines
 │   ├── sponsor/              the sponsoring service that pays testnet fees for agents
-│   ├── probe/                cron worker (every 5 min): which MCP endpoints answer
-│   └── api/                  cron worker (every 10 min): GitHub and skills.sh figures, cached
+│   ├── probe/                container (every 5 min): which MCP endpoints answer
+│   └── api/                  container (every 10 min): GitHub and skills.sh figures, cached
 ├── packages/                 what you import
 │   ├── protocol/             @arp-protocol/core — the protocol SDK
 │   └── graphql/              @arp-protocol/graphql — Intuition queries
@@ -130,8 +130,8 @@ ARP/
 | MCP server                        | [`apps/mcp/README.md`](apps/mcp/README.md)                                                    |
 | Hook                              | [`apps/hook/README.md`](apps/hook/README.md)                                                  |
 | Sponsor                           | [`apps/sponsor/README.md`](apps/sponsor/README.md)                                            |
-| Probe (cron)                      | [`apps/probe/README.md`](apps/probe/README.md)                                                |
-| API (cron)                        | [`apps/api/README.md`](apps/api/README.md)                                                    |
+| Probe (scheduled)                 | [`apps/probe/README.md`](apps/probe/README.md)                                                |
+| API (scheduled)                   | [`apps/api/README.md`](apps/api/README.md)                                                    |
 | Everything the programs touch     | [Running the MCP server and the hook](docs/22_RUNNING_THE_NODE.md)                            |
 | Protocol SDK                      | [`packages/protocol/README.md`](packages/protocol/README.md)                                  |
 | GraphQL layer                     | [`packages/graphql/README.md`](packages/graphql/README.md)                                    |

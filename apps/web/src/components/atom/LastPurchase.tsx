@@ -18,14 +18,16 @@ const steel = "text-[color:var(--color-steel)]";
  * whether it delivered, its failure code, the day, the settlement transaction, and the credit CC BY
  * 4.0 asks for. Somebody else's verdict, never an ARP line and in no ARP figure.
  *
- * Absent when the build has no Worker (`VITE_ARP_API_URL`) or the atom is not an endpoint. Otherwise
+ * Absent when the build has no API (`VITE_ARP_API_URL`), when the API serves no such route (its
+ * `ARP_X402_LAST_PURCHASE` is off, ADR `0200`), or the atom is not an endpoint. Otherwise
  * **three lines in every state**, "…" while it loads included, so the column never moves under the
- * reader when the reading lands (the user's standing ask for these pages).
+ * reader when the reading lands (the user's standing ask for these pages). One exception: with the
+ * route off, "…" shows until the 404 lands, then the card goes.
  */
 export function LastPurchase({label}: {label: string | null}) {
     const endpoint = endpointOfLabel(label);
     const query = useLastPurchase(hasLastPurchaseSource ? endpoint : null);
-    if (!hasLastPurchaseSource || endpoint === null) return null;
+    if (!hasLastPurchaseSource || endpoint === null || query.data === null) return null;
     const view = lastPurchaseView(
         query.isError
             ? {status: "error"}

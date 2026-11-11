@@ -3,26 +3,29 @@
  *  ```
  *  GET  /probe            every target's latest reading, and its last 24 hours
  *  GET  /probe?days=7     the same over 7 days (at most 30)
- *  GET  /x402?target=<label>&before=<ISO>   an x402 endpoint's last answered offers before then
+ *  GET  /x402?target=<label>&before=<ISO>   an x402 endpoint's last answered offers before then;
+ *                         off unless ARP_PROBE_X402=on, then a 404 (ADR `0200`)
  *  GET  /healthz          how many targets, and when the last cycle ran
- *  cron                   one cycle every five minutes (`wrangler.jsonc`)
+ *  schedule               one cycle every five minutes (`server.ts`)
  *  ```
  *
- *  **What it is.** A dated fact measured by ARP: "this server answered ARP from Cloudflare at
- *  14:10". It is not the pulse — whether a tool works for the operators who use it comes from their
+ *  **What it is.** A dated fact measured by ARP: "this server answered ARP's server at 14:10". It
+ *  ran as a Cloudflare Worker until task 140 and runs as a container since (ADR `0200`). It is not the pulse — whether a tool works for the operators who use it comes from their
  *  signed reports and the `uses` triples (ADR `0093`). A server can answer `initialize` and fail
  *  every real call.
  *
  *  **What it is not.** Never written on chain, never a score, never a colour. It holds no key and
  *  sends nothing but one `initialize` per endpoint and one registry read per package.
  */
-import { read, type Reading } from './probe.ts';
-import { d1Readings, type D1Like, type Readings } from './store.ts';
+import { read, type Io, type Reading } from './probe.ts';
+import type { Readings } from './store.ts';
 import { TARGETS, type Target } from './targets.ts';
 
-export type Env = { PROBES: D1Like };
+/** Who measured, as every answer says it. */
+const MEASURED_BY = 'ARP, from its own server';
 
-type ExecutionContext = { waitUntil(promise: Promise<unknown>): void };
+/** `x402`: whether 402 offers are kept and `/x402` answers (`ARP_PROBE_X402=on`, ADR `0200`). */
+export type ProbeOptions = { x402: boolean };
 
 const CORS = {
   'access-control-allow-origin': '*',
@@ -40,10 +43,13 @@ function json(value: unknown, status = 200, extra: Record<string, string> = {}):
 export async function runCycle(
   targets: readonly Target[],
   store: Readings,
-  fetcher: typeof fetch,
+  io: Io,
   now: () => number,
+  options: ProbeOptions = { x402: false },
 ): Promise<Reading[]> {
-  const readings = await Promise.all(targets.map((target) => read(target, fetcher, now)));
+  const readings = await Promise.all(
+    targets.map((target) => read(target, io, now, { keepOffers: options.x402 })),
+  );
   await store.append(readings);
   return readings;
 }
@@ -51,7 +57,7 @@ export async function runCycle(
 /** Per target: the latest reading, and the history over the window, oldest first. */
 export function probeAnswer(targets: readonly Target[], rows: readonly Reading[], days: number) {
   return {
-    measuredBy: 'ARP, from Cloudflare',
+    measuredBy: MEASURED_BY,
     window: { days },
     targets: targets.map((target) => {
       const history = rows.filter((row) => row.target === target.label);
@@ -70,6 +76,7 @@ export async function handle(
   request: Request,
   store: Readings,
   now: () => number = Date.now,
+  options: ProbeOptions = { x402: false },
 ): Promise<Response> {
   const url = new URL(request.url);
 
@@ -83,7 +90,7 @@ export async function handle(
     return json(probeAnswer(TARGETS, rows, days), 200, { 'cache-control': 'public, max-age=60' });
   }
 
-  if (request.method === 'GET' && url.pathname === '/x402') {
+  if (request.method === 'GET' && url.pathname === '/x402' && options.x402) {
     // ADR 0189: the reading an x402 line's terms are checked against, the most recent before its payment.
     const target = url.searchParams.get('target') ?? '';
     const before = Date.parse(url.searchParams.get('before') ?? '');
@@ -91,7 +98,7 @@ export async function handle(
     const found = await store.latestX402(target, new Date(before).toISOString());
     if (found === null) return json({ error: `no x402 reading of ${target} before ${new Date(before).toISOString()}` }, 404);
     const { offers } = JSON.parse(found.detail ?? '{"offers":[]}') as { offers: unknown[] }; // written by `read` as JSON
-    return json({ measuredBy: 'ARP, from Cloudflare', reading: { target: found.target, at: found.at, offers } });
+    return json({ measuredBy: MEASURED_BY, reading: { target: found.target, at: found.at, offers } });
   }
 
   if (request.method === 'GET' && url.pathname === '/healthz') {
@@ -103,14 +110,5 @@ export async function handle(
     });
   }
 
-  return json({ error: 'GET /probe, GET /x402 or GET /healthz' }, 404);
+  return json({ error: options.x402 ? 'GET /probe, GET /x402 or GET /healthz' : 'GET /probe or GET /healthz' }, 404);
 }
-
-export default {
-  fetch(request: Request, env: Env): Promise<Response> {
-    return handle(request, d1Readings(env.PROBES));
-  },
-  scheduled(_controller: unknown, env: Env, context: ExecutionContext): void {
-    context.waitUntil(runCycle(TARGETS, d1Readings(env.PROBES), fetch, Date.now));
-  },
-};

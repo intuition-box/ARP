@@ -4,4 +4,8 @@
 coverage = true
 coverageThreshold = { lines = 0.9, functions = 0.9 }
 # packages/protocol is another workspace, imported by src/probe.ts and measured by its own gate.
-coveragePathIgnorePatterns = ["../../packages/**"]
+coveragePathIgnorePatterns = [
+  "../../packages/**",
+  # Entrypoint: binds a port and starts the schedule at import; `src/server.ts` is what it runs, tested.
+  "src/main.ts",
+]

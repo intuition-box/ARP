@@ -1,0 +1,34 @@
+# Read by BuildKit for apps/api/Dockerfile, with the repository root as the context.
+# An allowlist: nothing enters the image unless it is named here, so no key, `.env` or local state
+# can, whatever sits untracked in the checkout. The cache is a volume.
+*
+
+# The workspace's manifests: `bun install --frozen-lockfile` resolves every workspace from the lockfile.
+!package.json
+!bun.lock
+!apps/*/package.json
+!contracts/package.json
+
+# What the service runs.
+!apps/api
+!packages/protocol
+!packages/graphql
+
+# The two catalogue files it bundles.
+!data/catalogue/skills-13579.json
+!data/catalogue/tools.json
+
+# Dropped again inside what was allowed.
+**/node_modules
+**/dist
+**/test
+**/*.test.ts
+**/.data
+**/.env
+**/.env.*
+**/.dev.vars*
+**/.wrangler
+**/*.key
+**/*.jsonl
+**/*.sqlite*
+**/.arp

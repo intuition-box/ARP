@@ -2,11 +2,13 @@
  *
  *  One cycle reads every repository (53), every skill repository's tree (41) and every skill's page
  *  (673) — about 770 requests (counted 2026-11-11 from `catalogue.ts`: `REPOS.length`,
- *  the distinct `repo` of `SKILLS`, `SKILLS.length`). A Worker invocation has a subrequest ceiling, and KV a daily write
- *  budget, so a cycle is cut into slices of `budget` reads, and each slice writes the three
- *  documents once at its end rather than once per read. The cursor lives in KV beside them.
+ *  the distinct `repo` of `SKILLS`, `SKILLS.length`). A cycle is cut into slices of `budget` reads,
+ *  and each slice writes the three documents once at its end rather than once per read. The cursor
+ *  lives in the store beside them. The slices were for a Worker's subrequest ceiling and KV's daily
+ *  write budget; in the container (ADR `0200`) they stay, and pace a cycle at one slice every ten
+ *  minutes, so a restart resumes at the cursor rather than starting over.
  *
- *  When a cycle is done the cron keeps firing and does nothing until `everyHours` have passed, then
+ *  When a cycle is done the schedule keeps firing and does nothing until `everyHours` have passed, then
  *  starts the next. A read that fails keeps the previous value: a stale fact with its date is worth
  *  more than an empty row. A rate limit stops the slice where it is, so the next one retries the
  *  same unit rather than skipping it.
@@ -24,7 +26,7 @@ import {
   type SkillFact,
 } from './sources.ts';
 
-/** The part of a KV namespace this uses. Workers' `KVNamespace` satisfies it; so does a Map in a test. */
+/** Get and put, with an expiry: what KV gave the Worker, and `sqlite-store.ts` gives the container (ADR `0200`). A Map does in a test. */
 export type Store = {
   get(key: string, type: 'json'): Promise<unknown>;
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;

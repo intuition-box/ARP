@@ -1,4 +1,4 @@
-/** What the probe reads. Bundled from two committed files, so the Worker carries its own list.
+/** What the probe reads. Bundled from two committed files, so the service carries its own list.
  *
  *  - every package `data/catalogue/package-identity-13579.json` gave an identity (ADR `0087`);
  *  - every candidate endpoint in `data/catalogue/remote-endpoints.json`, which is not an identity

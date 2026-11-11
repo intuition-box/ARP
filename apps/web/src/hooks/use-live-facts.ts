@@ -2,12 +2,12 @@ import type {QueryClient} from "@tanstack/react-query";
 
 import {fetchFacts, type FactsAnswer} from "../services/facts-api";
 
-/** Where ARP's Worker answers, or undefined when this build has none — then the bundle is used. */
+/** Where ARP's API answers, or undefined when this build has none — then the bundle is used. */
 const API_URL: string | undefined = import.meta.env.VITE_ARP_API_URL;
 
 /**
- * The Worker's facts, read once and shared by every hook that wants them, or `null` when there is
- * no Worker or it did not answer. Through the query client, so two hooks on one page make one
+ * The API's facts, read once and shared by every hook that wants them, or `null` when there is
+ * no API or it did not answer. Through the query client, so two hooks on one page make one
  * request, and a failure is remembered for the same five minutes as a success.
  */
 export async function liveFacts(client: QueryClient): Promise<FactsAnswer | null> {
@@ -18,7 +18,7 @@ export async function liveFacts(client: QueryClient): Promise<FactsAnswer | null
             try {
                 return await fetchFacts(API_URL);
             } catch {
-                // The fallback is the bundled copy, and the page prints its date, so a Worker that
+                // The fallback is the bundled copy, and the page prints its date, so an API that
                 // is down reads as an older figure rather than as an error.
                 return null;
             }

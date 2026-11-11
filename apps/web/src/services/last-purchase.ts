@@ -1,5 +1,5 @@
 /**
- * nohumans.directory's last purchase of an x402 endpoint, as ARP's Worker serves it (`apps/api`,
+ * nohumans.directory's last purchase of an x402 endpoint, as ARP's API serves it (`apps/api`,
  * `GET /x402/last-purchase`, task 120, ADR `0187`).
  *
  * Somebody else's verdict under CC BY 4.0, dated and credited. It is not an ARP line: nothing here
@@ -57,7 +57,7 @@ function purchaseOf(value: unknown): LastPurchasePurchase | null | undefined {
     };
 }
 
-/** The Worker's answer, checked field by field. Throws on anything that is not that shape. */
+/** The API's answer, checked field by field. Throws on anything that is not that shape. */
 export function parseLastPurchase(body: unknown): LastPurchaseAnswer {
     if (
         !isRecord(body) ||
@@ -93,15 +93,20 @@ export function parseLastPurchase(body: unknown): LastPurchaseAnswer {
     throw new Error(`unknown match ${String(body.match)}`);
 }
 
-/** `GET <base>/x402/last-purchase?url=<endpoint>`. Only the endpoint's public URL is sent. */
+/**
+ * `GET <base>/x402/last-purchase?url=<endpoint>`. Only the endpoint's public URL is sent. `null` when
+ * the API answers 404: it serves no such route, which is how `apps/api` answers with
+ * `ARP_X402_LAST_PURCHASE` off (task 140, ADR `0200`), and then there is no card.
+ */
 export async function fetchLastPurchase(
     baseUrl: string,
     endpoint: string,
     fetcher: typeof fetch = fetch,
-): Promise<LastPurchaseAnswer> {
+): Promise<LastPurchaseAnswer | null> {
     const response = await fetcher(
         `${baseUrl.replace(/\/+$/, "")}/x402/last-purchase?url=${encodeURIComponent(endpoint)}`,
     );
+    if (response.status === 404) return null;
     if (!response.ok) throw new Error(`${response.status} from the API`);
     return parseLastPurchase(await response.json());
 }

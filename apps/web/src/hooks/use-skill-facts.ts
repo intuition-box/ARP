@@ -15,10 +15,10 @@ import {dayOf} from "../services/facts-api";
  * a reader who never opens `/tools` should not pay for them. A dynamic `import()` makes it its own
  * chunk; the query keeps one copy for the session.
  *
- * **Read from ARP's Worker when one is configured** (`VITE_ARP_API_URL`, `apps/api`), which reads
+ * **Read from ARP's API when one is configured** (`VITE_ARP_API_URL`, `apps/api`), which reads
  * GitHub and skills.sh on a schedule: measured 2026-10-29, skills.sh sends no CORS header and the
  * GitHub API allows 60 requests an hour per visitor, so a browser cannot read either for 662 rows.
- * The bundled copy is the fallback — no Worker, or one that is down, gives the last dated copy
+ * The bundled copy is the fallback — no API, or one that is down, gives the last dated copy
  * rather than empty rows. The date printed is the day the figures were read, either way.
  */
 
@@ -83,7 +83,7 @@ export function useSkillFacts() {
                 measuredOn: (skills.default as {_measuredOn?: string})._measuredOn ?? null,
             };
         },
-        // The Worker refreshes once a day; five minutes is a session that sees a new read.
+        // The API refreshes once a day; five minutes is a session that sees a new read.
         staleTime: 5 * 60 * 1000,
     });
     const facts = query.data;

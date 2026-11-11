@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
-import { read } from '../src/probe.ts';
+import { read, type Fetch, type Io } from '../src/probe.ts';
 import { memoryReadings } from '../src/store.ts';
 import type { Target } from '../src/targets.ts';
 import { TARGETS } from '../src/targets.ts';
-import { handle, runCycle } from '../src/worker.ts';
+import { handle, runCycle } from '../src/service.ts';
 
 const endpoint: Target = {
   label: 'mcp.example.com/mcp',
@@ -25,8 +25,23 @@ const pypi: Target = {
   url: 'https://pypi.org/project/server',
 };
 
-function answering(response: () => Response): typeof fetch {
-  return (async () => response()) as unknown as typeof fetch;
+/** Both ways out through one fake `fetch`: an endpoint's `ask` is read off the same Response. */
+function io(fetcher: Fetch): Io {
+  return {
+    fetch: fetcher,
+    ask: async (url, init) => {
+      const response = await fetcher(url, init);
+      return {
+        status: response.status,
+        header: (name) => response.headers.get(name),
+        body: await response.text(),
+      };
+    },
+  };
+}
+
+function answering(response: () => Response): Io {
+  return io(async () => response());
 }
 
 /** One x402 offer: Base's USDC, 0.02, to a payee. */
@@ -91,6 +106,28 @@ describe('an endpoint', () => {
     expect([bare.outcome, bare.detail]).toEqual(['http-error', null]);
   });
 
+  test('with the x402 switch off, a 402 with offers is still x402 and keeps none of them (ADR 0200)', async () => {
+    const required = btoa(
+      JSON.stringify({ x402Version: 2, accepts: [{ scheme: 'exact', ...OFFER, maxTimeoutSeconds: 60, extra: {} }] }),
+    );
+    const paid = await read(
+      endpoint,
+      answering(() => new Response('', { status: 402, headers: { 'payment-required': required } })),
+      now,
+      { keepOffers: false },
+    );
+    expect([paid.outcome, paid.detail]).toEqual(['x402', null]);
+  });
+
+  test('a redirect is not followed: it is an http error with its status', async () => {
+    const reading = await read(
+      endpoint,
+      answering(() => new Response('', { status: 302, headers: { location: 'http://169.254.169.254/' } })),
+      now,
+    );
+    expect(reading).toMatchObject({ outcome: 'http-error', http: 302 });
+  });
+
   test('a bare 401 refuses, and is not taken for an MCP server', async () => {
     const reading = await read(
       endpoint,
@@ -110,9 +147,9 @@ describe('an endpoint', () => {
   });
 
   test('a network failure is no answer, and the body is never kept', async () => {
-    const failing = (async () => {
+    const failing = io(async () => {
       throw new TypeError('fetch failed');
-    }) as unknown as typeof fetch;
+    });
     const reading = await read(endpoint, failing, now);
     expect(reading).toMatchObject({ outcome: 'no-answer', http: null, detail: 'TypeError' });
   });
@@ -162,10 +199,10 @@ describe('a package', () => {
 
   test('npm: the scoped name is escaped in the registry URL', async () => {
     let asked = '';
-    const recording = (async (url: string) => {
+    const recording = io(async (url: string) => {
       asked = url;
       return Response.json({ 'dist-tags': { latest: '1.0.0' }, versions: { '1.0.0': {} } });
-    }) as unknown as typeof fetch;
+    });
     await read(npm, recording, now);
     expect(asked).toBe('https://registry.npmjs.org/@o%2fserver');
   });
@@ -225,7 +262,7 @@ describe('the service', () => {
 
     const response = await handle(new Request('https://probe.test/probe'), store, () => clock);
     const body = (await response.json()) as { measuredBy: string; targets: { label: string }[] };
-    expect(body.measuredBy).toBe('ARP, from Cloudflare');
+    expect(body.measuredBy).toBe('ARP, from its own server');
     expect(body.targets.map((target) => target.label)).toEqual(
       TARGETS.map((target) => target.label),
     );
@@ -250,7 +287,7 @@ describe('the service', () => {
       { target: endpoint.label, kind: 'endpoint', at: '2026-11-11T11:00:00.000Z', outcome: 'x402', http: 402, ms: 9, detail: offers(OLD_PAYEE) },
     ]);
     const ask = async (query: string) => {
-      const response = await handle(new Request(`https://probe.test/x402?${query}`), store, () => clock);
+      const response = await handle(new Request(`https://probe.test/x402?${query}`), store, () => clock, { x402: true });
       // The worker's own answer, whose shape the assertions below check.
       return { status: response.status, body: (await response.json()) as { reading?: { at: string; offers: { payTo: string }[] } } };
     };
@@ -260,6 +297,24 @@ describe('the service', () => {
     expect(found.body.reading?.offers.map((offer) => offer.payTo)).toEqual([OFFER.payTo]);
     expect((await ask(`target=${encodeURIComponent(endpoint.label)}&before=2026-11-01T00:00:00Z`)).status).toBe(404);
     expect((await ask('target=&before=x')).status).toBe(400);
+  });
+
+  test('/x402 is off by default: a 404 whatever is stored (ADR 0200)', async () => {
+    const store = memoryReadings();
+    await store.append([
+      { target: endpoint.label, kind: 'endpoint', at: '2026-11-10T10:00:00.000Z', outcome: 'x402', http: 402, ms: 9, detail: JSON.stringify({ offers: [OFFER] }) },
+    ]);
+    const query = `target=${encodeURIComponent(endpoint.label)}&before=2026-11-11T00:00:00Z`;
+    const response = await handle(new Request(`https://probe.test/x402?${query}`), store, () => clock);
+    expect(response.status).toBe(404);
+  });
+
+  test('a cycle with the switch off stores no offers', async () => {
+    const store = memoryReadings();
+    const required = btoa(JSON.stringify({ x402Version: 2, accepts: [{ scheme: 'exact', ...OFFER, maxTimeoutSeconds: 60, extra: {} }] }));
+    await runCycle([endpoint], store, answering(() => new Response('', { status: 402, headers: { 'payment-required': required } })), now);
+    expect(store.rows.map((row) => [row.outcome, row.detail])).toEqual([['x402', null]]);
+    expect(await store.latestX402(endpoint.label, '2100-01-01T00:00:00.000Z')).toBeNull();
   });
 
   test('the bundled list holds the eight packages and only endpoints with a public URL', () => {

@@ -107,7 +107,7 @@ flowchart LR
         a3["hook"]
         a5["cli: mcp and hook in one binary"]
         a6["sponsor"]
-        a7["api, probe: Workers"]
+        a7["api, probe: containers"]
     end
     subgraph packages["packages/ : what is imported"]
         p1["core: the protocol layer"]
@@ -127,8 +127,8 @@ flowchart LR
 | [`apps/hook`](https://github.com/intuition-box/ARP/tree/main/apps/hook) | The runtime hook, wired on `PreToolUse`, `PostToolUse`, `PostToolUseFailure` and `Stop` |
 | [`apps/cli`](https://github.com/intuition-box/ARP/tree/main/apps/cli) | `@arp-protocol/cli`: the MCP server and the hook in one binary, plus `init`, `line`, `share`. It also generates the Claude Code and Gemini packages |
 | [`apps/sponsor`](https://github.com/intuition-box/ARP/tree/main/apps/sponsor) | The sponsoring service, testnet 13579 only |
-| [`apps/api`](https://github.com/intuition-box/ARP/tree/main/apps/api) | Cloudflare Worker: GitHub's, skills.sh's and nohumans.directory's figures, cached and dated, never chain data |
-| [`apps/probe`](https://github.com/intuition-box/ARP/tree/main/apps/probe) | Cloudflare Worker: whether each listed MCP endpoint answers |
+| [`apps/api`](https://github.com/intuition-box/ARP/tree/main/apps/api) | A container: GitHub's and skills.sh's figures, cached and dated, never chain data; nohumans.directory's behind a switch, off |
+| [`apps/probe`](https://github.com/intuition-box/ARP/tree/main/apps/probe) | A container: whether each listed MCP endpoint answers |
 | [`packages/protocol`](https://github.com/intuition-box/ARP/tree/main/packages/protocol) | `@arp-protocol/core`: identity, graph reads, the pulse score, plans for writes, receipts. It holds no key and sends nothing; it signs only through a signer the caller passes in. Only `src/arp/` names a chain |
 | [`packages/graphql`](https://github.com/intuition-box/ARP/tree/main/packages/graphql) | `@arp-protocol/graphql`: the HTTP transport and every query against Intuition's index |
 | [`contracts`](https://github.com/intuition-box/ARP/tree/main/contracts) | Foundry. `TrustStakeCapEnforcer` and a testnet copy of the reference ERC-8004 `IdentityRegistry` |

@@ -156,7 +156,7 @@ Beside the score, each result shows what its files name: commands, keys, a login
 | `arp mcp --http`, the content server | Local, port 3002, for a checkout. ARP's own runs as `apps/mcp/src/content-server.ts` at `https://content.arp.intuition.box` once task 131 is deployed, the CLI's default from 0.0.6. Used by the sponsored setup, not by the plugin. _Amended 2026-11-11: read "**Local only**, port 3002"._ |
 | `arp node` | Removed from the CLI after 0.0.6 (task 139), kept on the `future/hire-loop` branch. A node started from 0.0.6 or earlier still runs on its operator's machine. _Amended 2026-11-11: read "The operator's machine, on 127.0.0.1 behind a tunnel they rent. Only our test agents run one so far"._ |
 | `apps/web`, the web app | **Hosted** at `https://arp.intuition.box` since 2026-11-11 (task 117), testnet only. _Amended 2026-11-11: read "Local only, `bun run dev`"._ |
-| `apps/probe`, `apps/api`, Workers | **Local only**, with no public deployment (`docs/27`) |
+| `apps/probe`, `apps/api` | Containers on the same Coolify as the site since task 140 (ADR `0200`), at `https://probe.arp.intuition.box` and `https://api.arp.intuition.box` once deployed; their x402 parts are off. _Amended 2026-11-11: read "Cloudflare Workers, **Local only**, with no public deployment (`docs/27`)"._ |
 | MultiVault and the index | Intuition's, public, testnet 13579 |
 | skills.sh, GitHub | Third parties. Without a token, GitHub allows 60 requests an hour per address, and a new search takes about 5 (`docs/tasks/70`) |
 

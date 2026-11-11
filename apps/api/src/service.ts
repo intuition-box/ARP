@@ -4,16 +4,18 @@
  *  GET  /facts     every repository's and skill's facts, each with the moment it was read
  *  GET  /x402/last-purchase?url=<endpoint>
  *                  nohumans.directory's last purchase of one x402 endpoint, read on demand and
- *                  cached six hours when listed, about 100 a day (`purchases.ts`, task 120, ADR `0187`)
+ *                  cached six hours when listed, about 100 a day (`purchases.ts`, task 120, ADR `0187`).
+ *                  Off unless ARP_X402_LAST_PURCHASE=on: then a 404, and no outbound call (ADR `0200`)
  *  GET  /healthz   the refresh cycle's state
  *  POST /refresh   one slice now (`?all=1`: until the cycle ends). Off unless REFRESH_SECRET is set
- *  cron            one slice every ten minutes while a cycle runs (`wrangler.jsonc`)
+ *  schedule        one slice every ten minutes while a cycle runs (`server.ts`)
  *  ```
  *
  *  **Why it exists.** The web app used to carry a dated copy of these facts in its bundle, because a
  *  browser cannot read them itself: skills.sh sends no CORS header, and the GitHub API allows 60
- *  requests an hour per visitor's IP and a token must never ship to a browser. A Worker holds the
- *  token, reads on a schedule, and every visitor reads its cache instead of GitHub.
+ *  requests an hour per visitor's IP and a token must never ship to a browser. This service holds
+ *  the token, reads on a schedule, and every visitor reads its cache instead of GitHub. It ran as a
+ *  Cloudflare Worker until task 140 and runs as a container since (ADR `0200`).
  *
  *  **What it is not.** Not a source of truth and nothing ARP stakes: every value is somebody else's
  *  number, served with the URL family it came from and when it was read, so a reader can check it
@@ -31,9 +33,9 @@ export type Env = {
   GITHUB_TOKEN?: string;
   REFRESH_SECRET?: string;
   REFRESH_EVERY_HOURS?: string;
+  /** `on` serves `/x402/last-purchase`. Anything else, unset included, leaves it off (ADR `0200`). */
+  ARP_X402_LAST_PURCHASE?: string;
 };
-
-type ExecutionContext = { waitUntil(promise: Promise<unknown>): void };
 
 const SOURCES = {
   repos: 'api.github.com/repos/{owner}/{repo}',
@@ -97,7 +99,7 @@ function factsAnswer(docs: Documents, now: number) {
   };
 }
 
-function everyHours(env: Env): number {
+export function everyHours(env: Env): number {
   const value = Number(env.REFRESH_EVERY_HOURS ?? '24');
   return Number.isFinite(value) && value > 0 ? value : 24;
 }
@@ -138,7 +140,11 @@ export async function handle(
     });
   }
 
-  if (request.method === 'GET' && url.pathname === '/x402/last-purchase') {
+  if (
+    request.method === 'GET' &&
+    url.pathname === '/x402/last-purchase' &&
+    env.ARP_X402_LAST_PURCHASE?.trim() === 'on'
+  ) {
     const endpoint = endpointOf(url.searchParams.get('url'));
     if (endpoint === null) return json({ error: 'url must be an absolute http(s) URL' }, 400);
     const result = await lastPurchase(endpoint, env.FACTS, fetcher, Date.now());
@@ -154,51 +160,26 @@ export async function handle(
     if (!(await sameSecret(request.headers.get('authorization') ?? '', `Bearer ${secret}`)))
       return json({ error: 'unauthorised' }, 401);
     const all = url.searchParams.get('all') === '1';
-    let result = await runSlice({
-      store: env.FACTS,
-      fetch: fetcher,
-      now: Date.now,
-      githubToken: env.GITHUB_TOKEN,
-      everyHours: everyHours(env),
-    });
-    // `all` runs slices back to back, which only makes sense where there is no subrequest ceiling —
-    // `wrangler dev`. Bounded, so a cycle stuck on a rate limit returns instead of spinning.
-    for (
-      let slices = 1;
-      all && !result.idle && result.state.completedAt === null && slices < 40;
-      slices += 1
-    ) {
-      if (result.ran === 0) break;
-      result = await runSlice({
+    const slice = () =>
+      runSlice({
         store: env.FACTS,
         fetch: fetcher,
         now: Date.now,
         githubToken: env.GITHUB_TOKEN,
         everyHours: everyHours(env),
       });
+    let result = await slice();
+    // `all` runs slices back to back, which a container can, having no subrequest ceiling. Bounded, so a cycle stuck on a rate limit returns instead of spinning.
+    for (
+      let slices = 1;
+      all && !result.idle && result.state.completedAt === null && slices < 40;
+      slices += 1
+    ) {
+      if (result.ran === 0) break;
+      result = await slice();
     }
     return json(result);
   }
 
-  return json(
-    { error: 'GET /facts, GET /x402/last-purchase?url=, GET /healthz, or POST /refresh' },
-    404,
-  );
+  return json({ error: 'GET /facts, GET /healthz, or POST /refresh' }, 404);
 }
-
-export default {
-  fetch(request: Request, env: Env): Promise<Response> {
-    return handle(request, env);
-  },
-  scheduled(_controller: unknown, env: Env, context: ExecutionContext): void {
-    context.waitUntil(
-      runSlice({
-        store: env.FACTS,
-        fetch,
-        now: Date.now,
-        githubToken: env.GITHUB_TOKEN,
-        everyHours: everyHours(env),
-      }),
-    );
-  },
-};

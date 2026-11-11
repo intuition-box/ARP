@@ -1,11 +1,12 @@
-# Deploying the site, the sponsor, the MCP endpoint and the content server on Coolify
+# Deploying the site, the sponsor, the MCP endpoint, the content server, the API and the probe on Coolify
 
-One Coolify project, four applications: the web app, a static build served by nginx from
+One Coolify project, six applications: the web app, a static build served by nginx from
 `apps/web/Dockerfile` (task 74), ARP's sponsoring service from `apps/sponsor/Dockerfile` (task
 78, ADR `0149`), the hosted read-only MCP endpoint from `apps/mcp/Dockerfile` (task 92, ADR
-`0161`), and the content server from `apps/mcp/Dockerfile.content` (task 131, ADR `0196`). The last
-three have their own sections, [The sponsor](#the-sponsor), [The MCP endpoint](#the-mcp-endpoint)
-and [The content server](#the-content-server).
+`0161`), the content server from `apps/mcp/Dockerfile.content` (task 131, ADR `0196`), and the facts
+API and the probe from `apps/api/Dockerfile` and `apps/probe/Dockerfile` (task 140, ADR `0200`). The
+last five have their own sections, [The sponsor](#the-sponsor), [The MCP endpoint](#the-mcp-endpoint),
+[The content server](#the-content-server), [The API](#the-api) and [The probe](#the-probe).
 
 ## Before it goes online
 
@@ -48,7 +49,7 @@ secret: everything here ends up in public JavaScript.
 | `VITE_WALLETCONNECT_PROJECT_ID` | no, leave it unset | a WalletConnect (Reown) project id, for mobile wallets. This build does not ship `@walletconnect/ethereum-provider`, so the connector cannot load, and the privacy and cookies pages do not cover it: set it only after adding the package and re-checking both pages | browser-extension wallets only |
 | `VITE_INTUITION_TESTNET_RPC_URL` | no | the testnet RPC | `https://testnet.rpc.intuition.systems/http` |
 | `VITE_INTUITION_TESTNET_EXPLORER` | no | the testnet explorer | `https://testnet.explorer.intuition.systems` |
-| `VITE_ARP_API_URL` | no | ARP's facts API (`apps/api`), for fresh install and star counts | the copy bundled with the build, dated |
+| `VITE_ARP_API_URL` | no; set it once the API is up, `https://api.arp.intuition.box` ([The API](#the-api)) | ARP's facts API (`apps/api`), for fresh install and star counts | the copy bundled with the build, dated |
 | `VITE_ARP_ACTIVITY_URL` | no, leave unset | the local activity feed of one machine | no feed; the start steps show no tick |
 | `VITE_ARP_SPONSOR_URL` | no; set it once the sponsor is up, `https://<SPONSOR_PUBLIC_HOST>` | ARP's sponsoring service, for adding a tool or a category without a wallet | the sponsored form is hidden; "Add it with a wallet" stays |
 | `VITE_ARP_SPONSOR_ADDRESS` | no | the sponsor's address, to read Signals | the one in `data/deployments/13579.json` |
@@ -133,7 +134,7 @@ by the image.
 | `SPONSOR_CONTENT_SIGNERS` | no | the content servers whose receipts unlock a deposit |
 | `GITHUB_TOKEN` | no | raises GitHub's limit of 60 requests an hour, for listing checks. A secret |
 | `SPONSOR_LINE_REQUESTS` | no | where the request each x402 line was signed with is kept, served at `GET /line-request` for the x402 feed; default `/data/line-requests.jsonl`. Keep it on the volume: it is the only copy (ADR `0188`) |
-| `ARP_PROBE_URL` | no | ARP's probe (`apps/probe`), whose dated reading of an x402 endpoint's `402` checks a line's signed terms once the endpoint is dark. Unset, only a live read checks them (ADR `0189`) |
+| `ARP_PROBE_URL` | no; **leave it unset for now** | ARP's probe (`apps/probe`), whose dated reading of an x402 endpoint's `402` checks a line's signed terms once the endpoint is dark. Unset, only a live read checks them (ADR `0189`). It needs the probe's x402 part, off for now ([later](#later-the-two-x402-switches)) |
 | `SPONSOR_ENDPOINT_CHECKS_PER_HOUR` | no | how many non-GitHub URLs `/list-tool` asks whether they are a tool, in an hour; default 60 (ADR `0163`) |
 
 Never set `ARP_ALLOW_PRIVATE_PROBE` here: it lets `/list-tool` connect to private addresses, which
@@ -292,9 +293,130 @@ docker run --rm -p 127.0.0.1:3003:3003 -v /path/to/receipt.key:/run/secrets/rece
 curl -s http://127.0.0.1:3003/
 ```
 
+## The API
+
+`apps/api` (ADR `0084`, task 140, ADR `0200`): GitHub's and skills.sh's figures for every catalogued
+repository and skill, read on a schedule, cached and dated, served at `GET /facts`. A cache, never a
+source, and no chain data. It holds **no key that moves value**: `GITHUB_TOKEN`, when set, is a token
+with no scopes. It reads GitHub (`api.github.com`) and skills.sh (`www.skills.sh`) and nothing else
+while its x402 switch is off.
+
+A slice of 40 reads every ten minutes, one at a time, and one on start; a whole cycle, about 770
+reads, takes a few hours, then it waits `REFRESH_EVERY_HOURS` (24). The cycle's cursor is on the
+volume, so a redeploy resumes where it was. Until the first cycle has reached a figure, the site shows
+the copy bundled with its build, with its date.
+
+### Coolify settings
+
+| Setting | Value |
+| --- | --- |
+| Source | the Git repository, branch `main` |
+| Build pack | **Dockerfile** |
+| Base directory | `/`. The Dockerfile's path goes in Dockerfile location, never here |
+| Dockerfile location | `/apps/api/Dockerfile` |
+| Ports exposes | `8787` |
+| Domain | `https://api.arp.intuition.box` |
+| Health check | **off** in Coolify. The image has its own `HEALTHCHECK` on `/healthz`, run with `bun`: the image has no `curl` |
+| **Consistent Container Names** | **on**: one container at a time on the volume's SQLite file |
+| **Persistent storage, volume** | Destination Path **`/data`**, Source Path **empty** (a Docker volume, not a host directory). `api.sqlite` lives there: the cache and the cycle's cursor. Without it every redeploy starts a cycle from nothing |
+| Replicas | one |
+
+### Variables
+
+Set at run time, marked **Available at Runtime**, not at Buildtime. The image already sets
+`API_LISTEN=0.0.0.0`, `API_PORT=8787` and `ARP_DATA_DIR=/data`; leave them.
+
+| Variable | Required | What it is |
+| --- | --- | --- |
+| `API_PUBLIC_HOST` | **yes** | `api.arp.intuition.box`: no scheme, no port. The service answers that `Host` and its loopback names, and any other with a 421 |
+| `GITHUB_TOKEN` | no, recommended | a classic token with **no scopes**: 5,000 GitHub reads an hour instead of 60. A secret: tick "Is secret?" |
+| `REFRESH_SECRET` | no, leave unset | turns on `POST /refresh` with `Authorization: Bearer <it>`. Unset, the route answers 404 |
+| `REFRESH_EVERY_HOURS` | no | the pause between two cycles, default `24` |
+| `ARP_X402_LAST_PURCHASE` | no, **leave unset for now** | `on` serves `/x402/last-purchase` ([later](#later-the-two-x402-switches)) |
+
+Check it once deployed, then set `VITE_ARP_API_URL=https://api.arp.intuition.box` on the site, as a
+build variable, and rebuild the site:
+
+```bash
+curl -s https://api.arp.intuition.box/healthz
+# {"ok":true,"state":{"cycleStartedAt":"…","completedAt":null,"cursor":…,"lastErrors":[]}}
+curl -s https://api.arp.intuition.box/facts | head -c 300
+```
+
+Locally, from the repository root:
+
+```bash
+docker build -f apps/api/Dockerfile -t arp-api .
+docker run --rm -p 127.0.0.1:8787:8787 -v arp-api-data:/data -e API_PUBLIC_HOST=api.example.org arp-api
+curl -s http://127.0.0.1:8787/healthz
+```
+
+## The probe
+
+`apps/probe` (ADR `0093`, task 140, ADR `0200`): every five minutes it sends one MCP `initialize`
+to each remote endpoint in the catalogue and reads each package's npm or PyPI record, and keeps the
+dated result, append only. `GET /probe` serves the latest reading of each and its last 24 hours. A
+fact ARP measured, never a score, never written on chain. It holds **no key** and needs no secret.
+
+**It refuses private addresses, always.** Each endpoint is asked through a lookup that resolves the
+name once, refuses it when any address is private, loopback or link-local, connects only to the
+addresses it checked, and follows no redirect. Nothing in the probe reads `ARP_ALLOW_PRIVATE_PROBE`;
+never set it on this host for any app.
+
+### Coolify settings
+
+| Setting | Value |
+| --- | --- |
+| Source | the Git repository, branch `main` |
+| Build pack | **Dockerfile** |
+| Base directory | `/`. The Dockerfile's path goes in Dockerfile location, never here |
+| Dockerfile location | `/apps/probe/Dockerfile` |
+| Ports exposes | `8788` |
+| Domain | `https://probe.arp.intuition.box` |
+| Health check | **off** in Coolify. The image has its own `HEALTHCHECK` on `/healthz`, run with `bun` |
+| **Consistent Container Names** | **on**: one container at a time on the volume's SQLite file |
+| **Persistent storage, volume** | Destination Path **`/data`**, Source Path **empty**. `probe.sqlite` lives there: the whole history, which nothing else keeps |
+| Replicas | one |
+
+### Variables
+
+Set at run time, marked **Available at Runtime**, not at Buildtime. The image already sets
+`PROBE_LISTEN=0.0.0.0`, `PROBE_PORT=8788` and `ARP_DATA_DIR=/data`; leave them.
+
+| Variable | Required | What it is |
+| --- | --- | --- |
+| `PROBE_PUBLIC_HOST` | **yes** | `probe.arp.intuition.box`: no scheme, no port. The service answers that `Host` and its loopback names, and any other with a 421 |
+| `ARP_PROBE_X402` | no, **leave unset for now** | `on` keeps each `402`'s offers and serves `GET /x402` ([later](#later-the-two-x402-switches)) |
+
+Nothing on the site reads the probe yet, and nothing needs setting on the other apps.
+
+```bash
+curl -s https://probe.arp.intuition.box/healthz
+# {"ok":true,"targets":…,"lastReading":"…"}
+curl -s https://probe.arp.intuition.box/probe | head -c 300
+```
+
+Locally, from the repository root:
+
+```bash
+docker build -f apps/probe/Dockerfile -t arp-probe .
+docker run --rm -p 127.0.0.1:8788:8788 -v arp-probe-data:/data -e PROBE_PUBLIC_HOST=probe.example.org arp-probe
+curl -s http://127.0.0.1:8788/healthz
+```
+
+### Later: the two x402 switches
+
+Both are off by default (the user, 2026-11-11: skills and GitHub first, x402 later). Off, the route
+answers 404 and nothing is read or kept for it.
+
+| Switch | On | Then |
+| --- | --- | --- |
+| `ARP_X402_LAST_PURCHASE=on` on the API | `/x402/last-purchase` reads nohumans.directory's free `/v1/resolve` for an endpoint a page asks about, at most about 100 stored a day (ADR `0187`) | the site's endpoint pages show the last-purchase card; with it off they show none |
+| `ARP_PROBE_X402=on` on the probe | each `402`'s offers are kept, and `GET /x402?target=&before=` serves the latest before a date (ADR `0189`) | `ARP_PROBE_URL=https://probe.arp.intuition.box` on the sponsor, and redeploy it |
+
 ## What the site does not run
 
 Since 2026-11-11 the site, the sponsor and the MCP endpoint run at `https://arp.intuition.box`,
-`https://sponsor.arp.intuition.box` and `https://mcp.arp.intuition.box` (task 117). The activity feed runs on one machine and is not hosted; the content server has its own section above (task 131). Nothing on the site
+`https://sponsor.arp.intuition.box` and `https://mcp.arp.intuition.box` (task 117). The activity feed runs on one machine and is not hosted; the content server, the API and the probe have their own sections above (tasks 131 and 140). Nothing on the site
 needs them: steps that would are hidden while their variable is unset. The sponsor and the MCP
 endpoint are above.

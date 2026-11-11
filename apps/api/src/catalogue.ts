@@ -1,4 +1,4 @@
-/** What the Worker reads facts about. Bundled, like `apps/mcp/src/data.ts`, so it carries its list.
+/** What the service reads facts about. Bundled, like `apps/mcp/src/data.ts`, so it carries its list.
  *
  *  The skills are the ones ARP wrote on testnet 13579 — the only chain with a skill catalogue. The
  *  facts themselves are GitHub's and skills.sh's and belong to no chain; only the list does.

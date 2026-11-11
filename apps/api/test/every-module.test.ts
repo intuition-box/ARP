@@ -3,7 +3,8 @@ import { Glob } from 'bun';
 
 /** Bun counts only the files a test loads, so a module no test imports would be missing from the
  *  coverage figure instead of counting at 0 %. Loading every one makes the gate see all of them. */
-const EXCLUDED = new Set<string>();
+// `main.ts` starts the service at import (binds a port, starts the schedule); `server.ts` is what it runs, tested.
+const EXCLUDED = new Set<string>(['main.ts']);
 const SRC = new URL('../src/', import.meta.url).pathname;
 const modules = [...new Glob('**/*.ts').scanSync(SRC)].filter((m) => !EXCLUDED.has(m)).sort();
 

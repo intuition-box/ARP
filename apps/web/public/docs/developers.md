@@ -9,8 +9,8 @@ apps/        what runs
   hook/      the runtime hook: records which skills and MCP tools a session used; reads GitHub before a skills install, and a failed skill's lines
   sponsor/   the sponsoring service that pays testnet fees for agents (testnet 13579 only)
   web/       the web app
-  probe/     Cloudflare Worker: asks listed MCP endpoints whether they answer
-  api/       Cloudflare Worker: GitHub's and skills.sh's figures, cached and dated
+  probe/     a container: asks listed MCP endpoints whether they answer
+  api/       a container: GitHub's and skills.sh's figures, cached and dated
 packages/    what is imported
   protocol/  @arp-protocol/core: identity, graph reads, the search's score, unsigned call plans
   graphql/   @arp-protocol/graphql: the Intuition queries
@@ -168,9 +168,9 @@ Every variable read in `apps/*/src` and `packages/*/src`, found by a grep of `pr
 
 `VITE_INTUITION_TESTNET_RPC_URL`, `VITE_INTUITION_TESTNET_EXPLORER`, `VITE_WALLETCONNECT_PROJECT_ID`, `VITE_MAX_STAKE_TRUST`, `VITE_ARP_API_URL`, `VITE_ARP_ACTIVITY_URL`, `VITE_ARP_SPONSOR_ADDRESS`, `VITE_ARP_SPONSOR_URL`, each explained in `.env.example`. A `VITE_` variable ends up in the page every visitor loads: never put a key in one.
 
-### The Workers (`apps/api`, `apps/probe`)
+### The API and the probe (`apps/api`, `apps/probe`)
 
-`apps/api` reads `GITHUB_TOKEN`, `REFRESH_SECRET` and `REFRESH_EVERY_HOURS` (set to `24` in `wrangler.jsonc`). `apps/probe` reads no variable. Both use Cloudflare bindings (`FACTS`, `PROBES`) declared in their `wrangler.jsonc`.
+`apps/api` reads `API_PUBLIC_HOST`, `GITHUB_TOKEN`, `REFRESH_SECRET`, `REFRESH_EVERY_HOURS` (default `24`) and `ARP_X402_LAST_PURCHASE` (off unless `on`). `apps/probe` reads `PROBE_PUBLIC_HOST` and `ARP_PROBE_X402` (off unless `on`). Both keep a SQLite file under `ARP_DATA_DIR`, `/data` in their images; `apps/web/DEPLOY.md` has their Coolify settings.
 
 ### Deploying and scripts
 

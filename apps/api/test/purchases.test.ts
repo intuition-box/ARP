@@ -9,7 +9,7 @@ import {
   readLastPurchase,
 } from '../src/purchases.ts';
 import type { Store } from '../src/refresh.ts';
-import { handle, type Env } from '../src/worker.ts';
+import { handle, type Env } from '../src/service.ts';
 
 /*
  * Bodies recorded from `https://api.nohumans.directory/v1/resolve?url=…` on 2026-11-11, cut to the
@@ -208,7 +208,25 @@ describe("nohumans.directory's last purchase", () => {
 });
 
 describe('GET /x402/last-purchase', () => {
-  const env = (store: Store): Env => ({ FACTS: store });
+  const env = (store: Store): Env => ({ FACTS: store, ARP_X402_LAST_PURCHASE: 'on' });
+
+  test('off unless ARP_X402_LAST_PURCHASE=on: a 404, and nothing is read or written (ADR 0200)', async () => {
+    for (const value of [undefined, '', 'off', '1', 'true']) {
+      const store = memoryStore();
+      let called = false;
+      const response = await handle(
+        new Request(`http://api/x402/last-purchase?url=${encodeURIComponent('https://e.example/a')}`),
+        { FACTS: store, ARP_X402_LAST_PURCHASE: value },
+        async () => {
+          called = true;
+          return new Response(JSON.stringify(FAILED));
+        },
+      );
+      expect(response.status).toBe(404);
+      expect(called).toBe(false);
+      expect(store.writes).toBe(0);
+    }
+  });
 
   test('serves the reading with its source, licence, network and date', async () => {
     const response = await handle(

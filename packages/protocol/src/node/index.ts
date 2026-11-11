@@ -27,3 +27,13 @@ export {
     type LocalRequestPolicy,
 } from "./local-state.js";
 export {skillDirectoryDigest} from "./skill-directory.js";
+export {
+    pinnedAsk,
+    Refused,
+    type Answer,
+    type Ask,
+    type AskInit,
+    type PinnedAskOptions,
+    type ResolveAll,
+} from "./pinned-ask.js";
+export {every, hostedListener, refuseOtherHost, type Listener, type Schedule} from "./hosted.js";

@@ -73,3 +73,7 @@ data/outreach/
 
 # the Claude Desktop extension, built by `bun run --cwd apps/cli mcpb` (task 135)
 apps/cli/dist-mcpb/
+
+# apps/api and apps/probe run locally (task 140): their SQLite files
+apps/api/.data/
+apps/probe/.data/

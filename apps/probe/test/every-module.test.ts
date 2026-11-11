@@ -6,7 +6,10 @@ import { readdirSync } from 'node:fs';
  * coverage report rather than counted at zero. Loading every one of them here keeps the 90 % gate in
  * `bunfig.toml` honest: a new file without tests drags the figure down.
  */
-const SOURCES = readdirSync(new URL('../src/', import.meta.url)).filter((file) => file.endsWith('.ts'));
+// `main.ts` starts the service at import (binds a port, starts the schedule); `server.ts` is what it runs, tested.
+const SOURCES = readdirSync(new URL('../src/', import.meta.url)).filter(
+  (file) => file.endsWith('.ts') && file !== 'main.ts',
+);
 
 describe('every module in src/', () => {
   test('there is at least one', () => {

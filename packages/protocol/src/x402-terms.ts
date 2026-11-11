@@ -12,7 +12,7 @@
  *
  * Nothing else: a third party's listing is not read here.
  *
- * **No import**, on purpose: `apps/probe` is a Worker that imports this file by path, as the hook imports
+ * **No import**, on purpose: `apps/probe` imports this file by path, as the hook imports
  * pure modules, so it carries no viem and no index.
  */
 

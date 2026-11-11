@@ -6122,38 +6122,6 @@ var init_skill_directory = __esm(() => {
   MAX_TOTAL = 8 * 1048576;
 });
 
-// ../../packages/protocol/dist/node/index.js
-var exports_node = {};
-__export(exports_node, {
-  stateFile: () => stateFile,
-  skillDirectoryDigest: () => skillDirectoryDigest,
-  serveFetch: () => serveFetch,
-  refuseMovedState: () => refuseMovedState,
-  refuseForeignRequest: () => refuseForeignRequest,
-  redactUrls: () => redactUrls,
-  readKeyFile: () => readKeyFile,
-  readJsonLines: () => readJsonLines,
-  loopbackHosts: () => loopbackHosts,
-  lockFile: () => lockFile,
-  loadOrCreateKeyFile: () => loadOrCreateKeyFile,
-  linesOf: () => linesOf,
-  jsonResponse: () => jsonResponse,
-  bufferedCopy: () => bufferedCopy,
-  bigintSafe: () => bigintSafe,
-  arpHome: () => arpHome,
-  appendJsonLine: () => appendJsonLine,
-  MovedStateError: () => MovedStateError,
-  KeyFileError: () => KeyFileError,
-  ERC8004_REGISTRY_REF: () => ERC8004_REGISTRY,
-  DEFAULT_SERVE_MAX_BODY_BYTES: () => DEFAULT_SERVE_MAX_BODY_BYTES,
-  DEFAULT_REQUEST_TIMEOUT_MS: () => DEFAULT_REQUEST_TIMEOUT_MS
-});
-var init_node2 = __esm(() => {
-  init_serve();
-  init_local_state();
-  init_skill_directory();
-});
-
 // ../../packages/graphql/dist/http.js
 function isTimeoutError(error) {
   let cursor = error;
@@ -6932,6 +6900,738 @@ var init_dist = __esm(() => {
   init_tool_listing();
   init_tool_usage();
   init_x402_feed();
+});
+
+// ../../packages/protocol/dist/verify/probe.js
+function fetchableDocumentUrl(published, options = {}) {
+  const trimmed = published.trim();
+  if (!/^(https?|ipfs):\/\//i.test(trimmed)) {
+    return {
+      status: "refuse",
+      reason: "not an http, https or ipfs URL — this process fetches no other scheme"
+    };
+  }
+  const url = /^ipfs:\/\//i.test(trimmed) ? `${IPFS_GATEWAY}${trimmed.slice("ipfs://".length)}` : trimmed;
+  const local = options.allowPrivate === true ? null : privateProbeTarget(url);
+  if (local !== null) {
+    return { status: "refuse", reason: `${local} is not a public address` };
+  }
+  return { status: "fetch", url };
+}
+function nextDocumentHop(from, location, options = {}) {
+  let absolute;
+  try {
+    absolute = new URL(location, from).toString();
+  } catch {
+    return { status: "refuse", reason: `redirected to something that is not a URL: ${location}` };
+  }
+  const answer = fetchableDocumentUrl(absolute, options);
+  if (answer.status === "refuse") {
+    return { status: "refuse", reason: `redirected to ${absolute}: ${answer.reason}` };
+  }
+  return answer;
+}
+function parseIpv4(host) {
+  const quad = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+  if (quad === null)
+    return null;
+  const octets = [Number(quad[1]), Number(quad[2]), Number(quad[3]), Number(quad[4])];
+  if (octets.some((octet) => octet > 255))
+    return null;
+  const [a = 0, b = 0, c = 0, d = 0] = octets;
+  return [a, b, c, d];
+}
+function parseIpv6(host) {
+  const bare = host.split("%")[0] ?? "";
+  if (!bare.includes(":"))
+    return null;
+  let text = bare;
+  const lastColon = text.lastIndexOf(":");
+  const quad = parseIpv4(text.slice(lastColon + 1));
+  if (quad !== null) {
+    const high = (quad[0] << 8 | quad[1]).toString(16);
+    const low = (quad[2] << 8 | quad[3]).toString(16);
+    text = `${text.slice(0, lastColon + 1)}${high}:${low}`;
+  }
+  const halves = text.split("::");
+  if (halves.length > 2)
+    return null;
+  const parse = (part) => {
+    if (part === "")
+      return [];
+    const groups = [];
+    for (const group of part.split(":")) {
+      if (!/^[0-9a-f]{1,4}$/i.test(group))
+        return null;
+      groups.push(Number.parseInt(group, 16));
+    }
+    return groups;
+  };
+  const head = parse(halves[0] ?? "");
+  const rest = halves.length === 2 ? parse(halves[1] ?? "") : [];
+  if (head === null || rest === null)
+    return null;
+  const given = head.length + rest.length;
+  if (halves.length === 1)
+    return given === 8 ? head : null;
+  if (given > 7)
+    return null;
+  return [...head, ...new Array(8 - given).fill(0), ...rest];
+}
+function isPrivateIpv4([a, b, c]) {
+  if (a === 0)
+    return true;
+  if (a === 10)
+    return true;
+  if (a === 100 && b >= 64 && b <= 127)
+    return true;
+  if (a === 127)
+    return true;
+  if (a === 169 && b === 254)
+    return true;
+  if (a === 172 && b >= 16 && b <= 31)
+    return true;
+  if (a === 192 && b === 0 && c === 0)
+    return true;
+  if (a === 192 && b === 168)
+    return true;
+  if (a === 198 && (b === 18 || b === 19))
+    return true;
+  if (a >= 224)
+    return true;
+  return false;
+}
+function ipv4FromGroups(high, low) {
+  return [high >> 8, high & 255, low >> 8, low & 255];
+}
+function isPrivateIpv6(groups) {
+  const [g0 = 0, g1 = 0, g2 = 0, g3 = 0, g4 = 0, g5 = 0, g6 = 0, g7 = 0] = groups;
+  const leadingZero = g0 === 0 && g1 === 0 && g2 === 0 && g3 === 0 && g4 === 0;
+  if (leadingZero && g5 === 0)
+    return isPrivateIpv4(ipv4FromGroups(g6, g7));
+  if (leadingZero && g5 === 65535)
+    return isPrivateIpv4(ipv4FromGroups(g6, g7));
+  if (g0 === 100 && g1 === 65435 && g2 === 0 && g3 === 0 && g4 === 0 && g5 === 0) {
+    return isPrivateIpv4(ipv4FromGroups(g6, g7));
+  }
+  if (g0 === 100 && g1 === 65435 && g2 === 1)
+    return true;
+  if (g0 === 8194)
+    return isPrivateIpv4(ipv4FromGroups(g1, g2));
+  if ((g0 & 65024) === 64512)
+    return true;
+  if ((g0 & 65472) === 65152)
+    return true;
+  if ((g0 & 65472) === 65216)
+    return true;
+  if ((g0 & 65280) === 65280)
+    return true;
+  return false;
+}
+function privateAddress(address) {
+  const literal = address.toLowerCase();
+  const v4 = parseIpv4(literal);
+  if (v4 !== null)
+    return isPrivateIpv4(v4);
+  const v6 = parseIpv6(literal);
+  return v6 !== null && isPrivateIpv6(v6);
+}
+function privateProbeTarget(url) {
+  let host;
+  try {
+    host = new URL(url).hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  } catch {
+    return null;
+  }
+  const name = host.replace(/\.+$/, "");
+  if (name === "localhost" || name.endsWith(".localhost"))
+    return host;
+  if (name.endsWith(".internal") || name.endsWith(".local"))
+    return host;
+  return privateAddress(name) ? host : null;
+}
+async function resolvesPrivate(url, resolveHost) {
+  const host = new URL(url).hostname.replace(/^\[|\]$/g, "");
+  const addresses = await resolveHost(host);
+  for (const address of addresses) {
+    if (privateAddress(address))
+      return `${host} resolves to ${address}, not a public address`;
+  }
+  return null;
+}
+async function guardedFetchText(fetchImpl, url, init, options) {
+  const allowPrivate = options.allowPrivate === true;
+  const maxHops = options.maxHops ?? MAX_DOCUMENT_HOPS;
+  const { timeoutMs } = options;
+  const first = fetchableDocumentUrl(url, { allowPrivate });
+  if (first.status === "refuse")
+    return { status: "refused", reason: first.reason };
+  const controller = new AbortController;
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    let current = first.url;
+    let currentInit = init;
+    for (let hop = 0;; hop += 1) {
+      if (!allowPrivate && options.resolveHost !== undefined) {
+        const resolved = await resolvesPrivate(current, options.resolveHost);
+        if (resolved !== null)
+          return { status: "refused", reason: resolved };
+      }
+      let response;
+      try {
+        response = await fetchImpl(current, {
+          ...currentInit,
+          signal: controller.signal,
+          redirect: "manual"
+        });
+      } catch (error) {
+        if (controller.signal.aborted) {
+          throw new HttpError("timeout", `timed out after ${timeoutMs}ms: ${current}`, timeoutMs);
+        }
+        throw new HttpError("network", error instanceof Error ? error.message : String(error), timeoutMs, error);
+      }
+      if (response.type === "opaqueredirect") {
+        return {
+          status: "refused",
+          reason: `${current} redirected, and this runtime does not expose where to`
+        };
+      }
+      const location = REDIRECTS.has(response.status) ? response.headers.get("location") : null;
+      if (location === null) {
+        const text = await readBodyText(response, {
+          signal: controller.signal,
+          timeoutMs,
+          maxBytes: options.maxBytes ?? DEFAULT_MAX_BODY_BYTES
+        });
+        return { status: "ok", response, text, url: current };
+      }
+      await response.body?.cancel().catch(() => {
+        return;
+      });
+      if (hop >= maxHops) {
+        return { status: "refused", reason: `more than ${maxHops} redirects from ${url}` };
+      }
+      const next = nextDocumentHop(current, location, { allowPrivate });
+      if (next.status === "refuse")
+        return { status: "refused", reason: next.reason };
+      const method = (currentInit.method ?? "GET").toUpperCase();
+      if (response.status === 303 || method === "POST" && response.status <= 302) {
+        const { body: _body, ...rest } = currentInit;
+        currentInit = { ...rest, method: "GET" };
+      }
+      current = next.url;
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+}
+function unframe(text) {
+  if (!text.includes("data:"))
+    return text;
+  return text.split(`
+`).filter((line) => line.startsWith("data:")).map((line) => line.slice(5).trim()).join("");
+}
+function truncate(text) {
+  const flat = text.replace(/\s+/g, " ").trim();
+  return flat.length > OBSERVED_LIMIT ? `${flat.slice(0, OBSERVED_LIMIT)}…` : flat;
+}
+async function send2(request, init, options) {
+  const doFetch = options.fetch ?? globalThis.fetch;
+  try {
+    const answer = await guardedFetchText(doFetch, request.url, {
+      ...init,
+      headers: {
+        "user-agent": options.userAgent ?? DEFAULT_USER_AGENT,
+        ...init.headers ?? {}
+      }
+    }, {
+      timeoutMs: options.timeoutMs ?? DEFAULT_PROBE_TIMEOUT_MS,
+      maxBytes: options.maxBodyBytes ?? PROBE_MAX_BODY_BYTES,
+      ...options.allowPrivate === true ? { allowPrivate: true } : {},
+      ...options.resolveHost === undefined ? {} : { resolveHost: options.resolveHost }
+    });
+    if (answer.status === "refused")
+      return { refused: answer.reason };
+    return { response: answer.response, body: answer.text };
+  } catch (error) {
+    return { error };
+  }
+}
+function refusedOutcome(request, reason) {
+  return {
+    status: "inconclusive",
+    code: "refused",
+    httpStatus: null,
+    request,
+    observed: "",
+    detail: `not probed: ${reason}`
+  };
+}
+function transportError(request, error) {
+  const message = error instanceof Error ? error.message : String(error);
+  const isTimeout = /abort|timeout|timed out/i.test(message);
+  if (isTimeout) {
+    return {
+      status: "confirmed",
+      code: "dead",
+      httpStatus: null,
+      request,
+      detail: `no response within the timeout (${message})`
+    };
+  }
+  return {
+    status: "inconclusive",
+    code: "transport-error",
+    httpStatus: null,
+    request,
+    observed: truncate(message),
+    detail: "the request did not complete; this may be our network rather than the endpoint"
+  };
+}
+function rateLimited(request, status, body) {
+  return {
+    status: "inconclusive",
+    code: "rate-limited",
+    httpStatus: status,
+    request,
+    observed: truncate(body),
+    detail: `the host asked us to back off (HTTP ${status}); nothing was established`
+  };
+}
+async function listTools(url, session, options) {
+  const headers = {
+    "content-type": "application/json",
+    accept: "application/json, text/event-stream"
+  };
+  if (session)
+    headers["mcp-session-id"] = session;
+  await send2({ method: "POST", url, rpcMethod: "notifications/initialized" }, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })
+  }, options);
+  const sent = await send2({ method: "POST", url, rpcMethod: "tools/list" }, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list" })
+  }, options);
+  if (!("response" in sent))
+    return [];
+  try {
+    const parsed = JSON.parse(unframe(sent.body));
+    const tools = readArray(readRecord(parsed, "result"), "tools");
+    return tools.flatMap((tool) => {
+      const name = readString(tool, "name");
+      if (name === null || name.length === 0)
+        return [];
+      return [{ name, description: readString(tool, "description") }];
+    });
+  } catch {
+    return [];
+  }
+}
+async function probeMcp(url, options) {
+  const request = { method: "POST", url, rpcMethod: "initialize" };
+  const sent = await send2(request, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream"
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: MCP_PROTOCOL_VERSION,
+        capabilities: {},
+        clientInfo: { name: "arp-verifier", version: "0.1" }
+      }
+    })
+  }, options);
+  if ("error" in sent)
+    return transportError(request, sent.error);
+  if ("refused" in sent)
+    return refusedOutcome(request, sent.refused);
+  const { response, body } = sent;
+  if (response.status === 429 || response.status === 503) {
+    return rateLimited(request, response.status, body);
+  }
+  const framed = unframe(body);
+  let parsed = null;
+  try {
+    parsed = JSON.parse(framed);
+  } catch {
+    parsed = null;
+  }
+  const result = readRecord(parsed, "result");
+  if (response.ok && result !== null) {
+    const info = readRecord(result, "serverInfo");
+    const server = {
+      name: readString(info, "name"),
+      version: readString(info, "version"),
+      protocolVersion: readString(result, "protocolVersion")
+    };
+    const session = response.headers.get("mcp-session-id");
+    const servedTools = options.listTools ? await listTools(url, session, options) : undefined;
+    return {
+      status: "confirmed",
+      code: "serves-declared-protocol",
+      httpStatus: response.status,
+      request,
+      detail: `answered \`initialize\` as ${server.name ?? "an unnamed server"}` + (server.protocolVersion ? ` on ${server.protocolVersion}` : "") + (servedTools ? `, serving ${servedTools.length} tools` : ""),
+      server,
+      ...servedTools === undefined ? {} : { servedTools }
+    };
+  }
+  if (response.status >= 500) {
+    return {
+      status: "confirmed",
+      code: "dead",
+      httpStatus: response.status,
+      request,
+      detail: `server error (HTTP ${response.status})`
+    };
+  }
+  const rpcError = readRecord(parsed, "error");
+  if (rpcError !== null && typeof rpcError["code"] === "number") {
+    return {
+      status: "confirmed",
+      code: "declared-protocol-not-served",
+      httpStatus: response.status,
+      request,
+      detail: "returned a JSON-RPC error to `initialize`"
+    };
+  }
+  return {
+    status: "inconclusive",
+    code: "unrecognised-response",
+    httpStatus: response.status,
+    request,
+    observed: truncate(body),
+    detail: "answered, but not with an MCP result; our handshake may be wrong for this deployment"
+  };
+}
+function a2aCandidates(url) {
+  const base = url.replace(/\/+$/, "");
+  if (/\.json$/i.test(base))
+    return [url];
+  return [`${base}/.well-known/agent-card.json`, `${base}/.well-known/agent.json`, url];
+}
+async function probeA2a(url, options) {
+  let last = null;
+  for (const candidate of a2aCandidates(url)) {
+    const request = { method: "GET", url: candidate };
+    const sent = await send2(request, { method: "GET" }, options);
+    if ("error" in sent) {
+      last = transportError(request, sent.error);
+      continue;
+    }
+    if ("refused" in sent)
+      return refusedOutcome(request, sent.refused);
+    const { response, body } = sent;
+    if (response.status === 429 || response.status === 503) {
+      return rateLimited(request, response.status, body);
+    }
+    if (response.ok && /"(name|skills|capabilities|protocolVersion)"\s*:/.test(body)) {
+      const which = candidate === url ? "the declared URL itself" : `\`${candidate.slice(url.replace(/\/+$/, "").length)}\``;
+      return {
+        status: "confirmed",
+        code: "serves-declared-protocol",
+        httpStatus: response.status,
+        request,
+        detail: `served an agent card at ${which}`
+      };
+    }
+    last = {
+      status: "inconclusive",
+      code: "unrecognised-response",
+      httpStatus: response.status,
+      request,
+      observed: truncate(body),
+      detail: "answered, but not with anything shaped like an agent card"
+    };
+  }
+  return last ?? {
+    status: "inconclusive",
+    code: "unrecognised-response",
+    httpStatus: null,
+    request: { method: "GET", url },
+    observed: "",
+    detail: "no candidate path produced a response"
+  };
+}
+async function probePlain(url, options) {
+  const request = { method: "GET", url };
+  const sent = await send2(request, { method: "GET" }, options);
+  if ("error" in sent)
+    return transportError(request, sent.error);
+  if ("refused" in sent)
+    return refusedOutcome(request, sent.refused);
+  const { response, body } = sent;
+  if (response.status === 429 || response.status === 503) {
+    return rateLimited(request, response.status, body);
+  }
+  if (response.status >= 500) {
+    return {
+      status: "confirmed",
+      code: "dead",
+      httpStatus: response.status,
+      request,
+      detail: `server error (HTTP ${response.status})`
+    };
+  }
+  return {
+    status: "confirmed",
+    code: "live",
+    httpStatus: response.status,
+    request,
+    detail: `answered HTTP ${response.status}`
+  };
+}
+async function probeEndpoint(endpoint, options = {}) {
+  if (endpoint.classification.status !== "probeable") {
+    return {
+      status: "not-checkable",
+      code: endpoint.classification.code,
+      detail: `not probed: ${endpoint.classification.code}`
+    };
+  }
+  const { url } = endpoint.classification;
+  if (endpoint.protocol === "mcp")
+    return probeMcp(url, options);
+  if (endpoint.protocol === "a2a")
+    return probeA2a(url, options);
+  return probePlain(url, options);
+}
+async function readIpfsJson(uri, fetcher, timeoutMs, maxBytes = 256 * 1024) {
+  if (!uri.startsWith("ipfs://"))
+    throw new Error(`not an ipfs:// document: ${uri}`);
+  const failures = [];
+  for (const gateway of IPFS_GATEWAYS) {
+    const host = new URL(gateway).host;
+    try {
+      const answer = await guardedFetchText(fetcher, `${gateway}${uri.slice("ipfs://".length)}`, {}, { timeoutMs, maxBytes });
+      if (answer.status === "refused")
+        failures.push(`${host} refused: ${answer.reason}`);
+      else if (answer.response.ok)
+        return JSON.parse(answer.text);
+      else
+        failures.push(`${host} answered ${answer.response.status}`);
+    } catch (error) {
+      failures.push(`${host}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  throw new Error(failures.join("; "));
+}
+var DEFAULT_USER_AGENT = "ARP-verifier/0.1 (+https://github.com/intuition-box/ARP)", IPFS_GATEWAYS, IPFS_GATEWAY, MAX_DOCUMENT_HOPS = 3, REDIRECTS, DEFAULT_PROBE_TIMEOUT_MS = 8000, MCP_PROTOCOL_VERSION = "2025-06-18", OBSERVED_LIMIT = 240, PROBE_MAX_BODY_BYTES;
+var init_probe = __esm(() => {
+  init_dist();
+  IPFS_GATEWAYS = ["https://gateway.pinata.cloud/ipfs/", "https://ipfs.io/ipfs/"];
+  IPFS_GATEWAY = IPFS_GATEWAYS[0];
+  REDIRECTS = new Set([301, 302, 303, 307, 308]);
+  PROBE_MAX_BODY_BYTES = 1024 * 1024;
+});
+
+// ../../packages/protocol/dist/node/pinned-ask.js
+import { lookup as dnsLookup } from "node:dns";
+import http from "node:http";
+import https from "node:https";
+function pinnedAsk(options) {
+  const resolve2 = options.resolve ?? resolveWithDns;
+  const { timeoutMs, maxBytes } = options;
+  return (url, init) => new Promise((settle, fail) => {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      fail(new Refused("not-a-tool", `${url} is not an http or https URL`));
+      return;
+    }
+    if (!options.allowPrivate && privateProbeTarget(url) !== null) {
+      fail(new Refused("private-address", `${parsed.hostname} is not a public address`));
+      return;
+    }
+    const lookup = (hostname, lookupOptions, callback) => {
+      resolve2(hostname).then((addresses) => {
+        const bad = options.allowPrivate ? undefined : addresses.find((entry) => privateAddress(entry.address));
+        if (bad !== undefined) {
+          callback(new Refused("private-address", `${hostname} resolves to ${bad.address}, not a public address`), "");
+          return;
+        }
+        const first = addresses[0];
+        if (first === undefined) {
+          callback(new Error(`${hostname} has no address`), "");
+          return;
+        }
+        if (lookupOptions?.all)
+          callback(null, addresses);
+        else
+          callback(null, first.address, first.family);
+      }, (error) => callback(error instanceof Error ? error : new Error(String(error)), ""));
+    };
+    let done = false;
+    let request;
+    const chunks = [];
+    let size2 = 0;
+    let answered = null;
+    const finish = () => {
+      if (done || answered === null)
+        return;
+      done = true;
+      clearTimeout(deadline);
+      settle({ ...answered, body: Buffer.concat(chunks).toString("utf8") });
+    };
+    const abort = (error) => {
+      if (done)
+        return;
+      done = true;
+      clearTimeout(deadline);
+      fail(error);
+    };
+    const deadline = setTimeout(() => {
+      if (answered !== null) {
+        finish();
+        request.destroy();
+      } else {
+        request.destroy();
+        abort(new Error(`no answer within ${timeoutMs} ms`));
+      }
+    }, timeoutMs);
+    const client = parsed.protocol === "https:" ? https : http;
+    request = client.request(url, {
+      method: init.method,
+      headers: { "user-agent": options.userAgent, ...init.headers },
+      lookup,
+      agent: false
+    }, (response) => {
+      const headers = response.headers;
+      answered = {
+        status: response.statusCode ?? 0,
+        header: (name) => {
+          const value = headers[name.toLowerCase()];
+          return Array.isArray(value) ? value.join(", ") : value ?? null;
+        }
+      };
+      response.on("data", (chunk) => {
+        size2 += chunk.length;
+        if (size2 > maxBytes) {
+          chunks.push(chunk.subarray(0, maxBytes - (size2 - chunk.length)));
+          finish();
+          request.destroy();
+          return;
+        }
+        chunks.push(chunk);
+      });
+      response.on("end", finish);
+      response.on("error", (error) => answered === null ? abort(error) : finish());
+    });
+    request.on("error", (error) => abort(error));
+    if (init.body !== undefined)
+      request.write(init.body);
+    request.end();
+  });
+}
+var Refused, resolveWithDns = (hostname) => new Promise((resolve2, reject) => dnsLookup(hostname, { all: true }, (error, addresses) => error ? reject(error) : resolve2(addresses)));
+var init_pinned_ask = __esm(() => {
+  init_probe();
+  Refused = class Refused extends Error {
+    rule;
+    constructor(rule, message) {
+      super(message);
+      this.rule = rule;
+    }
+  };
+});
+
+// ../../packages/protocol/dist/node/hosted.js
+function hostedListener(prefix, port, listen, publicHost) {
+  const where = (listen ?? "").trim() || "127.0.0.1";
+  if (where !== "127.0.0.1" && where !== "0.0.0.0") {
+    return { error: `${prefix}_LISTEN must be 127.0.0.1 or 0.0.0.0, not ${where}` };
+  }
+  const name = (publicHost ?? "").trim().toLowerCase();
+  if (name !== "" && !HOST_NAME.test(name)) {
+    return { error: `${prefix}_PUBLIC_HOST must be a bare host name such as api.example.org, not ${publicHost}` };
+  }
+  if (where === "0.0.0.0" && name === "") {
+    return { error: `${prefix}_LISTEN=0.0.0.0 needs ${prefix}_PUBLIC_HOST, the name the proxy forwards` };
+  }
+  if (where === "127.0.0.1" && name !== "") {
+    return { error: `${prefix}_PUBLIC_HOST needs ${prefix}_LISTEN=0.0.0.0: on 127.0.0.1 no proxy reaches it` };
+  }
+  return { hostname: where, hosts: name === "" ? loopbackHosts(port) : [...loopbackHosts(port), name] };
+}
+function refuseOtherHost(request, hosts) {
+  const host = (request.headers.get("host") ?? "").toLowerCase();
+  if (hosts.some((allowed) => allowed.toLowerCase() === host))
+    return null;
+  return new Response(JSON.stringify({ error: "this service answers to its own host only" }), {
+    status: 421,
+    headers: { "content-type": "application/json" }
+  });
+}
+function every(periodMs, task, options) {
+  let running = false;
+  const tick = async () => {
+    if (running)
+      return false;
+    running = true;
+    try {
+      await task();
+    } catch (error) {
+      options.onError(error);
+    } finally {
+      running = false;
+    }
+    return true;
+  };
+  const timer = setInterval(() => void tick(), periodMs);
+  if (options.runOnStart)
+    tick();
+  return { tick, stop: () => clearInterval(timer) };
+}
+var HOST_NAME;
+var init_hosted = __esm(() => {
+  init_local_state();
+  HOST_NAME = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]$/;
+});
+
+// ../../packages/protocol/dist/node/index.js
+var exports_node = {};
+__export(exports_node, {
+  stateFile: () => stateFile,
+  skillDirectoryDigest: () => skillDirectoryDigest,
+  serveFetch: () => serveFetch,
+  refuseOtherHost: () => refuseOtherHost,
+  refuseMovedState: () => refuseMovedState,
+  refuseForeignRequest: () => refuseForeignRequest,
+  redactUrls: () => redactUrls,
+  readKeyFile: () => readKeyFile,
+  readJsonLines: () => readJsonLines,
+  pinnedAsk: () => pinnedAsk,
+  loopbackHosts: () => loopbackHosts,
+  lockFile: () => lockFile,
+  loadOrCreateKeyFile: () => loadOrCreateKeyFile,
+  linesOf: () => linesOf,
+  jsonResponse: () => jsonResponse,
+  hostedListener: () => hostedListener,
+  every: () => every,
+  bufferedCopy: () => bufferedCopy,
+  bigintSafe: () => bigintSafe,
+  arpHome: () => arpHome,
+  appendJsonLine: () => appendJsonLine,
+  Refused: () => Refused,
+  MovedStateError: () => MovedStateError,
+  KeyFileError: () => KeyFileError,
+  ERC8004_REGISTRY_REF: () => ERC8004_REGISTRY,
+  DEFAULT_SERVE_MAX_BODY_BYTES: () => DEFAULT_SERVE_MAX_BODY_BYTES,
+  DEFAULT_REQUEST_TIMEOUT_MS: () => DEFAULT_REQUEST_TIMEOUT_MS
+});
+var init_node2 = __esm(() => {
+  init_serve();
+  init_local_state();
+  init_skill_directory();
+  init_pinned_ask();
+  init_hosted();
 });
 
 // ../../node_modules/.bun/abitype@1.2.3+e016764623ac6761/node_modules/abitype/dist/esm/version.js
@@ -19596,7 +20296,7 @@ function getSignalId(signal) {
   signalIds.set(signal, nextId);
   return nextId;
 }
-function http(url, config = {}) {
+function http2(url, config = {}) {
   const { batch, fetchFn, fetchOptions, key = "http", methods, name = "HTTP JSON-RPC", onFetchRequest, onFetchResponse, retryDelay, raw } = config;
   return ({ chain, retryCount: retryCount_, timeout: timeout_ }) => {
     const { batchSize = 1000, wait: wait2 = 0 } = typeof batch === "object" ? batch : {};
@@ -20145,7 +20845,7 @@ function erc8004RegistrySource(config = {}) {
     const existing = clients.get(chainId);
     if (existing !== undefined)
       return existing;
-    const transport = config.transports?.[chainId] ?? http(config.rpcUrls?.[chainId] ?? DEFAULT_RPC_URLS[chainId] ?? chain.rpcUrls.default.http[0]);
+    const transport = config.transports?.[chainId] ?? http2(config.rpcUrls?.[chainId] ?? DEFAULT_RPC_URLS[chainId] ?? chain.rpcUrls.default.http[0]);
     const client = createPublicClient({ chain, transport });
     clients.set(chainId, client);
     return client;
@@ -20624,537 +21324,6 @@ var init_client2 = __esm(() => {
   init_dist();
   init_erc8004_registry();
   init_intuition();
-});
-
-// ../../packages/protocol/dist/verify/probe.js
-function fetchableDocumentUrl(published, options = {}) {
-  const trimmed = published.trim();
-  if (!/^(https?|ipfs):\/\//i.test(trimmed)) {
-    return {
-      status: "refuse",
-      reason: "not an http, https or ipfs URL — this process fetches no other scheme"
-    };
-  }
-  const url = /^ipfs:\/\//i.test(trimmed) ? `${IPFS_GATEWAY}${trimmed.slice("ipfs://".length)}` : trimmed;
-  const local = options.allowPrivate === true ? null : privateProbeTarget(url);
-  if (local !== null) {
-    return { status: "refuse", reason: `${local} is not a public address` };
-  }
-  return { status: "fetch", url };
-}
-function nextDocumentHop(from14, location, options = {}) {
-  let absolute;
-  try {
-    absolute = new URL(location, from14).toString();
-  } catch {
-    return { status: "refuse", reason: `redirected to something that is not a URL: ${location}` };
-  }
-  const answer = fetchableDocumentUrl(absolute, options);
-  if (answer.status === "refuse") {
-    return { status: "refuse", reason: `redirected to ${absolute}: ${answer.reason}` };
-  }
-  return answer;
-}
-function parseIpv4(host) {
-  const quad = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
-  if (quad === null)
-    return null;
-  const octets = [Number(quad[1]), Number(quad[2]), Number(quad[3]), Number(quad[4])];
-  if (octets.some((octet) => octet > 255))
-    return null;
-  const [a = 0, b = 0, c = 0, d = 0] = octets;
-  return [a, b, c, d];
-}
-function parseIpv6(host) {
-  const bare = host.split("%")[0] ?? "";
-  if (!bare.includes(":"))
-    return null;
-  let text = bare;
-  const lastColon = text.lastIndexOf(":");
-  const quad = parseIpv4(text.slice(lastColon + 1));
-  if (quad !== null) {
-    const high = (quad[0] << 8 | quad[1]).toString(16);
-    const low = (quad[2] << 8 | quad[3]).toString(16);
-    text = `${text.slice(0, lastColon + 1)}${high}:${low}`;
-  }
-  const halves = text.split("::");
-  if (halves.length > 2)
-    return null;
-  const parse = (part) => {
-    if (part === "")
-      return [];
-    const groups = [];
-    for (const group of part.split(":")) {
-      if (!/^[0-9a-f]{1,4}$/i.test(group))
-        return null;
-      groups.push(Number.parseInt(group, 16));
-    }
-    return groups;
-  };
-  const head = parse(halves[0] ?? "");
-  const rest = halves.length === 2 ? parse(halves[1] ?? "") : [];
-  if (head === null || rest === null)
-    return null;
-  const given = head.length + rest.length;
-  if (halves.length === 1)
-    return given === 8 ? head : null;
-  if (given > 7)
-    return null;
-  return [...head, ...new Array(8 - given).fill(0), ...rest];
-}
-function isPrivateIpv4([a, b, c]) {
-  if (a === 0)
-    return true;
-  if (a === 10)
-    return true;
-  if (a === 100 && b >= 64 && b <= 127)
-    return true;
-  if (a === 127)
-    return true;
-  if (a === 169 && b === 254)
-    return true;
-  if (a === 172 && b >= 16 && b <= 31)
-    return true;
-  if (a === 192 && b === 0 && c === 0)
-    return true;
-  if (a === 192 && b === 168)
-    return true;
-  if (a === 198 && (b === 18 || b === 19))
-    return true;
-  if (a >= 224)
-    return true;
-  return false;
-}
-function ipv4FromGroups(high, low) {
-  return [high >> 8, high & 255, low >> 8, low & 255];
-}
-function isPrivateIpv6(groups) {
-  const [g0 = 0, g1 = 0, g2 = 0, g3 = 0, g4 = 0, g5 = 0, g6 = 0, g7 = 0] = groups;
-  const leadingZero = g0 === 0 && g1 === 0 && g2 === 0 && g3 === 0 && g4 === 0;
-  if (leadingZero && g5 === 0)
-    return isPrivateIpv4(ipv4FromGroups(g6, g7));
-  if (leadingZero && g5 === 65535)
-    return isPrivateIpv4(ipv4FromGroups(g6, g7));
-  if (g0 === 100 && g1 === 65435 && g2 === 0 && g3 === 0 && g4 === 0 && g5 === 0) {
-    return isPrivateIpv4(ipv4FromGroups(g6, g7));
-  }
-  if (g0 === 100 && g1 === 65435 && g2 === 1)
-    return true;
-  if (g0 === 8194)
-    return isPrivateIpv4(ipv4FromGroups(g1, g2));
-  if ((g0 & 65024) === 64512)
-    return true;
-  if ((g0 & 65472) === 65152)
-    return true;
-  if ((g0 & 65472) === 65216)
-    return true;
-  if ((g0 & 65280) === 65280)
-    return true;
-  return false;
-}
-function privateAddress(address) {
-  const literal = address.toLowerCase();
-  const v4 = parseIpv4(literal);
-  if (v4 !== null)
-    return isPrivateIpv4(v4);
-  const v6 = parseIpv6(literal);
-  return v6 !== null && isPrivateIpv6(v6);
-}
-function privateProbeTarget(url) {
-  let host;
-  try {
-    host = new URL(url).hostname.toLowerCase().replace(/^\[|\]$/g, "");
-  } catch {
-    return null;
-  }
-  const name = host.replace(/\.+$/, "");
-  if (name === "localhost" || name.endsWith(".localhost"))
-    return host;
-  if (name.endsWith(".internal") || name.endsWith(".local"))
-    return host;
-  return privateAddress(name) ? host : null;
-}
-async function resolvesPrivate(url, resolveHost) {
-  const host = new URL(url).hostname.replace(/^\[|\]$/g, "");
-  const addresses = await resolveHost(host);
-  for (const address of addresses) {
-    if (privateAddress(address))
-      return `${host} resolves to ${address}, not a public address`;
-  }
-  return null;
-}
-async function guardedFetchText(fetchImpl, url, init, options) {
-  const allowPrivate = options.allowPrivate === true;
-  const maxHops = options.maxHops ?? MAX_DOCUMENT_HOPS;
-  const { timeoutMs } = options;
-  const first = fetchableDocumentUrl(url, { allowPrivate });
-  if (first.status === "refuse")
-    return { status: "refused", reason: first.reason };
-  const controller = new AbortController;
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    let current = first.url;
-    let currentInit = init;
-    for (let hop = 0;; hop += 1) {
-      if (!allowPrivate && options.resolveHost !== undefined) {
-        const resolved = await resolvesPrivate(current, options.resolveHost);
-        if (resolved !== null)
-          return { status: "refused", reason: resolved };
-      }
-      let response;
-      try {
-        response = await fetchImpl(current, {
-          ...currentInit,
-          signal: controller.signal,
-          redirect: "manual"
-        });
-      } catch (error) {
-        if (controller.signal.aborted) {
-          throw new HttpError("timeout", `timed out after ${timeoutMs}ms: ${current}`, timeoutMs);
-        }
-        throw new HttpError("network", error instanceof Error ? error.message : String(error), timeoutMs, error);
-      }
-      if (response.type === "opaqueredirect") {
-        return {
-          status: "refused",
-          reason: `${current} redirected, and this runtime does not expose where to`
-        };
-      }
-      const location = REDIRECTS.has(response.status) ? response.headers.get("location") : null;
-      if (location === null) {
-        const text = await readBodyText(response, {
-          signal: controller.signal,
-          timeoutMs,
-          maxBytes: options.maxBytes ?? DEFAULT_MAX_BODY_BYTES
-        });
-        return { status: "ok", response, text, url: current };
-      }
-      await response.body?.cancel().catch(() => {
-        return;
-      });
-      if (hop >= maxHops) {
-        return { status: "refused", reason: `more than ${maxHops} redirects from ${url}` };
-      }
-      const next = nextDocumentHop(current, location, { allowPrivate });
-      if (next.status === "refuse")
-        return { status: "refused", reason: next.reason };
-      const method = (currentInit.method ?? "GET").toUpperCase();
-      if (response.status === 303 || method === "POST" && response.status <= 302) {
-        const { body: _body, ...rest } = currentInit;
-        currentInit = { ...rest, method: "GET" };
-      }
-      current = next.url;
-    }
-  } finally {
-    clearTimeout(timer);
-  }
-}
-function unframe(text) {
-  if (!text.includes("data:"))
-    return text;
-  return text.split(`
-`).filter((line) => line.startsWith("data:")).map((line) => line.slice(5).trim()).join("");
-}
-function truncate(text) {
-  const flat = text.replace(/\s+/g, " ").trim();
-  return flat.length > OBSERVED_LIMIT ? `${flat.slice(0, OBSERVED_LIMIT)}…` : flat;
-}
-async function send2(request, init, options) {
-  const doFetch = options.fetch ?? globalThis.fetch;
-  try {
-    const answer = await guardedFetchText(doFetch, request.url, {
-      ...init,
-      headers: {
-        "user-agent": options.userAgent ?? DEFAULT_USER_AGENT,
-        ...init.headers ?? {}
-      }
-    }, {
-      timeoutMs: options.timeoutMs ?? DEFAULT_PROBE_TIMEOUT_MS,
-      maxBytes: options.maxBodyBytes ?? PROBE_MAX_BODY_BYTES,
-      ...options.allowPrivate === true ? { allowPrivate: true } : {},
-      ...options.resolveHost === undefined ? {} : { resolveHost: options.resolveHost }
-    });
-    if (answer.status === "refused")
-      return { refused: answer.reason };
-    return { response: answer.response, body: answer.text };
-  } catch (error) {
-    return { error };
-  }
-}
-function refusedOutcome(request, reason) {
-  return {
-    status: "inconclusive",
-    code: "refused",
-    httpStatus: null,
-    request,
-    observed: "",
-    detail: `not probed: ${reason}`
-  };
-}
-function transportError(request, error) {
-  const message = error instanceof Error ? error.message : String(error);
-  const isTimeout = /abort|timeout|timed out/i.test(message);
-  if (isTimeout) {
-    return {
-      status: "confirmed",
-      code: "dead",
-      httpStatus: null,
-      request,
-      detail: `no response within the timeout (${message})`
-    };
-  }
-  return {
-    status: "inconclusive",
-    code: "transport-error",
-    httpStatus: null,
-    request,
-    observed: truncate(message),
-    detail: "the request did not complete; this may be our network rather than the endpoint"
-  };
-}
-function rateLimited(request, status, body) {
-  return {
-    status: "inconclusive",
-    code: "rate-limited",
-    httpStatus: status,
-    request,
-    observed: truncate(body),
-    detail: `the host asked us to back off (HTTP ${status}); nothing was established`
-  };
-}
-async function listTools(url, session, options) {
-  const headers = {
-    "content-type": "application/json",
-    accept: "application/json, text/event-stream"
-  };
-  if (session)
-    headers["mcp-session-id"] = session;
-  await send2({ method: "POST", url, rpcMethod: "notifications/initialized" }, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })
-  }, options);
-  const sent = await send2({ method: "POST", url, rpcMethod: "tools/list" }, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list" })
-  }, options);
-  if (!("response" in sent))
-    return [];
-  try {
-    const parsed = JSON.parse(unframe(sent.body));
-    const tools = readArray(readRecord(parsed, "result"), "tools");
-    return tools.flatMap((tool) => {
-      const name = readString(tool, "name");
-      if (name === null || name.length === 0)
-        return [];
-      return [{ name, description: readString(tool, "description") }];
-    });
-  } catch {
-    return [];
-  }
-}
-async function probeMcp(url, options) {
-  const request = { method: "POST", url, rpcMethod: "initialize" };
-  const sent = await send2(request, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json, text/event-stream"
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "initialize",
-      params: {
-        protocolVersion: MCP_PROTOCOL_VERSION,
-        capabilities: {},
-        clientInfo: { name: "arp-verifier", version: "0.1" }
-      }
-    })
-  }, options);
-  if ("error" in sent)
-    return transportError(request, sent.error);
-  if ("refused" in sent)
-    return refusedOutcome(request, sent.refused);
-  const { response, body } = sent;
-  if (response.status === 429 || response.status === 503) {
-    return rateLimited(request, response.status, body);
-  }
-  const framed = unframe(body);
-  let parsed = null;
-  try {
-    parsed = JSON.parse(framed);
-  } catch {
-    parsed = null;
-  }
-  const result = readRecord(parsed, "result");
-  if (response.ok && result !== null) {
-    const info = readRecord(result, "serverInfo");
-    const server = {
-      name: readString(info, "name"),
-      version: readString(info, "version"),
-      protocolVersion: readString(result, "protocolVersion")
-    };
-    const session = response.headers.get("mcp-session-id");
-    const servedTools = options.listTools ? await listTools(url, session, options) : undefined;
-    return {
-      status: "confirmed",
-      code: "serves-declared-protocol",
-      httpStatus: response.status,
-      request,
-      detail: `answered \`initialize\` as ${server.name ?? "an unnamed server"}` + (server.protocolVersion ? ` on ${server.protocolVersion}` : "") + (servedTools ? `, serving ${servedTools.length} tools` : ""),
-      server,
-      ...servedTools === undefined ? {} : { servedTools }
-    };
-  }
-  if (response.status >= 500) {
-    return {
-      status: "confirmed",
-      code: "dead",
-      httpStatus: response.status,
-      request,
-      detail: `server error (HTTP ${response.status})`
-    };
-  }
-  const rpcError = readRecord(parsed, "error");
-  if (rpcError !== null && typeof rpcError["code"] === "number") {
-    return {
-      status: "confirmed",
-      code: "declared-protocol-not-served",
-      httpStatus: response.status,
-      request,
-      detail: "returned a JSON-RPC error to `initialize`"
-    };
-  }
-  return {
-    status: "inconclusive",
-    code: "unrecognised-response",
-    httpStatus: response.status,
-    request,
-    observed: truncate(body),
-    detail: "answered, but not with an MCP result; our handshake may be wrong for this deployment"
-  };
-}
-function a2aCandidates(url) {
-  const base2 = url.replace(/\/+$/, "");
-  if (/\.json$/i.test(base2))
-    return [url];
-  return [`${base2}/.well-known/agent-card.json`, `${base2}/.well-known/agent.json`, url];
-}
-async function probeA2a(url, options) {
-  let last = null;
-  for (const candidate of a2aCandidates(url)) {
-    const request = { method: "GET", url: candidate };
-    const sent = await send2(request, { method: "GET" }, options);
-    if ("error" in sent) {
-      last = transportError(request, sent.error);
-      continue;
-    }
-    if ("refused" in sent)
-      return refusedOutcome(request, sent.refused);
-    const { response, body } = sent;
-    if (response.status === 429 || response.status === 503) {
-      return rateLimited(request, response.status, body);
-    }
-    if (response.ok && /"(name|skills|capabilities|protocolVersion)"\s*:/.test(body)) {
-      const which = candidate === url ? "the declared URL itself" : `\`${candidate.slice(url.replace(/\/+$/, "").length)}\``;
-      return {
-        status: "confirmed",
-        code: "serves-declared-protocol",
-        httpStatus: response.status,
-        request,
-        detail: `served an agent card at ${which}`
-      };
-    }
-    last = {
-      status: "inconclusive",
-      code: "unrecognised-response",
-      httpStatus: response.status,
-      request,
-      observed: truncate(body),
-      detail: "answered, but not with anything shaped like an agent card"
-    };
-  }
-  return last ?? {
-    status: "inconclusive",
-    code: "unrecognised-response",
-    httpStatus: null,
-    request: { method: "GET", url },
-    observed: "",
-    detail: "no candidate path produced a response"
-  };
-}
-async function probePlain(url, options) {
-  const request = { method: "GET", url };
-  const sent = await send2(request, { method: "GET" }, options);
-  if ("error" in sent)
-    return transportError(request, sent.error);
-  if ("refused" in sent)
-    return refusedOutcome(request, sent.refused);
-  const { response, body } = sent;
-  if (response.status === 429 || response.status === 503) {
-    return rateLimited(request, response.status, body);
-  }
-  if (response.status >= 500) {
-    return {
-      status: "confirmed",
-      code: "dead",
-      httpStatus: response.status,
-      request,
-      detail: `server error (HTTP ${response.status})`
-    };
-  }
-  return {
-    status: "confirmed",
-    code: "live",
-    httpStatus: response.status,
-    request,
-    detail: `answered HTTP ${response.status}`
-  };
-}
-async function probeEndpoint(endpoint, options = {}) {
-  if (endpoint.classification.status !== "probeable") {
-    return {
-      status: "not-checkable",
-      code: endpoint.classification.code,
-      detail: `not probed: ${endpoint.classification.code}`
-    };
-  }
-  const { url } = endpoint.classification;
-  if (endpoint.protocol === "mcp")
-    return probeMcp(url, options);
-  if (endpoint.protocol === "a2a")
-    return probeA2a(url, options);
-  return probePlain(url, options);
-}
-async function readIpfsJson(uri, fetcher, timeoutMs, maxBytes = 256 * 1024) {
-  if (!uri.startsWith("ipfs://"))
-    throw new Error(`not an ipfs:// document: ${uri}`);
-  const failures = [];
-  for (const gateway of IPFS_GATEWAYS) {
-    const host = new URL(gateway).host;
-    try {
-      const answer = await guardedFetchText(fetcher, `${gateway}${uri.slice("ipfs://".length)}`, {}, { timeoutMs, maxBytes });
-      if (answer.status === "refused")
-        failures.push(`${host} refused: ${answer.reason}`);
-      else if (answer.response.ok)
-        return JSON.parse(answer.text);
-      else
-        failures.push(`${host} answered ${answer.response.status}`);
-    } catch (error) {
-      failures.push(`${host}: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-  throw new Error(failures.join("; "));
-}
-var DEFAULT_USER_AGENT = "ARP-verifier/0.1 (+https://github.com/intuition-box/ARP)", IPFS_GATEWAYS, IPFS_GATEWAY, MAX_DOCUMENT_HOPS = 3, REDIRECTS, DEFAULT_PROBE_TIMEOUT_MS = 8000, MCP_PROTOCOL_VERSION = "2025-06-18", OBSERVED_LIMIT = 240, PROBE_MAX_BODY_BYTES;
-var init_probe = __esm(() => {
-  init_dist();
-  IPFS_GATEWAYS = ["https://gateway.pinata.cloud/ipfs/", "https://ipfs.io/ipfs/"];
-  IPFS_GATEWAY = IPFS_GATEWAYS[0];
-  REDIRECTS = new Set([301, 302, 303, 307, 308]);
-  PROBE_MAX_BODY_BYTES = 1024 * 1024;
 });
 
 // ../../packages/protocol/dist/canonicalize.js
@@ -21698,7 +21867,7 @@ function encodeDeposit(receiver, termId, curveId, minShares) {
 }
 function multiVaultReads(config) {
   const client = config.client ?? createPublicClient({
-    transport: config.transport ?? http(config.rpcUrl)
+    transport: config.transport ?? http2(config.rpcUrl)
   });
   const contract = { address: config.address, abi: multiVaultDeclareAbi };
   const injected = config.client;
@@ -22807,7 +22976,7 @@ function transfersIn(logs, assets) {
   }));
 }
 function x402TransferReads(rpcUrl) {
-  const client = createPublicClient({ transport: http(rpcUrl, { timeout: 20000 }) });
+  const client = createPublicClient({ transport: http2(rpcUrl, { timeout: 20000 }) });
   return {
     getTransactionReceipt: (args) => client.getTransactionReceipt(args),
     getBlock: (args) => client.getBlock(args)
@@ -34527,7 +34696,7 @@ function hostedRefusal(env = process.env) {
   if (name === null) {
     return `${HOSTED_FLAG}=1 needs ARP_PUBLIC_HOST, the name the proxy forwards`;
   }
-  if (!HOST_NAME.test(name)) {
+  if (!HOST_NAME2.test(name)) {
     return `ARP_PUBLIC_HOST must be a bare host name such as mcp.example.org, not ${env["ARP_PUBLIC_HOST"]}`;
   }
   return null;
@@ -34537,9 +34706,9 @@ function loggable(error, message, env = process.env) {
     return message;
   return error instanceof Error ? error.name : "error";
 }
-var HOSTED_FLAG = "ARP_HOSTED", HOST_NAME, REFUSED_WHEN_HOSTED;
-var init_hosted = __esm(() => {
-  HOST_NAME = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]$/;
+var HOSTED_FLAG = "ARP_HOSTED", HOST_NAME2, REFUSED_WHEN_HOSTED;
+var init_hosted2 = __esm(() => {
+  HOST_NAME2 = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]$/;
   REFUSED_WHEN_HOSTED = [
     "ARP_RECEIPT_KEY",
     "ARP_AGENT_PRIVATE_KEY",
@@ -34606,7 +34775,7 @@ var init_config = __esm(() => {
   init__esm();
   init_content();
   init_data2();
-  init_hosted();
+  init_hosted2();
   refusedHosting = hostedRefusal(process.env);
   if (refusedHosting !== null) {
     console.error(refusedHosting);
@@ -35103,8 +35272,8 @@ function refusal2(call2, permitted) {
   return null;
 }
 function agentSender(account, rpcUrl) {
-  const client = createPublicClient({ chain: intuitionTestnet, transport: http(rpcUrl) });
-  const wallet = createWalletClient({ account, chain: intuitionTestnet, transport: http(rpcUrl) });
+  const client = createPublicClient({ chain: intuitionTestnet, transport: http2(rpcUrl) });
+  const wallet = createWalletClient({ account, chain: intuitionTestnet, transport: http2(rpcUrl) });
   return {
     address: account.address,
     account,
@@ -40278,10 +40447,10 @@ var init_agent_sieve_13579 = __esm(() => {
 
 // ../mcp/src/host-guard.ts
 import { promises as dns } from "node:dns";
-function hostGuard(env = process.env, resolveHost = resolveWithDns) {
+function hostGuard(env = process.env, resolveHost = resolveWithDns2) {
   return env["ARP_ALLOW_PRIVATE_PROBE"] === "1" ? { allowPrivate: true } : { allowPrivate: false, resolveHost };
 }
-var resolveWithDns = async (hostname) => (await dns.lookup(hostname, { all: true })).map((entry) => entry.address);
+var resolveWithDns2 = async (hostname) => (await dns.lookup(hostname, { all: true })).map((entry) => entry.address);
 var init_host_guard = () => {};
 
 // ../../data/catalogue/outside-signals.json
@@ -40975,7 +41144,7 @@ async function agentsForDomain(domain) {
     note: "used_here counts lines written by the wallet controlling the agent they name; lines_not_counted are the others. A wallet is not a person. say_they_do_this is an agent describing itself."
   };
 }
-var REGISTRY_ABI, MAX_LINES = 10, MAX_PROBED = 3, PROBE_TIMEOUT_MS = 5000, chainClient = () => createPublicClient({ transport: http(RPC) }), knownRegistries = () => {
+var REGISTRY_ABI, MAX_LINES = 10, MAX_PROBED = 3, PROBE_TIMEOUT_MS = 5000, chainClient = () => createPublicClient({ transport: http2(RPC) }), knownRegistries = () => {
   const own = record.arp?.identityRegistry;
   return own === undefined ? [] : [own];
 }, MAX_OFFER_FIELD = 500, shortText = (value) => typeof value === "string" && value.length > 0 && value.length <= MAX_OFFER_FIELD ? value.replace(/[\u0000-\u001f\u007f]+/g, " ") : null, isObject = (value) => typeof value === "object" && value !== null && !Array.isArray(value), NEW_NAME_WAIT_SECONDS = 60, NEW_ADDRESS_MS, RETRY_DELAY_MS = 1000, nameNotFound = (error) => error instanceof Error && /ENOTFOUND|ENODATA|EAI_NONAME/.test(`${error.code ?? ""} ${error.message}`), MAX_OFFERS_READ = 10, lineWordPair = () => lineWordAtomIds(GRAPHQL), SIEVE, SIEVE_HERE, RUNGS;
@@ -42559,7 +42728,7 @@ var init_pulse2 = __esm(() => {
   init_dist2();
   init_node2();
   init_domain_words2();
-  init_hosted();
+  init_hosted2();
   init_outside();
   init_pulse_window();
   init_search_run();
@@ -42733,7 +42902,7 @@ var init_server = __esm(async () => {
   init_content();
   init_client_session();
   init_config();
-  init_hosted();
+  init_hosted2();
   init_reputation();
   init_declare2();
   init_category3();

@@ -1,5 +1,7 @@
 # 0093 — The probe is not the pulse
 
+> **Amended by ADR `0200`, 2026-11-11.** It runs as a container on Coolify with a SQLite file, not a Worker on D1, asks endpoints through a lookup that refuses private addresses, and keeps 402 offers only with `ARP_PROBE_X402=on`. That it is not the pulse is unchanged.
+
 **Status:** Accepted. **Renumbered from `0089` on 2026-10-30**: it shared that number with `0089-one-installer-one-package-thin-manifests.md`, which was written first. Commits before the rename cite it as `0089`.
 **Date:** 2026-10-30
 **Triggered by:** the user, 2026-10-30. Asked whether a cron should check every server in real time,

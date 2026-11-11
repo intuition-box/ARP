@@ -1,42 +1,107 @@
-import { Database, type SQLQueryBindings } from 'bun:sqlite';
-import { describe, expect, test } from 'bun:test';
-import { readdirSync, readFileSync } from 'node:fs';
+import { Database } from 'bun:sqlite';
+import { afterEach, describe, expect, test } from 'bun:test';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
-import type { Reading } from '../src/probe.ts';
-import { d1Readings, memoryReadings, type D1Like, type Readings } from '../src/store.ts';
+import { pinnedAsk } from '@arp-protocol/core/node';
 
-const MIGRATIONS = new URL('../migrations/', import.meta.url);
+import { read, type Reading } from '../src/probe.ts';
+import { memoryReadings, migrate, sqliteReadings, type Readings } from '../src/store.ts';
+import type { Target } from '../src/targets.ts';
 
-/** D1 is SQLite: an in-memory SQLite with the committed migrations applied, behind D1's surface. */
-function sqliteD1(): { d1: D1Like; db: Database } {
-  const db = new Database(':memory:');
-  for (const file of readdirSync(MIGRATIONS).sort()) {
-    db.exec(readFileSync(new URL(file, MIGRATIONS), 'utf8'));
-  }
-  const d1: D1Like = {
-    prepare(query) {
-      return {
-        bind(...values) {
-          // The store binds only strings, numbers and nulls, which is what SQLite accepts.
-          const params = values as SQLQueryBindings[];
-          return {
-            run: async () => db.query(query).run(...params),
-            // Rows come back with the columns the store selected, which is the `T` it asks for.
-            all: async <T>() => ({ results: db.query(query).all(...params) as T[] }),
-          };
-        },
-      };
-    },
-    async batch(statements) {
-      // Each statement is the `{ run }` object `bind` returned; D1 runs a batch as one transaction.
-      const runs = statements as { run(): Promise<unknown> }[];
-      db.exec('BEGIN');
-      for (const statement of runs) await statement.run();
-      db.exec('COMMIT');
-    },
-  };
-  return { d1, db };
+const dirs: string[] = [];
+function tempFile(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'arp-probe-store-'));
+  dirs.push(dir);
+  return join(dir, 'probe.sqlite');
 }
+afterEach(() => {
+  for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
+const row = (at: string, outcome: Reading['outcome'], detail: string | null = null): Reading => ({
+  target: 'mcp.example.com/mcp',
+  kind: 'endpoint',
+  at,
+  outcome,
+  http: outcome === 'x402' ? 402 : 200,
+  ms: 12,
+  detail,
+});
+
+describe('the SQLite history', () => {
+  test('the migrations D1 applied run once each, whatever the number of opens', () => {
+    const path = tempFile();
+    sqliteReadings(path).close();
+    sqliteReadings(path).close();
+    const db = new Database(path);
+    expect(db.query('PRAGMA user_version').get()).toEqual({ user_version: 2 });
+    expect(migrate(db)).toBe(0);
+    const indexes = db
+      .query<{ name: string }, []>("SELECT name FROM sqlite_master WHERE type = 'index' ORDER BY name")
+      .all()
+      .map((index) => index.name);
+    expect(indexes).toEqual(['readings_at', 'readings_target_at']);
+    db.close();
+  });
+
+  test('append and since, oldest first, kept across a reopen', async () => {
+    const path = tempFile();
+    const first = sqliteReadings(path);
+    await first.append([row('2026-11-11T10:05:00.000Z', 'answers'), row('2026-11-11T10:00:00.000Z', 'no-answer')]);
+    first.close();
+    const second = sqliteReadings(path);
+    expect((await second.since('2026-11-11T10:00:00.000Z')).map((r) => r.outcome)).toEqual([
+      'no-answer',
+      'answers',
+    ]);
+    expect(await second.since('2026-11-12T00:00:00.000Z')).toEqual([]);
+    second.close();
+  });
+
+  test('latestX402 is the newest reading before the date that kept its offers', async () => {
+    const store = sqliteReadings(tempFile());
+    await store.append([
+      row('2026-11-10T10:00:00.000Z', 'x402', '{"offers":["old"]}'),
+      row('2026-11-11T09:00:00.000Z', 'x402', '{"offers":["kept"]}'),
+      row('2026-11-11T09:30:00.000Z', 'x402', null),
+      row('2026-11-11T11:00:00.000Z', 'x402', '{"offers":["later"]}'),
+    ]);
+    expect((await store.latestX402('mcp.example.com/mcp', '2026-11-11T10:00:00.000Z'))?.detail).toBe(
+      '{"offers":["kept"]}',
+    );
+    expect(await store.latestX402('mcp.example.com/mcp', '2026-11-01T00:00:00.000Z')).toBeNull();
+    expect(await store.latestX402('other', '2100-01-01T00:00:00.000Z')).toBeNull();
+    store.close();
+  });
+});
+
+describe('a private address, through pinnedAsk with private addresses refused', () => {
+  const ask = (resolve?: (host: string) => Promise<{ address: string; family: number }[]>) =>
+    pinnedAsk({ allowPrivate: false, timeoutMs: 2_000, maxBytes: 1024, userAgent: 'test', resolve });
+  const target = (url: string): Target => ({ label: url.replace(/^https?:\/\//, ''), kind: 'endpoint', repo: 'o/r', url });
+
+  test('a literal private address is never connected to', async () => {
+    let served = 0;
+    const server = Bun.serve({ port: 0, hostname: '127.0.0.1', fetch: () => (served += 1, new Response('{}')) });
+    try {
+      for (const url of [`http://127.0.0.1:${server.port}/mcp`, 'http://169.254.169.254/latest/meta-data/', 'http://10.0.0.1/mcp', 'http://localhost/mcp']) {
+        const reading = await read(target(url), { ask: ask(), fetch }, Date.now);
+        expect(reading).toMatchObject({ outcome: 'no-answer', http: null, detail: 'private-address' });
+      }
+      expect(served).toBe(0);
+    } finally {
+      void server.stop(true);
+    }
+  });
+
+  test('a public name that resolves to a private address is refused at the lookup', async () => {
+    const toLoopback = async () => [{ address: '127.0.0.1', family: 4 }];
+    const reading = await read(target('https://mcp.example.com/mcp'), { ask: ask(toLoopback), fetch }, Date.now);
+    expect(reading).toMatchObject({ outcome: 'no-answer', detail: 'private-address' });
+  });
+});
 
 function reading(over: Partial<Reading>): Reading {
   return {
@@ -59,7 +124,7 @@ const ROWS: Reading[] = [
   reading({ at: '2026-11-11T11:00:00.000Z', outcome: 'x402', http: 402, detail: '{"offers":[2]}' }),
 ];
 
-/** The two stores answer the same questions the same way; the worker relies on either. */
+/** The two stores answer the same questions the same way; the service relies on either (task 136, kept by task 140). */
 function behavesAsTheHistory(name: string, make: () => Readings) {
   describe(name, () => {
     test('since returns every target from the date on, oldest first', async () => {
@@ -98,26 +163,5 @@ function behavesAsTheHistory(name: string, make: () => Readings) {
   });
 }
 
-behavesAsTheHistory('d1Readings over SQLite with the committed migrations', () => d1Readings(sqliteD1().d1));
+behavesAsTheHistory('sqliteReadings over a file with the committed migrations', () => sqliteReadings(tempFile()));
 behavesAsTheHistory('memoryReadings', () => memoryReadings());
-
-describe('d1Readings', () => {
-  test('writes a batch in one call, every column in place', async () => {
-    const { d1, db } = sqliteD1();
-    let batches = 0;
-    const counting: D1Like = { prepare: d1.prepare, batch: (statements) => ((batches += 1), d1.batch(statements)) };
-    await d1Readings(counting).append(ROWS.slice(0, 2));
-    expect(batches).toBe(1);
-    expect(db.query('SELECT target, kind, at, outcome, http, ms, detail FROM readings ORDER BY at').all()).toEqual([
-      ROWS[1],
-      ROWS[0],
-    ]);
-  });
-
-  test('sends no batch for an empty append', async () => {
-    let batches = 0;
-    const { d1 } = sqliteD1();
-    await d1Readings({ prepare: d1.prepare, batch: async () => (batches += 1) }).append([]);
-    expect(batches).toBe(0);
-  });
-});

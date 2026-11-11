@@ -8,15 +8,35 @@
  *  record instead — the latest version, when it was published, and whether it is deprecated.
  *
  *  Neither outcome is good or bad here. `asks-for-auth` is a server answering; `no-answer` is a
- *  read that failed from Cloudflare at that minute. The page states which, and when (ADR `0093`).
+ *  read that failed from ARP's server at that minute. The page states which, and when (ADR `0093`).
+ *
+ *  **An endpoint is asked through an {@link Ask}**, never a bare `fetch` (task 140, ADR `0200`): on
+ *  Cloudflare's edge a private address reached nothing, in a container on ARP's host it reaches the
+ *  host's network. `server.ts` hands it `pinnedAsk` with private addresses refused, which resolves the
+ *  name once, connects only to the checked addresses and follows no redirect. A registry is a fixed
+ *  host ARP chose (`registry.npmjs.org`, `pypi.org`), so it keeps `fetch`.
  *
  *  **An x402 endpoint** answers `initialize` with `402` and its payment requirements. Its offers (network,
  *  asset, payee, amount) are kept as the reading's detail, `x402`: they are the endpoint's own published
- *  terms, not something it said about a caller (task 122, ADR `0189`).
+ *  terms, not something it said about a caller (task 122, ADR `0189`). **Kept only with
+ *  `keepOffers`** (`ARP_PROBE_X402=on`, off by default, ADR `0200`): off, a `402` with offers is
+ *  still `x402`, and its detail is `null`.
  */
-// By path, as the hook imports pure modules: the file has no import, so the Worker carries no viem.
+import { Refused, type Ask } from '@arp-protocol/core/node';
+
+// By path, as the hook imports pure modules: the file has no import.
 import { x402OffersOf } from '../../../packages/protocol/src/x402-terms.ts';
 import type { Target } from './targets.ts';
+
+export type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
+
+/** How a reading reaches the network: an endpoint through `ask`, a registry through `fetch`. */
+export type Io = { ask: Ask; fetch: Fetch };
+
+export type ReadOptions = { keepOffers: boolean };
+
+/** An endpoint's body is read up to this much: enough for an `initialize` result or a payment request. */
+export const ENDPOINT_MAX_BYTES = 256 * 1024;
 
 export type Outcome =
   | 'answers' // an endpoint returned a JSON-RPC result to `initialize`
@@ -40,7 +60,8 @@ export type Reading = {
   detail: string | null;
 };
 
-const TIMEOUT_MS = 10_000;
+/** One read, at most this long: an endpoint through its `ask`, a registry through its signal. */
+export const TIMEOUT_MS = 10_000;
 
 const INITIALIZE = JSON.stringify({
   jsonrpc: '2.0',
@@ -74,56 +95,53 @@ function hasResult(body: string): boolean {
 
 async function readEndpoint(
   target: Target,
-  fetcher: typeof fetch,
+  ask: Ask,
+  options: ReadOptions,
 ): Promise<Omit<Reading, 'at' | 'ms'>> {
   const base = { target: target.label, kind: target.kind };
-  let response: Response;
+  let answer: Awaited<ReturnType<Ask>>;
   try {
-    response = await fetcher(target.url, {
+    answer = await ask(target.url, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         accept: 'application/json, text/event-stream',
       },
       body: INITIALIZE,
-      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (error) {
-    return {
-      ...base,
-      outcome: 'no-answer',
-      http: null,
-      detail: error instanceof Error ? error.name : 'unknown',
-    };
+    // A refused target says which rule refused it; anything else says only what kind of failure.
+    const detail =
+      error instanceof Refused ? error.rule : error instanceof Error ? error.name : 'unknown';
+    return { ...base, outcome: 'no-answer', http: null, detail };
   }
-  const http = response.status;
+  const http = answer.status;
   if (http === 401 || http === 403) {
-    await response.body?.cancel();
     // The MCP authorization spec has a protected server name its metadata in this header. A bare
     // 401 is any API closed to anonymous callers, and reading it as an MCP server would be a guess.
-    const isMcpAuth = /resource_metadata=/i.test(response.headers.get('www-authenticate') ?? '');
+    const isMcpAuth = /resource_metadata=/i.test(answer.header('www-authenticate') ?? '');
     return { ...base, outcome: isMcpAuth ? 'asks-for-auth' : 'refuses', http, detail: null };
   }
   if (http === 402) {
     // Who the endpoint asks to be paid, on which network, in what, for how much: the dated reading an x402
     // line's signed terms are checked against once the endpoint no longer answers (ADR 0189). The offers
     // only, never the rest of the answer.
-    const body = await response.text();
-    const offers = x402OffersOf(http, (name) => response.headers.get(name), body);
-    return offers === null
-      ? { ...base, outcome: 'http-error', http, detail: null }
-      : { ...base, outcome: 'x402', http, detail: JSON.stringify({ offers }) };
+    const offers = x402OffersOf(http, answer.header, answer.body);
+    if (offers === null) return { ...base, outcome: 'http-error', http, detail: null };
+    return {
+      ...base,
+      outcome: 'x402',
+      http,
+      detail: options.keepOffers ? JSON.stringify({ offers }) : null,
+    };
   }
-  if (!response.ok) {
-    await response.body?.cancel();
-    return { ...base, outcome: 'http-error', http, detail: null };
-  }
-  // A stream that stays open would hold the read until the timeout; the first result is enough.
-  const body = await response.text();
-  return { ...base, outcome: hasResult(body) ? 'answers' : 'not-mcp', http, detail: null };
+  // A 3xx lands here: `ask` follows no redirect, so a moved endpoint reads as an http error.
+  if (http < 200 || http >= 300) return { ...base, outcome: 'http-error', http, detail: null };
+  // A stream that stays open is read until the deadline, and what came by then is enough.
+  return { ...base, outcome: hasResult(answer.body) ? 'answers' : 'not-mcp', http, detail: null };
 }
 
-async function readNpm(target: Target, fetcher: typeof fetch): Promise<Omit<Reading, 'at' | 'ms'>> {
+async function readNpm(target: Target, fetcher: Fetch): Promise<Omit<Reading, 'at' | 'ms'>> {
   const name = target.label.slice('npmjs.com/package/'.length);
   const base = { target: target.label, kind: target.kind };
   const response = await fetcher(`https://registry.npmjs.org/${name.replace('/', '%2f')}`, {
@@ -150,7 +168,7 @@ async function readNpm(target: Target, fetcher: typeof fetch): Promise<Omit<Read
 
 async function readPypi(
   target: Target,
-  fetcher: typeof fetch,
+  fetcher: Fetch,
 ): Promise<Omit<Reading, 'at' | 'ms'>> {
   const name = target.label.slice('pypi.org/project/'.length);
   const base = { target: target.label, kind: target.kind };
@@ -176,18 +194,19 @@ async function readPypi(
 
 export async function read(
   target: Target,
-  fetcher: typeof fetch,
+  io: Io,
   now: () => number,
+  options: ReadOptions = { keepOffers: true },
 ): Promise<Reading> {
   const started = now();
   let partial: Omit<Reading, 'at' | 'ms'>;
   try {
     partial =
       target.kind === 'endpoint'
-        ? await readEndpoint(target, fetcher)
+        ? await readEndpoint(target, io.ask, options)
         : target.kind === 'npm'
-          ? await readNpm(target, fetcher)
-          : await readPypi(target, fetcher);
+          ? await readNpm(target, io.fetch)
+          : await readPypi(target, io.fetch);
   } catch (error) {
     // A registry that times out or sends something unparseable: the read failed, the target did not.
     partial = {
