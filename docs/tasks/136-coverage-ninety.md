@@ -1,6 +1,6 @@
 # Task 136 — Coverage ninety
 
-**Status:** in progress, branch `test/coverage-90`, cut from `0b47689d`, rebased on `origin/dev` `4815c2b9`.
+**Status:** verified 2026-11-11, `task-verifier` PASS (round 2; round 1 FAIL on `apps/cli`'s per-file gate over `scripts/mcpb.ts`, the missing ladder sentence, stale figures and a stray `foundry.lock`), branch `test/coverage-90` on `origin/dev` `4815c2b9`, post-mortem `.claude/learning/124-coverage-ninety.md`. Not pushed.
 **ADR:** `0198`.
 **Rules:** `code.md`, `workflow.md`, `claims.md`; `ui.md` for `apps/web`; `security.md` for `apps/sponsor`.
 **Required skills:** `arp-contributing`. **Reviewer:** none per domain (tests only, no product code
@@ -65,15 +65,15 @@ Measured 2026-11-11 at `abba75e9` (on `origin/dev` `4815c2b9`), by the root `bun
 | `apps/sponsor` | 84.7 → 99.2 % | not measured | `src/main.ts` (reads the key file, binds a port) |
 | `apps/api` | 92.8 → 98.9 % | not measured | none |
 | `apps/cli` | 97.6 → 97.9 % | not measured | `src/cli.ts` (runs a command at import; tested as the built binary) |
-
-`apps/cli`'s figure includes `scripts/mcpb.ts`, which task 135 added after the lot measured: its build
-moved into `build(paths, run)` so a test runs it (100 % functions, 97.4 % lines).
 | `apps/node` | 99.7 % | not measured | `src/node.ts` (calls the RPC at import) |
 | `apps/probe` | 74.0 → 100 % | not measured | none |
 
+`apps/cli`'s figure includes `scripts/mcpb.ts`, which task 135 added after the lot measured: its build
+moved into `build(paths, run)` so a test runs it (100 % functions, 97.4 % lines).
+
 The bun "before" figures include a test importing every module, so they differ from the table above
 where an unloaded file was invisible. Every bun workspace ignores `../../packages/**`, gated in its own
-workspace. No test file or test was removed; no product code changed.
+workspace. No test file or test was removed; no product code changed beyond extracting `apps/cli/scripts/mcpb.ts`'s build into a function.
 
 Found and **not fixed** (product behaviour, out of this task's scope):
 

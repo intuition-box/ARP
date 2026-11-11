@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-12 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-130 entries, one per completed task. Written by `task-verifier` on a pass.
+131 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -133,6 +133,7 @@
 | [121](121-the-landing-scenes-are-static.md) | `docs/tasks/133-the-landing-scenes-are-static.md` | PASS | The landing's scenes are static: they read nothing |
 | [122](122-arp-as-a-signal-generator.md) | `docs/tasks/134-arp-as-a-signal-generator.md` | PASS | ARP as a signal generator, for an external adapter |
 | [123](123-the-desktop-extension-is-built-here.md) | `docs/tasks/135-the-desktop-extension-is-built-here.md` | PASS | The Claude Desktop extension is built here |
+| [124](124-coverage-ninety.md) | `docs/tasks/136-coverage-ninety.md` | PASS (round 2) | Coverage ninety |
 | [125](125-desktop-share-and-server-version.md) | `docs/tasks/137-desktop-share-and-server-version.md` | PASS | Desktop's share setting stops overwriting, and the server names its version |
 | [126](126-the-skills-say-what-0-0-6-does.md) | `docs/tasks/138-the-skills-say-what-0-0-6-does.md` | PASS (second pass; the first failed on three sentences) | The skills say what CLI 0.0.4 to 0.0.6 does |
 | [127](127-prune-dev-keep-the-hire-loop.md) | `docs/tasks/139-prune-dev-keep-the-hire-loop.md` | PASS (second pass; first FAIL on ` | Prune what production does not need; keep the hire loop on `future/hire-loop` |
