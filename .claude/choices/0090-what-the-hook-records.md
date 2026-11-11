@@ -30,7 +30,8 @@ the log verbatim, because `normaliseToolUrl` keeps the query.
 
 - the call id;
 - the payload's format, `claude` or `grok`;
-- an outcome: `ok`, `tool_error`, `auth`, `timeout`, `unreachable` or `payment`;
+- an outcome: `ok`, `tool_error`, `auth`, `timeout`, `unreachable` or ~~`payment`~~ (since
+  2026-11-11, task 125: `payment_required`, `payment_refused` or `paid_no_delivery`; see the header);
 - at most a status code;
 - the duration the runtime measured;
 - the response's size;

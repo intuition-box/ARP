@@ -50,7 +50,7 @@ A plain word in the path (`/weather/paris`) is not caught: nothing tells a route
 
 `no-delivery` means "paid, got nothing back": a line with a settled transaction. It is one of the closed reasons.
 
-A call refused before any payment settled (a `402` you did not pay, a payment the facilitator refused) has no transaction to attach, and is not a record. When the call went through an MCP tool in Claude Code, the hook notes it locally as `payment_refused` (the ordinary first `402` is `payment_required`, not a failure) and nothing more; a call the hook saw settle and return nothing is `paid_no_delivery`, on your machine only; ARP's sponsoring service writes no line about an endpoint without a payment.
+A call refused before any payment settled (a `402` you did not pay, a payment the facilitator refused) has no transaction to attach, and is not a record. When the call went through an MCP tool in Claude Code, the hook notes it locally and nothing more: a payment refused or failed before it settled is `payment_refused`; a `402` with nothing else wrong is `payment_required`, whether or not it was paid on the next call, and is not a failure; `paid_no_delivery` is written only when the call's own result shows a settled payment and nothing came back; ARP's sponsoring service writes no line about an endpoint without a payment.
 
 From the CLI, with `--tool` the URL you paid:
 

@@ -102,6 +102,10 @@ They feed none, checked in the code:
 ## Open
 
 - A real x402 call's payload is not captured as a fixture; the shapes above are the spec's.
+- A non-x402 `402` in a failed shell command (an API out of credits answering `402 Payment Required`)
+  is now `payment_required`, not a failure, so it no longer reaches `recordSkillFailure`. Latent: a
+  record there also needs `missing-key`, `missing-program` or `missing-file` in the output, and no
+  fixture or measurement shows such a case.
 - Whether to join a `payment_required` line to the next line of its tool, in a reader, is not done.
 - Whether `paid_no_delivery` should propose a `no-delivery` line is the user's decision (it would carry
   no payment proof unless the payload's transaction were kept, which the hook never does today).
