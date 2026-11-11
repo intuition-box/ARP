@@ -103,7 +103,7 @@ That address goes in two places, in the release that ships with it: `arp.sponsor
 | Domain | `https://<SPONSOR_PUBLIC_HOST>` |
 | Health check | path `/`, port `3200` (the image has its own `HEALTHCHECK`) |
 | **Consistent Container Names** | **on**. Coolify then stops the old container before it starts the new one. A rolling update would run two sponsors on one ledger for a moment, and the ledger's lock cannot see a process in another container |
-| **Persistent storage, volume** | a volume mounted on **`/data`**. The ledger (`sponsor-ledger.jsonl`), the category log and the signed x402 line requests (`line-requests.jsonl`, the only copy, read by the x402 feed) live there. Without it every redeploy starts from an empty ledger, and an empty ledger sponsors every proof a second time |
+| **Persistent storage, volume** | a volume mounted on **`/data`**. The ledger (`sponsor-ledger.jsonl`), the category log and the signed x402 line requests (`line-requests.jsonl`, the only copy, read by the x402 feed) live there. Without it every redeploy starts from an empty ledger, and an empty ledger sponsors every proof a second time; and the line requests, which exist nowhere else, are lost for good, so every x402 record's `signed_by_payer` turns `false` (ADR `0188`) |
 | **Persistent storage, file mount** | destination `/run/secrets/sponsor.key`, content: the key file's one line. Never in the image, in git or in an environment variable |
 | Replicas | one. Never scale it out |
 
@@ -131,6 +131,7 @@ by the image.
 | `SPONSOR_MINT_GAS_WEI` | no | turns on `/mint-gas` for agents that start with nothing |
 | `SPONSOR_CONTENT_SIGNERS` | no | the content servers whose receipts unlock a deposit |
 | `GITHUB_TOKEN` | no | raises GitHub's limit of 60 requests an hour, for listing checks. A secret |
+| `SPONSOR_LINE_REQUESTS` | no | where the request each x402 line was signed with is kept, served at `GET /line-request` for the x402 feed; default `/data/line-requests.jsonl`. Keep it on the volume: it is the only copy (ADR `0188`) |
 | `SPONSOR_ENDPOINT_CHECKS_PER_HOUR` | no | how many non-GitHub URLs `/list-tool` asks whether they are a tool, in an hour; default 60 (ADR `0163`) |
 
 Never set `ARP_ALLOW_PRIVATE_PROBE` here: it lets `/list-tool` connect to private addresses, which

@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-111 entries, one per completed task. Written by `task-verifier` on a pass.
+112 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -117,3 +117,4 @@
 | [106](106-x402-test-feed.md) | `docs/tasks/118-x402-test-feed.md` | PASS | A separate x402 test feed for Base Sepolia |
 | [107](107-an-endpoint-url-without-its-values.md) | `docs/tasks/119-an-endpoint-url-without-its-values.md` | PASS | An x402 endpoint's URL is written without its values |
 | [108](108-an-endpoints-last-purchase.md) | `docs/tasks/120-an-endpoints-last-purchase.md` | PASS (fourth pass | An endpoint's last purchase, checked by nohumans.directory, beside ARP's lines |
+| [109](109-the-payer-signed-the-line.md) | `docs/tasks/121-the-payer-signed-the-line.md` | PASS (second round) | A reader can check that an x402 line was signed by the wallet that paid |

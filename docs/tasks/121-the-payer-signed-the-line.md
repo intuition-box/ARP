@@ -1,6 +1,6 @@
 # Task 121 — A reader can check that an x402 line was signed by the wallet that paid
 
-**Status:** in progress.
+**Status:** verified 2026-11-11, `task-verifier` PASS (round 2; round 1 failed on `signed_by_payer` binding only payment and outcome, and on date wording), post-mortem `.claude/learning/109-the-payer-signed-the-line.md`; on the worktree branch, for the orchestrator to push. Line request still version 4; feed schema still `arp.x402-outcomes/3`.
 **ADR:** `0188`.
 **Rules:** `code.md`, `security.md` (a signing site's entry updated), `claims.md`, `workflow.md`,
 `portability.md`, `docs/02`'s storage principle. Gates: `packages/protocol` test and lint, `apps/sponsor`
