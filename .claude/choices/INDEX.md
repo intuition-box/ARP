@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-181 decisions. Newest last. `choices/README.md` says when to write one.
+182 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -227,4 +227,5 @@ Read these before relying on them.
 | [0188](0188-the-signed-line-request-is-kept-by-the-sponsor-and-published-in-the-x402-feed.md) | 2026-11-11 | Accepted | An x402 line's signed request is kept by the sponsoring service and published in the x402 feed |
 | [0189](0189-an-x402-line-names-the-terms-it-paid-and-they-are-checked-against-the-endpoint.md) | 2026-11-11 | Accepted | An x402 line names the terms it paid against, and they are checked against the endpoint |
 | [0190](0190-a-tool-url-with-a-value-is-refused-wherever-it-is-listed.md) | 2026-11-11 | Accepted | A tool URL that carries a value is refused wherever it is listed, never stripped |
+| [0191](0191-ask-once-after-the-first-result-with-always.md) | 2026-11-11 | Accepted | Sharing is asked once, after the first skill result, with "always" |
 | [0193](0193-the-web-page-on-an-agent-offers-no-market.md) | 2026-11-11 | Accepted | the web page on an agent offers no market and no declaration |

@@ -44,7 +44,8 @@ What you get, the full feature set of this round:
 
 - the MCP server with three read tools: `arp_pulse`, `arp_tool_reputation`, `arp_agent_endpoints` ([MCP tools](/docs/mcp-tools));
 - the hook ([Local memory and sharing](/docs/local-memory)): it keeps a local memory of what failed, shows what a skill contains before `npx skills add` runs, shows what others wrote when a skill fails, and asks once per skill whether it did its job;
-- five commands you type yourself: `/arp:share`, `/arp:share-on`, `/arp:share-off`, `/arp:share-send`, `/arp:line`. The last two need a sponsoring service: ARP's is hosted at `https://sponsor.arp.intuition.box`, the default from 0.0.4. 0.0.3 cannot write a line through it once it checks line request v5 (task 122), which 0.0.3 does not sign, so update to 0.0.4.
+- one question, once: after the first skill result, the agent asks whether to share it, with three answers, "yes, this once", "always" and "no". Nothing is shared before you answer. "Always" sends that result and each later one in the background when its session ends, nothing kept before ([Sharing](/docs/local-memory#sharing));
+- five commands you type yourself: `/arp:share`, `/arp:share-on`, `/arp:share-off`, `/arp:share-send`, `/arp:line`. The last two need a sponsoring service: ARP's is hosted at `https://sponsor.arp.intuition.box`, the default from 0.0.4. 0.0.3 cannot write a line through it once it checks line request v5 (task 122), which 0.0.3 does not sign, so update to 0.0.4. The send after "always" or "yes, this once" goes through the same service; when it fails, why is written down in `~/.arp/share-log.jsonl`, not shown.
 
 Checked on 2026-11-10 in a clean `node:22-bookworm` container with Claude Code 2.1.322: both install commands succeeded, `claude plugin list` showed `arp@arp`, version 0.0.3, enabled, and the update commands answered `arp is already at the latest version (0.0.3)`.
 
@@ -73,7 +74,7 @@ Add ARP under `mcpServers` (merge it with any servers already there), then quit 
 
 Node.js 22 or later must be installed: Desktop starts `npx` itself. Both variables matter. Without `ARP_TARGET=testnet` the server plans against mainnet 1155; without `ARP_TOOLS=read` it serves the full tool set, planners included.
 
-What you get: the plugin's three read tools. **Claude Desktop runs no hooks**, so nothing of the hook happens there: no record of what failed on your machine (`failed_on_this_machine` stays empty), no check before an install, no answer when a skill fails, no question whether a skill worked, so no worked line to share.
+What you get: the plugin's three read tools. **Claude Desktop runs no hooks**, so nothing of the hook happens there: no record of what failed on your machine (`failed_on_this_machine` stays empty), no check before an install, no answer when a skill fails, no question whether a skill worked, so no worked line to share, and no question whether to share.
 
 State: the command was run on Linux with Node 22.21.1 on 2026-11-10, outside Desktop. It answered `initialize` and listed `arp_pulse, arp_tool_reputation, arp_agent_endpoints` on chain 13579. This entry has not yet been run inside Claude Desktop, on macOS or on Windows.
 

@@ -10,7 +10,7 @@ ARP writes lines on a public graph, Intuition testnet 13579, that anyone can rea
 
 ## What is written on the public graph
 
-Only what you send yourself: by `arp line`, by `arp share send`, or by a call you sign from a planner or the web app. Nothing is written by a search, by the hook, or by a read tool the plugin serves.
+Only what you send or agreed to: by `arp line`, by `arp share send`, by the send the hook starts at the end of a session once you answered "always" or "yes, this once" to its one question, or by a call you sign from a planner or the web app. Nothing is written by a search, by a read tool the plugin serves, or by the hook while you have not said yes.
 
 | What | When | Its content |
 | --- | --- | --- |

@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import {
   CLAUDE_HOOKS,
@@ -64,6 +64,12 @@ export type Commands = {
   hook: string;
   /** Where `init` copies the hook. Its path is how our hook entries are recognised. */
   hookFile: string;
+  /**
+   * `send.json` beside the hook: how the hook starts `arp share send --auto` at the end of a session (task 126).
+   * The hook has no CLI beside it here, unlike in the plugin, and `npx`'s cache path would vanish.
+   */
+  sendFile: string;
+  send: { command: string; args: string[] };
   /** The `cli.js` this `arp` runs from. A local install's MCP entry names it. */
   cliPath: string;
   /**
@@ -125,10 +131,10 @@ function read(path: string): string | null {
  * still lands there. A short fetch limit lets a dead registry fall back to the cache and still sees a new
  * pinned version.
  */
-export function npxLaunch(pkg: string): { command: string; args: string[] } {
+export function npxLaunch(pkg: string, command = 'mcp'): { command: string; args: string[] } {
   return {
     command: 'sh',
-    args: ['-c', `export ARP_PROJECT_DIR="$PWD"; cd / && exec npx --prefix / -y --fetch-retries=0 --fetch-timeout=5000 ${pkg} mcp`],
+    args: ['-c', `export ARP_PROJECT_DIR="$PWD"; cd / && exec npx --prefix / -y --fetch-retries=0 --fetch-timeout=5000 ${pkg} ${command}`],
   };
 }
 
@@ -171,7 +177,10 @@ export function commandsFor(
     env: sponsored ? SPONSORED_ENV : SERVER_ENV,
   };
   const hook = `"${env.node}" "${hookFile}"${capture ? ' --capture' : ''}`;
-  return { mcp, hook, hookFile, cliPath, capture, force };
+  const send = fromNpx
+    ? npxLaunch(`@arp-protocol/cli@${env.version}`, 'share send --auto')
+    : { command: env.node, args: [cliPath, 'share', 'send', '--auto'] };
+  return { mcp, hook, hookFile, sendFile: join(dirname(hookFile), 'send.json'), send, cliPath, capture, force };
 }
 
 /** `- ` lines for what was there, `+ ` lines for what will be. Nothing for an absent side. */

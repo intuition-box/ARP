@@ -124,25 +124,25 @@ const PLUGIN_COMMANDS: readonly {
 }[] = [
   {
     file: 'share',
-    description: 'Show which of this machine\'s failures would be public, and which stay here. Sends nothing',
+    description: 'Show which of this machine\'s results would be public, and which stay here. Sends nothing',
     args: 'share',
     after: 'Say what the output above says, briefly. Run nothing else.',
   },
   {
     file: 'share-on',
-    description: 'Turn on sharing of this machine\'s failures, and show the lines that would be public. Sends nothing',
+    description: 'Turn on sharing of this machine\'s results, and show the lines that would be public. They go at the end of each session',
     args: 'share on',
-    after: 'Say what the output above says, briefly, and that `/arp:share-send` is what writes them. Run nothing else.',
+    after: 'Say what the output above says, briefly, and that the hook sends them at the end of each session, or `/arp:share-send` now. Run nothing else.',
   },
   {
     file: 'share-off',
-    description: 'Turn off sharing of this machine\'s failures',
+    description: 'Turn off sharing of this machine\'s results',
     args: 'share off',
     after: 'Say what the output above says, briefly. Run nothing else.',
   },
   {
     file: 'share-send',
-    description: 'Write the shared failures as public, permanent lines on testnet 13579. Needs sharing on, and a sponsoring service',
+    description: 'Write the shared results now as public, permanent lines on testnet 13579. Needs sharing on, and a sponsoring service',
     args: 'share send',
     after: 'Say what the output above says, briefly. In this plugin, `/arp:share-on` is what the output calls `arp share on`. Run nothing else.',
   },

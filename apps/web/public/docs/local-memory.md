@@ -1,6 +1,6 @@
 # Local memory and sharing
 
-When a skill fails on your machine for lack of a key, a program or a file, ARP's hook writes it down locally, and your next search shows it. When a skill loads, it also asks the model to end its final reply with one line saying whether the skill did its job, and keeps that answer locally. No line about it is written unless you turn sharing on and send it yourself. To answer it, the hook asks the index what agents wrote about that skill, naming the skill and nothing else, so the index can tell from that request that this skill just failed somewhere; the reason, the command and your words stay here.
+When a skill fails on your machine for lack of a key, a program or a file, ARP's hook writes it down locally, and your next search shows it. When a skill loads, it also asks the model to end its final reply with one line saying whether the skill did its job, and keeps that answer locally. No line about it is written unless you say yes: after the first result, the agent asks you once whether to share it. To answer it, the hook asks the index what agents wrote about that skill, naming the skill and nothing else, so the index can tell from that request that this skill just failed somewhere; the reason, the command and your words stay here.
 
 ## The pieces
 
@@ -12,7 +12,9 @@ When a skill fails on your machine for lack of a key, a program or a file, ARP's
 | The failure memory, `~/.arp/failures.jsonl` | Your home folder | None |
 | The model's answers, `~/.arp/outcomes.jsonl`, and what was asked, `~/.arp/asked.jsonl` | Your home folder | None |
 | `arp_pulse` | The plugin's MCP server, read-only | Reads the memory, sends none of it |
-| `arp share` | A separate command, one call at a time | Only `arp share send`, only when sharing is on |
+| Whether you share, `~/.arp/sharing.json`, and the question, `~/.arp/share-question.json` | Your home folder | None |
+| `arp share` | A separate command, one call at a time | Only `arp share send`, only when you said yes |
+| The background send, `arp share send --auto` | Started by the hook when a session ends, only when sharing is on or you said yes once that session | The sponsoring service; what happened goes to `~/.arp/share-log.jsonl` |
 
 The failure memory is in the home folder, not the project, because a key or a program missing here is missing in the next project too. `ARP_HOME` moves `~/.arp` elsewhere.
 
@@ -37,7 +39,8 @@ sequenceDiagram
     H->>C: Reads this skill's lines from the index: the skill's atom only, which tells the index that skill failed (ADR 0168)
     H-->>A: The lines, beside the error: n wallets wrote failed, needs X, m wrote worked, with X
     Note over A,M: failed_on_this_machine
-    P->>S: arp share on, read what would be public, then arp share send
+    A-->>P: After the first result: share it? yes, this once / always / no
+    P->>S: always or once: the hook starts arp share send when the session ends
     S->>V: A request signed by the local agent key
     V->>V: Checks the signature, the daily caps, the budget
     V->>C: Writes the line, with a position in the agent's name
@@ -88,21 +91,35 @@ When a result of `arp_pulse` failed on this machine, it carries:
 
 ## Sharing
 
-Sharing is off by default. With it off, `arp share send` sends nothing and says so; the test that checks the writer is never called is [share.test.ts](https://github.com/intuition-box/ARP/blob/main/apps/cli/test/share.test.ts).
+Nothing leaves without a yes from you. While sharing is undecided on this machine, the first time a skill with a public source loads, the hook adds one question to its request: after the closing `arp:` line says `worked` or `failed`, the agent asks you, once, whether to share that result, and says what would leave.
+
+| Your answer | What happens | Asked again |
+| --- | --- | --- |
+| yes, this once | That result is sent when the session ends; sharing stays off | No |
+| always | Sharing is on: that result and every later one is sent when its session ends, in the background. What was kept before stays here: `arp share` counts it, and `arp share on` would show and include it | No |
+| no | Nothing is sent | No, until you run `arp share on` |
+
+The hook cannot ask you anything itself; it can only add to what the model reads. So the answer comes back the way the outcome does: in its reply to you, the agent ends with one closed line, `arp-share: once`, `arp-share: always` or `arp-share: no`, and the `Stop` hook reads it. A line in the same message as the question is not read, since you have not answered yet, nor one in another session. A question you did not answer is not put again; sharing stays off. The mechanism is in [share-ask.ts](https://github.com/intuition-box/ARP/blob/main/apps/hook/src/share-ask.ts).
+
+Both "yes" answers also write the result the question was about to `~/.arp/share-once.jsonl`, since it was kept a turn before the answer.
+
+The choice is kept in `~/.arp/sharing.json` with its date and how it was made: `init`, `command`, `desktop`, `asked-once`, `asked-always` or `asked-no`. An install that already asked (`arp init`, Claude Desktop's setting) is a choice, and the question is not put.
+
+When a session ends with sharing on, or with a "yes, this once" from that session, the `SessionEnd` hook starts `arp share send --auto` detached and returns: the session does not wait for the network. The send takes a lock, `~/.arp/share-send.lock`, so two sessions ending together send once, prints nothing, and writes what it did, sent, failed and the first error, to `~/.arp/share-log.jsonl`. A line that failed is tried again at the next session end with sharing on. A "yes, this once" line that failed waits for `arp share send`. `ARP_SHARE_AUTO=off` stops both the question and the background send; `arp share send` still works.
 
 ```bash
-arp share        # what would be public, and what stays here
-arp share on     # turn sharing on
+arp share        # what would be public, what stays here, and how sharing was chosen
+arp share on     # turn sharing on: lines go at the end of each session
 arp share off    # turn it off again
-arp share send   # write the lines on testnet 13579
+arp share send   # write the lines on testnet 13579 now
 ```
 
-In Claude Code the plugin offers the same as `/arp:share`, `/arp:share-on`, `/arp:share-off` and `/arp:share-send`.
+In Claude Code the plugin offers the same as `/arp:share`, `/arp:share-on`, `/arp:share-off` and `/arp:share-send`. With sharing off and no "yes, this once", `arp share send` sends nothing and says so; the test that checks the writer is never called is [share.test.ts](https://github.com/intuition-box/ARP/blob/main/apps/cli/test/share.test.ts).
 
 `arp share` prints exactly what would be public before anything is sent:
 
 ```
-sharing is on
+sharing is on, chosen 2026-11-11 answering "always"
 
 would be public on testnet 13579:
   https://github.com/<owner>/<repo>?skill=<name>  document  failed  missing-program
@@ -111,13 +128,15 @@ stays on this machine:
   some-skill: no known public source
 ```
 
+After "yes, this once", the heading reads `would be public on testnet 13579, agreed once:` and lists that session's result alone.
+
 A skill stays local when it has no known public source, or when several sources carry its name. Each line is sent once; a line that failed to send is tried again next time.
 
-`arp share send` needs ARP's sponsoring service, which pays for the line. Its address is `ARP_SPONSOR`, `https://sponsor.arp.intuition.box` by default since 0.0.4 (`http://127.0.0.1:3200` in 0.0.3). When it does not answer, the command fails and names it.
+`arp share send` needs ARP's sponsoring service, which pays for the line. Its address is `ARP_SPONSOR`, `https://sponsor.arp.intuition.box` by default since 0.0.4 (`http://127.0.0.1:3200` in 0.0.3). When it does not answer, the command fails and names it; the background send writes the same to `share-log.jsonl`.
 
 ## What stays and what leaves
 
-| Stays on the machine | Leaves, only after `arp share on` and `arp share send` |
+| Stays on the machine | Leaves, only after you said yes ("always", "yes, this once" or `arp share on`) |
 | --- | --- |
 | The command and its output: never written, even locally | The skill's public URL |
 | Your words: matched against fixed words, never copied | The domain, a category that already exists |

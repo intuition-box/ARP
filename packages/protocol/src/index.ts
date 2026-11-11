@@ -674,6 +674,17 @@ export {readRequires, type SkillRequires} from "./skill-requires.js";
 export {classifySkill, SKILL_DOMAINS, type DomainRule} from "./skill-domains.js";
 export {domainInText, resolveDomain, suggestNodes, type DomainResolution, type DomainWords} from "./domain-words.js";
 export {SHARE_OFFER, shareOfferLines} from "./share-offer.js";
+export {
+    choiceForAnswer,
+    SHARE_ANSWERS,
+    shareAnswerIn,
+    SHARING_HOWS,
+    sharingChoiceOf,
+    sharingFileText,
+    type ShareAnswer,
+    type SharingChoice,
+    type SharingHow,
+} from "./sharing-state.js";
 export {parseLocalFailures, yourFailures, type LocalFailure, type YourFailures} from "./local-failures.js";
 export {
     answersIn,

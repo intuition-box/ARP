@@ -106,14 +106,23 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
                        table on the skill's name and description, which can be wrong. The source, with
                        no search, comes from ~/.agents/.skill-lock.json, the project's own
                        skills-lock.json or a receipt, when only one source is known for that name. Your words are read for that and not kept. Never
-                       the command or its output. Stays on this machine unless you run `arp share on`.
+                       the command or its output. Stays on this machine unless you say yes to sharing.
                        A source still empty is looked up again by `arp share`, from the same files,
                        with the project it runs in as the project
 ~/.arp/asked.jsonl     when a skill loads, the skills the hook asked about: the session, the skill, its source, the date
 ~/.arp/outcomes.jsonl  on Stop, the model's closing line for each, `worked`, `failed` or `unsure`, with a domain
                        found as for a failure, and on a worked answer the `with` name an earlier failure
                        named, only when the skill's SKILL.md names it. Never the model's message
-~/.arp/sharing.json    whether failures and worked answers may become public lines. Absent means off
+~/.arp/sharing.json    whether failures and worked answers may become public lines, with the date and how
+                       it was chosen (init, command, desktop, asked-once, asked-always, asked-no).
+                       Absent means undecided, which is off
+~/.arp/share-question.json  the one sharing question the hook puts: the session, the skill, offered,
+                       put or answered, and the answer. Never the person's words
+~/.arp/share-once.jsonl  the result a "yes, this once" or "always" was about: the session and the skill.
+                       Under "always", only that result and what is kept after the choice may go
+~/.arp/share-log.jsonl   what each background send did: the date, sent, failed, the first error
+~/.arp/share-send.lock   held while a send runs, so two sessions ending together send once
+~/.arp/bin/send.json   with `arp init`: the command the hook runs for `arp share send --auto`
 ~/.arp/shared-failures.jsonl  what has been made public: a skill's public URL, `failed` and a closed reason or
                        `worked`, a domain if known, and a `needs` or `with` name
 .arp/searches.jsonl    what `arp_pulse` answered, if you wired the hook: the session, the domain, the skills
@@ -153,7 +162,9 @@ would stop accepting your receipts.
 
 Seven fixed hosts, the first two configurable, and agents' own signed addresses. The sponsored mode also reaches two more, both
 configurable: ARP's content server (`ARP_CONTENT`) and ARP's sponsoring service (`ARP_SPONSOR`),
-both local by default. `arp line` and `arp share send` reach the sponsoring service too. The hook
+both local by default. `arp line` and `arp share send` reach the sponsoring service too, and so does
+`arp share send --auto`, which the hook starts detached when a session ends with sharing on or a
+"yes, this once" from that session; the hook itself does not connect. The hook
 reaches `api.github.com` and `raw.githubusercontent.com` before a skills install, and at no other
 time ([The hook](#the-hook--appshook)). `arp_pulse` reaches up to ten agents' signed addresses on a search with words: `GET /`, with none of your words, though each node sees your IP and the time.
 
@@ -344,6 +355,10 @@ ARP_PROJECT_DIR        set by the launch through npx, which starts from /: the p
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_FAILURE_LINES      off: the hook reads nothing from the graph when a skill fails (ADR 0168). It also
                        reads INTUITION_GRAPHQL_URL, and otherwise testnet 13579's graph
+ARP_SHARE_AUTO         off: the hook neither puts the sharing question nor starts the background send
+                       at SessionEnd (ADR 0191). `arp share send` still works
+ARP_CLI                the CLI script the hook runs as `arp share send --auto`. Default: the arp.js or
+                       cli.js beside the hook, then ~/.arp/bin/send.json
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
 ARP_PULSE_SEARCH       off: arp_pulse runs no package, and takes search_output only
 ARP_SKILLS_INDEX_URL   off: arp_find_tools searches ARP's catalogue alone and sends your words nowhere.
@@ -657,7 +672,8 @@ cd apps/hook && bun run build      # once: writes apps/hook/dist/arp-hook.js
 ```
 
 `arp init` writes this for you (`@arp-protocol/cli`, `apps/cli`): it copies the hook to
-`~/.arp/bin/hook.js`, registers it on its four events (below), and backs up `settings.json` first. `arp
+`~/.arp/bin/hook.js`, writes `~/.arp/bin/send.json` beside it (the command for the background send),
+registers it on its five events (below), and backs up `settings.json` first. `arp
 uninstall` takes it out again. It leaves an MCP server named `arp` that it did not write, and says so. A run that had to leave a file out, one that is not valid JSON for instance, does the rest, names the file at the end and exits 6. By hand, it is:
 
 <!-- prettier-ignore -->
@@ -679,6 +695,9 @@ uninstall` takes it out again. It leaves an MCP server named `arp` that it did n
   ]}],
   "Stop": [{"hooks": [
     {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "timeout": 10}
+  ]}],
+  "SessionEnd": [{"hooks": [
+    {"type": "command", "command": "bun /path/to/ARP/apps/hook/dist/arp-hook.js", "timeout": 5}
   ]}]
 }}
 ```
@@ -691,7 +710,12 @@ records and leaves at once. `PostToolUse` has two rows: every tool but `Skill` i
 and `Skill` waited on, because there the hook answers: once per skill in the session it asks the
 model to end its final reply with one closed line, whether the skill did its job (an async answer
 would reach the model a turn late). `Stop` reads that line and prints nothing, so it never continues
-the turn; it is waited on so `claude -p` does not cancel it at exit (ADR `0169`, ADR `0179`). Grok Build reads this same
+the turn; it is waited on so `claude -p` does not cancel it at exit (ADR `0169`, ADR `0179`). While
+sharing is undecided, the first skill with a public source also carries one question for the person,
+whether to share that result, and `Stop` reads the answer line, `arp-share: once|always|no`, from a
+later message of the same session. `SessionEnd` starts `arp share send --auto` detached when sharing is
+on or was agreed once that session, and returns at once; by hand, set `ARP_CLI` to the CLI's `cli.js`
+so the hook can find it (task 126, ADR `0191`). Grok Build reads this same
 file and sends camelCase keys, which the hook also reads (`apps/hook/src/payload.ts`).
 
 It fires on every tool call and appends one line to `.arp/session.jsonl` (or `ARP_SESSION_LOG`)

@@ -41,9 +41,9 @@ With no `arp` on `PATH`, its commands stand in for `arp share` and `arp line`. A
 
 ```
 /arp:share         what would be public, and what stays here. Sends nothing
-/arp:share-on      turn sharing on (off by default). Sends nothing
+/arp:share-on      turn sharing on (off by default); the hook then sends at the end of each session
 /arp:share-off     turn it off
-/arp:share-send    write the shared failures as public lines on testnet. Needs a sponsoring service
+/arp:share-send    write the shared lines now as public lines on testnet. Needs a sponsoring service
 /arp:line          write one public line on testnet: --tool <url> --outcome worked|failed
 ```
 

@@ -12,6 +12,7 @@ import {
 import { dirname, join } from 'node:path';
 
 import { SHARE_OFFER, shareOfferLines } from '../../../../packages/protocol/src/share-offer.ts';
+import { sharingFileText } from '../../../../packages/protocol/src/sharing-state.ts';
 
 import type { InstallEnv } from './env.ts';
 import {
@@ -179,6 +180,20 @@ function hookFileStep(env: InstallEnv, commands: Commands, remove: boolean): Ste
   };
 }
 
+/** `send.json` beside the hook, which it reads to start the background send (task 126). Removed with the hook. */
+function sendFileStep(commands: Commands, remove: boolean): Step {
+  const before = read(commands.sendFile);
+  const after = remove ? null : `${JSON.stringify(commands.send, null, 2)}\n`;
+  return {
+    kind: 'file',
+    path: commands.sendFile,
+    before,
+    after,
+    summary: remove ? 'removed' : 'how the hook starts `arp share send --auto` when sharing is on',
+    diff: [],
+  };
+}
+
 async function consent(env: InstallEnv, flags: Flags, question: string): Promise<boolean> {
   if (flags.yes) return true;
   if (flags.noInput || !env.interactive) {
@@ -260,7 +275,7 @@ export async function init(env: InstallEnv, flags: Flags, cliPath: string): Prom
     steps: runtime.install(env, commands, flags.project),
   }));
   if (installsHook(runtimes, flags.capture)) {
-    plan.push({ runtime: 'hook', steps: [hookFileStep(env, commands, false)] });
+    plan.push({ runtime: 'hook', steps: [hookFileStep(env, commands, false), sendFileStep(commands, false)] });
   }
   const code = await change(env, flags, plan, 'Install');
   if ((code === EXIT.ok || code === EXIT.partly) && !flags.dryRun) await offerSharing(env, flags);
@@ -276,7 +291,7 @@ async function offerSharing(env: InstallEnv, flags: Flags): Promise<void> {
   const file = join(home, 'sharing.json');
   const save = (on: boolean) => {
     mkdirSync(home, { recursive: true });
-    writeFileSync(file, `${JSON.stringify({ failures: on })}\n`);
+    writeFileSync(file, sharingFileText(on, 'init', env.now()));
   };
   if (flags.share !== null) {
     save(flags.share);
@@ -300,7 +315,7 @@ export async function uninstall(env: InstallEnv, flags: Flags, cliPath: string):
     runtime: runtime.name,
     steps: runtime.remove(env, commands, flags.project),
   }));
-  plan.push({ runtime: 'hook', steps: [hookFileStep(env, commands, true)] });
+  plan.push({ runtime: 'hook', steps: [hookFileStep(env, commands, true), sendFileStep(commands, true)] });
   const code = await change(env, flags, plan, 'Remove');
   // Captures are the operator's to hand over or delete; uninstall says where they are, nothing more.
   const captures = join(env.home, '.arp', 'captures');

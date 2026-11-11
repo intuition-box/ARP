@@ -24786,17 +24786,31 @@ function domainInText(text, words) {
 var SUGGESTIONS = 5;
 var init_domain_words = () => {};
 
-// ../../packages/protocol/dist/share-offer.js
-var SHARE_OFFER;
-var init_share_offer = __esm(() => {
-  SHARE_OFFER = {
-    question: "Share this machine's skill failures as public lines?",
-    sends: `When a skill fails here, one public line on Intuition testnet: the skill's public address, its category when known, "failed" and a closed reason (missing-key, missing-program, missing-file).`,
-    signer: "Each line is signed by this machine's own ARP address, created on the first send: it is public and the same on every line, so this machine's lines can be told apart from others' and linked together.",
-    never: "Never your prompts, your files, your paths, your code or your keys.",
-    service: "Sending goes through ARP's sponsoring service, which is not online yet: until it is, nothing is sent and `arp share send` says so.",
-    later: "Off by default. Change it any time with `arp share on` or `arp share off`."
-  };
+// ../../packages/protocol/dist/sharing-state.js
+function sharingChoiceOf(text) {
+  if (text === null)
+    return null;
+  try {
+    const parsed = JSON.parse(text);
+    if (typeof parsed !== "object" || parsed === null)
+      return { on: false, at: null, how: null };
+    const { failures, at, how } = parsed;
+    return {
+      on: failures === true,
+      at: typeof at === "string" ? at : null,
+      how: typeof how === "string" && SHARING_HOWS.includes(how) ? how : null
+    };
+  } catch {
+    return { on: false, at: null, how: null };
+  }
+}
+function sharingFileText(on, how, at) {
+  return `${JSON.stringify({ failures: on, at: at.toISOString(), how })}
+`;
+}
+var SHARING_HOWS;
+var init_sharing_state = __esm(() => {
+  SHARING_HOWS = ["init", "command", "desktop", "asked-once", "asked-always", "asked-no"];
 });
 
 // ../../packages/protocol/dist/declare/line-need.js
@@ -27432,7 +27446,7 @@ var init_dist2 = __esm(() => {
   init_pulse();
   init_skill_requires();
   init_domain_words();
-  init_share_offer();
+  init_sharing_state();
   init_local_failures();
   init_local_outcomes();
   init_share_failures();
@@ -27745,12 +27759,14 @@ var init_node_init = __esm(() => {
 // src/share.ts
 var exports_share = {};
 __export(exports_share, {
+  withSendLock: () => withSendLock,
   setSharing: () => setSharing,
   sendShared: () => sendShared,
+  logSend: () => logSend,
   describe: () => describe,
   decide: () => decide
 });
-import { appendFileSync as appendFileSync2, existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync2, writeFileSync as writeFileSync3 } from "node:fs";
+import { appendFileSync as appendFileSync2, existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync2, rmSync, writeFileSync as writeFileSync3 } from "node:fs";
 import { join as join4 } from "node:path";
 function shared(env) {
   const keys = new Set;
@@ -27766,30 +27782,115 @@ function shared(env) {
   }
   return keys;
 }
-function decide(env) {
-  const on = isSharingOn(read(join4(env.arpHome, "sharing.json")));
-  const decision = decideShare({
-    on,
-    failures: parseLocalFailures(read(join4(env.arpHome, "failures.jsonl")) ?? ""),
-    outcomes: parseLocalOutcomes(read(join4(env.arpHome, "outcomes.jsonl")) ?? ""),
-    installed: [
-      ...installedFromSkillLock(read(join4(env.home, ".agents", ".skill-lock.json"))),
-      ...installedFromSkillLock(read(join4(env.cwd, "skills-lock.json"))),
-      ...installedFromReceipts(read(join4(env.arpHome, "receipts.jsonl"))),
-      ...installedFromReceipts(read(join4(env.cwd, ".arp", "receipts.jsonl")))
-    ],
-    alreadyShared: shared(env)
-  });
-  return { ...decision, on };
+function onceGrants(env) {
+  const grants = [];
+  for (const row of (read(join4(env.arpHome, "share-once.jsonl")) ?? "").split(`
+`)) {
+    try {
+      const { session, skill } = JSON.parse(row);
+      if (typeof session === "string" && typeof skill === "string")
+        grants.push({ session, skill });
+    } catch {
+      continue;
+    }
+  }
+  return grants;
 }
-function setSharing(env, on) {
+function granted(text, grants, since = null) {
+  return text.split(`
+`).filter((row) => {
+    try {
+      const { session, skill, at } = JSON.parse(row);
+      if (since !== null && typeof at === "string" && at >= since)
+        return true;
+      return grants.some((grant) => grant.session === session && typeof skill === "string" && nameOf(skill) === nameOf(grant.skill));
+    } catch {
+      return false;
+    }
+  }).join(`
+`);
+}
+function decide(env) {
+  const choice = sharingChoiceOf(read(join4(env.arpHome, "sharing.json")));
+  const on = isSharingOn(read(join4(env.arpHome, "sharing.json")));
+  const since = on && choice?.how === "asked-always" && choice.at !== null ? choice.at : null;
+  const grants = on && since === null ? [] : onceGrants(env);
+  const failuresAll = read(join4(env.arpHome, "failures.jsonl")) ?? "";
+  const outcomesAll = read(join4(env.arpHome, "outcomes.jsonl")) ?? "";
+  const failuresText = since === null ? failuresAll : granted(failuresAll, grants, since);
+  const outcomesText = since === null ? outcomesAll : granted(outcomesAll, grants, since);
+  const earlier = rowCount(failuresAll) + rowCount(outcomesAll) - rowCount(failuresText) - rowCount(outcomesText);
+  const installed = [
+    ...installedFromSkillLock(read(join4(env.home, ".agents", ".skill-lock.json"))),
+    ...installedFromSkillLock(read(join4(env.cwd, "skills-lock.json"))),
+    ...installedFromReceipts(read(join4(env.arpHome, "receipts.jsonl"))),
+    ...installedFromReceipts(read(join4(env.cwd, ".arp", "receipts.jsonl")))
+  ];
+  const alreadyShared = shared(env);
+  const all = decideShare({
+    on,
+    failures: parseLocalFailures(failuresText),
+    outcomes: parseLocalOutcomes(outcomesText),
+    installed,
+    alreadyShared
+  });
+  if (on || grants.length === 0)
+    return { ...all, on, choice, once: false, earlier };
+  const once2 = decideShare({
+    on: true,
+    failures: parseLocalFailures(granted(failuresText, grants)),
+    outcomes: parseLocalOutcomes(granted(outcomesText, grants)),
+    installed,
+    alreadyShared
+  });
+  const onceSkills = new Set(grants.map((grant) => nameOf(grant.skill)));
+  const stillOff = all.keptLocal.filter((row) => !onceSkills.has(row.skill));
+  return { lines: once2.lines, keptLocal: [...once2.keptLocal, ...stillOff], on, choice, once: once2.lines.length > 0, earlier: 0 };
+}
+function setSharing(env, on, how = "command", now = new Date) {
   mkdirSync3(env.arpHome, { recursive: true });
-  writeFileSync3(join4(env.arpHome, "sharing.json"), `${JSON.stringify({ failures: on })}
+  writeFileSync3(join4(env.arpHome, "sharing.json"), sharingFileText(on, how, now));
+}
+async function withSendLock(env, send3, now = Date.now) {
+  mkdirSync3(env.arpHome, { recursive: true });
+  const path = join4(env.arpHome, LOCK);
+  const take = () => {
+    try {
+      writeFileSync3(path, `${JSON.stringify({ pid: process.pid, at: new Date(now()).toISOString() })}
+`, { flag: "wx" });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  if (!take()) {
+    let at = 0;
+    try {
+      at = Date.parse(JSON.parse(readFileSync2(path, "utf8")).at ?? "");
+    } catch {
+      at = 0;
+    }
+    if (Number.isFinite(at) && now() - at < STALE_MS)
+      return null;
+    rmSync(path, { force: true });
+    if (!take())
+      return null;
+  }
+  try {
+    return await send3();
+  } finally {
+    rmSync(path, { force: true });
+  }
+}
+function logSend(env, result, now = new Date) {
+  mkdirSync3(env.arpHome, { recursive: true });
+  const row = { at: now.toISOString(), sent: result.sent, failed: result.failed, ...result.firstError === null ? {} : { error: result.firstError } };
+  appendFileSync2(join4(env.arpHome, "share-log.jsonl"), `${JSON.stringify(row)}
 `);
 }
 async function sendShared(env, write) {
-  const { on, lines } = decide(env);
-  if (!on)
+  const { on, once: once2, lines } = decide(env);
+  if (!on && !once2)
     return { sent: 0, failed: 0, firstError: null };
   let sent = 0;
   let failed = 0;
@@ -27807,10 +27908,18 @@ async function sendShared(env, write) {
   }
   return { sent, failed, firstError };
 }
+function status(decision) {
+  const state = decision.on ? "on" : "off";
+  if (decision.choice === null)
+    return `sharing is ${state}, not decided yet`;
+  const when = decision.choice.at === null ? "" : ` ${decision.choice.at.slice(0, 10)}`;
+  const how = decision.choice.how === null ? "" : ` ${HOW[decision.choice.how]}`;
+  return when === "" && how === "" ? `sharing is ${state}` : `sharing is ${state}, chosen${when}${how}`;
+}
 function describe(decision) {
-  const out = [`sharing is ${decision.on ? "on" : "off"}`];
+  const out = [status(decision)];
   if (decision.lines.length > 0) {
-    out.push("", "would be public on testnet 13579:");
+    out.push("", decision.on ? "would be public on testnet 13579:" : "would be public on testnet 13579, agreed once:");
     for (const line of decision.lines) {
       const tail = line.outcome === "failed" ? `failed  ${line.reason}${line.need === undefined ? "" : `  needs ${line.need}`}` : `worked${line.need === undefined ? "" : `  with ${line.need}`}`;
       out.push(`  ${line.toolUrl}  ${line.domain ?? "(no domain)"}  ${tail}`);
@@ -27821,17 +27930,30 @@ function describe(decision) {
     for (const row of decision.keptLocal)
       out.push(`  ${row.skill}: ${WHY[row.why]}`);
   }
+  if (decision.earlier > 0) {
+    out.push("", `kept before "always" was chosen, and staying here: ${decision.earlier} record(s). \`arp share on\` would show and include them`);
+  }
   return `${out.join(`
 `)}
 `;
 }
-var read = (path) => existsSync2(path) ? readFileSync2(path, "utf8") : null, WHY;
+var read = (path) => existsSync2(path) ? readFileSync2(path, "utf8") : null, nameOf = (skill) => skill.split(":").pop() ?? skill, rowCount = (text) => text.split(`
+`).filter((row) => row.trim() !== "").length, LOCK = "share-send.lock", STALE_MS, WHY, HOW;
 var init_share = __esm(() => {
   init_dist2();
+  STALE_MS = 10 * 60 * 1000;
   WHY = {
     sharing_off: "sharing is off",
     no_public_source: "no known public source",
     several_sources: "several sources with this name"
+  };
+  HOW = {
+    init: "at install",
+    command: "by command",
+    desktop: "in Claude Desktop's settings",
+    "asked-once": 'answering "yes, this once"',
+    "asked-always": 'answering "always"',
+    "asked-no": 'answering "no"'
   };
 });
 
@@ -35890,26 +36012,13 @@ var init_line2 = __esm(() => {
 });
 
 // ../mcp/src/share-ask.ts
-import { existsSync as existsSync6, mkdirSync as mkdirSync6, writeFileSync as writeFileSync7 } from "node:fs";
+import { mkdirSync as mkdirSync6, writeFileSync as writeFileSync7 } from "node:fs";
 import { join as join9 } from "node:path";
-function shareAskInstructions(arpHome2) {
-  if (existsSync6(join9(arpHome2, "sharing.json")))
-    return null;
-  return [
-    "SHARING IS NOT SET YET. Once in this session, at a natural pause (never in the middle of a task), ask the",
-    `person: "${SHARE_OFFER.question}" and give them, in your own short words, exactly this: ${SHARE_OFFER.sends}`,
-    `${SHARE_OFFER.signer} ${SHARE_OFFER.never} ${SHARE_OFFER.service}`,
-    "It is off unless they agree. If they agree, they type /arp:share-on; if not, /arp:share-off, so the",
-    "question is not asked again. Do not run either yourself, and do not ask twice."
-  ].join(`
-`);
-}
 function applyDesktopShare(value, arpHome2) {
   if (value !== "true" && value !== "false")
     return null;
   mkdirSync6(arpHome2, { recursive: true });
-  writeFileSync7(join9(arpHome2, "sharing.json"), `${JSON.stringify({ failures: value === "true" })}
-`);
+  writeFileSync7(join9(arpHome2, "sharing.json"), sharingFileText(value === "true", "desktop", new Date));
   return value === "true";
 }
 var init_share_ask = __esm(() => {
@@ -41951,7 +42060,7 @@ var init_pulse_cache = __esm(() => {
 });
 
 // ../mcp/src/handlers/pulse.ts
-import { chmodSync as chmodSync3, existsSync as existsSync7, mkdirSync as mkdirSync8, readFileSync as readFileSync7, rmSync } from "node:fs";
+import { chmodSync as chmodSync3, existsSync as existsSync6, mkdirSync as mkdirSync8, readFileSync as readFileSync7, rmSync as rmSync2 } from "node:fs";
 import { homedir as homedir4 } from "node:os";
 import { join as join11, delimiter } from "node:path";
 function within(work, ms, stop) {
@@ -42018,7 +42127,7 @@ function searchHome() {
   return join11(arpHome(process.env, homedir4()), "skills-cli");
 }
 function searchIsCached() {
-  return existsSync7(join11(searchHome(), ".npm", "_npx"));
+  return existsSync6(join11(searchHome(), ".npm", "_npx"));
 }
 async function search(query, timeoutMs, stop, firstDownload = false) {
   if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env["ARP_PULSE_SEARCH"] })) {
@@ -42028,7 +42137,7 @@ async function search(query, timeoutMs, stop, firstDownload = false) {
     const home = searchHome();
     mkdirSync8(home, { recursive: true, mode: 448 });
     chmodSync3(home, 448);
-    rmSync(join11(home, ".npm", "_logs"), { recursive: true, force: true });
+    rmSync2(join11(home, ".npm", "_logs"), { recursive: true, force: true });
     return { output: await runSearch(searchInvocation(query, process.env["PATH"], home, firstDownload), { timeoutMs, stop }) };
   } catch (error) {
     return { error: withoutPaths(error instanceof Error ? error.message.split(`
@@ -42127,7 +42236,7 @@ function usageLine(usage, domain) {
 function readYourFailures() {
   try {
     const path = join11(arpHome(process.env, homedir4()), "failures.jsonl");
-    return existsSync7(path) ? parseLocalFailures(readFileSync7(path, "utf8")) : [];
+    return existsSync6(path) ? parseLocalFailures(readFileSync7(path, "utf8")) : [];
   } catch {
     return [];
   }
@@ -42753,9 +42862,7 @@ var init_server = __esm(async () => {
             protocolVersion: PROTOCOL_VERSION,
             capabilities: { tools: {} },
             serverInfo: { name: "ARP", version: "0.2.0" },
-            instructions: DESKTOP ? DESKTOP_INSTRUCTIONS : HOSTED ? READ_INSTRUCTIONS : READ_ONLY ? [READ_INSTRUCTIONS, shareAskInstructions(arpHome())].filter((part) => part !== null).join(`
-
-`) : SERVER_INSTRUCTIONS
+            instructions: DESKTOP ? DESKTOP_INSTRUCTIONS : READ_ONLY || HOSTED ? READ_INSTRUCTIONS : SERVER_INSTRUCTIONS
           });
         case "notifications/initialized":
           return new Response(null, { status: 202 });
@@ -44698,7 +44805,7 @@ __export(exports_check, {
   CHECK_BUDGET_MS: () => CHECK_BUDGET_MS
 });
 import { createHash as createHash2 } from "node:crypto";
-import { existsSync as existsSync8, statSync as statSync2 } from "node:fs";
+import { existsSync as existsSync7, statSync as statSync2 } from "node:fs";
 import { delimiter as delimiter2, join as join12 } from "node:path";
 function skillRefOf(arg) {
   const part = /^[\w.-]+$/;
@@ -44732,7 +44839,7 @@ function thisMachine(env = process.env, platform = process.platform) {
     hasProgram: (name) => dirs.some((dir) => exts.some((ext) => {
       const path = join12(dir, name + ext);
       try {
-        return existsSync8(path) && statSync2(path).isFile();
+        return existsSync7(path) && statSync2(path).isFile();
       } catch {
         return false;
       }
@@ -45628,7 +45735,7 @@ var init_skill_nodes_13579 = __esm(() => {
 });
 
 // ../hook/src/skill-failure.ts
-import { existsSync as existsSync9, mkdirSync as mkdirSync9, readFileSync as readFileSync8 } from "node:fs";
+import { existsSync as existsSync8, mkdirSync as mkdirSync9, readFileSync as readFileSync8 } from "node:fs";
 import { homedir as homedir5 } from "node:os";
 import { dirname as dirname6, join as join13 } from "node:path";
 function failureReason(text2) {
@@ -45673,7 +45780,7 @@ function skillDirectory(name, cwd) {
   const given = process.env["ARP_SKILLS_DIR"];
   if (given !== undefined && given !== "")
     roots.unshift(given);
-  return roots.map((root2) => join13(root2, name)).find((dir) => existsSync9(join13(dir, "SKILL.md"))) ?? null;
+  return roots.map((root2) => join13(root2, name)).find((dir) => existsSync8(join13(dir, "SKILL.md"))) ?? null;
 }
 function arpHome2() {
   const given = process.env["ARP_HOME"]?.trim();
@@ -45681,7 +45788,7 @@ function arpHome2() {
 }
 function appendFailure(line) {
   const path = join13(arpHome2(), "failures.jsonl");
-  const seen = existsSync9(path) ? readFileSync8(path, "utf8") : "";
+  const seen = existsSync8(path) ? readFileSync8(path, "utf8") : "";
   const key = `"session":${JSON.stringify(line.session)},"skill":${JSON.stringify(line.skill)},`;
   if (seen.split(`
 `).some((row) => row.includes(key) && row.includes(`"reason":"${line.reason}"`)))
@@ -46445,7 +46552,7 @@ function shareOfferLines2() {
   return [SHARE_OFFER2.sends, SHARE_OFFER2.signer, SHARE_OFFER2.never, SHARE_OFFER2.service, SHARE_OFFER2.later];
 }
 var SHARE_OFFER2;
-var init_share_offer2 = __esm(() => {
+var init_share_offer = __esm(() => {
   SHARE_OFFER2 = {
     question: "Share this machine's skill failures as public lines?",
     sends: `When a skill fails here, one public line on Intuition testnet: the skill's public address, its category when known, "failed" and a closed reason (missing-key, missing-program, missing-file).`,
@@ -46455,6 +46562,13 @@ var init_share_offer2 = __esm(() => {
     later: "Off by default. Change it any time with `arp share on` or `arp share off`."
   };
 });
+
+// ../../packages/protocol/src/sharing-state.ts
+function sharingFileText2(on, how, at) {
+  return `${JSON.stringify({ failures: on, at: at.toISOString(), how })}
+`;
+}
+var init_sharing_state2 = () => {};
 
 // src/install/edits.ts
 function isRecord3(value) {
@@ -46624,7 +46738,8 @@ var init_edits = __esm(() => {
       { name: "PostToolUse", matcher: "Skill", sync: true, timeout: 5 },
       { name: "PostToolUseFailure", matcher: "*", sync: true },
       { name: "PreToolUse", matcher: "Bash", sync: true, timeout: 15, if: "Bash(*skills*)" },
-      { name: "Stop", sync: true, timeout: 10 }
+      { name: "Stop", sync: true, timeout: 10 },
+      { name: "SessionEnd", sync: true, timeout: 5 }
     ],
     entry: (command, event) => ({
       type: "command",
@@ -46637,8 +46752,8 @@ var init_edits = __esm(() => {
 });
 
 // src/install/targets.ts
-import { existsSync as existsSync10, readFileSync as readFileSync10 } from "node:fs";
-import { join as join16 } from "node:path";
+import { existsSync as existsSync9, readFileSync as readFileSync10 } from "node:fs";
+import { dirname as dirname7, join as join16 } from "node:path";
 function namesOurServer(text2, cliPath) {
   return text2.includes("@arp-protocol/cli") || text2.includes(cliPath) || /apps[\\/]cli[\\/]dist[\\/]cli\.js/.test(text2) || /[\\/]dist[\\/]cli\.js/.test(text2) && text2.includes("ARP_TARGET") || /(?:packaging[\\/]claude[\\/]arp|plugins[\\/]cache[\\/]arp[\\/]arp[\\/][^\\/]+)[\\/]bin[\\/]arp\.js/.test(text2);
 }
@@ -46657,15 +46772,15 @@ function foreignRefusal(where) {
 }
 function read2(path) {
   try {
-    return existsSync10(path) ? readFileSync10(path, "utf8") : null;
+    return existsSync9(path) ? readFileSync10(path, "utf8") : null;
   } catch {
     return null;
   }
 }
-function npxLaunch(pkg) {
+function npxLaunch(pkg, command = "mcp") {
   return {
     command: "sh",
-    args: ["-c", `export ARP_PROJECT_DIR="$PWD"; cd / && exec npx --prefix / -y --fetch-retries=0 --fetch-timeout=5000 ${pkg} mcp`]
+    args: ["-c", `export ARP_PROJECT_DIR="$PWD"; cd / && exec npx --prefix / -y --fetch-retries=0 --fetch-timeout=5000 ${pkg} ${command}`]
   };
 }
 function commandsFor(env, cliPath, capture = false, sponsored = false, force = false) {
@@ -46678,7 +46793,8 @@ function commandsFor(env, cliPath, capture = false, sponsored = false, force = f
     env: sponsored ? SPONSORED_ENV : SERVER_ENV
   };
   const hook = `"${env.node}" "${hookFile}"${capture ? " --capture" : ""}`;
-  return { mcp, hook, hookFile, cliPath, capture, force };
+  const send3 = fromNpx ? npxLaunch(`@arp-protocol/cli@${env.version}`, "share send --auto") : { command: env.node, args: [cliPath, "share", "send", "--auto"] };
+  return { mcp, hook, hookFile, sendFile: join16(dirname7(hookFile), "send.json"), send: send3, cliPath, capture, force };
 }
 function diffLines(before, after) {
   const lines = (value, sign3) => value === undefined || typeof value === "object" && value !== null && Object.keys(value).length === 0 ? [] : JSON.stringify(value, null, 2).split(`
@@ -46857,7 +46973,7 @@ function jsonMcpRuntime(options) {
   return {
     id,
     name,
-    detect: (env) => env.which(binary) !== null || existsSync10(join16(env.home, dir)),
+    detect: (env) => env.which(binary) !== null || existsSync9(join16(env.home, dir)),
     install: (env, commands, project) => steps(env, commands, project, false),
     remove: (env, commands, project) => steps(env, commands, project, true),
     check: (env, _commands, project) => {
@@ -46908,7 +47024,7 @@ var init_targets = __esm(() => {
   claude = {
     id: "claude",
     name: "Claude Code",
-    detect: (env) => env.which("claude") !== null || existsSync10(join16(env.home, ".claude")),
+    detect: (env) => env.which("claude") !== null || existsSync9(join16(env.home, ".claude")),
     install: (env, commands, project) => [
       ...claudeMcpSteps(env, commands, project, false, true),
       claudeHookStep(env, commands, project, false)
@@ -46922,7 +47038,7 @@ var init_targets = __esm(() => {
   grok = {
     id: "grok",
     name: "Grok Build",
-    detect: (env) => env.which("grok") !== null || existsSync10(join16(env.home, ".grok")),
+    detect: (env) => env.which("grok") !== null || existsSync9(join16(env.home, ".grok")),
     install: (env, commands, project) => claude.detect(env) ? [{ kind: "skip", summary: "reads Claude Code's files, written above" }] : [
       ...claudeMcpSteps(env, commands, project, false, false),
       claudeHookStep(env, commands, project, false)
@@ -46960,7 +47076,7 @@ var init_targets = __esm(() => {
   codex2 = {
     id: "codex",
     name: "Codex",
-    detect: (env) => env.which("codex") !== null || existsSync10(join16(env.home, ".codex")),
+    detect: (env) => env.which("codex") !== null || existsSync9(join16(env.home, ".codex")),
     install: (env, commands, project) => [
       codexStep(env, commands.mcp, project, commands.force),
       commands.capture ? hookStep(join16(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, false) : noHook(join16(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands)
@@ -47020,15 +47136,15 @@ __export(exports_commands, {
 import {
   chmodSync as chmodSync4,
   copyFileSync,
-  existsSync as existsSync11,
+  existsSync as existsSync10,
   mkdirSync as mkdirSync10,
   readFileSync as readFileSync11,
   renameSync,
-  rmSync as rmSync2,
+  rmSync as rmSync3,
   statSync as statSync5,
   writeFileSync as writeFileSync9
 } from "node:fs";
-import { dirname as dirname7, join as join17 } from "node:path";
+import { dirname as dirname8, join as join17 } from "node:path";
 function parseFlags(args) {
   const flags = {
     yes: false,
@@ -47085,7 +47201,7 @@ function installsHook(runtimes, capture) {
 }
 function read3(path) {
   try {
-    return existsSync11(path) ? readFileSync11(path, "utf8") : null;
+    return existsSync10(path) ? readFileSync11(path, "utf8") : null;
   } catch {
     return null;
   }
@@ -47107,10 +47223,10 @@ function apply(env, step2) {
     if (step2.before !== null)
       copyFileSync(step2.path, `${step2.path}.arp-backup-${stamp(env.now())}`);
     if (step2.after === null) {
-      rmSync2(step2.path, { force: true });
+      rmSync3(step2.path, { force: true });
       return null;
     }
-    mkdirSync10(dirname7(step2.path), { recursive: true });
+    mkdirSync10(dirname8(step2.path), { recursive: true });
     const mode2 = step2.before === null ? undefined : statSync5(step2.path).mode & 511;
     const temp = `${step2.path}.arp-tmp`;
     writeFileSync9(temp, step2.after, mode2 === undefined ? undefined : { mode: mode2 });
@@ -47138,6 +47254,19 @@ function hookFileStep(env, commands, remove) {
     before,
     after,
     summary: remove ? "removed" : `the hook, ${after?.length ?? 0} bytes, run by ${env.node}`,
+    diff: []
+  };
+}
+function sendFileStep(commands, remove) {
+  const before = read3(commands.sendFile);
+  const after = remove ? null : `${JSON.stringify(commands.send, null, 2)}
+`;
+  return {
+    kind: "file",
+    path: commands.sendFile,
+    before,
+    after,
+    summary: remove ? "removed" : "how the hook starts `arp share send --auto` when sharing is on",
     diff: []
   };
 }
@@ -47216,7 +47345,7 @@ async function init(env, flags, cliPath) {
     steps: runtime.install(env, commands, flags.project)
   }));
   if (installsHook(runtimes, flags.capture)) {
-    plan.push({ runtime: "hook", steps: [hookFileStep(env, commands, false)] });
+    plan.push({ runtime: "hook", steps: [hookFileStep(env, commands, false), sendFileStep(commands, false)] });
   }
   const code = await change(env, flags, plan, "Install");
   if ((code === EXIT.ok || code === EXIT.partly) && !flags.dryRun)
@@ -47228,15 +47357,14 @@ async function offerSharing(env, flags) {
   const file = join17(home, "sharing.json");
   const save = (on) => {
     mkdirSync10(home, { recursive: true });
-    writeFileSync9(file, `${JSON.stringify({ failures: on })}
-`);
+    writeFileSync9(file, sharingFileText2(on, "init", env.now()));
   };
   if (flags.share !== null) {
     save(flags.share);
     env.out(`Sharing ${flags.share ? "on" : "off"}. ${SHARE_OFFER2.later}`);
     return;
   }
-  if (existsSync11(file))
+  if (existsSync10(file))
     return;
   if (flags.yes || flags.noInput || !env.interactive) {
     env.out(`Sharing is off. ${SHARE_OFFER2.later}`);
@@ -47254,10 +47382,10 @@ async function uninstall(env, flags, cliPath) {
     runtime: runtime.name,
     steps: runtime.remove(env, commands, flags.project)
   }));
-  plan.push({ runtime: "hook", steps: [hookFileStep(env, commands, true)] });
+  plan.push({ runtime: "hook", steps: [hookFileStep(env, commands, true), sendFileStep(commands, true)] });
   const code = await change(env, flags, plan, "Remove");
   const captures = join17(env.home, ".arp", "captures");
-  if (existsSync11(captures))
+  if (existsSync10(captures))
     env.out(`Captures kept in ${captures}. Delete them when you no longer need them.`);
   return code;
 }
@@ -47282,7 +47410,7 @@ function doctor(env, flags, cliPath) {
         installed === packaged
       ]);
     }
-    rows.push(["hook", `node at ${env.node}`, existsSync11(env.node)]);
+    rows.push(["hook", `node at ${env.node}`, existsSync10(env.node)]);
   }
   const answer2 = env.run([commands.mcp.command, ...commands.mcp.args], INITIALIZE, 30000);
   rows.push([
@@ -47308,7 +47436,8 @@ function doctor(env, flags, cliPath) {
 }
 var EXIT, INITIALIZE;
 var init_commands = __esm(() => {
-  init_share_offer2();
+  init_share_offer();
+  init_sharing_state2();
   init_targets();
   EXIT = {
     ok: 0,
@@ -47329,7 +47458,7 @@ __export(exports_env, {
   processEnv: () => processEnv
 });
 import { spawnSync } from "node:child_process";
-import { existsSync as existsSync12 } from "node:fs";
+import { existsSync as existsSync11 } from "node:fs";
 import { homedir as homedir7 } from "node:os";
 import { delimiter as delimiter4, join as join18 } from "node:path";
 import { createInterface as createInterface2 } from "node:readline/promises";
@@ -47338,7 +47467,7 @@ function which(command) {
     if (dir.length === 0)
       continue;
     const candidate = join18(dir, command);
-    if (existsSync12(candidate))
+    if (existsSync11(candidate))
       return candidate;
   }
   return null;
@@ -47382,7 +47511,7 @@ var init_env2 = () => {};
 
 // src/cli.ts
 init_node2();
-import { dirname as dirname8 } from "node:path";
+import { dirname as dirname9 } from "node:path";
 import { fileURLToPath } from "node:url";
 // package.json
 var version2 = "0.0.4";
@@ -47394,11 +47523,14 @@ usage
   arp mcp [--http]   the MCP server. stdio by default, which is how an MCP client launches it
   arp hook           the runtime hook: one payload on stdin. Records what a session used in
                      .arp/session.jsonl, and a skill's failures in ~/.arp/failures.jsonl. On
-                     Stop, asks once per skill whether it did its job: ~/.arp/outcomes.jsonl
+                     Stop, asks once per skill whether it did its job: ~/.arp/outcomes.jsonl.
+                     While sharing is undecided, the first result also asks once whether to share
+                     it; with sharing on, SessionEnd starts arp share send --auto in the background
   arp backfill       read old Claude Code transcripts into ~/.arp/failures.jsonl. Sends nothing
   arp share          say what would be public from ~/.arp/failures.jsonl and outcomes.jsonl,
                      and what stays here.
-                     arp share on, off (off by default). arp share send writes them on testnet
+                     arp share on, off (off by default). arp share send writes them on testnet;
+                     --auto prints nothing and keeps the result in ~/.arp/share-log.jsonl
   arp check <skill>  before you use a skill: what its files contain, what agents wrote about
                      it, and whether what it needed when it failed is on this machine.
                      <owner/repo/skill> or a github.com URL with ?skill=. Writes nothing
@@ -47477,17 +47609,41 @@ async function shareCommand(rest) {
   const { arpHome: arpHome3 } = await Promise.resolve().then(() => (init_node2(), exports_node));
   const { homedir: homedir8 } = await import("node:os");
   const share = await Promise.resolve().then(() => (init_share(), exports_share));
-  const env = { arpHome: arpHome3(process.env, homedir8()), home: homedir8(), cwd: process.cwd() };
+  const cwd = process.env["ARP_PROJECT_DIR"]?.trim() || process.cwd();
+  const env = { arpHome: arpHome3(process.env, homedir8()), home: homedir8(), cwd };
   if (rest[0] === "send") {
-    if (!share.decide(env).on) {
-      process.stderr.write("sharing is off: nothing was sent. `arp share on` turns it on\n");
+    const auto = rest.includes("--auto");
+    const decision = share.decide(env);
+    if (!decision.on && !decision.once) {
+      if (!auto)
+        process.stderr.write("sharing is off: nothing was sent. `arp share on` turns it on\n");
       return EXIT2.ok;
     }
+    if (auto && decision.lines.length === 0)
+      return EXIT2.ok;
     process.env["ARP_TARGET"] ??= "testnet";
-    const { writeLineHere: writeLineHere2 } = await Promise.resolve().then(() => (init_line2(), exports_line));
-    const done = await share.sendShared(env, async (line) => {
-      await writeLineHere2(line);
-    });
+    let done;
+    try {
+      const { writeLineHere: writeLineHere2 } = await Promise.resolve().then(() => (init_line2(), exports_line));
+      done = await share.withSendLock(env, () => share.sendShared(env, async (line) => {
+        await writeLineHere2(line);
+      }));
+    } catch (error) {
+      if (!auto)
+        throw error;
+      share.logSend(env, { sent: 0, failed: 0, firstError: error instanceof Error ? error.message : String(error) });
+      return EXIT2.ok;
+    }
+    if (done === null) {
+      if (!auto)
+        process.stderr.write(`another send is running: nothing was sent by this one
+`);
+      return EXIT2.ok;
+    }
+    if (auto) {
+      share.logSend(env, done);
+      return EXIT2.ok;
+    }
     process.stdout.write(`sent ${done.sent}, failed ${done.failed}
 `);
     if (done.firstError !== null)
@@ -47618,7 +47774,7 @@ async function run(argv) {
 `);
         return EXIT2.usage;
       }
-      const env = processEnv2(dirname8(CLI_PATH), version2);
+      const env = processEnv2(dirname9(CLI_PATH), version2);
       if (command === "doctor")
         return install.doctor(env, flags, CLI_PATH);
       return command === "init" ? install.init(env, flags, CLI_PATH) : install.uninstall(env, flags, CLI_PATH);

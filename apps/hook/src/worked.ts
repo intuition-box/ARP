@@ -25,6 +25,7 @@ import { answersIn, type LocalOutcome, type OutcomeAnswer } from '../../../packa
 import { publishableNeed } from '../../../packages/protocol/src/declare/line-need.ts';
 
 import { appendOwn } from './append.ts';
+import { offerShare, onStopShare, shareQuestionFor } from './share-ask.ts';
 import { arpHome, contextOf, foundBySearch, installedSource, lastUserWords, skillDirectory } from './skill-failure.ts';
 
 export type StopInput = {
@@ -55,12 +56,16 @@ export function stopInputOf(raw: unknown): StopInput | null {
   };
 }
 
-/** The request, closed: one line, three words to choose from, at the end of a reply the model writes anyway. */
-export function requestFor(skill: string): string {
+/**
+ * The request, closed: one line, three words to choose from, at the end of a reply the model writes anyway. With
+ * `share`, the one question about sharing follows it (`share-ask.ts`, task 126).
+ */
+export function requestFor(skill: string, share = false): string {
   return (
     `ARP: at the end of your final reply, add one line saying whether the skill ${skill} did its job: ` +
     `\`arp: ${skill} worked\`, \`arp: ${skill} failed\` or \`arp: ${skill} unsure\`. ` +
-    'Kept on this machine unless `arp share` is on.'
+    'Kept on this machine unless `arp share` is on.' +
+    (share ? shareQuestionFor() : '')
   );
 }
 
@@ -138,7 +143,13 @@ function record(input: StopInput, asked: Asked, outcome: OutcomeAnswer, at: stri
  * or `null` when it was already asked this session, is ARP's own, or cannot be marked asked. It is marked before it
  * goes out, so a skill is asked once per session even when the model never answers.
  */
-export function askOnSkill(session: string, skill: string, source: string | null, now: Date = new Date()): string | null {
+export function askOnSkill(
+  session: string,
+  skill: string,
+  source: string | null,
+  cwd: string = process.cwd(),
+  now: Date = new Date(),
+): string | null {
   if (isArpsOwn(skill)) return null;
   try {
     const home = arpHome();
@@ -147,7 +158,7 @@ export function askOnSkill(session: string, skill: string, source: string | null
     if (rows(askedPath).some((row) => row['session'] === session && row['skill'] === skill)) return null;
     const row: Asked = { at: now.toISOString(), session, skill, source };
     appendOwn(askedPath, `${JSON.stringify(row)}\n`);
-    return requestFor(skill);
+    return requestFor(skill, offerShare(session, skill, source, cwd, now));
   } catch {
     // Not marked, not asked: a request that could not be remembered would go out on every call.
     return null;
@@ -183,10 +194,13 @@ export function onStop(input: StopInput, now: Date = new Date()): void {
 
     const pending = asked.filter((row) => !answered.has(row.skill));
     const at = now.toISOString();
-    for (const [skill, answer] of answersIn(input.last, pending.map((row) => row.skill))) {
+    const answers = answersIn(input.last, pending.map((row) => row.skill));
+    for (const [skill, answer] of answers) {
       const row = pending.find((entry) => entry.skill === skill);
       if (row !== undefined) record(input, row, answer, at);
     }
+    // After the outcomes, so an answer to the sharing question is read only in a later message than the question.
+    onStopShare(input.session, input.last, answers, now);
   } catch {
     // A session must not fail because a record could not be kept.
   }

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 
-import { decide, describe as describeShare, sendShared, setSharing, type ShareEnv } from '../src/share.ts';
+import { decide, describe as describeShare, logSend, sendShared, setSharing, type ShareEnv, withSendLock } from '../src/share.ts';
 
 let dir: string;
 let env: ShareEnv;
@@ -137,4 +137,107 @@ test('a project lock and the global lock naming two sources keep the line here (
   const decision = decide(env);
   expect(decision.lines.map((line) => line.toolUrl)).not.toContain('https://github.com/a/b?skill=clip');
   expect(decision.keptLocal).toContainEqual({ skill: 'clip', why: 'several_sources' });
+});
+
+test('the file keeps the date and how it was chosen, and `arp share` says both (task 126)', () => {
+  setSharing(env, true, 'asked-always', new Date('2026-11-11T09:00:00.000Z'));
+  expect(JSON.parse(readFileSync(join(env.arpHome, 'sharing.json'), 'utf8'))).toEqual({
+    failures: true,
+    at: '2026-11-11T09:00:00.000Z',
+    how: 'asked-always',
+  });
+  expect(describeShare(decide(env)).split('\n')[0]).toBe('sharing is on, chosen 2026-11-11 answering "always"');
+  rmSync(join(env.arpHome, 'sharing.json'));
+  expect(describeShare(decide(env)).split('\n')[0]).toBe('sharing is off, not decided yet');
+  writeFileSync(join(env.arpHome, 'sharing.json'), '{"failures":true}\n');
+  expect(describeShare(decide(env)).split('\n')[0]).toBe('sharing is on');
+});
+
+test('"yes, this once" sends that session\'s result and nothing else, and shows it first (task 126)', async () => {
+  writeFileSync(
+    join(env.arpHome, 'outcomes.jsonl'),
+    [
+      { at: '2026-11-11T10:00:00Z', session: 'ONCE', skill: 'clip', source: 'a/b', outcome: 'worked' },
+      { at: '2026-11-11T10:00:00Z', session: 'OTHER', skill: 'gadget', source: 'c/d', outcome: 'worked' },
+    ]
+      .map((row) => JSON.stringify(row))
+      .join('\n'),
+  );
+  setSharing(env, false, 'asked-once', new Date('2026-11-11T10:00:00.000Z'));
+  writeFileSync(join(env.arpHome, 'share-once.jsonl'), `${JSON.stringify({ at: '2026-11-11T10:00:00Z', session: 'ONCE', skill: 'clip' })}\n`);
+  const shown = describeShare(decide(env));
+  expect(shown).toContain('sharing is off, chosen 2026-11-11 answering "yes, this once"');
+  expect(shown).toContain('would be public on testnet 13579, agreed once:');
+  expect(shown).toContain('https://github.com/a/b?skill=clip  (no domain)  worked');
+  expect(shown).not.toContain('c/d');
+  // The failure of beforeEach was in another session: it stays.
+  expect(shown).not.toContain('missing-key');
+  const written: unknown[] = [];
+  expect(
+    await sendShared(env, async (line) => {
+      written.push(line);
+    }),
+  ).toEqual({ sent: 1, failed: 0, firstError: null });
+  expect(written).toEqual([{ toolUrl: 'https://github.com/a/b?skill=clip', outcome: 'worked' }]);
+  expect(await sendShared(env, () => Promise.reject(new Error('must not be called')))).toEqual({ sent: 0, failed: 0, firstError: null });
+});
+
+test('"always" sends the result it was asked about and what comes after, never what was kept before (task 126)', async () => {
+  writeFileSync(
+    join(env.arpHome, 'outcomes.jsonl'),
+    [
+      { at: '2026-11-01T10:00:00.000Z', session: 'OLD', skill: 'gadget', source: 'c/d', outcome: 'worked' },
+      { at: '2026-11-11T09:59:00.000Z', session: 'ASKED', skill: 'clip', source: 'a/b', outcome: 'worked' },
+      { at: '2026-11-11T11:00:00.000Z', session: 'LATER', skill: 'later', source: 'e/f', outcome: 'worked' },
+    ]
+      .map((row) => JSON.stringify(row))
+      .join('\n'),
+  );
+  setSharing(env, true, 'asked-always', new Date('2026-11-11T10:00:00.000Z'));
+  writeFileSync(join(env.arpHome, 'share-once.jsonl'), `${JSON.stringify({ at: '2026-11-11T10:00:00.000Z', session: 'ASKED', skill: 'clip' })}\n`);
+  const decision = decide(env);
+  expect(decision.lines.map((line) => line.toolUrl).sort()).toEqual([
+    'https://github.com/a/b?skill=clip',
+    'https://github.com/e/f?skill=later',
+  ]);
+  // The old worked answer, and beforeEach's two failures of 2026-11-05, stay here, counted.
+  expect(decision.earlier).toBe(3);
+  expect(describeShare(decision)).toContain('kept before "always" was chosen, and staying here: 3 record(s)');
+  const written: unknown[] = [];
+  await sendShared(env, async (line) => {
+    written.push(line);
+  });
+  expect(JSON.stringify(written)).not.toContain('c/d');
+  expect(JSON.stringify(written)).not.toContain('missing-key');
+  // `arp share on` prints everything first, and includes the history.
+  setSharing(env, true);
+  expect(decide(env).lines.map((line) => line.toolUrl)).toContain('https://github.com/c/d?skill=gadget');
+  expect(decide(env).earlier).toBe(0);
+});
+
+test('one send at a time: a second sends nothing; a stale lock is taken over (task 126)', async () => {
+  let inside = 0;
+  const first = withSendLock(env, async () => {
+    inside += 1;
+    await Bun.sleep(100);
+    return 'first';
+  });
+  expect(await withSendLock(env, async () => 'second')).toBeNull();
+  expect(await first).toBe('first');
+  expect(inside).toBe(1);
+  expect(existsSync(join(env.arpHome, 'share-send.lock'))).toBe(false);
+  writeFileSync(join(env.arpHome, 'share-send.lock'), JSON.stringify({ pid: 1, at: '2026-11-11T00:00:00.000Z' }));
+  expect(await withSendLock(env, async () => 'taken', () => Date.parse('2026-11-11T01:00:00.000Z'))).toBe('taken');
+  writeFileSync(join(env.arpHome, 'share-send.lock'), JSON.stringify({ pid: 1, at: '2026-11-11T00:59:00.000Z' }));
+  expect(await withSendLock(env, async () => 'taken', () => Date.parse('2026-11-11T01:00:00.000Z'))).toBeNull();
+});
+
+test('what a background send did is kept here, never shown (task 126)', () => {
+  logSend(env, { sent: 1, failed: 1, firstError: 'sponsor down' }, new Date('2026-11-11T10:00:00.000Z'));
+  expect(JSON.parse(readFileSync(join(env.arpHome, 'share-log.jsonl'), 'utf8'))).toEqual({
+    at: '2026-11-11T10:00:00.000Z',
+    sent: 1,
+    failed: 1,
+    error: 'sponsor down',
+  });
 });

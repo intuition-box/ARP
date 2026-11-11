@@ -75,7 +75,8 @@ sequenceDiagram
     H->>C: Reads this skill's lines from the index: the skill's atom only, which tells the index that skill failed (ADR 0168)
     H-->>A: The lines, beside the error: n wallets wrote failed, needs X, m wrote worked, with X
     Note over A,M: failed_on_this_machine
-    P->>S: arp share on, reads what would be public, then arp share send
+    A-->>P: After the first result, once: share it? yes, this once / always / no (ADR 0191)
+    P->>S: always or once: the hook starts arp share send when the session ends; or arp share send by hand
     S->>V: A request signed by the local agent key: public URL, domain, failed, reason
     V->>V: Checks the signature, the daily caps and the budget
     V->>C: Writes T1 to T4, and deposits in the agent's name on each level
@@ -83,7 +84,7 @@ sequenceDiagram
     Note over O,C: Shown as unconfirmed: below 3 wallets it moves no order
 ```
 
-| Stays on the machine | Leaves, only after `arp share on` and `arp share send` |
+| Stays on the machine | Leaves, only after a yes: "always", "yes, this once" or `arp share on` (ADR `0191`) |
 | --- | --- |
 | The command and its output: never written, even locally | The skill's public GitHub URL |
 | The person's words: matched against closed words, never copied | The domain, a category that already exists under `tool` |
@@ -93,7 +94,7 @@ sequenceDiagram
 
 When a skill fails, the hook also **reads** that skill's lines from the index and hands them to the agent beside the error. The request names the skill's atom, a hash of its public URL, and nothing else: the index sees your IP address, the time and which skill, and since the read happens only when a skill fails, it can infer that this skill just failed here. It never gets the reason, the command, its output or your words. Once per session, skill and reason. `ARP_FAILURE_LINES=off` stops it (ADR `0168`).
 
-A hook can see a failure and cannot tell from a call that something worked, so when a skill loads it asks the model, once per skill per session, to end its final reply with one closed line, and a `worked` answer can be shared the same way (ADR `0169`, amending `0140`; ADR `0179`). The line is the agent's word, and nothing proves a use happened. The check for "off by default" is `apps/cli/test/share.test.ts`: the writer is never called.
+A hook can see a failure and cannot tell from a call that something worked, so when a skill loads it asks the model, once per skill per session, to end its final reply with one closed line, and a `worked` answer can be shared the same way (ADR `0169`, amending `0140`; ADR `0179`). The line is the agent's word, and nothing proves a use happened. The check for "off by default" is `apps/cli/test/share.test.ts`: the writer is never called. The one question about sharing, and the answer read back as a closed line, are tested in `apps/hook/test/share-ask.test.ts` (task 126).
 
 ## What a line is on chain
 

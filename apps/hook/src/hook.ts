@@ -13,7 +13,10 @@
  * PostToolUseFailure  failure-answer.ts  a skill's failure, recorded then answered with its lines (task 99);
  *                                       any other call is handed to the recording
  * Stop                worked.ts        reads that line from the last message into outcomes.jsonl; prints
- *                                      nothing, so the turn ends (task 100, ADR `0179`)
+ *                                      nothing, so the turn ends (task 100, ADR `0179`); and the person's
+ *                                      answer to the one sharing question (share-ask.ts, task 126)
+ * SessionEnd          share-ask.ts     sharing on, or agreed once this session: starts `arp share send --auto`
+ *                                      detached, and prints nothing (task 126, ADR `0191`)
  * ```
  *
  * A route returns its stdout, or `null` for none, and the hook exits 0 either way; or `RECORD`, and
@@ -113,6 +116,7 @@ import { eventOf, type PayloadFormat, type ToolCall, toolCallOf } from './payloa
 import { preToolUse } from './pre-install.ts';
 import { postToolUseFailure, RECORD } from './failure-answer.ts';
 import { recordSearch, recordSkillFailure } from './skill-failure.ts';
+import { sessionEnd } from './share-ask.ts';
 import { askOnSkill, requestOutput, stop } from './worked.ts';
 
 /**
@@ -126,6 +130,7 @@ const ROUTES: Readonly<Record<string, Route>> = {
   PreToolUse: (payload) => preToolUse(payload),
   PostToolUseFailure: (payload) => postToolUseFailure(payload),
   Stop: (payload) => stop(payload),
+  SessionEnd: (payload) => sessionEnd(payload),
 };
 
 /** Run a route and exit 0, whatever it did, unless it hands the call on. A hook that fails must never stop the session. */
@@ -384,7 +389,7 @@ try {
 // A skill that loaded is asked about once per session, in the reply the model writes anyway (task 109, ADR `0179`).
 // Only the waited-on `Skill` entry is read before the model goes on; the background entry never sees `Skill`.
 if (what.kind === 'skill' && call.event === 'PostToolUse' && classified.outcome === 'ok' && call.session !== null) {
-  const request = askOnSkill(call.session, what.name, what.source);
+  const request = askOnSkill(call.session, what.name, what.source, cwd);
   if (request !== null) process.stdout.write(`${requestOutput(request)}\n`);
 }
 

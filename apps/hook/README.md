@@ -35,6 +35,19 @@ the model to end its final reply with one line, `arp: <skill> worked`, `failed` 
 `Stop` it reads that line and writes the answer to `~/.arp/outcomes.jsonl`. No network, and no extra
 turn: `Stop` prints nothing. A reply without the line records nothing (ADR `0169`, ADR `0179`).
 
+**It asks once whether to share, and starts the sending.** While `~/.arp/sharing.json` does not exist,
+the first skill with a public source to load carries one more request: when the closing line says
+`worked` or `failed`, the agent asks the person whether to share that result, "yes, this once",
+"always" or "no", and ends its reply to the answer with `arp-share: once`, `always` or `no`. `Stop`
+reads it from a later message of the same session, never the one that asked, and writes
+`sharing.json` with the date and how it was chosen. The question is put once per machine. On
+`SessionEnd`, with sharing on or a "yes, this once" from that session, it starts
+`arp share send --auto` detached and returns at once: that program, not the hook, reaches the
+sponsoring service, takes a lock and writes what happened to `~/.arp/share-log.jsonl`. The hook
+finds it beside itself (`arp.js` in the plugin, `cli.js` under `arp hook`), in `send.json` beside
+it (written by `arp init`), or in `ARP_CLI`. `ARP_SHARE_AUTO=off` stops the question and the sending
+(`src/share-ask.ts`, ADR `0191`).
+
 ## Install
 
 ```bash
@@ -42,7 +55,7 @@ arp init         # copies the hook to ~/.arp/bin and registers it, backing up yo
 arp uninstall    # removes it
 ```
 
-By hand: `cd apps/hook && bun run build`, then point its four events in `.claude/settings.json` (`Stop` and the `Skill` row of `PostToolUse` without `async`) at
+By hand: `cd apps/hook && bun run build`, then point its five events in `.claude/settings.json` (`Stop`, `SessionEnd` and the `Skill` row of `PostToolUse` without `async`) at
 `apps/hook/dist/arp-hook.js`. The exact snippet is in
 [Running the node](../../docs/22_RUNNING_THE_NODE.md#the-hook--appshook).
 

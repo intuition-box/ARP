@@ -14,9 +14,9 @@ function appendOwn(path, text) {
 }
 
 // ../hook/src/hook.ts
-import { existsSync as existsSync3, lstatSync as lstatSync2, mkdirSync as mkdirSync4, readFileSync as readFileSync4, writeFileSync as writeFileSync2 } from "node:fs";
+import { existsSync as existsSync4, lstatSync as lstatSync2, mkdirSync as mkdirSync5, readFileSync as readFileSync5, writeFileSync as writeFileSync3 } from "node:fs";
 import { homedir as homedir3 } from "node:os";
-import { dirname as dirname3, join as join5 } from "node:path";
+import { dirname as dirname4, join as join6 } from "node:path";
 // ../../packages/protocol/dist/declare/tool-thing.js
 class InvalidToolUrlError extends Error {
   input;
@@ -4622,19 +4622,200 @@ async function postToolUseFailure(payload) {
   return context === null ? null : failureOutput(context);
 }
 
+// ../hook/src/share-ask.ts
+import { spawn } from "node:child_process";
+import { existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
+import { dirname as dirname3, join as join4 } from "node:path";
+import { fileURLToPath } from "node:url";
+
+// ../../packages/protocol/src/sharing-state.ts
+var SHARING_HOWS2 = ["init", "command", "desktop", "asked-once", "asked-always", "asked-no"];
+function sharingChoiceOf2(text) {
+  if (text === null)
+    return null;
+  try {
+    const parsed2 = JSON.parse(text);
+    if (typeof parsed2 !== "object" || parsed2 === null)
+      return { on: false, at: null, how: null };
+    const { failures, at, how } = parsed2;
+    return {
+      on: failures === true,
+      at: typeof at === "string" ? at : null,
+      how: typeof how === "string" && SHARING_HOWS2.includes(how) ? how : null
+    };
+  } catch {
+    return { on: false, at: null, how: null };
+  }
+}
+function sharingFileText2(on, how, at) {
+  return `${JSON.stringify({ failures: on, at: at.toISOString(), how })}
+`;
+}
+function choiceForAnswer2(answer) {
+  return { on: answer === "always", how: `asked-${answer}` };
+}
+var ANSWER = /^[\s>*`-]*arp-share:\s*(once|always|no)[\s.`*]*$/gim;
+function shareAnswerIn2(text) {
+  const found = new Set;
+  for (const match of text.matchAll(ANSWER)) {
+    const word = match[1]?.toLowerCase();
+    if (word === "once" || word === "always" || word === "no")
+      found.add(word);
+  }
+  return found.size === 1 ? [...found][0] ?? null : null;
+}
+
+// ../hook/src/share-ask.ts
+var isOff = () => process.env["ARP_SHARE_AUTO"]?.trim().toLowerCase() === "off";
+var GITHUB_REPO = /^[\w.-]+\/[\w.-]+$/;
+var readIfThere2 = (path) => existsSync2(path) ? readFileSync3(path, "utf8") : null;
+function shareQuestionFor() {
+  return " Sharing is not set on this machine yet. If that line says worked or failed, ask the person once, right after it, " + "in their language: share this result as a public line on Intuition testnet? Three choices: yes, this once; " + "always (this result and every one from now on, sent at the end of each session; earlier ones stay here); no (not asked again). Say what would leave: " + "the skill's public address, its category, worked or failed with a closed reason, signed by this machine's own " + "ARP address. Never their prompts, files, paths, code or keys. Do not choose for them. At the end of your reply to " + "their answer, add one line: `arp-share: once`, `arp-share: always` or `arp-share: no`, the one they chose; if " + "they did not answer it, add none.";
+}
+function stateOf(home) {
+  const text = readIfThere2(join4(home, "share-question.json"));
+  if (text === null)
+    return null;
+  try {
+    const row = JSON.parse(text);
+    if (typeof row.session !== "string" || typeof row.skill !== "string")
+      return null;
+    if (row.state !== "offered" && row.state !== "put" && row.state !== "answered")
+      return null;
+    return { at: typeof row.at === "string" ? row.at : "", session: row.session, skill: row.skill, state: row.state };
+  } catch {
+    return { at: "", session: "", skill: "", state: "put" };
+  }
+}
+var writeState = (home, state) => writeFileSync2(join4(home, "share-question.json"), `${JSON.stringify(state)}
+`);
+function offerShare(session, skill, source, cwd, now = new Date) {
+  if (isOff())
+    return false;
+  try {
+    const home = arpHome();
+    if (existsSync2(join4(home, "sharing.json")))
+      return false;
+    const state = stateOf(home);
+    if (state !== null && (state.state !== "offered" || state.session === session))
+      return false;
+    const name = skill.split(":").pop() ?? skill;
+    const known = source ?? installedSource(name, cwd);
+    if (known === null || !GITHUB_REPO.test(known))
+      return false;
+    mkdirSync3(home, { recursive: true });
+    writeState(home, { at: now.toISOString(), session, skill, state: "offered" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+function onStopShare(session, last, recorded, now = new Date) {
+  if (isOff())
+    return;
+  try {
+    const home = arpHome();
+    const state = stateOf(home);
+    if (state === null || state.session !== session)
+      return;
+    if (state.state === "put") {
+      if (existsSync2(join4(home, "sharing.json")))
+        return;
+      const answer = shareAnswerIn2(last);
+      if (answer === null)
+        return;
+      const choice = choiceForAnswer2(answer);
+      writeFileSync2(join4(home, "sharing.json"), sharingFileText2(choice.on, choice.how, now));
+      if (answer !== "no") {
+        appendOwn(join4(home, "share-once.jsonl"), `${JSON.stringify({ at: now.toISOString(), session, skill: state.skill })}
+`);
+      }
+      writeState(home, { ...state, state: "answered", answer, at: now.toISOString() });
+      return;
+    }
+    if (state.state !== "offered")
+      return;
+    const outcome = recorded.get(state.skill);
+    if (outcome === "worked" || outcome === "failed")
+      writeState(home, { ...state, state: "put", at: now.toISOString() });
+  } catch {}
+}
+function senderOf(here = dirname3(fileURLToPath(import.meta.url))) {
+  const send = ["share", "send", "--auto"];
+  const given = process.env["ARP_CLI"]?.trim();
+  if (given !== undefined && given !== "")
+    return { command: process.execPath, args: [given, ...send] };
+  for (const name of ["arp.js", "cli.js"]) {
+    if (existsSync2(join4(here, name)))
+      return { command: process.execPath, args: [join4(here, name), ...send] };
+  }
+  const written = readIfThere2(join4(here, "send.json"));
+  if (written === null)
+    return null;
+  try {
+    const parsed2 = JSON.parse(written);
+    if (typeof parsed2.command !== "string" || !Array.isArray(parsed2.args))
+      return null;
+    const args = parsed2.args.filter((arg) => typeof arg === "string");
+    return { command: parsed2.command, args };
+  } catch {
+    return null;
+  }
+}
+function onceFor(home, session) {
+  for (const line of (readIfThere2(join4(home, "share-once.jsonl")) ?? "").split(`
+`)) {
+    try {
+      if (JSON.parse(line).session === session)
+        return true;
+    } catch {
+      continue;
+    }
+  }
+  return false;
+}
+async function sessionEnd(payload) {
+  if (isOff() || typeof payload !== "object" || payload === null)
+    return null;
+  const raw = payload;
+  const session = raw["session_id"] ?? raw["sessionId"];
+  if (typeof session !== "string")
+    return null;
+  const cwd = typeof raw["cwd"] === "string" ? raw["cwd"] : process.cwd();
+  try {
+    const home = arpHome();
+    const choice = sharingChoiceOf2(readIfThere2(join4(home, "sharing.json")));
+    if (choice?.on !== true && !onceFor(home, session))
+      return null;
+    const sender = senderOf();
+    if (sender === null) {
+      mkdirSync3(home, { recursive: true });
+      appendOwn(join4(home, "share-log.jsonl"), `${JSON.stringify({ at: new Date().toISOString(), sent: 0, failed: 0, error: "no arp program beside the hook; run arp share send" })}
+`);
+      return null;
+    }
+    const child = spawn(sender.command, sender.args, { cwd, detached: true, stdio: "ignore", env: process.env });
+    child.on("error", () => {
+      return;
+    });
+    child.unref();
+  } catch {}
+  return null;
+}
+
 // ../hook/src/worked.ts
-import { existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3 } from "node:fs";
-import { join as join4 } from "node:path";
+import { existsSync as existsSync3, mkdirSync as mkdirSync4, readFileSync as readFileSync4 } from "node:fs";
+import { join as join5 } from "node:path";
 
 // ../../packages/protocol/src/local-outcomes.ts
 var OUTCOME_ANSWERS2 = ["worked", "failed", "unsure"];
 function isOutcomeAnswer2(word) {
   return OUTCOME_ANSWERS2.includes(word);
 }
-var ANSWER = /^[\s>*`-]*arp:\s*([A-Za-z0-9._:@/-]+)\s+(worked|failed|unsure)[\s.`*]*$/gim;
+var ANSWER2 = /^[\s>*`-]*arp:\s*([A-Za-z0-9._:@/-]+)\s+(worked|failed|unsure)[\s.`*]*$/gim;
 function answersIn2(text, asked) {
   const found = new Map;
-  for (const match of text.matchAll(ANSWER)) {
+  for (const match of text.matchAll(ANSWER2)) {
     const [, skill, word] = match;
     if (skill === undefined || word === undefined)
       continue;
@@ -4665,18 +4846,18 @@ function stopInputOf(raw) {
     transcript: text(field(raw, "transcript_path", "transcriptPath"))
   };
 }
-function requestFor(skill) {
-  return `ARP: at the end of your final reply, add one line saying whether the skill ${skill} did its job: ` + `\`arp: ${skill} worked\`, \`arp: ${skill} failed\` or \`arp: ${skill} unsure\`. ` + "Kept on this machine unless `arp share` is on.";
+function requestFor(skill, share = false) {
+  return `ARP: at the end of your final reply, add one line saying whether the skill ${skill} did its job: ` + `\`arp: ${skill} worked\`, \`arp: ${skill} failed\` or \`arp: ${skill} unsure\`. ` + "Kept on this machine unless `arp share` is on." + (share ? shareQuestionFor() : "");
 }
 function requestOutput(context) {
   return JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: context } });
 }
 var isArpsOwn = (name) => name === "arp" || name.endsWith(":arp");
 function rows(path) {
-  if (!existsSync2(path))
+  if (!existsSync3(path))
     return [];
   const found = [];
-  for (const line of readFileSync3(path, "utf8").split(`
+  for (const line of readFileSync4(path, "utf8").split(`
 `)) {
     if (line.trim() === "")
       continue;
@@ -4692,7 +4873,7 @@ function withOf(skill, source, cwd, before) {
   const name = skill.split(":").pop() ?? skill;
   let need = null;
   let latest = "";
-  for (const row of rows(join4(arpHome(), "failures.jsonl"))) {
+  for (const row of rows(join5(arpHome(), "failures.jsonl"))) {
     const { skill: rowSkill, source: rowSource, need: rowNeed, at } = row;
     if (typeof rowSkill !== "string" || typeof rowNeed !== "string" || typeof at !== "string")
       continue;
@@ -4710,11 +4891,11 @@ function withOf(skill, source, cwd, before) {
   const directory = skillDirectory(name, cwd);
   if (directory === null)
     return null;
-  return publishableNeed3(need, readFileSync3(join4(directory, "SKILL.md"), "utf8"));
+  return publishableNeed3(need, readFileSync4(join5(directory, "SKILL.md"), "utf8"));
 }
 function record(input, asked, outcome, at) {
   const search = foundBySearch(input.cwd, input.session, asked.skill);
-  const words = input.transcript !== null && existsSync2(input.transcript) ? lastUserWords(readFileSync3(input.transcript, "utf8")) : "";
+  const words = input.transcript !== null && existsSync3(input.transcript) ? lastUserWords(readFileSync4(input.transcript, "utf8")) : "";
   const domain = search?.domain ?? contextOf(words, asked.skill);
   const source = asked.source ?? search?.source ?? installedSource(asked.skill.split(":").pop() ?? asked.skill, input.cwd);
   const named = outcome === "worked" ? withOf(asked.skill, source, input.cwd, at) : null;
@@ -4727,22 +4908,22 @@ function record(input, asked, outcome, at) {
     outcome,
     ...named === null ? {} : { with: named }
   };
-  appendOwn(join4(arpHome(), "outcomes.jsonl"), `${JSON.stringify(line)}
+  appendOwn(join5(arpHome(), "outcomes.jsonl"), `${JSON.stringify(line)}
 `);
 }
-function askOnSkill(session, skill, source, now = new Date) {
+function askOnSkill(session, skill, source, cwd = process.cwd(), now = new Date) {
   if (isArpsOwn(skill))
     return null;
   try {
     const home = arpHome();
-    mkdirSync3(home, { recursive: true });
-    const askedPath = join4(home, "asked.jsonl");
+    mkdirSync4(home, { recursive: true });
+    const askedPath = join5(home, "asked.jsonl");
     if (rows(askedPath).some((row2) => row2["session"] === session && row2["skill"] === skill))
       return null;
     const row = { at: now.toISOString(), session, skill, source };
     appendOwn(askedPath, `${JSON.stringify(row)}
 `);
-    return requestFor(skill);
+    return requestFor(skill, offerShare(session, skill, source, cwd, now));
   } catch {
     return null;
   }
@@ -4756,20 +4937,22 @@ async function stop(payload) {
 function onStop(input, now = new Date) {
   try {
     const home = arpHome();
-    const asked = rows(join4(home, "asked.jsonl")).flatMap((row) => row["session"] === input.session && typeof row["skill"] === "string" ? [{
+    const asked = rows(join5(home, "asked.jsonl")).flatMap((row) => row["session"] === input.session && typeof row["skill"] === "string" ? [{
       at: typeof row["at"] === "string" ? row["at"] : "",
       session: input.session,
       skill: row["skill"],
       source: typeof row["source"] === "string" ? row["source"] : null
     }] : []);
-    const answered = new Set(rows(join4(home, "outcomes.jsonl")).flatMap((row) => row["session"] === input.session && typeof row["skill"] === "string" ? [row["skill"]] : []));
+    const answered = new Set(rows(join5(home, "outcomes.jsonl")).flatMap((row) => row["session"] === input.session && typeof row["skill"] === "string" ? [row["skill"]] : []));
     const pending = asked.filter((row) => !answered.has(row.skill));
     const at = now.toISOString();
-    for (const [skill, answer] of answersIn2(input.last, pending.map((row) => row.skill))) {
+    const answers = answersIn2(input.last, pending.map((row) => row.skill));
+    for (const [skill, answer] of answers) {
       const row = pending.find((entry) => entry.skill === skill);
       if (row !== undefined)
         record(input, row, answer, at);
     }
+    onStopShare(input.session, input.last, answers, now);
   } catch {}
 }
 
@@ -4777,7 +4960,8 @@ function onStop(input, now = new Date) {
 var ROUTES = {
   PreToolUse: (payload) => preToolUse(payload),
   PostToolUseFailure: (payload) => postToolUseFailure(payload),
-  Stop: (payload) => stop(payload)
+  Stop: (payload) => stop(payload),
+  SessionEnd: (payload) => sessionEnd(payload)
 };
 async function route(handler, payload) {
   let out = null;
@@ -4797,12 +4981,12 @@ async function route(handler, payload) {
   });
 }
 function fetchedRefs(cwd) {
-  const path = process.env["ARP_RECEIPTS"] ?? join5(cwd, ".arp", "receipts.jsonl");
-  if (!existsSync3(path))
+  const path = process.env["ARP_RECEIPTS"] ?? join6(cwd, ".arp", "receipts.jsonl");
+  if (!existsSync4(path))
     return [];
   let text2;
   try {
-    text2 = readFileSync4(path, "utf8");
+    text2 = readFileSync5(path, "utf8");
   } catch {
     return [];
   }
@@ -4882,7 +5066,7 @@ try {
   process.exit(0);
 }
 if (process.argv.includes("--capture"))
-  capture(parsed2, join5(homedir3(), ".arp", "captures"));
+  capture(parsed2, join6(homedir3(), ".arp", "captures"));
 var event = eventOf(parsed2);
 var handler = event === null ? undefined : ROUTES[event];
 if (handler !== undefined)
@@ -4903,8 +5087,8 @@ if (what === null)
 var classified = classifyCall(call);
 if (classified === null)
   process.exit(0);
-var own = join5(cwd, ".arp");
-var path = process.env["ARP_SESSION_LOG"] ?? join5(own, "session.jsonl");
+var own = join6(cwd, ".arp");
+var path = process.env["ARP_SESSION_LOG"] ?? join6(own, "session.jsonl");
 var line = {
   at: new Date().toISOString(),
   session: call.session,
@@ -4917,18 +5101,18 @@ var line = {
   response: responseOf(call, classified.outcome)
 };
 try {
-  mkdirSync4(dirname3(path), { recursive: true });
-  if (dirname3(path) === own && lstatSync2(own).isSymbolicLink())
+  mkdirSync5(dirname4(path), { recursive: true });
+  if (dirname4(path) === own && lstatSync2(own).isSymbolicLink())
     throw new Error(`${own} is a symbolic link`);
-  const ignore = join5(own, ".gitignore");
-  if (dirname3(path) === own && !existsSync3(ignore))
-    writeFileSync2(ignore, `*
+  const ignore = join6(own, ".gitignore");
+  if (dirname4(path) === own && !existsSync4(ignore))
+    writeFileSync3(ignore, `*
 `, { flag: "wx" });
   appendOwn(path, `${JSON.stringify(line)}
 `);
 } catch {}
 if (what.kind === "skill" && call.event === "PostToolUse" && classified.outcome === "ok" && call.session !== null) {
-  const request = askOnSkill(call.session, what.name, what.source);
+  const request = askOnSkill(call.session, what.name, what.source, cwd);
   if (request !== null)
     process.stdout.write(`${requestOutput(request)}
 `);

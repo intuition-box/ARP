@@ -88,10 +88,13 @@ Every ARP program keeps its state here. `ARP_HOME` moves most of it: if you set 
 | `receipt-key` | the MCP server, on its first start | a key that signs a receipt when a skill's files are served. It cannot move value |
 | `.gitignore` | the MCP server | `*`, so the folder is never committed by accident |
 | `bin/hook.js` | `arp init` | the hook program |
+| `bin/send.json` | `arp init` | the command the hook runs for the background send |
 | `failures.jsonl` | the hook, and `arp backfill` | a skill's failures seen on this machine, in closed words |
 | `asked.jsonl`, `outcomes.jsonl` | the hook, when a skill loads and on `Stop` | the skills it asked about, and the model's answer in closed words |
-| `sharing.json` | `arp share on` / `off` | whether sharing is on. Absent means off |
+| `sharing.json` | `arp share on` / `off`, `arp init`, the answer to the hook's question | whether sharing is on, when and how it was chosen. Absent means undecided, which is off |
+| `share-question.json`, `share-once.jsonl` | the hook | the one sharing question and its answer; the result a "yes, this once" or "always" was about |
 | `shared-failures.jsonl` | `arp share send` | what was made public |
+| `share-log.jsonl`, `share-send.lock` | `arp share send --auto`, started when a session ends | what each background send did; the lock while one runs |
 | `skills-cli/` | `arp_pulse` | the search package's home and npm's cache of it |
 | `pulse-listings/` | `arp_pulse` | the file lists of repositories your searches returned, kept a day |
 | `agent-key` | `arp line`, `arp share send`, the sponsored setup | **your agent's private key on testnet** |

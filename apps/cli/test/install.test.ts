@@ -199,7 +199,11 @@ describe('init', () => {
     expect(at(hooks, 'PostToolUseFailure', 0, 'hooks', 0)).toEqual({ type: 'command', command: expect.any(String), timeout: 10 });
     // Stop records the answer and prints nothing (task 109); waited on so `claude -p` does not cancel it.
     expect(at(hooks, 'Stop', 0)).toEqual({ hooks: [{ type: 'command', command: expect.stringContaining('hook.js'), timeout: 10 }] });
+    // SessionEnd only starts the background send, and returns (task 126).
+    expect(at(hooks, 'SessionEnd', 0)).toEqual({ hooks: [{ type: 'command', command: expect.stringContaining('hook.js'), timeout: 5 }] });
     expect(readFileSync(join(home, '.arp', 'bin', 'hook.js'), 'utf8')).toBe('// the hook\n');
+    // How that hook starts `arp share send --auto`: this arp, since no CLI sits beside the copied hook.
+    expect(json(join(home, '.arp', 'bin', 'send.json'))).toEqual({ command: '/usr/bin/node', args: [CLI, 'share', 'send', '--auto'] });
   });
 
   test('a second run changes nothing', async () => {
@@ -429,6 +433,7 @@ describe('uninstall and doctor', () => {
     expect(existsSync(join(home, '.claude.json'))).toBe(false);
     expect(existsSync(join(home, '.codex', 'config.toml'))).toBe(false);
     expect(existsSync(join(home, '.arp', 'bin', 'hook.js'))).toBe(false);
+    expect(existsSync(join(home, '.arp', 'bin', 'send.json'))).toBe(false);
   });
 
   test('uninstall leaves a server named arp that ARP did not write, and says so', async () => {
@@ -610,9 +615,9 @@ describe('the sharing offer at install (task 88)', () => {
   test('--share turns it on, --no-share writes off, without asking', async () => {
     withClaude();
     await init(env(), flags(['--yes', '--share']), CLI);
-    expect(json(sharing())).toEqual({ failures: true });
+    expect(json(sharing())).toEqual({ failures: true, at: '2026-10-30T12:00:00.000Z', how: 'init' });
     await init(env(), flags(['--yes', '--no-share']), CLI);
-    expect(json(sharing())).toEqual({ failures: false });
+    expect(json(sharing())).toEqual({ failures: false, at: '2026-10-30T12:00:00.000Z', how: 'init' });
   });
 
   test('a person at a terminal is asked once, with what leaves and what never does, default no', async () => {
@@ -623,7 +628,7 @@ describe('the sharing offer at install (task 88)', () => {
     expect(asked.at(-1)).toBe("Share this machine's skill failures as public lines?");
     expect(lines.join('\n')).toContain('Never your prompts');
     expect(lines.join('\n')).toContain('not online yet');
-    expect(json(sharing())).toEqual({ failures: true });
+    expect(json(sharing())).toEqual({ failures: true, at: '2026-10-30T12:00:00.000Z', how: 'init' });
     asked.length = 0;
     await init(terminal, flags(), CLI);
     expect(asked).not.toContain("Share this machine's skill failures as public lines?");

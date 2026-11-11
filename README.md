@@ -79,7 +79,8 @@ that match: none of your words, but each sees your IP. The hook records each ski
 loads for the first time in a session, it asks the model to end its final reply with one closed line,
 whether the skill did its job, and keeps that answer in `~/.arp/outcomes.jsonl` (what it asked:
 `~/.arp/asked.jsonl`). It sends
-nothing; sharing failures and worked answers is off until you run `arp share on`. `~/.arp/` also holds the keys ARP makes
+nothing until you say yes: after the first result, the agent asks once whether to share it, and with
+"always" or "yes, this once" the hook starts `arp share send` when the session ends. `~/.arp/` also holds the keys ARP makes
 and the search package's cache. Every file, and every connection, is in
 [Running the node](docs/22_RUNNING_THE_NODE.md). Testing ARP for us: [for testers](apps/web/public/docs/testers.md).
 

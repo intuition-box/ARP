@@ -35,7 +35,7 @@
  */
 
 import { arpHome, linesOf, loopbackHosts, redactUrls, refuseForeignRequest, serveFetch } from '@arp-protocol/core/node';
-import { applyDesktopShare, shareAskInstructions } from './share-ask.js';
+import { applyDesktopShare } from './share-ask.js';
 import { DESKTOP_TOOL_NAMES } from './tools.js';
 import { servedTools } from './served-tools.js';
 import { desktopTool } from './desktop/handlers.js';
@@ -301,15 +301,8 @@ export const handler = {
           protocolVersion: PROTOCOL_VERSION,
           capabilities: { tools: {} },
           serverInfo: { name: 'ARP', version: '0.2.0' },
-          // The plugin (read mode, not Desktop, which has its own setting) asks once about sharing (task 88).
-          // Hosted, no sharing question: sharing is about the caller's own machine, which this is not.
-          instructions: DESKTOP
-            ? DESKTOP_INSTRUCTIONS
-            : HOSTED
-              ? READ_INSTRUCTIONS
-              : READ_ONLY
-              ? [READ_INSTRUCTIONS, shareAskInstructions(arpHome())].filter((part) => part !== null).join('\n\n')
-              : SERVER_INSTRUCTIONS,
+          // No sharing question here since task 126: the hook asks, once, after the first skill result (ADR `0191`).
+          instructions: DESKTOP ? DESKTOP_INSTRUCTIONS : READ_ONLY || HOSTED ? READ_INSTRUCTIONS : SERVER_INSTRUCTIONS,
         });
       case 'notifications/initialized':
         // A notification has no id and takes no response body.

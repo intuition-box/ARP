@@ -90,7 +90,8 @@ export type HookEvent = {
  * | `PostToolUse` on `Skill`, waited on | the recording, and once per skill per session a request for one closed line at the end of the final reply (task 109, ADR `0179`) |
  * | the same `PostToolUseFailure` row, waited on | a skill's failure is also answered with that skill's lines; the hook bounds its read at 3 s (task 99, ADR `0168`) |
  * | `PreToolUse` on `Bash`, waited on | a skills install, read before it runs (task 98, ADR `0167`) |
- * | `Stop`, waited on | reads that line into `outcomes.jsonl`; prints nothing, so it never continues the turn (task 100, ADR `0179`) |
+ * | `Stop`, waited on | reads that line into `outcomes.jsonl`; prints nothing, so it never continues the turn (task 100, ADR `0179`); and the answer to the one sharing question (task 126, ADR `0191`) |
+ * | `SessionEnd`, waited on | with sharing on, or agreed once that session, starts `arp share send --auto` detached and returns (task 126, ADR `0191`) |
  *
  * `^(?!Skill$)` is a JavaScript regular expression (any character outside letters, digits, `_`, `-`,
  * spaces, `,` and `|` puts a matcher on that path, per the docs read 2026-11-10): every tool but
@@ -111,6 +112,9 @@ export const CLAUDE_HOOKS: HookSpec = {
     { name: 'PostToolUseFailure', matcher: '*', sync: true },
     { name: 'PreToolUse', matcher: 'Bash', sync: true, timeout: 15, if: 'Bash(*skills*)' },
     { name: 'Stop', sync: true, timeout: 10 },
+    // Only starts `arp share send --auto` detached, when sharing is on (task 126): waited on so it runs before
+    // the runtime exits, and it returns at once.
+    { name: 'SessionEnd', sync: true, timeout: 5 },
   ],
   entry: (command, event) => ({
     type: 'command',

@@ -4,6 +4,12 @@
 **Date:** 2026-11-09
 **Triggered by:** the user, 2026-11-09 (« il faut une check box à l'installation pour que ça propose d'activer le sharing »), task 88
 
+**Amended 2026-11-11 by ADR `0191`** (task 126): the Claude Code plugin row no longer holds. The server no
+longer asks at the start of a session; the hook asks once, after the first skill result, with "yes, this once",
+"always" and "no", and the agent writes the answer back as a closed line. The rejected alternative "the agent
+turns it on when the person says yes" is accepted there in that narrow form. Turned on, lines are sent at the
+end of each session. The rows for `arp init`, Desktop and the web page stand.
+
 ## Context
 
 Sharing a machine's skill failures as public lines (`arp share`, task 70) is off by default and was turned on

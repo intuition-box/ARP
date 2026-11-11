@@ -33,11 +33,14 @@ usage
   arp mcp [--http]   the MCP server. stdio by default, which is how an MCP client launches it
   arp hook           the runtime hook: one payload on stdin. Records what a session used in
                      .arp/session.jsonl, and a skill's failures in ~/.arp/failures.jsonl. On
-                     Stop, asks once per skill whether it did its job: ~/.arp/outcomes.jsonl
+                     Stop, asks once per skill whether it did its job: ~/.arp/outcomes.jsonl.
+                     While sharing is undecided, the first result also asks once whether to share
+                     it; with sharing on, SessionEnd starts arp share send --auto in the background
   arp backfill       read old Claude Code transcripts into ~/.arp/failures.jsonl. Sends nothing
   arp share          say what would be public from ~/.arp/failures.jsonl and outcomes.jsonl,
                      and what stays here.
-                     arp share on, off (off by default). arp share send writes them on testnet
+                     arp share on, off (off by default). arp share send writes them on testnet;
+                     --auto prints nothing and keeps the result in ~/.arp/share-log.jsonl
   arp check <skill>  before you use a skill: what its files contain, what agents wrote about
                      it, and whether what it needed when it failed is on this machine.
                      <owner/repo/skill> or a github.com URL with ?skill=. Writes nothing
@@ -129,17 +132,41 @@ async function shareCommand(rest: readonly string[]): Promise<number> {
   const { arpHome } = await import('@arp-protocol/core/node');
   const { homedir } = await import('node:os');
   const share = await import('./share.ts');
-  const env = { arpHome: arpHome(process.env, homedir()), home: homedir(), cwd: process.cwd() };
+  // `npxLaunch` runs from `/` and keeps the project in ARP_PROJECT_DIR: a project's skills-lock.json is read there.
+  const cwd = process.env['ARP_PROJECT_DIR']?.trim() || process.cwd();
+  const env = { arpHome: arpHome(process.env, homedir()), home: homedir(), cwd };
   if (rest[0] === 'send') {
-    if (!share.decide(env).on) {
-      process.stderr.write('sharing is off: nothing was sent. `arp share on` turns it on\n');
+    // `--auto`: started detached by the hook at the end of a session (task 126, ADR `0191`). It prints
+    // nothing, and keeps what happened in share-log.jsonl.
+    const auto = rest.includes('--auto');
+    const decision = share.decide(env);
+    if (!decision.on && !decision.once) {
+      if (!auto) process.stderr.write('sharing is off: nothing was sent. `arp share on` turns it on\n');
       return EXIT.ok;
     }
+    if (auto && decision.lines.length === 0) return EXIT.ok;
     process.env['ARP_TARGET'] ??= 'testnet';
-    const { writeLineHere } = await import('@arp/mcp/line');
-    const done = await share.sendShared(env, async (line) => {
-      await writeLineHere(line);
-    });
+    let done: Awaited<ReturnType<typeof share.sendShared>> | null;
+    try {
+      const { writeLineHere } = await import('@arp/mcp/line');
+      done = await share.withSendLock(env, () =>
+        share.sendShared(env, async (line) => {
+          await writeLineHere(line);
+        }),
+      );
+    } catch (error) {
+      if (!auto) throw error;
+      share.logSend(env, { sent: 0, failed: 0, firstError: error instanceof Error ? error.message : String(error) });
+      return EXIT.ok;
+    }
+    if (done === null) {
+      if (!auto) process.stderr.write('another send is running: nothing was sent by this one\n');
+      return EXIT.ok;
+    }
+    if (auto) {
+      share.logSend(env, done);
+      return EXIT.ok;
+    }
     process.stdout.write(`sent ${done.sent}, failed ${done.failed}\n`);
     if (done.firstError !== null) process.stderr.write(`${done.firstError}\n`);
     return done.failed === 0 ? EXIT.ok : 1;
