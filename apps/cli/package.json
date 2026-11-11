@@ -28,7 +28,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "bun run --cwd ../../packages/protocol build && rm -rf dist && ARP_SPONSOR_DEFAULT=$npm_package_config_sponsorDefault bun build src/cli.ts --env 'ARP_SPONSOR_DEFAULT*' --define process.env.ARP_CONTENT_DEFAULT=\\\"$npm_package_config_contentDefault\\\" --define process.env.ARP_PACKAGE_VERSION=\\\"$npm_package_version\\\" --outdir dist --target=node --format=esm --splitting --entry-naming '[name].js' --chunk-naming 'chunks/[name]-[hash].js' --external ./hook.js --external @metamask/smart-accounts-kit --banner '#!/usr/bin/env node' && bun build ../hook/src/hook.ts --outfile dist/hook.js --target=node --format=esm --external viem --external 'viem/*'",
+    "build": "bun run --cwd ../../packages/protocol build && rm -rf dist && ARP_SPONSOR_DEFAULT=$(bun -e 'console.log(require(\"./package.json\").config.sponsorDefault)') bun build src/cli.ts --env 'ARP_SPONSOR_DEFAULT*' --define process.env.ARP_CONTENT_DEFAULT=\\\"$(bun -e 'console.log(require(\"./package.json\").config.contentDefault)')\\\" --define process.env.ARP_PACKAGE_VERSION=\\\"$(bun -e 'console.log(require(\"./package.json\").version)')\\\" --outdir dist --target=node --format=esm --splitting --entry-naming '[name].js' --chunk-naming 'chunks/[name]-[hash].js' --external ./hook.js --external @metamask/smart-accounts-kit --banner '#!/usr/bin/env node' && bun build ../hook/src/hook.ts --outfile dist/hook.js --target=node --format=esm --external viem --external 'viem/*'",
     "test": "bun run build && bun test",
     "prepublishOnly": "bun run build",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json",
