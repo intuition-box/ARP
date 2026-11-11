@@ -1,6 +1,6 @@
 # Task 125 — The hook tells x402's first 402 from a refusal, and a refusal from paid with nothing back
 
-**Status:** in progress 2026-11-11, on the worktree branch, for the orchestrator to push.
+**Status:** verified 2026-11-11, `task-verifier` PASS (round 2; round 1 failed on `x402-feed.md` mapping an unpaid 402 to `payment_refused`, and on ADR `0090`'s body corrected in its header only), post-mortem `.claude/learning/113-a-402-is-not-a-refusal.md`; on the worktree branch, for the orchestrator to push.
 **ADR:** none. The outcome list in ADR `0090` is amended by this task (its header says so).
 **Rules:** `code.md`, `claims.md`, `workflow.md`. Gates: `apps/hook` test and lint, `apps/cli` test,
 `check:node`, `packages --check`, root `bun run check`, `packages/protocol` test (its `activity.ts` reads
