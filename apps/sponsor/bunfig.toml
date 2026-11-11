@@ -1,0 +1,10 @@
+[test]
+coverage = true
+coverageThreshold = { lines = 0.9, functions = 0.9 }
+coveragePathIgnorePatterns = [
+  # Other workspaces' sources, loaded through @arp-protocol/core: gated in their own workspace.
+  "../../packages/**",
+  "test/**",
+  # Entrypoint: reads env, reads the treasury key file and binds a port at import.
+  "src/main.ts",
+]

@@ -1279,6 +1279,53 @@ describe('POST /identity', () => {
     expect(res.status).toBe(503);
     expect(w.sent).toHaveLength(0);
   });
+
+  test('answers 400 when the identity cannot be planned for the agent', async () => {
+    const w = world();
+    const reads = {
+      ...fakeReads(w),
+      atomId: async () => {
+        throw new Error('no atom id for this agent');
+      },
+    } as MultiVaultReads; // Every other member is the fixture's.
+    const res = await call(sponsor(w, { reads, pinThing: pinned }), '/identity', {
+      agentRegistry: REGISTRY,
+      agentId: '7',
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('no atom id for this agent');
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('sends nothing when the pinning service fails', async () => {
+    const w = world();
+    const failing = async (): Promise<string> => {
+      throw new Error('pinning service down');
+    };
+    const res = await call(sponsor(w, { pinThing: failing }), '/identity', {
+      agentRegistry: REGISTRY,
+      agentId: '7',
+    });
+    expect(res.status).toBe(502);
+    expect(res.body.error).toMatch(/returned null/);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('stops at a reverted send, which is not counted as spent', async () => {
+    const w = world();
+    w.revert = true;
+    const ledger = new SponsorLedger(null);
+    const res = await call(sponsor(w, { pinThing: pinned, ledger }), '/identity', {
+      agentRegistry: REGISTRY,
+      agentId: '7',
+    });
+    expect(res.status).toBe(502);
+    expect(String(res.body.error)).toMatch(/reverted/);
+    expect(res.body.sent).toEqual([]);
+    expect(w.sent).toHaveLength(1);
+    expect(ledger.pending()).toHaveLength(0);
+    expect(ledger.relevant(NOW)).toHaveLength(0);
+  });
 });
 
 describe('a request from somewhere other than this machine', () => {
@@ -1867,6 +1914,63 @@ describe('POST /list-tool', () => {
     expect(gas.status).toBe(403);
     expect(w.gas).toHaveLength(0);
   });
+
+  test('sends nothing when the pinning service fails', async () => {
+    const w = world();
+    const res = await call(
+      listing(w, {
+        pinThing: async () => {
+          throw new Error('pinning service down');
+        },
+      }),
+      '/list-tool',
+      { url: TOOL },
+    );
+    expect(res.status).toBe(502);
+    expect(res.body.rule).toBe('pin');
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('refuses a request signed for another chain', async () => {
+    const request = await signListToolRequest(
+      {
+        address: AGENT.address,
+        url: TOOL,
+        nonce: keccak256(stringToBytes('other-chain')),
+        expiresAt: Math.floor(NOW / 1000) + 600,
+      },
+      1,
+      { signTypedData: (data) => AGENT.signTypedData(data) },
+    );
+    const res = await call(listing(world()), '/list-tool', { url: TOOL, request });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('request is for chain 1');
+  });
+
+  test('a listing sent and not confirmed is not sent again until the operator reconciles it', async () => {
+    const w = world();
+    const ledger = new SponsorLedger(null);
+    const service = listing(w, { ledger });
+    w.unconfirmed = true;
+    expect((await call(service, '/list-tool', { url: TOOL })).status).toBe(504);
+    w.unconfirmed = false;
+    const sentBefore = w.sent.length;
+    const again = await call(service, '/list-tool', { url: TOOL });
+    expect(again.status).toBe(409);
+    expect(again.body.rule).toBe('pending');
+    expect(w.sent).toHaveLength(sentBefore);
+  });
+
+  test('stops at a reverted send, which is not counted as spent', async () => {
+    const w = world();
+    w.revert = true;
+    const ledger = new SponsorLedger(null);
+    const res = await call(listing(w, { ledger }), '/list-tool', { url: TOOL });
+    expect(res.status).toBe(502);
+    expect(String(res.body.error)).toMatch(/reverted/);
+    expect(res.body.transactions).toEqual([]);
+    expect(ledger.pending()).toHaveLength(0);
+  });
 });
 
 describe('POST /propose-category', () => {
@@ -2139,6 +2243,102 @@ describe('POST /propose-category', () => {
     const w = fresh();
     expect((await call(sponsor(w), '/propose-category', proposal())).status).toBe(503);
     expect(w.sent).toHaveLength(0);
+  });
+
+  test('refuses a signed request on a service that is not on testnet 13579', async () => {
+    const w = fresh();
+    const res = await call(
+      sponsor(w, { categories, chainId: 1, reads: fakeReads(w, 1) }),
+      '/propose-category',
+      await signed(),
+    );
+    expect(res.status).toBe(403);
+    expect(res.body.rule).toBe('chain');
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('refuses a missing label, a parent or a reason that is not a string', async () => {
+    const service = sponsor(fresh(), { categories });
+    const cases: [Record<string, unknown>, string][] = [
+      [{ label: undefined }, 'empty'],
+      [{ label: 'x'.repeat(10_000) }, 'empty'],
+      [{ parent: 7 }, 'parent'],
+      [{ reason: 7 }, 'reason'],
+    ];
+    for (const [over, rule] of cases) {
+      const res = await call(service, '/propose-category', proposal(over));
+      expect(res.status, rule).toBe(400);
+      expect(res.body.rule, rule).toBe(rule);
+    }
+  });
+
+  test('a chain that cannot be read while planning is a 503 to retry, not a refusal', async () => {
+    const w = fresh();
+    const reads = {
+      ...fakeReads(w),
+      termExists: async () => {
+        throw new Error('rpc unavailable');
+      },
+    } as MultiVaultReads; // Every other member is the fixture's.
+    const res = await call(sponsor(w, { categories, reads }), '/propose-category', {
+      label: 'Design',
+      subjectId: OBJECT,
+    });
+    expect(res.status).toBe(503);
+    expect(res.body.retry).toBe(true);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('asks again when the label changed kind while the proposal was queued', async () => {
+    const w = fresh();
+    let asked = 0;
+    const changing = {
+      ...categories,
+      // A category on the first read, gone by the second: the queue re-plans and finds a new one.
+      isCategory: async (label: string) => (label === 'typography' ? (asked += 1) === 1 : known.has(label)),
+    };
+    const res = await call(sponsor(w, { categories: changing }), '/propose-category', proposal());
+    expect(res.status).toBe(409);
+    expect(res.body.rule).toBe('changed');
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('a category sent and not confirmed is logged as partial and not sent again', async () => {
+    const w = fresh();
+    const ledger = new SponsorLedger(null);
+    const wallet = fakeWallet(w);
+    let sends = 0;
+    const secondUnconfirmed: SponsorWallet = {
+      ...wallet,
+      send: async (c) => {
+        sends += 1;
+        const result = await wallet.send(c);
+        return sends === 2 ? { ...result, status: 'unconfirmed' } : result;
+      },
+    };
+    const service = sponsor(w, { categories, ledger, wallet: secondUnconfirmed });
+    const request = await signed();
+    const res = await call(service, '/propose-category', request);
+    expect(res.status).toBe(504);
+    expect(logged).toEqual([expect.objectContaining({ status: 'partial', transactions: [expect.any(String)] })]);
+    const again = await call(service, '/propose-category', await signed());
+    expect(again.status).toBe(409);
+    expect(again.body.rule).toBe('pending');
+    expect(sends).toBe(2);
+  });
+
+  test('stops at a reverted send, logs nothing when nothing landed, and counts nothing spent', async () => {
+    const w = fresh();
+    w.revert = true;
+    const ledger = new SponsorLedger(null);
+    const res = await call(sponsor(w, { categories, ledger }), '/propose-category', {
+      label: 'Design',
+      subjectId: OBJECT,
+    });
+    expect(res.status).toBe(502);
+    expect(String(res.body.error)).toMatch(/reverted/);
+    expect(logged).toEqual([]);
+    expect(ledger.pending()).toHaveLength(0);
   });
 });
 
@@ -2914,5 +3114,19 @@ describe('lineSubjectCheck', () => {
 
   test('throws on an index that does not answer, so the route says try again', async () => {
     await expect(answering(429, {})).rejects.toThrow('the index answered 429');
+  });
+});
+
+describe('a route that does not exist', () => {
+  test('a GET or a POST elsewhere is a 404 that names the routes there are', async () => {
+    const service = sponsor(world());
+    for (const request of [
+      new Request('http://sponsor/nowhere', { headers: { host: 'sponsor' } }),
+      post('/nowhere', {}),
+    ]) {
+      const response = await service.fetch(request);
+      expect(response.status).toBe(404);
+      expect(((await response.json()) as { error: string }).error).toContain('POST /gas');
+    }
   });
 });
