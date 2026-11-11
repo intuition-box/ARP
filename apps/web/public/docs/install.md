@@ -10,7 +10,7 @@ Every way to install ARP, and the state of each on 2026-11-10. This page is the 
 | Claude Desktop | [the extension, one `.mcpb` file](#claude-desktop-the-extension) | **not published** | sponsored tools, nothing to sign |
 | Cursor, Gemini CLI, Codex, Copilot, Grok Build | [`arp init`](#other-runtimes-arp-init) | works | the full tool set; the hook in Claude Code and Grok Build only |
 | the runtimes `arp init` finds, sponsored | [`arp init --sponsored`](#arp-init---sponsored) | works; the hosted sponsor is the default from 0.0.4 | tools that sign nothing for you |
-| any MCP client | [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry) | published, 0.0.3; 0.0.4 prepared | what the client's entry starts |
+| any MCP client | [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry) | published, 0.0.4 on npm (2026-11-11) | what the client's entry starts |
 | nothing installed | [the skill file](#nothing-installed-the-skill-file) | works | the procedure, as public reads and calls you sign |
 | a throwaway machine | [a Docker container](#an-isolated-test-in-docker) | works | the plugin, away from your own files |
 
@@ -64,7 +64,7 @@ Add ARP under `mcpServers` (merge it with any servers already there), then quit 
   "mcpServers": {
     "arp": {
       "command": "npx",
-      "args": ["-y", "@arp-protocol/cli@0.0.3", "mcp"],
+      "args": ["-y", "@arp-protocol/cli@0.0.4", "mcp"],
       "env": { "ARP_TARGET": "testnet", "ARP_TOOLS": "read" }
     }
   }
