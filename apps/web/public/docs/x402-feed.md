@@ -30,13 +30,29 @@ T4 = (T3, because, no-delivery)
 T5 = (T3, paid with, eip155:8453/tx/0x… http://www.api.example.com/x402/weather/)
 ```
 
-T5's object is the network (CAIP-2), the transaction hash, one space, and the URL exactly as the payer called it. The payer, the recipient, the amount and the asset are read from the transaction itself, so there is one copy of each.
+T5's object is the network (CAIP-2), the transaction hash, one space, and the URL as the payer called it, with its values removed. The payer, the recipient, the amount and the asset are read from the transaction itself, so there is one copy of each.
 
-T1 names the tool in one canonical spelling, so every line about it lands on one atom: `https`, no `www.`, no trailing `/`, the query sorted. T5 keeps the spelling that was paid, because a checker matches on that. The two must agree: the exact URL must reduce to T1's, or the line is refused and the feed leaves it out.
+T1 names the tool in one canonical spelling, so every line about it lands on one atom: `https`, no `www.`, no trailing `/`, the query's names sorted. T5 keeps the spelling that was paid, because a checker matches on that. The two must agree: the URL must reduce to T1's, or the line is refused and the feed leaves it out.
 
-`no-delivery` means "paid, got nothing back". It is one of the closed reasons.
+## Values are removed before anything is signed
 
-From the CLI, with `--tool` the URL you paid, exactly as you called it:
+T1 and T5 are permanent and public, so a URL never carries what was asked: `arp line` removes it on your machine before it signs, and ARP's sponsoring service refuses a URL that still carries a value (`422`, rule `endpoint-private`). The rules are the same everywhere, so a checker that applies them to the URL it called gets the same key:
+
+- scheme, host and port are kept as typed;
+- a URL with `user:pass@` is refused;
+- the fragment (`#…`) is removed;
+- each query parameter keeps its name and loses its value: `?city=paris&q=x` becomes `?city=&q=`; a part with no `=` is removed;
+- a path segment, or a parameter name, that looks personal becomes `:id`: one that holds an `@`, `0x` and 40 or more hex digits, a UUID, 6 digits in a row, 16 hex digits in a row with a digit among them, a phone number, a space, or more than 20 characters of base64 with upper case, lower case and a digit.
+
+A plain word in the path (`/weather/paris`) is not caught: nothing tells a route from a search there. Write `:id` in its place yourself before running `arp line`. The full rules and examples: [What ARP publishes about you](/docs/what-arp-publishes). The code: [endpoint-redaction.ts](https://github.com/intuition-box/ARP/blob/main/packages/protocol/src/endpoint-redaction.ts).
+
+## Failed before paying, and paid with nothing back
+
+`no-delivery` means "paid, got nothing back": a line with a settled transaction. It is one of the closed reasons.
+
+A call refused before any payment settled (a `402` you did not pay, a payment the facilitator refused) has no transaction to attach, and is not a record. When the call went through an MCP tool in Claude Code, the hook notes it locally as `payment` and nothing more; ARP's sponsoring service writes no line about an endpoint without a payment.
+
+From the CLI, with `--tool` the URL you paid:
 
 ```
 arp line --tool http://www.api.example.com/x402/weather/ --outcome failed --reason no-delivery \
@@ -67,7 +83,7 @@ arp line --tool http://www.api.example.com/x402/weather/ --outcome failed --reas
 }
 ```
 
-`endpoint` is the URL the payer called. A line written before 2026-11-10 did not name it, so its `endpoint` is `null`: unknown, not guessed. `endpoint_canonical` is always there. `amount` is in the asset's smallest unit: 20000 is 0.02 USDC. `line_id` is T5's id on Intuition testnet 13579. Beside the records: `by_endpoint` (records, worked, failed, no-delivery and distinct payers per `endpoint_canonical`), `skipped` (lines left out, by why), and `truncated`. The schema is `arp.x402-outcomes/2`; version 1 had no `endpoint_canonical` and put the canonical URL in `endpoint`.
+`endpoint` is the URL the payer called, with its values removed. A line written before 2026-11-10 did not name it, so its `endpoint` is `null`: unknown, not guessed. `endpoint_canonical` is always there, also without values, so two calls that differ only in what they asked count under one key. The feed removes values again as it reads, whatever a line wrote: no value reaches the file, and a line whose URLs no longer agree once reduced, or that carries credentials, is counted in `skipped`. `amount` is in the asset's smallest unit: 20000 is 0.02 USDC. `line_id` is T5's id on Intuition testnet 13579. Beside the records: `by_endpoint` (records, worked, failed, no-delivery and distinct payers per `endpoint_canonical`), `skipped` (lines left out, by why), and `truncated`. The schema is `arp.x402-outcomes/3`; version 2 published both URLs with their values, and version 1 had no `endpoint_canonical` and put the canonical URL in `endpoint`.
 
 ## When a line becomes a record
 
@@ -76,7 +92,7 @@ All of these, checked when the file is built:
 - the transaction exists on its network and succeeded;
 - it holds exactly one transfer of an accepted asset (USDC on Base today) from the line's writer, or from the `agentWallet` of an ERC-8004 agent that writer holds. The payer is read from the token's `Transfer` log, never from the transaction's sender, which for x402 is the facilitator;
 - the transfer pays someone other than the payer, and more than nothing;
-- the exact URL, when the line names one, reduces to the tool's URL;
+- the exact URL, when the line names one, reduces to the tool's URL, before and after values are removed;
 - the line was written after the payment;
 - no other line whose payment also checks names the same payment;
 - a wallet other than ARP's own stands behind every level of the line.
@@ -87,6 +103,7 @@ Anything else is left out and counted in `skipped`. If Base does not answer, no 
 
 - **That the endpoint failed to deliver.** A record proves a payment and who made it. The outcome is the payer's word.
 - **That `pay_to` is the endpoint's payee.** Only the endpoint's own 402 answer says who it should pay. A checker such as Doctor compares the two.
+- **That the payer is anonymous.** The paying wallet is public on its own chain. Pay from a wallet dedicated to the agent's payments, never a personal one: [What ARP publishes about you](/docs/what-arp-publishes).
 - **That two payers are two people.** One person can hold several wallets. ARP's own ranking counts an outcome only from 3 distinct wallets; the feed lists every record and leaves the counting to the reader.
 
 ## How to check a record

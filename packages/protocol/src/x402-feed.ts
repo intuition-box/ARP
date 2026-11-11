@@ -9,7 +9,9 @@ import {
 } from "@arp-protocol/graphql";
 import {getAddress, type Address, type Hex} from "viem";
 
+import {normaliseToolUrl} from "./declare/tool-thing.js";
 import {isUsageOutcome, isUsageReason, type UsageOutcome} from "./declare/usage-context.js";
+import {redactEndpointUrl} from "./endpoint-redaction.js";
 import {privateProbeTarget} from "./verify/probe.js";
 import {
     checkX402Payment,
@@ -32,20 +34,29 @@ import {
  * tool atom's canonical URL (`normaliseToolUrl`) is beside it, and the exact one is kept only when it
  * normalises to it. A line written before task 93 names no exact URL: its `endpoint` is `null`.
  *
+ * **No value is ever republished** (task 119, ADR `0186`): both URLs go through `redactEndpointUrl` as
+ * they are read, whatever the line wrote, so a query value, an email or an address in a path never
+ * reaches the file. A line whose URLs no longer agree once reduced, or that carries credentials, is
+ * counted in `skipped`. Schema 3 because `endpoint` and `endpoint_canonical` changed meaning.
+ *
  * **What a record proves:** a payment of an accepted asset, from the wallet that wrote the line (or
  * that agent's `agentWallet`), and that wallet's word about the outcome. **Not** that the endpoint
  * delivered or failed to: that is the payer's claim. Nor that the recipient is the endpoint's own
  * payee, which only the endpoint's 402 answer says; a reader such as Doctor checks it.
  */
-export const X402_FEED_SCHEMA = "arp.x402-outcomes/2";
+export const X402_FEED_SCHEMA = "arp.x402-outcomes/3";
 
 export type X402FeedRecord = {
     /**
-     * The URL the payer called, exactly as the line names it, or `null` for a line written before task 93
-     * (ADR `0162`), which named none: unknown, never guessed from the canonical form.
+     * The URL the payer called, as the line names it with its values removed (`redactEndpointUrl`, ADR
+     * `0186`), or `null` for a line written before task 93 (ADR `0162`), which named none: unknown, never
+     * guessed from the canonical form.
      */
     endpoint: string | null;
-    /** The tool atom's URL, `normaliseToolUrl`'s form: https, no `www.`, no trailing `/`, query sorted. */
+    /**
+     * The tool atom's URL with its values removed, in `normaliseToolUrl`'s form: https, no `www.`, no
+     * trailing `/`, query names sorted. Two URLs that differ only in values have one.
+     */
     endpoint_canonical: string;
     outcome: UsageOutcome;
     /** The closed reason the writer gave, or `null`. Several, sorted and joined by a comma. */
@@ -278,6 +289,20 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
             skip("the endpoint is a loopback or private address");
             continue;
         }
+        // Reduced on read as well as at the payer (ADR `0186`): what the chain holds is not what the file says.
+        let endpoint: string | null;
+        let endpointCanonical: string;
+        try {
+            endpoint = level.endpoint === null ? null : redactEndpointUrl(level.endpoint);
+            endpointCanonical = normaliseToolUrl(redactEndpointUrl(canonical));
+        } catch {
+            skip("the URL carries credentials or has no redacted form");
+            continue;
+        }
+        if (endpoint !== null && !exactEndpointNamesTool(endpoint, endpointCanonical)) {
+            skip("the exact URL no longer reduces to the tool's once its values are removed");
+            continue;
+        }
         const chain = [payment, outcome, ...(uses === above ? [] : above === undefined ? [] : [above]), uses];
         if (chain.some((level) => level.capped)) truncated = true;
         const writers = new Set([...payment.standing].filter((wallet) => !ours.has(wallet) && chain.every((level) => level.standing.has(wallet))));
@@ -304,8 +329,8 @@ export async function buildX402Feed(config: X402FeedConfig): Promise<X402Feed> {
             owner,
             agentWallet,
             record: {
-                endpoint: level.endpoint,
-                endpoint_canonical: canonical,
+                endpoint,
+                endpoint_canonical: endpointCanonical,
                 outcome: outcome.object.label,
                 reason: reasons.length === 0 ? null : [...new Set(reasons)].sort().join(","),
                 domain,

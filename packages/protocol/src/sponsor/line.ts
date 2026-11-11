@@ -20,7 +20,7 @@ import {isExactEndpointUrl, parsePaymentAtomLabel} from "../x402-payment.js";
  * `eip155:<chain>/tx/<hash>`, or `""`. The agent signs which payment it claims; the service reads that
  * transaction on its own chain before it writes anything. A version 1 request no longer verifies.
  *
- * **Version 3** (task 93, ADR `0162`) adds `endpoint`: the exact URL the payer called, as typed, which a
+ * **Version 3** (task 93, ADR `0162`) adds `endpoint`: the exact URL the payer called, which a
  * payment requires and nothing else allows. The tool atom stays the canonical URL (`normaliseToolUrl`);
  * the service checks the two agree and writes the exact one in the payment level. A version 2 request no
  * longer verifies, as version 1 did not under version 2: the CLI and the sponsor ship together.
@@ -29,6 +29,10 @@ import {isExactEndpointUrl, parsePaymentAtomLabel} from "../x402-payment.js";
  * program or the environment variable's **name** that was missing, and on a worked line what had to be
  * added; `""` for none. The service writes it only when the skill's own SKILL.md names it
  * (`publishableNeed`). A version 3 request no longer verifies.
+ *
+ * **Still version 4 since task 119** (ADR `0186`): `endpoint` is the URL called **with its values removed**
+ * (`redactEndpointUrl`). The typed data is unchanged, so a v4 signer that sends a URL without values still
+ * verifies; the service refuses one that carries a value with 422 `endpoint-private`, before it reads anything.
  */
 export const LINE_REQUEST_TYPES = {
     LineRequest: [
@@ -65,7 +69,7 @@ export type LineRequest = {
     reason: UsageReason | "";
     /** The x402 payment, `eip155:<chain>/tx/<hash>` in lower case (`paymentAtomLabel`), or `""` for none. */
     payment: string;
-    /** The exact URL the payer called, as typed (`isExactEndpointUrl`), with a payment; `""` without one. */
+    /** The exact URL the payer called, values removed (`redactEndpointUrl`), with a payment; `""` without one. */
     endpoint: string;
     /**
      * `needs` on a `missing-program` or `missing-key` failure, `with` on a worked line: a program's or an

@@ -22456,23 +22456,54 @@ var init_attestors = __esm(() => {
   ];
 });
 
-// ../../packages/protocol/dist/arp/x402-networks.js
-var X402_DEFAULT_NETWORKS;
-var init_x402_networks = __esm(() => {
-  init__esm();
-  X402_DEFAULT_NETWORKS = new Map([
-    [
-      "eip155:8453",
-      { assets: [getAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913")], rpcUrl: "https://mainnet.base.org" }
-    ]
-  ]);
-});
-
-// ../../packages/protocol/dist/arp/index.js
-var init_arp = __esm(() => {
-  init_chains2();
-  init_attestors();
-  init_x402_networks();
+// ../../packages/protocol/dist/endpoint-redaction.js
+function looksPersonal(segment) {
+  if (segment === REDACTED_SEGMENT)
+    return false;
+  let decoded = segment;
+  try {
+    decoded = decodeURIComponent(segment);
+  } catch {}
+  return [segment, decoded].some((form2) => PERSONAL.some((test) => test(form2)));
+}
+function redactEndpointUrl(url) {
+  const match = PARTS.exec(url);
+  if (match === null)
+    throw new EndpointNotRedactableError(url, "not a URL with a scheme and a host");
+  const scheme = match[1];
+  const authority = match[2];
+  if (!/^https?:\/\/$/i.test(scheme))
+    throw new EndpointNotRedactableError(url, `scheme ${scheme} is not http or https`);
+  if (authority.includes("@"))
+    throw new EndpointNotRedactableError(url, "it carries credentials (user:pass@)");
+  if (authority === "" || authority.startsWith(":"))
+    throw new EndpointNotRedactableError(url, "no host");
+  const path = match[3].split("/").map(reduce).join("/");
+  const names = (match[4] ?? "").split("&").filter((part) => part.indexOf("=") > 0).map((part) => reduce(part.slice(0, part.indexOf("="))));
+  const query = names.length === 0 ? "" : `?${names.map((name) => `${name}=`).join("&")}`;
+  return `${scheme}${authority}${path}${query}`;
+}
+var REDACTED_SEGMENT = ":id", EndpointNotRedactableError, PARTS, PERSONAL, reduce = (segment) => segment !== "" && looksPersonal(segment) ? REDACTED_SEGMENT : segment;
+var init_endpoint_redaction = __esm(() => {
+  EndpointNotRedactableError = class EndpointNotRedactableError extends Error {
+    input;
+    constructor(input, why) {
+      super(`${JSON.stringify(input)} cannot be written as an endpoint: ${why}`);
+      this.name = "EndpointNotRedactableError";
+      this.input = input;
+    }
+  };
+  PARTS = /^([A-Za-z][A-Za-z0-9+.-]*:\/\/)([^/?#]*)([^?#]*)(?:\?([^#]*))?(?:#.*)?$/;
+  PERSONAL = [
+    (s) => s.includes("@"),
+    (s) => /0x[0-9a-f]{40}/i.test(s),
+    (s) => /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(s),
+    (s) => /\d{6}/.test(s),
+    (s) => (s.match(/[0-9a-f]{16,}/gi) ?? []).some((run) => /\d/.test(run)),
+    (s) => /^[\d\s+().-]+$/.test(s) && (s.match(/\d/g) ?? []).length >= 7,
+    (s) => /\s/.test(s),
+    (s) => s.length > 20 && /^[A-Za-z0-9+/=_-]+$/.test(s) && /[A-Z]/.test(s) && /[a-z]/.test(s) && /\d/.test(s)
+  ];
 });
 
 // ../../packages/protocol/dist/x402-payment.js
@@ -22562,6 +22593,31 @@ var init_x402_payment = __esm(() => {
   NETWORK = /^eip155:([1-9][0-9]{0,9})$/;
   TX_HASH = /^0x[0-9a-f]{64}$/;
   NETWORK_ENTRY = /^(eip155:[1-9][0-9]{0,9})=(0x[0-9a-fA-F]{40})$/;
+});
+
+// ../../packages/protocol/dist/arp/x402-networks.js
+var X402_DEFAULT_NETWORKS, X402_TEST_NETWORKS;
+var init_x402_networks = __esm(() => {
+  init__esm();
+  X402_DEFAULT_NETWORKS = new Map([
+    [
+      "eip155:8453",
+      { assets: [getAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913")], rpcUrl: "https://mainnet.base.org" }
+    ]
+  ]);
+  X402_TEST_NETWORKS = new Map([
+    [
+      "eip155:84532",
+      { assets: [getAddress("0x036CbD53842c5426634e7929541eC2318f3dCF7e")], rpcUrl: "https://sepolia.base.org" }
+    ]
+  ]);
+});
+
+// ../../packages/protocol/dist/arp/index.js
+var init_arp = __esm(() => {
+  init_chains2();
+  init_attestors();
+  init_x402_networks();
 });
 
 // ../../packages/protocol/dist/tool-listing.js
@@ -27302,6 +27358,7 @@ var init_dist2 = __esm(() => {
   init_declare();
   init_arp();
   init_x402_payment();
+  init_endpoint_redaction();
   init_registered_tools();
   init_tool_listing2();
   init_reachability_plan();
@@ -35301,7 +35358,8 @@ async function approveSponsor(config, agent, ref, approval) {
   const next = gas.body["next"];
   await agent.send({ to: next.to, data: next.data, value: BigInt(next.value), chainId: DESKTOP_CHAIN_ID }, [approval]);
 }
-async function writeLine(config, agent, input) {
+async function writeLine(config, agent, asked) {
+  const input = asked.payment === undefined ? asked : { ...asked, toolUrl: redactEndpointUrl(asked.toolUrl) };
   const state = await ensureAgent(config, agent);
   const ref = { agentRegistry: registryRef(config), agentId: state.agentId };
   await ensureIdentity(config, state);
@@ -35605,8 +35663,16 @@ function lineFromArgs(args, env = process.env) {
   }
   if (args.paymentTx !== undefined && !/^0x[0-9a-fA-F]{64}$/.test(args.paymentTx))
     return new Error("--payment-tx is a 32-byte transaction hash");
-  if (args.paymentTx !== undefined && !isExactEndpointUrl(args.toolUrl)) {
-    return new Error("with --payment-tx, --tool is the exact URL you paid, scheme included, as you called it");
+  let toolUrl = args.toolUrl;
+  if (args.paymentTx !== undefined) {
+    if (!isExactEndpointUrl(args.toolUrl)) {
+      return new Error("with --payment-tx, --tool is the exact URL you paid, scheme included, as you called it");
+    }
+    try {
+      toolUrl = redactEndpointUrl(args.toolUrl);
+    } catch (error) {
+      return error instanceof Error ? error : new Error(String(error));
+    }
   }
   if (args.parent !== undefined && args.domain === undefined)
     return new Error("--parent and --why add a --domain");
@@ -35632,7 +35698,7 @@ function lineFromArgs(args, env = process.env) {
       return new Error("--needs and --with name a skill's word; a paid endpoint has no SKILL.md");
   }
   return {
-    toolUrl: args.toolUrl,
+    toolUrl,
     outcome: args.outcome,
     ...args.domain === undefined ? {} : { domain: args.domain },
     ...args.reason === undefined ? {} : { reason: args.reason },
@@ -47231,7 +47297,8 @@ usage
   arp line           write one public line on testnet 13579 through ARP's sponsor: --tool <url>
                      --outcome worked|failed [--domain <category>] [--reason <reason>]
                      [--payment-tx <hash> --network eip155:8453]  an x402 payment, read on Base;
-                     with it, --tool is the exact URL you paid
+                     with it, --tool is the exact URL you paid, written
+                     with its values removed
                      [--needs <name>] or [--with <name>]  the program or variable name that was
                      missing, or that you added; written only if the skill's SKILL.md names it
   arp init           add the MCP server and the hook to every runtime found here
@@ -47373,7 +47440,8 @@ async function run(argv) {
         process.stderr.write(`usage: arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>]
        [--parent <category> --why <text>]   adds a --domain the tree lacks, under --parent
        [--payment-tx <hash> --network eip155:8453]   the x402 payment this outcome refers to;
-                                                     --tool is then the exact URL you paid
+                                                     --tool is then the exact URL you paid;
+                                                     its values are removed before anything is signed
        [--needs <name>]   with missing-program or missing-key: the program or variable name (never a value)
        [--with <name>]    with --outcome worked: what you had to add; either is written only if the SKILL.md names it
 `);

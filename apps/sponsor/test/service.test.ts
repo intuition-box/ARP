@@ -2436,9 +2436,12 @@ describe('POST /line', () => {
 
   describe('with an x402 payment (ADR 0159)', () => {
     const TX = `0x${'ef'.repeat(32)}` as Hex;
-    /** The tool atom's URL, and what the payer called: http, www, a trailing slash, the query reversed (ADR 0162). */
-    const TOOL_URL = 'https://seller.example/x402/weather?a=1&b=2';
-    const CALLED = 'http://www.seller.example/x402/weather/?b=2&a=1';
+    /**
+     * The tool atom's URL, and what the payer called: http, www, a trailing slash, the query reversed (ADR 0162),
+     * values removed (ADR 0186).
+     */
+    const TOOL_URL = 'https://seller.example/x402/weather?a=&b=';
+    const CALLED = 'http://www.seller.example/x402/weather/?b=&a=';
     const USDC = getAddress('0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913');
     const word = (address: Address) => `0x${address.slice(2).toLowerCase().padStart(64, '0')}` as Hex;
     /** A recorded-shape Base receipt: one USDC transfer from `payer`, sent by a facilitator. */
@@ -2467,7 +2470,7 @@ describe('POST /line', () => {
     const withPayment = (over: Record<string, unknown> = {}) =>
       request({ domain: '', reason: 'no-delivery', payment: `eip155:8453/tx/${TX}`, endpoint: CALLED, ...over });
 
-    test('writes the exact URL called in the payment atom, as typed (ADR 0162)', async () => {
+    test('writes the exact URL called in the payment atom, as paid with no value (ADRs 0162, 0186)', async () => {
       const w = seeded();
       expect((await post(paid(w, base(AGENT.address)), { request: await withPayment() })).status).toBe(200);
       const label = stringToHex(`eip155:8453/tx/${TX} ${CALLED}`);
@@ -2479,6 +2482,40 @@ describe('POST /line', () => {
       const answer = await post(paid(w, base(AGENT.address)), { request: await withPayment({ endpoint: 'https://evil.example/x402/weather' }) });
       expect(answer.status).toBe(422);
       expect(answer.body.rule).toBe('endpoint');
+      expect(w.sent).toHaveLength(0);
+    });
+
+    test('refuses a URL that still carries a value, before anything is read or sent (ADR 0186)', async () => {
+      for (const endpoint of [
+        'http://www.seller.example/x402/weather/?b=2&a=1',
+        'http://www.seller.example/x402/weather/?b=&a=#top',
+        'http://www.seller.example/x402/weather/alice@example.com?b=&a=',
+        'http://user:pass@seller.example/x402/weather?a=&b=',
+      ]) {
+        const w = seeded();
+        let read = false;
+        const reads: X402TransferReads = { ...base(AGENT.address), getTransactionReceipt: async () => ((read = true), { status: 'success', blockNumber: 1n, logs: [] }) };
+        const answer = await post(paid(w, reads), { request: await withPayment({ endpoint }) });
+        expect(answer.status, endpoint).toBe(422);
+        expect(answer.body.rule, endpoint).toBe('endpoint-private');
+        expect(read).toBe(false);
+        expect(w.sent).toHaveLength(0);
+      }
+    });
+
+    test('refuses a line about a tool atom whose URL carries a value (ADR 0186)', async () => {
+      const w = seeded();
+      const valued = paid(w, base(AGENT.address), {
+        lines: {
+          inContextOf: IN_CONTEXT,
+          subject: async () => 'other',
+          toolUrl: async () => 'https://seller.example/x402/weather?a=1&b=2',
+          payments: { policy: x402Policy(X402_DEFAULT_NETWORKS), readsFor: () => base(AGENT.address) },
+        },
+      });
+      const answer = await post(valued, { request: await withPayment() });
+      expect(answer.status).toBe(422);
+      expect(answer.body.rule).toBe('endpoint-private');
       expect(w.sent).toHaveLength(0);
     });
 

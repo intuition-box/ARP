@@ -16,6 +16,8 @@ Every way to install ARP, and the state of each on 2026-11-10. This page is the 
 
 **Install one ARP per runtime, not two.** With the plugin and `arp init` both in Claude Code, every call is recorded twice. The same holds for two entries in Claude Desktop.
 
+**Pay from a dedicated wallet.** If your agent pays x402 endpoints and you write lines about them, the paying wallet is public and linked to the endpoints it paid. Use a wallet dedicated to the agent's payments, never a personal one: [What ARP publishes about you](/docs/what-arp-publishes).
+
 **Name ARP when you ask.** The agent reaches for ARP when you name it: "find me a skill for X with ARP". Asked only for a task, it may do the task without ARP.
 
 To remove any of them: [Uninstall](/docs/uninstall).

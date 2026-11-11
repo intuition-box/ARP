@@ -2,6 +2,9 @@ import {
   checkLineLimits,
   checkX402Payment,
   exactEndpointNamesTool,
+  isRedactedEndpointUrl,
+  isToolUrl,
+  normaliseToolUrl,
   needKindOfReason,
   publishableNeed,
   skillRefFromUrl,
@@ -34,6 +37,11 @@ import { chainUnreadable, json, REGISTRY, type Body, type SponsorContext } from 
  * **The exact URL paid** (task 93, ADR `0162`) rides in the payment level's atom, after the payment and
  * one space, so naming it costs nothing more. It must normalise to the tool atom's URL, read from the
  * index, or a writer could name any URL beside somebody else's endpoint.
+ *
+ * **With its values removed** (task 119, ADR `0186`): the payer reduces the URL before it signs
+ * (`redactEndpointUrl`), and this refuses with 422 `rule: 'endpoint-private'` a URL that still carries a
+ * query value, a fragment, credentials or a path segment that looks personal, and a tool atom whose URL
+ * does. It refuses rather than reduces: the agent signed the URL, and a value it signed is not written.
  *
  * **What was missing, or added** (task 97, ADR `0166`): `(reason, needs, ffmpeg)` on a missing-program or
  * missing-key failure, `(outcome, with, ffmpeg)` on a worked line. Written only when the skill's own SKILL.md,
@@ -85,6 +93,12 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
   const categories = options.categories;
 
   const payment = request.payment === '' ? null : parsePaymentAtomLabel(request.payment);
+  if (payment !== null && !isRedactedEndpointUrl(request.endpoint)) {
+    return json(
+      { error: `${request.endpoint} still carries a value; sign it with its values removed (redactEndpointUrl)`, rule: 'endpoint-private' },
+      422,
+    );
+  }
   if (payment !== null) {
     const payments = lines.payments ?? null;
     if (payments === null) {
@@ -122,6 +136,12 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
       return chainUnreadable(String(error instanceof Error ? error.message : error));
     }
     if (toolUrl === null) return json({ error: 'the index has no document for this tool yet', rule: 'tool', retry: true }, 422);
+    if (isToolUrl(toolUrl) && !isRedactedEndpointUrl(normaliseToolUrl(toolUrl))) {
+      return json(
+        { error: `the tool's atom ${toolUrl} carries a value; list the endpoint with its values removed`, rule: 'endpoint-private' },
+        422,
+      );
+    }
     if (!exactEndpointNamesTool(request.endpoint, toolUrl)) {
       return json({ error: `${request.endpoint} is not a spelling of the tool's URL ${toolUrl}`, rule: 'endpoint' }, 422);
     }

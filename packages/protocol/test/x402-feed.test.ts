@@ -117,7 +117,7 @@ describe("buildX402Feed", () => {
         expect(feed.by_endpoint[ENDPOINT]).toEqual({records: 1, worked: 0, failed: 1, no_delivery: 1, payers: 1});
         expect(feed.skipped).toEqual({count: 0, reasons: {}});
         expect(feed.trace.chain).toBe("eip155:13579");
-        expect(feed.schema).toBe("arp.x402-outcomes/2");
+        expect(feed.schema).toBe("arp.x402-outcomes/3");
         expect(feed.note).toContain("3 distinct wallets");
     });
 
@@ -128,8 +128,8 @@ describe("buildX402Feed", () => {
     });
 
     it("reads the exact URL from the atom's data, whole, where the index's label is cut at 256", async () => {
-        const long = `${CALLED}?q=${"a".repeat(300)}`;
-        const tool = `${ENDPOINT}?q=${"a".repeat(300)}`;
+        const long = `${CALLED}${"a".repeat(300)}`;
+        const tool = `${ENDPOINT}/${"a".repeat(300)}`;
         const rows = line(0, PAYER.toLowerCase(), TX, "failed", long).map((r) =>
             r.predicate_id === PRED.uses ? {...r, object: {...r.object, value: {thing: {url: tool}}}} : r,
         );
@@ -207,6 +207,53 @@ describe("buildX402Feed", () => {
         const a = await buildX402Feed(config(rows));
         const b = await buildX402Feed(config([...rows].reverse(), {generatedAt: "2027-01-01T00:00:00.000Z"}));
         expect({...a, generated_at: ""}).toEqual({...b, generated_at: ""});
+    });
+
+    describe("never republishes a value (task 119, ADR 0186)", () => {
+        const EMAIL = "alice@example.com";
+        const WALLET = "0x1111111111111111111111111111111111111111";
+        const withTool = (rows: Row[], url: string) =>
+            rows.map((r) => (r.predicate_id === PRED.uses ? {...r, object: {...r.object, value: {thing: {url}}}} : r));
+
+        it("reduces a line written with values, in the exact URL and in the tool's", async () => {
+            const called = `http://www.api.example.com/x402/weather/${WALLET}/?email=${EMAIL}&q=paris#top`;
+            const tool = `https://api.example.com/x402/weather/${WALLET}?email=${EMAIL}&q=paris`;
+            const feed = await buildX402Feed(config(withTool(line(0, PAYER.toLowerCase(), TX, "failed", called), tool)));
+            expect(feed.records.map((r) => [r.endpoint, r.endpoint_canonical])).toEqual([
+                ["http://www.api.example.com/x402/weather/:id/?email=&q=", "https://api.example.com/x402/weather/:id?email=&q="],
+            ]);
+            const text = JSON.stringify(feed);
+            for (const value of [EMAIL, WALLET.slice(2), "paris", "top"]) expect(text).not.toContain(value);
+        });
+
+        it("gives two URLs that differ only in values one endpoint_canonical", async () => {
+            const tx2 = `0x${"cd".repeat(32)}`;
+            const rows = [
+                ...withTool(line(0, PAYER.toLowerCase(), TX, "failed", `${CALLED}?city=paris`), `${ENDPOINT}?city=paris`),
+                ...withTool(line(100, PAYER.toLowerCase(), tx2, "failed", `${CALLED}?city=london`), `${ENDPOINT}?city=london`),
+            ];
+            const reads = recordedReads();
+            const feed = await buildX402Feed(
+                config(rows, {
+                    readsFor: () => ({
+                        ...reads,
+                        getTransactionReceipt: ({hash}) => reads.getTransactionReceipt({hash: TX as typeof hash}),
+                    }),
+                }),
+            );
+            const canonical = [...new Set(feed.records.map((r) => r.endpoint_canonical))];
+            expect(canonical).toEqual([`${ENDPOINT}?city=`]);
+            expect(Object.keys(feed.by_endpoint)).toEqual([`${ENDPOINT}?city=`]);
+            expect(JSON.stringify(feed)).not.toMatch(/paris|london/);
+        });
+
+        it("leaves out a URL with credentials, and counts it", async () => {
+            const called = "http://user:secret@api.example.com/x402/weather";
+            const feed = await buildX402Feed(config(line(0, PAYER.toLowerCase(), TX, "failed", called)));
+            expect(feed.records).toEqual([]);
+            expect(feed.skipped.reasons).toEqual({"the URL carries credentials or has no redacted form": 1});
+            expect(JSON.stringify(feed)).not.toContain("secret");
+        });
     });
 
     it("is empty, not missing, when no line names a payment", async () => {

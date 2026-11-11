@@ -2,6 +2,7 @@ import {createPublicClient, getAddress, hexToBigInt, http, isHex, keccak256, str
 
 import {ChainUnreadableError, isTransactionAbsent} from "./chain-errors.js";
 import {normaliseToolUrl} from "./declare/tool-thing.js";
+import {isRedactedEndpointUrl} from "./endpoint-redaction.js";
 
 /**
  * The payment an x402 line refers to, and the check of it at read time (task 89, ADR `0159`).
@@ -66,6 +67,8 @@ export const MAX_EXACT_ENDPOINT_LENGTH = 512;
  * Whether a string is an exact endpoint URL a payment level may carry (task 93, ADR `0162`): `http` or
  * `https` with a host, printable ASCII without a space, at most {@link MAX_EXACT_ENDPOINT_LENGTH}. It is
  * kept **as typed**, never normalised: a reader such as x402 Doctor matches on the URL the payer called.
+ * What is written is that URL **with its values removed** (`redactEndpointUrl`, task 119, ADR `0186`),
+ * which {@link paymentLevelLabel} requires; this checks the shape only.
  */
 export function isExactEndpointUrl(value: string): boolean {
     if (value.length === 0 || value.length > MAX_EXACT_ENDPOINT_LENGTH) return false;
@@ -95,14 +98,17 @@ const PAYMENT_LEVEL_LABEL = /^(eip155:[1-9][0-9]{0,9})\/tx\/(0x[0-9a-f]{64})(?: 
 
 /**
  * The payment level's object, as written on the trace chain (task 93, ADR `0162`): the payment, then one
- * space and the exact URL the payer called. One atom per payment as before, since a settlement pays one
- * call; the URL rides in it so that naming it costs no atom and no triple more. `endpoint` `null` writes
- * the label task 89 wrote. Throws on an endpoint {@link isExactEndpointUrl} refuses.
+ * space and the URL the payer called, with its values removed (task 119, ADR `0186`). One atom per payment
+ * as before, since a settlement pays one call; the URL rides in it so that naming it costs no atom and no
+ * triple more. `endpoint` `null` writes the label task 89 wrote. Throws on an endpoint
+ * {@link isExactEndpointUrl} refuses, and on one that still carries a value (`isRedactedEndpointUrl`):
+ * an atom is permanent, so this is the last place a value can be stopped.
  */
 export function paymentLevelLabel(ref: X402PaymentRef, endpoint: string | null): string {
     const payment = paymentAtomLabel(ref);
     if (endpoint === null) return payment;
     if (!isExactEndpointUrl(endpoint)) throw new Error(`${JSON.stringify(endpoint)} is not an exact http(s) URL a payment level can carry`);
+    if (!isRedactedEndpointUrl(endpoint)) throw new Error(`${JSON.stringify(endpoint)} still carries a value: redact it first (redactEndpointUrl)`);
     return `${payment} ${endpoint}`;
 }
 

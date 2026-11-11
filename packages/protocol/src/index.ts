@@ -391,7 +391,7 @@ export {ARP_DOMAIN_ATTESTORS, intuitionMainnet, intuitionTestnet, X402_DEFAULT_N
 
 /**
  * An x402 line's payment and the outcomes feed built from them (task 89, ADR `0159`). Reads the paying
- * chain, never signs on it. Since task 93 (ADR `0162`) the payment level also carries the exact URL paid.
+ * chain, never signs on it. Since task 93 (ADR `0162`) the payment level also carries the exact URL paid, its values removed since task 119 (ADR `0186`).
  */
 export {
     checkX402Payment,
@@ -417,6 +417,14 @@ export {
     type X402Transfer,
     type X402TransferReads,
 } from "./x402-payment.js";
+/** What an x402 endpoint URL may carry onto the chain: values removed before signing (task 119, ADR `0186`). */
+export {
+    EndpointNotRedactableError,
+    isRedactedEndpointUrl,
+    looksPersonal,
+    redactEndpointUrl,
+    REDACTED_SEGMENT,
+} from "./endpoint-redaction.js";
 export {
     buildX402Feed,
     X402_FEED_NOTE,

@@ -1,0 +1,39 @@
+{
+  "script": "scripts/measure/endpoint-values-on-chain.ts",
+  "chain": 13579,
+  "readAt": "2026-11-11T09:13:00.956Z",
+  "graphql": "https://testnet.intuition.sh/v1/graphql",
+  "rule": "a URL counts as changed when redactEndpointUrl (packages/protocol/src/endpoint-redaction.ts) does not return it unchanged",
+  "paymentLevels": {
+    "triples": 2,
+    "withoutUrl": 1,
+    "urls": 1,
+    "notHttp": 0,
+    "changed": 0,
+    "byWhy": {},
+    "changedUrls": []
+  },
+  "x402Tools": {
+    "urls": 1,
+    "notHttp": 0,
+    "changed": 0,
+    "byWhy": {},
+    "changedUrls": []
+  },
+  "usesTools": {
+    "usesTriplesWithThing": 182,
+    "urls": 38,
+    "notHttp": 3,
+    "changed": 0,
+    "byWhy": {},
+    "changedUrls": []
+  },
+  "arpListed": {
+    "things": 105,
+    "urls": 38,
+    "notHttp": 1,
+    "changed": 0,
+    "byWhy": {},
+    "changedUrls": []
+  }
+}

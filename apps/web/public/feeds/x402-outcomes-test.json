@@ -1,7 +1,7 @@
 {
   "test": true,
-  "schema": "arp.x402-outcomes/2",
-  "generated_at": "2026-11-11T09:05:11.196Z",
+  "schema": "arp.x402-outcomes/3",
+  "generated_at": "2026-11-11T09:16:19.855Z",
   "trace": {
     "chain": "eip155:13579",
     "graphql": "https://testnet.intuition.sh/v1/graphql"

@@ -47,7 +47,8 @@ usage
   arp line           write one public line on testnet 13579 through ARP's sponsor: --tool <url>
                      --outcome worked|failed [--domain <category>] [--reason <reason>]
                      [--payment-tx <hash> --network eip155:8453]  an x402 payment, read on Base;
-                     with it, --tool is the exact URL you paid
+                     with it, --tool is the exact URL you paid, written
+                     with its values removed
                      [--needs <name>] or [--with <name>]  the program or variable name that was
                      missing, or that you added; written only if the skill's SKILL.md names it
   arp init           add the MCP server and the hook to every runtime found here
@@ -198,7 +199,8 @@ async function run(argv: readonly string[]): Promise<number> {
           'usage: arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>]\n' +
             '       [--parent <category> --why <text>]   adds a --domain the tree lacks, under --parent\n' +
             '       [--payment-tx <hash> --network eip155:8453]   the x402 payment this outcome refers to;\n' +
-            '                                                     --tool is then the exact URL you paid\n' +
+            '                                                     --tool is then the exact URL you paid;\n' +
+            '                                                     its values are removed before anything is signed\n' +
             '       [--needs <name>]   with missing-program or missing-key: the program or variable name (never a value)\n' +
             '       [--with <name>]    with --outcome worked: what you had to add; either is written only if the SKILL.md names it\n',
         );

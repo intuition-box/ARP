@@ -14,6 +14,7 @@ import {
   needShapeProblem,
   normaliseCategoryLabel,
   readDomainTree,
+  redactEndpointUrl,
   resolveDomain,
   type DomainResolution,
   USAGE_REASONS,
@@ -71,9 +72,18 @@ export function lineFromArgs(args: {
     if (!networks.has(args.network)) return new Error(`--network must be one of ${[...networks.keys()].join(', ')}`);
   }
   if (args.paymentTx !== undefined && !/^0x[0-9a-fA-F]{64}$/.test(args.paymentTx)) return new Error('--payment-tx is a 32-byte transaction hash');
-  // The line names the URL exactly as it was called, beside the tool's canonical atom (ADR `0162`).
-  if (args.paymentTx !== undefined && !isExactEndpointUrl(args.toolUrl)) {
-    return new Error('with --payment-tx, --tool is the exact URL you paid, scheme included, as you called it');
+  // The line names the URL as it was called, beside the tool's canonical atom (ADR `0162`), with its values
+  // removed before anything is signed (ADR `0186`): `?city=paris` is written `?city=`.
+  let toolUrl = args.toolUrl;
+  if (args.paymentTx !== undefined) {
+    if (!isExactEndpointUrl(args.toolUrl)) {
+      return new Error('with --payment-tx, --tool is the exact URL you paid, scheme included, as you called it');
+    }
+    try {
+      toolUrl = redactEndpointUrl(args.toolUrl);
+    } catch (error) {
+      return error instanceof Error ? error : new Error(String(error));
+    }
   }
   if (args.parent !== undefined && args.domain === undefined) return new Error('--parent and --why add a --domain');
   if (args.why !== undefined && args.why.trim() === '') return new Error('--why says why no category fits');
@@ -91,7 +101,7 @@ export function lineFromArgs(args: {
     if (args.paymentTx !== undefined) return new Error("--needs and --with name a skill's word; a paid endpoint has no SKILL.md");
   }
   return {
-    toolUrl: args.toolUrl,
+    toolUrl,
     outcome: args.outcome,
     ...(args.domain === undefined ? {} : { domain: args.domain }),
     ...(args.reason === undefined ? {} : { reason: args.reason }),

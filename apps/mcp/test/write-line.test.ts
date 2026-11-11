@@ -244,6 +244,13 @@ describe("lineFromArgs", () => {
             toolUrl: "http://127.0.0.1:4021/x402-demo/no-delivery",
         });
         expect(lineFromArgs({...paid, toolUrl: "127.0.0.1:4021/x402-demo/no-delivery"})).toBeInstanceOf(Error);
+        // With its values removed, and refused with credentials (ADR 0186).
+        expect(lineFromArgs({...paid, toolUrl: "https://api.example.com/weather?city=paris#x"})).toMatchObject({
+            toolUrl: "https://api.example.com/weather?city=",
+        });
+        expect(lineFromArgs({...paid, toolUrl: "https://user:pass@api.example.com/weather"})).toBeInstanceOf(Error);
+        // A skill's URL without a payment keeps its value: it is the skill's name.
+        expect(lineFromArgs({...args, outcome: "worked", toolUrl: "https://github.com/o/r?skill=s"})).toMatchObject({toolUrl: "https://github.com/o/r?skill=s"});
     });
 
     it("takes --needs on a missing program or key, and --with on a worked line (ADR 0166)", () => {
@@ -387,8 +394,39 @@ describe("writeLineChecked", () => {
             });
             const written = await writeLineChecked({config, isCategory: async () => true, payments: payments(true), agent: () => agent}, PAID);
             expect(signed?.request.payment).toBe(`eip155:8453/tx/${TX}`);
-            expect(signed?.request.endpoint).toBe(INPUT.toolUrl);
+            // Its value removed before signing (ADR 0186), whatever the caller passed.
+            expect(signed?.request.endpoint).toBe("https://github.com/old/repo?skill=");
             expect(written.payment?.transfers).toEqual([{asset: USDC, payer: account.address, payTo: getAddress(SPONSOR), amount: "20000"}]);
+        });
+
+        it("lists and signs an endpoint with none of an email, an address or a search word (ADR 0186)", async () => {
+            const email = "alice@example.com";
+            const wallet = "0x1111111111111111111111111111111111111111";
+            const called = `https://api.example.com/v1/${wallet}/${encodeURIComponent(email)}/feed?q=pizza&owner=${wallet}&mail=${email}#top`;
+            let signed: SignedLineRequest | undefined;
+            const {config, agent} = setup((body) => {
+                signed = body.request;
+                return ok;
+            });
+            const bodies: string[] = [];
+            const inner = config.fetch ?? fetch;
+            const fetching = (async (input: string | URL, init?: RequestInit) => {
+                bodies.push(String(init?.body ?? ""));
+                return inner(input, init);
+            }) as typeof fetch; // the subset of fetch this module calls
+            await writeLineChecked({config: {...config, fetch: fetching}, isCategory: async () => true, payments: payments(true), agent: () => agent}, {...PAID, toolUrl: called});
+            expect(signed?.request.endpoint).toBe("https://api.example.com/v1/:id/:id/feed?q=&owner=&mail=");
+            const listed = bodies.find((body) => body.includes('"url"')) ?? "";
+            expect(listed).toContain("https://api.example.com/v1/:id/:id/feed?q=&owner=&mail=");
+            for (const value of [email, "alice", wallet.slice(2), "pizza", "#top"]) {
+                for (const body of bodies) expect(body).not.toContain(value);
+            }
+        });
+
+        it("refuses an endpoint with credentials before anything is sent", async () => {
+            const {config, agent, asked} = setup(() => ok);
+            await expect(writeLine(config, agent, {...PAID, toolUrl: "https://user:pass@api.example.com/x"})).rejects.toThrow(/credentials/);
+            expect(asked).toEqual([]);
         });
     });
 });

@@ -3,6 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-11-10
 **Amends:** ADR `0159` (decision 1, the payment level's object; decision 4, the line request's version; decision 6, the feed's record), `.claude/rules/security.md` (the line request's signing-site entry and the sponsoring table's line row)
+**Amended:** 2026-11-11 by ADR `0186` (task 119): decision 1's "the URL is kept as typed" now reads "as paid, with values removed" (`redactEndpointUrl`), decision 6's schema is `arp.x402-outcomes/3`, and decision 4's version stays 4. The text below is the decision as it stood.
 **Amended:** 2026-11-10 by task 107: decision 2's mainnet read is done. `atomDataMaxLength` is 1,000 on
 testnet 13579 (block 9,378,420) and on mainnet 1155 (block 10,795,862), read by
 `scripts/measure/atom-data-max-length.ts` into `data/measurements/atom-data-max-length-2026-11-10.json`.

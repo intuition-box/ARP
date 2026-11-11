@@ -39,6 +39,7 @@ import {
   paymentAtomLabel,
   readSkillContents,
   receiptMatchesContent,
+  redactEndpointUrl,
   signCategoryRequest,
   signLineRequest,
   signListToolRequest,
@@ -330,7 +331,8 @@ export type LineInput = {
   newDomain?: { parent: string; why: string };
   /**
    * The x402 payment this outcome refers to (task 89, ADR `0159`): its CAIP-2 network and settlement transaction.
-   * With it, `toolUrl` is also signed as the exact URL paid, as typed (task 93, ADR `0162`).
+   * With it, `toolUrl` is also signed as the exact URL paid (task 93, ADR `0162`), with its values removed
+   * before anything is signed or listed (task 119, ADR `0186`).
    */
   payment?: X402PaymentRef;
   /**
@@ -348,7 +350,10 @@ export type WrittenLine = { toolUrl: string; termId: Hex; levels: Hex[]; created
  * has no atom, and the agent is registered and approved the first time. This key signs requests, `register()`
  * and the approval, and nothing that sends value.
  */
-export async function writeLine(config: LoopConfig, agent: AgentSender, input: LineInput): Promise<WrittenLine> {
+export async function writeLine(config: LoopConfig, agent: AgentSender, asked: LineInput): Promise<WrittenLine> {
+  // An endpoint's values never reach a signature, the tool atom or the payment level (ADR `0186`). A skill's
+  // URL is not an endpoint: its `?skill=` value is the skill's name, and stays.
+  const input = asked.payment === undefined ? asked : { ...asked, toolUrl: redactEndpointUrl(asked.toolUrl) };
   const state = await ensureAgent(config, agent);
   const ref = { agentRegistry: registryRef(config), agentId: state.agentId };
   await ensureIdentity(config, state);
