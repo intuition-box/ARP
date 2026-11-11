@@ -16,8 +16,8 @@ COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 WORKDIR /repo
 
 COPY . .
-RUN bun install --frozen-lockfile --ignore-scripts \
-    && bun run --cwd packages/protocol build
+# No build of packages/protocol: under bun, its `package.json` exports resolve to `src/` (task 124).
+RUN bun install --frozen-lockfile --ignore-scripts
 
 ENV ARP_HOSTED=1 \
     ARP_TOOLS=read \

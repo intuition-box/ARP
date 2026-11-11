@@ -13,8 +13,8 @@ FROM oven/bun:1.3.14
 WORKDIR /repo
 
 COPY . .
-RUN bun install --frozen-lockfile --ignore-scripts \
-    && bun run --cwd packages/protocol build
+# No build of packages/protocol: under bun, its `package.json` exports resolve to `src/` (task 124).
+RUN bun install --frozen-lockfile --ignore-scripts
 
 # The volume mounted here is created from this directory the first time, so it belongs to `bun`.
 RUN mkdir -p /data && chown bun:bun /data && chmod 700 /data \

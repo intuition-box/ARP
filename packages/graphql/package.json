@@ -5,6 +5,8 @@
     "type": "module",
     "exports": {
         ".": {
+            "arp-source": "./src/index.ts",
+            "bun": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "default": "./dist/index.js"
         }
@@ -13,6 +15,7 @@
     "types": "./dist/index.d.ts",
     "files": [
         "dist",
+        "src",
         "README.md"
     ],
     "scripts": {

@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 
-import {defineConfig, loadEnv, type Plugin} from 'vite';
+import {defaultClientConditions, defineConfig, loadEnv, type Plugin} from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -96,11 +96,20 @@ function publicSite(env: Record<string, string>): Plugin {
     };
 }
 
+/**
+ * The dev server reads `@arp-protocol/core` and `@arp-protocol/graphql` from their `src/`, through
+ * the `arp-source` export condition their `package.json` declares (task 124). Without it they
+ * resolve to `dist/`, which nothing rebuilds after a merge, and a page importing a new export
+ * renders black. The build keeps `dist/`: it is what the Dockerfile builds first and what ships.
+ */
+const SOURCE_CONDITIONS = ['arp-source', ...defaultClientConditions];
+
 // https://vite.dev/config/
-export default defineConfig(({mode}) => {
+export default defineConfig(({command, mode}) => {
     const env = {...loadEnv(mode, process.cwd(), 'VITE_'), ...pickVite(process.env)};
     return {
         plugins: [react(), tailwindcss(), llmsTxt(), publicSite(env)],
+        ...(command === 'serve' ? {resolve: {conditions: SOURCE_CONDITIONS}} : {}),
         // skills.sh sends no CORS header, so the search reads it through the site's own origin.
         // The same path is proxied by `nginx.conf` in production (task 82).
         server: {

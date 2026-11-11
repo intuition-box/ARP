@@ -5,10 +5,14 @@
     "type": "module",
     "exports": {
         ".": {
+            "arp-source": "./src/index.ts",
+            "bun": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "default": "./dist/index.js"
         },
         "./node": {
+            "arp-source": "./src/node/index.ts",
+            "bun": "./src/node/index.ts",
             "types": "./dist/node/index.d.ts",
             "default": "./dist/node/index.js"
         }
@@ -17,6 +21,7 @@
     "types": "./dist/index.d.ts",
     "files": [
         "dist",
+        "src",
         "README.md"
     ],
     "scripts": {
