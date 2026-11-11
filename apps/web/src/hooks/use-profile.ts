@@ -1,12 +1,9 @@
-import {useQuery} from "@tanstack/react-query";
-
 import {
     buildProfileView,
     intuitionProfileReader,
     type ProfileReader,
     type ProfileView,
 } from "../services/account-profile";
-import {useChainChoice} from "../lib/chain-choice";
 
 /**
  * One account's own page.
@@ -37,9 +34,4 @@ export function profileQueryOptions(
         staleTime: 15_000,
         retry: 1,
     };
-}
-
-export function useProfile(account: string | undefined, curveId: number) {
-    const chain = useChainChoice();
-    return useQuery(profileQueryOptions(chain, account, curveId));
 }

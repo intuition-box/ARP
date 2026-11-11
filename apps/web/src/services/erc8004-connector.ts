@@ -2,7 +2,6 @@ import {
     createErc8004Client,
     erc8004RegistrySource,
     getAgentProfile,
-    getToolUsage,
     INTUITION_MAINNET_GRAPHQL,
     intuitionMainnet,
     intuitionSource,
@@ -13,7 +12,6 @@ import {
     type AgentRef,
     type Erc8004Client,
     type ListAgentsOptions,
-    type ToolUsage,
 } from "@arp-protocol/core";
 
 /**
@@ -174,28 +172,4 @@ export function fetchAgentCohort(
     client = erc8004Client(undefined, graphqlUrl),
 ): Promise<AgentPage> {
     return listAgents(client, options);
-}
-
-/**
- * Fetch one tool's incoming `uses` edges, with both vaults on each.
- *
- * Keyed by **atom id** rather than by an `AgentRef`, because a tool is not always an agent — and
- * where it is, which is the common case in ERC-8004 plus MCP (`docs/14`), the caller resolves it
- * through the identity path first and passes the atom.
- *
- * **Takes the chain it reads**, because the page that links here is chain-aware: a reader who
- * switched to testnet, saw three tools and clicked one would otherwise land on a mainnet read that
- * says "no declared uses" — the toggle working on the list and not on the thing it links to.
- *
- * Returns a tool with an empty `edges` array when nobody has declared using it, which is the answer
- * for the overwhelming majority of atoms and is not an error. Measured: **84** atoms are the object
- * of a `uses` edge on 1155 (`scripts/measure/tool-atom-shape.ts`); the atom population itself has
- * not been counted, and the Base registry's id count is of ERC-8004 identities there, not of atoms
- * here (`scripts/measure/cohort-coverage.ts` — 309,925 against 28,648 mirrored on 2026-10-20).
- */
-export function fetchToolUsage(
-    toolAtomId: string,
-    graphqlUrl: string = ERC8004_GRAPHQL_URL,
-): Promise<ToolUsage> {
-    return getToolUsage(toolAtomId, {graphqlUrl});
 }

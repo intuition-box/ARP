@@ -45,9 +45,6 @@
       "bin": {
         "arp-hook": "dist/arp-hook.js",
       },
-      "dependencies": {
-        "viem": "2.52.0",
-      },
       "devDependencies": {
         "@arp-protocol/core": "workspace:*",
         "@types/bun": "^1.4.4",

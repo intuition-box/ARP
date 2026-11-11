@@ -19,9 +19,6 @@
     "test": "bun run --cwd ../../packages/protocol build && bun test --timeout 20000",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
   },
-  "dependencies": {
-    "viem": "2.52.0"
-  },
   "devDependencies": {
     "@arp-protocol/core": "workspace:*",
     "@types/bun": "^1.4.4",
