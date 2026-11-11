@@ -56,6 +56,7 @@ const resolveAtom = vi.fn(
     }),
 );
 const planIdentity = vi.fn();
+const publishIdentity = vi.fn();
 const signConsent = vi.fn(async () => ({signature: SIGNATURE, chainId: 13579}));
 const publishLink = vi.fn(async () => ({tripleTx: SIGNATURE}));
 
@@ -68,7 +69,7 @@ vi.mock("../hooks/use-agent-import", () => ({
         planLink: async () => PLAN,
         publishLink,
         planIdentity,
-        publishIdentity: vi.fn(),
+        publishIdentity,
     }),
 }));
 
@@ -185,5 +186,63 @@ describe("AgentImport for an agent whose record is not pinned (task 129)", () =>
         fireEvent.click(await screen.findByRole("button", {name: "Price the public record"}));
         fireEvent.click(await screen.findByRole("button", {name: "Price the link"}));
         await screen.findByRole("button", {name: /Publish the link/});
+    });
+});
+
+describe("AgentImport writes the record, then reads it back (task 129)", () => {
+    // The fields the record step renders; the rest of an `IdentityAtomPlan` is the service's concern.
+    const priced = {
+        caip19: "eip155:13579/erc721:0x/1",
+        identityAtom: ATOM,
+        tripleId: ATOM,
+        existing: {
+            identityAtom: false,
+            caipAtom: false,
+            triple: false,
+            typeTriple: false,
+            implementTriple: false,
+        },
+        uris: {identity: "ipfs://identity", caip: "ipfs://caip"},
+        calls: [{kind: "identity atom", to: ATOM, data: "0x", value: 1n}],
+        totalValue: 1n,
+    };
+    const complete = {...priced, calls: [], totalValue: 0n};
+
+    async function writeRecord() {
+        resolveAtom.mockResolvedValueOnce(null);
+        publishIdentity.mockResolvedValueOnce({txs: [SIGNATURE]});
+        render(<AgentImport />, {wrapper: Provider});
+        await proveToken("1");
+        fireEvent.click(screen.getByRole("button", {name: "Sign the statement"}));
+        fireEvent.click(await screen.findByRole("button", {name: "Price the public record"}));
+        fireEvent.click(await screen.findByRole("button", {name: /Write the public record/}));
+    }
+
+    it("offers the link once every term reads as written", async () => {
+        planIdentity.mockResolvedValueOnce(priced).mockResolvedValueOnce(complete);
+        await writeRecord();
+        await screen.findByRole("button", {name: "Price the link"});
+        expect(planIdentity).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not offer the link when part of the record is missing after the write", async () => {
+        planIdentity.mockResolvedValueOnce(priced).mockResolvedValueOnce(priced);
+        await writeRecord();
+        await screen.findByText("Part of the record is not on chain yet. Write it again.");
+        expect(screen.queryByRole("button", {name: "Price the link"})).toBeNull();
+    });
+});
+
+describe("AgentImport after a mint on Base (task 129)", () => {
+    it("drops the token id with the chain it does not offer", () => {
+        render(
+            <MemoryRouter initialEntries={["/start/agent?have=yes&chain=8453&id=5"]}>
+                <ChainChoiceContext.Provider value={{choice: TESTNET, setMainnet: () => {}}}>
+                    <AgentImport />
+                </ChainChoiceContext.Provider>
+            </MemoryRouter>,
+        );
+        expect(screen.getByLabelText("Registry chain")).toHaveValue("13579");
+        expect(screen.getByLabelText("Token id")).toHaveValue("");
     });
 });

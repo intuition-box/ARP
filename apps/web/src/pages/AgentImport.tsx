@@ -31,7 +31,8 @@ import {MissingIdentityAtom} from "../components/import/MissingIdentityAtom";
 import {ConnectPrompt} from "../components/onboarding/ConnectPrompt";
 import {controlClass} from "../lib/control-class";
 import {useAgentImport} from "../hooks/use-agent-import";
-import {useChainChoice} from "../lib/chain-choice";
+import {choiceFor} from "../lib/chain-choice";
+import {intuitionTestnet} from "../lib/chains";
 import {identityRegistryFor} from "../lib/deployments";
 import {buildImportConsent, type ImportConsent, type ImportedAgent} from "../services/agent-import";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
@@ -56,17 +57,19 @@ import {formatTrust, truncateMiddle} from "../services/trust-format";
  */
 
 /**
- * Intuition testnet 13579 is the one chain an agent is imported from today: it is where the mint on
- * this page lands, so a mint followed by "link your agent wallet" ends here. Base, BSC and Ethereum are
- * shown and not offered (the user, 2026-11-11, task 129): their agents are real, and importing them is
- * not released yet.
+ * Intuition testnet 13579 is the one chain an agent is imported from today: a mint on testnet lands
+ * there, so a mint followed by "link your agent wallet" ends here. Base, BSC and Ethereum are shown
+ * and not offered (the user, 2026-11-11, task 129): their agents are real, and importing them is not
+ * released yet. Every read and write of the import is on 13579 whatever the site's chain toggle says,
+ * so a testnet agent's record can never be priced or written on mainnet.
  */
-const TESTNET_CHAIN_ID = 13579;
+const TESTNET_CHAIN_ID = intuitionTestnet.id;
+const IMPORT_CHAIN = choiceFor(false);
 const LOOKUP_CHAINS: {id: number; label: string; note: string; soon?: true}[] = [
     {
         id: TESTNET_CHAIN_ID,
         label: "Intuition Testnet (13579)",
-        note: "where an agent minted here lands",
+        note: "where an agent minted on testnet lands",
     },
     {id: 8453, label: "Base (8453) · soon to be released", note: "", soon: true},
     {id: 56, label: "BSC (56) · soon to be released", note: "", soon: true},
@@ -78,14 +81,18 @@ function registryOf(chainId: number) {
     return identityRegistryFor(chainId) ?? DEFAULT_IDENTITY_REGISTRY;
 }
 
-/** `?chain=13579&id=40`, as the mint links here; anything else falls back to an empty form. */
+/**
+ * `?chain=13579&id=40`, as a testnet mint links here. A chain not offered drops the id as well: a
+ * Base token id read against 13579 would name a different agent.
+ */
 function prefillOf(params: URLSearchParams): {chainId: number; tokenId: string} {
     const chain = Number(params.get("chain"));
     const id = params.get("id") ?? "";
     const offered = LOOKUP_CHAINS.some(
         (option) => option.id === chain && option.soon === undefined,
     );
-    return {chainId: offered ? chain : TESTNET_CHAIN_ID, tokenId: /^\d+$/.test(id) ? id : ""};
+    if (!offered) return {chainId: TESTNET_CHAIN_ID, tokenId: ""};
+    return {chainId: chain, tokenId: /^\d+$/.test(id) ? id : ""};
 }
 
 const inputClass =
@@ -135,7 +142,7 @@ export function AgentImport() {
 
     const trimmedToken = tokenId.trim();
     const isTokenValid = /^\d+$/.test(trimmedToken);
-    const chain = useChainChoice();
+    const chain = IMPORT_CHAIN;
     const onTargetChain = walletChainId === chain.chainId;
 
     const proven: ProvenAgent | null = phase.step === "proven" ? phase.proven : null;
@@ -338,12 +345,29 @@ export function AgentImport() {
         }));
         try {
             const result = await actions.publishIdentity(identityPlan);
-            updateProven(from, (current) =>
-                withAtom(
-                    {...current, identity: {stage: "sent", plan: identityPlan, result: result.txs}},
-                    identityPlan,
-                ),
-            );
+            // Read back rather than trust the receipts: a write that passed simulation can still
+            // revert, and only a plan with nothing left to send proves every term is on chain.
+            const after = await actions.planIdentity({
+                chainId: from.chainId,
+                tokenId: from.tokenId,
+                registry: registryOf(from.chainId),
+            });
+            updateProven(from, (current) => {
+                const sent: ProvenPhase = {
+                    ...current,
+                    identity: {stage: "sent", plan: identityPlan, result: result.txs},
+                };
+                return after.calls.length === 0
+                    ? withAtom(sent, after)
+                    : {
+                          ...current,
+                          identity: {
+                              stage: "priced",
+                              plan: after,
+                              error: "Part of the record is not on chain yet. Write it again.",
+                          },
+                      };
+            });
         } catch (error) {
             updateProven(from, (current) => ({
                 ...current,

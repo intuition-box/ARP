@@ -2,7 +2,7 @@ import type {IdentityAtomPlan} from "@arp-protocol/core";
 import {useCallback} from "react";
 import type {Address, Hex} from "viem";
 
-import {choiceFor, useChainChoice} from "../lib/chain-choice";
+import {choiceFor} from "../lib/chain-choice";
 import {intuitionTestnet} from "../lib/chains";
 import {intuitionMainnet} from "../lib/intuition-mainnet";
 import {
@@ -43,7 +43,9 @@ function choiceForPlan(chainId: number) {
  * retry semantics, and a retry that resubmits is the thing to avoid here.
  */
 export function useAgentImport() {
-    const chain = useChainChoice();
+    // The import is testnet 13579 only (task 129): its plans are priced and written there whatever
+    // the site's toggle says, so a testnet agent's record is never priced against mainnet.
+    const chain = choiceFor(false);
 
     /** Reads the ERC-8004 registry on the agent's own chain. Free, and signs nothing. */
     const verifyOwnership = useCallback(
@@ -60,15 +62,16 @@ export function useAgentImport() {
         [],
     );
 
-    /** The connector's preflight against the Intuition mainnet indexer. */
+    /**
+     * The connector's preflight: the testnet graph for an agent on 13579, mainnet's for the others
+     * (it mirrors Base; BSC and Ethereum agents are in no graph and resolve to `null`).
+     */
     const resolveAtom = useCallback(
         (params: {
             chainId: number;
             tokenId: string;
             registry: Address;
         }): Promise<CanonicalAgentAtom | null> =>
-            // An agent on testnet 13579 has its atom in the testnet graph; every other chain's agents
-            // are mirrored into mainnet's (task 129).
             resolveCanonicalAgentAtom({
                 ref: params,
                 client: erc8004GraphClient(
