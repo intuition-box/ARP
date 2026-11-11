@@ -40,6 +40,15 @@ test('--version prints the package version', () => {
   expect(arp(['--version']).out.trim()).toBe(pkg.version);
 });
 
+test("the MCP server's serverInfo.version is the package version, inlined at build (task 137)", () => {
+  const request = { jsonrpc: '2.0', id: 0, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {} } };
+  const { out } = arp(['mcp'], `${JSON.stringify(request)}\n`, { ARP_TARGET: 'testnet' });
+  const line = out.split('\n').find((text) => text.startsWith('{'));
+  // The server's own JSON-RPC answer; the test reads the one field it is about.
+  const answer = JSON.parse(line ?? '{}') as { result?: { serverInfo?: unknown } };
+  expect(answer.result?.serverInfo).toEqual({ name: 'ARP', version: pkg.version });
+});
+
 test('an unknown command exits 2 with the usage on stderr', () => {
   const { code, err } = arp(['nope']);
   expect(code).toBe(2);

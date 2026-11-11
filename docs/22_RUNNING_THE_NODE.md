@@ -116,6 +116,8 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 ~/.arp/sharing.json    whether failures and worked answers may become public lines, with the date and how
                        it was chosen (init, command, desktop, asked-once, asked-always, asked-no).
                        Absent means undecided, which is off
+~/.arp/desktop-share.json  in Claude Desktop: the share setting's value at the last start, so an
+                       unchanged setting never overwrites a choice made in Claude Code
 ~/.arp/share-question.json  the one sharing question the hook puts: the session, the skill, offered,
                        put or answered, and the answer. Never the person's words
 ~/.arp/share-once.jsonl  the result a "yes, this once" or "always" was about: the session and the skill.

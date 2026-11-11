@@ -3,6 +3,15 @@
 `@arp-protocol/cli`. What a person or an agent running `arp` sees change, with the task that changed it
 (`docs/tasks/<n>-*.md` in the repository). Everything writes on Intuition testnet 13579 only.
 
+## Unreleased
+
+- **Claude Desktop's share setting no longer overwrites a choice made in Claude Code** (task 137). It
+  writes `~/.arp/sharing.json` only when nothing is on file, when the file is the extension's own, or
+  when the setting changed since the last start, which it keeps in `~/.arp/desktop-share.json`. Left as
+  it was, it no longer turns off an `arp share on` or an "always" answer on the same machine.
+- **The MCP server reports the package's version** in `serverInfo.version`, in the plugin and in the
+  Desktop extension, inlined at build. It said `0.2.0` whatever the release.
+
 ## 0.0.6 — published 2026-11-11
 
 - **Breaking: the line request is version 6** (task 127, ADR `0192`). It signs two more fields, `version`

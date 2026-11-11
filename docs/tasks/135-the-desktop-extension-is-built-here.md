@@ -51,7 +51,8 @@ macOS:
    install screen shows **ARP** 0.0.6 and the setting "Share this machine's skill failures as public
    lines", unticked. Afterwards `~/.arp/sharing.json` reads `"failures": false` and `"how": "desktop"`.
    If Claude Code on the same machine had `arp share on`, note that Desktop's start set it back to off
-   (task-verifier, task 135: the setting writes the file both share at every start).
+   (task-verifier, task 135: the setting writes the file both share at every start). Fixed by task 137:
+   an unchanged setting no longer overwrites a choice made in Claude Code.
 3. A new chat: « Find me a skill to work with PDF files, with ARP ». Claude lists skills.
 4. « Get the pdf skill with ARP ». Claude shows what it contains, then its SKILL.md.
 5. « Declare with ARP that I used it ». About a minute; the answer says declared.

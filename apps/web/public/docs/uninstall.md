@@ -91,7 +91,8 @@ Every ARP program keeps its state here. `ARP_HOME` moves most of it: if you set 
 | `bin/send.json` | `arp init` | the command the hook runs for the background send |
 | `failures.jsonl` | the hook, and `arp backfill` | a skill's failures seen on this machine, in closed words |
 | `asked.jsonl`, `outcomes.jsonl` | the hook, when a skill loads and on `Stop` | the skills it asked about, and the model's answer in closed words |
-| `sharing.json` | `arp share on` / `off`, `arp init`, the answer to the hook's question | whether sharing is on, when and how it was chosen. Absent means undecided, which is off |
+| `sharing.json` | `arp share on` / `off`, `arp init`, the answer to the hook's question, Claude Desktop's setting | whether sharing is on, when and how it was chosen. Absent means undecided, which is off |
+| `desktop-share.json` | the Claude Desktop extension, at each start | the share setting's value at the last start, so an unchanged setting never overwrites a choice made elsewhere |
 | `share-question.json`, `share-once.jsonl` | the hook | the one sharing question and its answer; the result a "yes, this once" or "always" was about |
 | `shared-failures.jsonl` | `arp share send` | what was made public |
 | `share-log.jsonl`, `share-send.lock` | `arp share send --auto`, started when a session ends | what each background send did; the lock while one runs |

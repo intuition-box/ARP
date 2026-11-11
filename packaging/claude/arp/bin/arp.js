@@ -34965,7 +34965,7 @@ function domainWalk() {
     attestor: DOMAIN_ATTESTORS
   };
 }
-var refusedHosting, HOSTED, PORT, RECEIPT_SIGNER, DESKTOP, SKILLS_DIR, READ_ONLY, CONTENT_DEFAULT = "https://content.arp.intuition.box", CONTENT_URL, SPONSOR_DEFAULT = "https://sponsor.arp.intuition.box", SPONSOR_URL, SESSION_LOG, RECEIPTS_LOG, TARGETS, targetName, chainId, recorded, record, sessionCatalogue, accepted = null, GRAPHQL_URL, RPC_URL, MULTI_VAULT_RAW, GRAPHQL, SKILLS_INDEX, RPC, MULTI_VAULT, reads, toolAtoms, DOMAIN_ROOT = "tool", REACHABLE_ATOM = "0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805", DOMAIN_ATTESTORS, directory, IN_CONTEXT_OF, LINE_PAYERS;
+var refusedHosting, HOSTED, PORT, RECEIPT_SIGNER, DESKTOP, SKILLS_DIR, READ_ONLY, CONTENT_DEFAULT = "https://content.arp.intuition.box", CONTENT_URL, SPONSOR_DEFAULT = "https://sponsor.arp.intuition.box", SPONSOR_URL, SERVER_VERSION = "0.0.6", SESSION_LOG, RECEIPTS_LOG, TARGETS, targetName, chainId, recorded, record, sessionCatalogue, accepted = null, GRAPHQL_URL, RPC_URL, MULTI_VAULT_RAW, GRAPHQL, SKILLS_INDEX, RPC, MULTI_VAULT, reads, toolAtoms, DOMAIN_ROOT = "tool", REACHABLE_ATOM = "0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805", DOMAIN_ATTESTORS, directory, IN_CONTEXT_OF, LINE_PAYERS;
 var init_config = __esm(() => {
   init_dist2();
   init__esm();
@@ -36246,15 +36246,37 @@ var init_line2 = __esm(() => {
 });
 
 // ../mcp/src/share-ask.ts
-import { mkdirSync as mkdirSync6, writeFileSync as writeFileSync7 } from "node:fs";
+import { existsSync as existsSync6, mkdirSync as mkdirSync6, readFileSync as readFileSync6, writeFileSync as writeFileSync7 } from "node:fs";
 import { join as join10 } from "node:path";
-function applyDesktopShare(value, arpHome2) {
+function readOrNull(path) {
+  return existsSync6(path) ? readFileSync6(path, "utf8") : null;
+}
+function lastSeen(arpHome2) {
+  const text2 = readOrNull(join10(arpHome2, DESKTOP_SEEN));
+  if (text2 === null)
+    return false;
+  try {
+    const parsed = JSON.parse(text2);
+    return typeof parsed === "object" && parsed !== null && parsed["share"] === true;
+  } catch {
+    return false;
+  }
+}
+function applyDesktopShare(value, arpHome2, now = new Date) {
   if (value !== "true" && value !== "false")
     return null;
+  const ticked = value === "true";
+  const choice = sharingChoiceOf(readOrNull(join10(arpHome2, "sharing.json")));
+  const changed = ticked !== lastSeen(arpHome2);
   mkdirSync6(arpHome2, { recursive: true });
-  writeFileSync7(join10(arpHome2, "sharing.json"), sharingFileText(value === "true", "desktop", new Date));
-  return value === "true";
+  writeFileSync7(join10(arpHome2, DESKTOP_SEEN), `${JSON.stringify({ share: ticked })}
+`);
+  if (choice !== null && choice.how !== "desktop" && !changed)
+    return null;
+  writeFileSync7(join10(arpHome2, "sharing.json"), sharingFileText(ticked, "desktop", now));
+  return ticked;
 }
+var DESKTOP_SEEN = "desktop-share.json";
 var init_share_ask = __esm(() => {
   init_dist2();
 });
@@ -36946,12 +36968,12 @@ var init_declare_need = __esm(() => {
 });
 
 // ../mcp/src/handlers/declare.ts
-import { readFileSync as readFileSync6 } from "node:fs";
+import { readFileSync as readFileSync7 } from "node:fs";
 async function readLocalReceipts() {
   const held = new Map;
   let text2;
   try {
-    text2 = readFileSync6(RECEIPTS_LOG, "utf8");
+    text2 = readFileSync7(RECEIPTS_LOG, "utf8");
   } catch {
     return held;
   }
@@ -37170,7 +37192,7 @@ async function declareSession(id, args) {
     raw2 = given;
   } else {
     try {
-      raw2 = readFileSync6(SESSION_LOG, "utf8");
+      raw2 = readFileSync7(SESSION_LOG, "utf8");
     } catch {
       return fail(id, -32602, `no log passed and ${SESSION_LOG} is not readable — wire apps/hook/src/hook.ts as a PostToolUse hook, or pass \`log\``);
     }
@@ -42214,7 +42236,7 @@ var init_pulse_readings2 = __esm(() => {
 
 // ../mcp/src/pulse-cache.ts
 import { createHash as createHash2 } from "node:crypto";
-import { chmodSync as chmodSync2, mkdirSync as mkdirSync7, readFileSync as readFileSync7, writeFileSync as writeFileSync8 } from "node:fs";
+import { chmodSync as chmodSync2, mkdirSync as mkdirSync7, readFileSync as readFileSync8, writeFileSync as writeFileSync8 } from "node:fs";
 import { join as join11 } from "node:path";
 function diskListingCache(directory2, now = Date.now) {
   const pathOf = (repo) => join11(directory2, `${createHash2("sha256").update(repo).digest("hex")}.json`);
@@ -42222,7 +42244,7 @@ function diskListingCache(directory2, now = Date.now) {
     async get(repo) {
       let stored;
       try {
-        stored = JSON.parse(readFileSync7(pathOf(repo), "utf8"));
+        stored = JSON.parse(readFileSync8(pathOf(repo), "utf8"));
       } catch {
         return null;
       }
@@ -42389,7 +42411,7 @@ function positiveSetting(raw2, fallback2) {
 var BUSY = "the server is running as many searches as it can; try again in a moment", CANCELLED = "the call was cancelled";
 
 // ../mcp/src/handlers/pulse.ts
-import { chmodSync as chmodSync3, existsSync as existsSync6, mkdirSync as mkdirSync8, readFileSync as readFileSync8, rmSync as rmSync2 } from "node:fs";
+import { chmodSync as chmodSync3, existsSync as existsSync7, mkdirSync as mkdirSync8, readFileSync as readFileSync9, rmSync as rmSync2 } from "node:fs";
 import { homedir as homedir4 } from "node:os";
 import { join as join12, delimiter } from "node:path";
 function within(work, ms, stop) {
@@ -42456,7 +42478,7 @@ function searchHome() {
   return join12(arpHome(process.env, homedir4()), "skills-cli");
 }
 function searchIsCached() {
-  return existsSync6(join12(searchHome(), ".npm", "_npx"));
+  return existsSync7(join12(searchHome(), ".npm", "_npx"));
 }
 async function search(query, timeoutMs, stop, firstDownload = false) {
   if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env["ARP_PULSE_SEARCH"] })) {
@@ -42567,7 +42589,7 @@ function usageLine(usage, domain) {
 function readYourFailures() {
   try {
     const path = join12(arpHome(process.env, homedir4()), "failures.jsonl");
-    return existsSync6(path) ? parseLocalFailures(readFileSync8(path, "utf8")) : [];
+    return existsSync7(path) ? parseLocalFailures(readFileSync9(path, "utf8")) : [];
   } catch {
     return [];
   }
@@ -43197,7 +43219,7 @@ var init_server = __esm(async () => {
           return result(id, {
             protocolVersion: PROTOCOL_VERSION,
             capabilities: { tools: {} },
-            serverInfo: { name: "ARP", version: "0.2.0" },
+            serverInfo: { name: "ARP", version: SERVER_VERSION },
             instructions: DESKTOP ? DESKTOP_INSTRUCTIONS : READ_ONLY || HOSTED ? READ_INSTRUCTIONS : SERVER_INSTRUCTIONS
           });
         case "notifications/initialized":
@@ -45185,7 +45207,7 @@ __export(exports_check, {
   CHECK_BUDGET_MS: () => CHECK_BUDGET_MS
 });
 import { createHash as createHash3 } from "node:crypto";
-import { existsSync as existsSync7, statSync as statSync2 } from "node:fs";
+import { existsSync as existsSync8, statSync as statSync2 } from "node:fs";
 import { delimiter as delimiter2, join as join13 } from "node:path";
 function skillRefOf(arg) {
   const part = /^[\w.-]+$/;
@@ -45219,7 +45241,7 @@ function thisMachine(env = process.env, platform = process.platform) {
     hasProgram: (name) => dirs.some((dir) => exts.some((ext) => {
       const path = join13(dir, name + ext);
       try {
-        return existsSync7(path) && statSync2(path).isFile();
+        return existsSync8(path) && statSync2(path).isFile();
       } catch {
         return false;
       }
@@ -46115,7 +46137,7 @@ var init_skill_nodes_13579 = __esm(() => {
 });
 
 // ../hook/src/skill-failure.ts
-import { existsSync as existsSync8, mkdirSync as mkdirSync9, readFileSync as readFileSync9 } from "node:fs";
+import { existsSync as existsSync9, mkdirSync as mkdirSync9, readFileSync as readFileSync10 } from "node:fs";
 import { homedir as homedir5 } from "node:os";
 import { dirname as dirname6, join as join14 } from "node:path";
 function failureReason(text2) {
@@ -46160,7 +46182,7 @@ function skillDirectory(name, cwd) {
   const given = process.env["ARP_SKILLS_DIR"];
   if (given !== undefined && given !== "")
     roots.unshift(given);
-  return roots.map((root2) => join14(root2, name)).find((dir) => existsSync8(join14(dir, "SKILL.md"))) ?? null;
+  return roots.map((root2) => join14(root2, name)).find((dir) => existsSync9(join14(dir, "SKILL.md"))) ?? null;
 }
 function arpHome2() {
   const given = process.env["ARP_HOME"]?.trim();
@@ -46168,7 +46190,7 @@ function arpHome2() {
 }
 function appendFailure(line) {
   const path = join14(arpHome2(), "failures.jsonl");
-  const seen = existsSync8(path) ? readFileSync9(path, "utf8") : "";
+  const seen = existsSync9(path) ? readFileSync10(path, "utf8") : "";
   const key = `"session":${JSON.stringify(line.session)},"skill":${JSON.stringify(line.skill)},`;
   if (seen.split(`
 `).some((row) => row.includes(key) && row.includes(`"reason":"${line.reason}"`)))
@@ -46202,7 +46224,7 @@ __export(exports_backfill, {
   readTranscript: () => readTranscript,
   backfill: () => backfill
 });
-import { readdirSync as readdirSync2, readFileSync as readFileSync10, statSync as statSync3 } from "node:fs";
+import { readdirSync as readdirSync2, readFileSync as readFileSync11, statSync as statSync3 } from "node:fs";
 import { homedir as homedir6 } from "node:os";
 import { basename, join as join15 } from "node:path";
 function blocksOf(content2) {
@@ -46217,7 +46239,7 @@ function textOf(content2) {
 function fromDisk(name, cwd) {
   try {
     const directory2 = skillDirectory(name, cwd);
-    return directory2 === null ? null : { name, directory: directory2, markdown: readFileSync10(join15(directory2, "SKILL.md"), "utf8") };
+    return directory2 === null ? null : { name, directory: directory2, markdown: readFileSync11(join15(directory2, "SKILL.md"), "utf8") };
   } catch {
     return null;
   }
@@ -46336,7 +46358,7 @@ function backfill(root2 = join15(homedir6(), ".claude", "projects")) {
   for (const file of files) {
     let text2;
     try {
-      text2 = readFileSync10(file, "utf8");
+      text2 = readFileSync11(file, "utf8");
     } catch {
       continue;
     }
@@ -47132,7 +47154,7 @@ var init_edits = __esm(() => {
 });
 
 // src/install/targets.ts
-import { existsSync as existsSync9, readFileSync as readFileSync11 } from "node:fs";
+import { existsSync as existsSync10, readFileSync as readFileSync12 } from "node:fs";
 import { dirname as dirname7, join as join17 } from "node:path";
 function namesOurServer(text2, cliPath) {
   return text2.includes("@arp-protocol/cli") || text2.includes(cliPath) || /apps[\\/]cli[\\/]dist[\\/]cli\.js/.test(text2) || /[\\/]dist[\\/]cli\.js/.test(text2) && text2.includes("ARP_TARGET") || /(?:packaging[\\/]claude[\\/]arp|plugins[\\/]cache[\\/]arp[\\/]arp[\\/][^\\/]+)[\\/]bin[\\/]arp\.js/.test(text2);
@@ -47152,7 +47174,7 @@ function foreignRefusal(where) {
 }
 function read2(path) {
   try {
-    return existsSync9(path) ? readFileSync11(path, "utf8") : null;
+    return existsSync10(path) ? readFileSync12(path, "utf8") : null;
   } catch {
     return null;
   }
@@ -47353,7 +47375,7 @@ function jsonMcpRuntime(options) {
   return {
     id,
     name,
-    detect: (env) => env.which(binary) !== null || existsSync9(join17(env.home, dir)),
+    detect: (env) => env.which(binary) !== null || existsSync10(join17(env.home, dir)),
     install: (env, commands, project) => steps(env, commands, project, false),
     remove: (env, commands, project) => steps(env, commands, project, true),
     check: (env, _commands, project) => {
@@ -47404,7 +47426,7 @@ var init_targets = __esm(() => {
   claude = {
     id: "claude",
     name: "Claude Code",
-    detect: (env) => env.which("claude") !== null || existsSync9(join17(env.home, ".claude")),
+    detect: (env) => env.which("claude") !== null || existsSync10(join17(env.home, ".claude")),
     install: (env, commands, project) => [
       ...claudeMcpSteps(env, commands, project, false, true),
       claudeHookStep(env, commands, project, false)
@@ -47418,7 +47440,7 @@ var init_targets = __esm(() => {
   grok = {
     id: "grok",
     name: "Grok Build",
-    detect: (env) => env.which("grok") !== null || existsSync9(join17(env.home, ".grok")),
+    detect: (env) => env.which("grok") !== null || existsSync10(join17(env.home, ".grok")),
     install: (env, commands, project) => claude.detect(env) ? [{ kind: "skip", summary: "reads Claude Code's files, written above" }] : [
       ...claudeMcpSteps(env, commands, project, false, false),
       claudeHookStep(env, commands, project, false)
@@ -47456,7 +47478,7 @@ var init_targets = __esm(() => {
   codex2 = {
     id: "codex",
     name: "Codex",
-    detect: (env) => env.which("codex") !== null || existsSync9(join17(env.home, ".codex")),
+    detect: (env) => env.which("codex") !== null || existsSync10(join17(env.home, ".codex")),
     install: (env, commands, project) => [
       codexStep(env, commands.mcp, project, commands.force),
       commands.capture ? hookStep(join17(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, false) : noHook(join17(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands)
@@ -47516,9 +47538,9 @@ __export(exports_commands, {
 import {
   chmodSync as chmodSync4,
   copyFileSync,
-  existsSync as existsSync10,
+  existsSync as existsSync11,
   mkdirSync as mkdirSync10,
-  readFileSync as readFileSync12,
+  readFileSync as readFileSync13,
   renameSync,
   rmSync as rmSync3,
   statSync as statSync5,
@@ -47581,7 +47603,7 @@ function installsHook(runtimes, capture) {
 }
 function read3(path) {
   try {
-    return existsSync10(path) ? readFileSync12(path, "utf8") : null;
+    return existsSync11(path) ? readFileSync13(path, "utf8") : null;
   } catch {
     return null;
   }
@@ -47744,7 +47766,7 @@ async function offerSharing(env, flags) {
     env.out(`Sharing ${flags.share ? "on" : "off"}. ${SHARE_OFFER2.later}`);
     return;
   }
-  if (existsSync10(file))
+  if (existsSync11(file))
     return;
   if (flags.yes || flags.noInput || !env.interactive) {
     env.out(`Sharing is off. ${SHARE_OFFER2.later}`);
@@ -47765,7 +47787,7 @@ async function uninstall(env, flags, cliPath) {
   plan.push({ runtime: "hook", steps: [hookFileStep(env, commands, true), sendFileStep(commands, true)] });
   const code = await change(env, flags, plan, "Remove");
   const captures = join18(env.home, ".arp", "captures");
-  if (existsSync10(captures))
+  if (existsSync11(captures))
     env.out(`Captures kept in ${captures}. Delete them when you no longer need them.`);
   return code;
 }
@@ -47790,7 +47812,7 @@ function doctor(env, flags, cliPath) {
         installed === packaged
       ]);
     }
-    rows.push(["hook", `node at ${env.node}`, existsSync10(env.node)]);
+    rows.push(["hook", `node at ${env.node}`, existsSync11(env.node)]);
   }
   const answer2 = env.run([commands.mcp.command, ...commands.mcp.args], INITIALIZE, 30000);
   rows.push([
@@ -47838,7 +47860,7 @@ __export(exports_env, {
   processEnv: () => processEnv
 });
 import { spawnSync } from "node:child_process";
-import { existsSync as existsSync11 } from "node:fs";
+import { existsSync as existsSync12 } from "node:fs";
 import { homedir as homedir7 } from "node:os";
 import { delimiter as delimiter4, join as join19 } from "node:path";
 import { createInterface as createInterface2 } from "node:readline/promises";
@@ -47847,7 +47869,7 @@ function which(command) {
     if (dir.length === 0)
       continue;
     const candidate = join19(dir, command);
-    if (existsSync11(candidate))
+    if (existsSync12(candidate))
       return candidate;
   }
   return null;

@@ -89,6 +89,12 @@ export const CONTENT_URL = process.env['ARP_CONTENT'] ?? CONTENT_DEFAULT;
  */
 const SPONSOR_DEFAULT = process.env.ARP_SPONSOR_DEFAULT || 'http://127.0.0.1:3200';
 export const SPONSOR_URL = process.env['ARP_SPONSOR'] ?? SPONSOR_DEFAULT;
+/**
+ * The version `initialize` reports as `serverInfo.version`: `apps/cli`'s `package.json` version, inlined by its
+ * builds like the two defaults above (task 137, ADR `0175`), so the plugin's and the Desktop extension's server
+ * name the release they shipped in. Run from source, `source`. Dot access on purpose, as above.
+ */
+export const SERVER_VERSION = process.env.ARP_PACKAGE_VERSION || 'source';
 
 /** Where the hook writes, and where the fetch records what it fetched. Both overridable. */
 export const SESSION_LOG = inProject(process.env['ARP_SESSION_LOG'] ?? '.arp/session.jsonl');

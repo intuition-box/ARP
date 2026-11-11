@@ -100,9 +100,11 @@ async function bundledCli(): Promise<string> {
     // The sponsoring service's default, from `package.json`'s `config.sponsorDefault` as its build inlines it
     // (task 105, ADR `0175`). Always defined, empty for the loopback, so the bundle never reads it at run time.
     // The content server's, from `config.contentDefault`, the same way (task 131, ADR `0196`).
+    // The server's `serverInfo.version`, from `version` (task 137).
     define: {
       'process.env.ARP_SPONSOR_DEFAULT': JSON.stringify(pkg.config?.sponsorDefault ?? ''),
       'process.env.ARP_CONTENT_DEFAULT': JSON.stringify(pkg.config?.contentDefault ?? ''),
+      'process.env.ARP_PACKAGE_VERSION': JSON.stringify(pkg.version),
     },
   });
   const [only, ...others] = built.outputs;

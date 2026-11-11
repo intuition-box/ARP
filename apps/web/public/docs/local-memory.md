@@ -103,7 +103,7 @@ The hook cannot ask you anything itself; it can only add to what the model reads
 
 Both "yes" answers also write the result the question was about to `~/.arp/share-once.jsonl`, since it was kept a turn before the answer.
 
-The choice is kept in `~/.arp/sharing.json` with its date and how it was made: `init`, `command`, `desktop`, `asked-once`, `asked-always` or `asked-no`. An install that already asked (`arp init`, Claude Desktop's setting) is a choice, and the question is not put.
+The choice is kept in `~/.arp/sharing.json` with its date and how it was made: `init`, `command`, `desktop`, `asked-once`, `asked-always` or `asked-no`. An install that already asked (`arp init`, Claude Desktop's setting) is a choice, and the question is not put. Claude Desktop's setting writes the file only when nothing is on file, when the file is its own, or when you change the setting: left as it was, it never overwrites `arp share on`, `arp init` or an answer given in Claude Code on the same machine. It remembers its value at the last start in `~/.arp/desktop-share.json`.
 
 When a session ends with sharing on, or with a "yes, this once" from that session, the `SessionEnd` hook starts `arp share send --auto` detached and returns: the session does not wait for the network. The send takes a lock, `~/.arp/share-send.lock`, so two sessions ending together send once, prints nothing, and writes what it did, sent, failed and the first error, to `~/.arp/share-log.jsonl`. A line that failed is tried again at the next session end with sharing on. A "yes, this once" line that failed waits for `arp share send`. `ARP_SHARE_AUTO=off` stops both the question and the background send; `arp share send` still works.
 

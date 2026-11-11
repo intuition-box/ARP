@@ -55,6 +55,7 @@ import {
   DESKTOP,
   READ_ONLY,
   HOSTED,
+  SERVER_VERSION,
 } from './config.js';
 import { loggable, publicHost } from './hosted.js';
 import { type JsonRpcId, type Rpc, result, fail } from './rpc.js';
@@ -300,7 +301,7 @@ export const handler = {
         return result(id, {
           protocolVersion: PROTOCOL_VERSION,
           capabilities: { tools: {} },
-          serverInfo: { name: 'ARP', version: '0.2.0' },
+          serverInfo: { name: 'ARP', version: SERVER_VERSION },
           // No sharing question here since task 126: the hook asks, once, after the first skill result (ADR `0191`).
           instructions: DESKTOP ? DESKTOP_INSTRUCTIONS : READ_ONLY || HOSTED ? READ_INSTRUCTIONS : SERVER_INSTRUCTIONS,
         });

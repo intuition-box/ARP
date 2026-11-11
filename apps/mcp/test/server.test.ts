@@ -332,7 +332,8 @@ describe("the handshake", () => {
         });
         const result = body?.["result"] as Record<string, unknown>;
         expect(result["protocolVersion"]).toBe("2025-06-18");
-        expect(result["serverInfo"]).toMatchObject({name: "ARP"});
+        // Run from source, the version is `source`; `apps/cli`'s builds inline the package version (task 137).
+        expect(result["serverInfo"]).toEqual({name: "ARP", version: "source"});
         expect(result["capabilities"]).toHaveProperty("tools");
         /**
          * The instructions are the **only** context an agent gets if it never reads the skill file,

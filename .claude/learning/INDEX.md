@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-127 entries, one per completed task. Written by `task-verifier` on a pass.
+128 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -133,3 +133,4 @@
 | [121](121-the-landing-scenes-are-static.md) | `docs/tasks/133-the-landing-scenes-are-static.md` | PASS | The landing's scenes are static: they read nothing |
 | [122](122-arp-as-a-signal-generator.md) | `docs/tasks/134-arp-as-a-signal-generator.md` | PASS | ARP as a signal generator, for an external adapter |
 | [123](123-the-desktop-extension-is-built-here.md) | `docs/tasks/135-the-desktop-extension-is-built-here.md` | PASS | The Claude Desktop extension is built here |
+| [125](125-desktop-share-and-server-version.md) | `docs/tasks/137-desktop-share-and-server-version.md` | PASS | Desktop's share setting stops overwriting, and the server names its version |
