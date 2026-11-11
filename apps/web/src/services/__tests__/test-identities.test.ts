@@ -32,15 +32,15 @@ const side = {
 };
 
 describe("the list", () => {
-    it("hides agents 13579:1 to 38 on ARP's registry, and nothing else", () => {
+    it("hides agents 13579:1 to 43 on ARP's registry, and nothing else", () => {
         expect(isHiddenAgent({chainId: 13579, tokenId: "1"})).toBe(true);
-        expect(isHiddenAgent({chainId: 13579, tokenId: "38"})).toBe(true);
-        expect(isHiddenAgent({chainId: 13579, tokenId: "39"})).toBe(false);
+        expect(isHiddenAgent({chainId: 13579, tokenId: "43"})).toBe(true);
+        expect(isHiddenAgent({chainId: 13579, tokenId: "44"})).toBe(false);
         expect(isHiddenAgent({chainId: 8453, tokenId: "5"})).toBe(false);
         expect(
             isHiddenAgent({chainId: 13579, tokenId: "5", registry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432"}),
         ).toBe(false);
-        expect(hiddenCaip19s()).toHaveLength(38);
+        expect(hiddenCaip19s()).toHaveLength(43);
     });
 
     it("hides the four wallets, whatever their case", () => {
@@ -127,14 +127,14 @@ describe("what is left out", () => {
 });
 
 describe("fetchHiddenAtomIds", () => {
-    it("asks for the subjects of `same as` edges to the 38 identities, and lowercases them", async () => {
+    it("asks for the subjects of `same as` edges to the 43 identities, and lowercases them", async () => {
         const fetcher = vi.fn(async () =>
             new Response(JSON.stringify({data: {triples: [{subject_id: "0xABC"}]}}), {status: 200}),
         );
         const ids = await fetchHiddenAtomIds("https://indexer.test", fetcher);
         expect([...ids]).toEqual(["0xabc"]);
         const body = JSON.parse(String((fetcher.mock.calls[0] as unknown as [string, RequestInit])[1].body));
-        expect(body.variables.labels).toHaveLength(38);
+        expect(body.variables.labels).toHaveLength(43);
     });
 
     it("throws on a failed read rather than hiding nothing", async () => {
