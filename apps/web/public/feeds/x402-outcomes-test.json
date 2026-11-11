@@ -1,7 +1,7 @@
 {
   "test": true,
   "schema": "arp.x402-outcomes/4",
-  "generated_at": "2026-11-11T13:46:59.549Z",
+  "generated_at": "2026-11-11T15:03:40.335Z",
   "trace": {
     "chain": "eip155:13579",
     "graphql": "https://testnet.intuition.sh/v1/graphql"
@@ -54,6 +54,124 @@
       "price": null,
       "payee_check": "unchecked",
       "payee_checked_at": null
+    },
+    {
+      "endpoint": "https://seller.arp.intuition.box/x402-demo/no-delivery",
+      "endpoint_canonical": "https://seller.arp.intuition.box/x402-demo/no-delivery",
+      "outcome": "failed",
+      "reason": "no-delivery",
+      "domain": null,
+      "settlement_tx": "0x10f48d8562e0bed45eeffc825624b6af5579c75e90acddd55b1ef141ae179e5d",
+      "network": "eip155:84532",
+      "line_id": "0xd2930d0376524eec84d182d0758aec67e996d358545f603a2996ce16003f5924",
+      "written_at": "2026-11-11T15:08:43.000Z",
+      "payer": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42",
+      "pay_to": "0x000000000000000000000000000000000000dEaD",
+      "amount": "1000",
+      "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "paid_at": "2026-11-11T15:06:33.000Z",
+      "writer": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42",
+      "signed_request": {
+        "typed_data": {
+          "domain": {
+            "name": "ARP Line Request",
+            "version": "5",
+            "chainId": 13579
+          },
+          "types": {
+            "LineRequest": [
+              {
+                "name": "agent",
+                "type": "address"
+              },
+              {
+                "name": "agentRegistry",
+                "type": "string"
+              },
+              {
+                "name": "agentId",
+                "type": "string"
+              },
+              {
+                "name": "tool",
+                "type": "bytes32"
+              },
+              {
+                "name": "domain",
+                "type": "string"
+              },
+              {
+                "name": "outcome",
+                "type": "string"
+              },
+              {
+                "name": "reason",
+                "type": "string"
+              },
+              {
+                "name": "payment",
+                "type": "string"
+              },
+              {
+                "name": "endpoint",
+                "type": "string"
+              },
+              {
+                "name": "need",
+                "type": "string"
+              },
+              {
+                "name": "payTo",
+                "type": "string"
+              },
+              {
+                "name": "asset",
+                "type": "string"
+              },
+              {
+                "name": "price",
+                "type": "string"
+              },
+              {
+                "name": "termsAt",
+                "type": "uint256"
+              },
+              {
+                "name": "nonce",
+                "type": "bytes32"
+              },
+              {
+                "name": "expiresAt",
+                "type": "uint256"
+              }
+            ]
+          },
+          "primaryType": "LineRequest",
+          "message": {
+            "agent": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42",
+            "agentRegistry": "eip155:13579:0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+            "agentId": "12",
+            "tool": "0x1483382024b8de0174d599d16d160af2a4659450d6c8d17a3fc47e374fb88066",
+            "domain": "",
+            "outcome": "failed",
+            "reason": "no-delivery",
+            "payment": "eip155:84532/tx/0x10f48d8562e0bed45eeffc825624b6af5579c75e90acddd55b1ef141ae179e5d",
+            "endpoint": "https://seller.arp.intuition.box/x402-demo/no-delivery",
+            "need": "",
+            "payTo": "0x000000000000000000000000000000000000dEaD",
+            "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+            "price": "1000",
+            "termsAt": 1794409364,
+            "nonce": "0x5f9eccb1a6787f5ff424c820ae663a60cbe08e4733d1647349fde77a4df344b2",
+            "expiresAt": 1794409987
+          }
+        },
+        "signature": "0x9e7ef358b3fe8feb2e22fa82942caa9041b996e2f2f3b43b0da427a1c986c78d5adfced3e6f1e427ba78fb415c10feb03dfa800fc153cc54cc6937c926f8e1de1c"
+      },
+      "signed_by_payer": true,
+      "price": "1000",
+      "payee_check": "live",
+      "payee_checked_at": "2026-11-11T15:08:34.000Z"
     }
   ],
   "by_endpoint": {
@@ -64,6 +182,14 @@
       "no_delivery": 0,
       "payers": 0,
       "unchecked": 2
+    },
+    "https://seller.arp.intuition.box/x402-demo/no-delivery": {
+      "records": 1,
+      "worked": 0,
+      "failed": 1,
+      "no_delivery": 1,
+      "payers": 1,
+      "unchecked": 0
     }
   },
   "skipped": {
@@ -71,5 +197,5 @@
     "reasons": {}
   },
   "truncated": false,
-  "signed_requests_from": null
+  "signed_requests_from": "https://sponsor.arp.intuition.box/line-request"
 }
