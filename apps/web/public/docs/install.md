@@ -10,7 +10,7 @@ Every way to install ARP, and the state of each on 2026-11-11. This page is the 
 | Claude Desktop | [the extension, one `.mcpb` file](#claude-desktop-the-extension) | **not published** | sponsored tools, nothing to sign |
 | Cursor, Gemini CLI, Codex, Copilot, Grok Build | [`arp init`](#other-runtimes-arp-init) | works | the full tool set; the hook in Claude Code and Grok Build only |
 | the runtimes `arp init` finds, sponsored | [`arp init --sponsored`](#arp-init---sponsored) | works from 0.0.6, with ARP's hosted sponsor and content server | tools that sign nothing for you |
-| any MCP client | [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry) | published, 0.0.5 on npm (2026-11-11) | what the client's entry starts |
+| any MCP client | [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry) | published, 0.0.6 on npm (2026-11-11) | what the client's entry starts |
 | nothing installed | [the skill file](#nothing-installed-the-skill-file) | works | the procedure, as public reads and calls you sign |
 | a throwaway machine | [a Docker container](#an-isolated-test-in-docker) | works | the plugin, away from your own files |
 
@@ -45,9 +45,9 @@ What you get, the full feature set of this round:
 - the MCP server with three read tools: `arp_pulse`, `arp_tool_reputation`, `arp_agent_endpoints` ([MCP tools](/docs/mcp-tools));
 - the hook ([Local memory and sharing](/docs/local-memory)): it keeps a local memory of what failed, shows what a skill contains before `npx skills add` runs, shows what others wrote when a skill fails, and asks once per skill whether it did its job;
 - one question, once: after the first skill result, the agent asks whether to share it, with three answers, "yes, this once", "always" and "no". Nothing is shared before you answer. "Always" sends that result and each later one in the background when its session ends, nothing kept before ([Sharing](/docs/local-memory#sharing));
-- five commands you type yourself: `/arp:share`, `/arp:share-on`, `/arp:share-off`, `/arp:share-send`, `/arp:line`. The last two need a sponsoring service: ARP's is hosted at `https://sponsor.arp.intuition.box`, the default from 0.0.4. 0.0.3 cannot write a line through it once it checks line request v5 (task 122), which 0.0.3 does not sign, so update to 0.0.5 (0.0.5 also asks once whether to share). The send after "always" or "yes, this once" goes through the same service; when it fails, why is written down in `~/.arp/share-log.jsonl`, not shown.
+- five commands you type yourself: `/arp:share`, `/arp:share-on`, `/arp:share-off`, `/arp:share-send`, `/arp:line`. The last two need a sponsoring service: ARP's is hosted at `https://sponsor.arp.intuition.box`, the default from 0.0.4. 0.0.5 and earlier cannot write a line through it: it checks line request v6 (task 127), which they do not sign, so update to 0.0.6. Since 0.0.5 the plugin asks once whether to share. The send after "always" or "yes, this once" goes through the same service; when it fails, why is written down in `~/.arp/share-log.jsonl`, not shown.
 
-Checked on 2026-11-11 in a clean `node:22-bookworm` container with Claude Code 2.1.322: both install commands succeeded, `claude plugin list` showed `arp@arp`, version 0.0.5, enabled, both update commands succeeded and `claude plugin update arp@arp` answered `arp is already at the latest version (0.0.5)`, and `claude mcp list` showed `plugin:arp:arp … ✔ Connected`.
+Checked on 2026-11-11 in a clean `node:22-bookworm` container with Claude Code 2.1.322: both install commands succeeded, `claude plugin list` showed `arp@arp`, version 0.0.6, enabled, both update commands succeeded and `claude plugin update arp@arp` answered `arp is already at the latest version (0.0.6)`, and `claude mcp list` showed `plugin:arp:arp … ✔ Connected`.
 
 ## Claude Desktop, today: an MCP entry by hand
 
@@ -65,7 +65,7 @@ Add ARP under `mcpServers` (merge it with any servers already there), then quit 
   "mcpServers": {
     "arp": {
       "command": "npx",
-      "args": ["-y", "@arp-protocol/cli@0.0.5", "mcp"],
+      "args": ["-y", "@arp-protocol/cli@0.0.6", "mcp"],
       "env": { "ARP_TARGET": "testnet", "ARP_TOOLS": "read" }
     }
   }
@@ -76,7 +76,7 @@ Node.js 22 or later must be installed: Desktop starts `npx` itself. Both variabl
 
 What you get: the plugin's three read tools. **Claude Desktop runs no hooks**, so nothing of the hook happens there: no record of what failed on your machine (`failed_on_this_machine` stays empty), no check before an install, no answer when a skill fails, no question whether a skill worked, so no worked line to share, and no question whether to share.
 
-State: the command, with `@arp-protocol/cli@0.0.5`, was run in a clean `node:22-bookworm` container on 2026-11-11, outside Desktop. It answered `initialize` and listed `arp_pulse, arp_tool_reputation, arp_agent_endpoints` on chain 13579. This entry has not yet been run inside Claude Desktop, on macOS or on Windows.
+State: the command, with `@arp-protocol/cli@0.0.6`, was run in a clean `node:22-bookworm` container on 2026-11-11, outside Desktop. It answered `initialize` and listed `arp_pulse, arp_tool_reputation, arp_agent_endpoints` on chain 13579. This entry has not yet been run inside Claude Desktop, on macOS or on Windows.
 
 ## Claude Desktop and claude.ai: a hosted connector
 
@@ -120,7 +120,7 @@ npx -y @arp-protocol/cli init --sponsored
 
 `arp_get_skill` and `arp_declare_used` fetch a skill through ARP's content server, which signs the receipt the sponsor pays against. From 0.0.6 that is ARP's hosted one, `https://content.arp.intuition.box` (task 131); up to 0.0.5 they looked for one on your own machine (`http://127.0.0.1:3002`) and failed unless you ran one.
 
-The same install with `ARP_TOOLS=sponsored`: tools that walk the loop with nothing for you to sign, because ARP's sponsoring service pays, plus `arp_get_skill`, which installs a skill you accept into the project's `.claude/skills/`. It holds a local agent key, on testnet. From 0.0.4 the calls that send something reach ARP's hosted sponsoring service, `https://sponsor.arp.intuition.box`, testnet 13579. 0.0.3 cannot write a line through it once it checks line request v5 (task 122), which 0.0.3 does not sign. When it does not answer, they fail and name it.
+The same install with `ARP_TOOLS=sponsored`: tools that walk the loop with nothing for you to sign, because ARP's sponsoring service pays, plus `arp_get_skill`, which installs a skill you accept into the project's `.claude/skills/`. It holds a local agent key, on testnet. From 0.0.4 the calls that send something reach ARP's hosted sponsoring service, `https://sponsor.arp.intuition.box`, testnet 13579. 0.0.5 and earlier cannot write a line through it: it checks line request v6 (task 127). When it does not answer, they fail and name it. Checked on 2026-11-11 in a clean `node:22-bookworm` container with 0.0.6 and nothing else set: `init --sponsored`, then `arp_get_skill` and `arp_declare_used` on the `pdf` skill, then `arp line --tool "https://github.com/anthropics/skills?skill=pdf" --outcome worked`, all answered.
 
 ## The npm package and the MCP Registry
 
@@ -133,7 +133,7 @@ npm view @arp-protocol/cli version mcpName dist-tags.latest
 curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Wieedze/arp"
 ```
 
-On 2026-11-11 the first printed `version = '0.0.5'`, `mcpName = 'io.github.Wieedze/arp'` and `dist-tags.latest = '0.0.5'`. The second returned three entries, one per version, all `active`: 0.0.3 (published `2026-11-10T13:21:55Z`, no `remotes`), 0.0.4 (`2026-11-11T15:29:46Z`) and 0.0.5 (`2026-11-11T17:07:29Z`, `isLatest: true`), the last two with the remote `https://mcp.arp.intuition.box/mcp`. The entries come in that order, so a client that shows the first one shows 0.0.3: read `isLatest`.
+On 2026-11-11 the first printed `version = '0.0.6'`, `mcpName = 'io.github.Wieedze/arp'` and `dist-tags.latest = '0.0.6'`. The second returned four entries, one per version, all `active`: 0.0.3 (published `2026-11-10T13:21:55Z`, no `remotes`), 0.0.4 (`2026-11-11T15:29:46Z`), 0.0.5 (`2026-11-11T17:07:29Z`) and 0.0.6 (`2026-11-11T17:58:56Z`, `isLatest: true`), the last three with the remote `https://mcp.arp.intuition.box/mcp`. The entries come in that order, so a client that shows the first one shows 0.0.3: read `isLatest`.
 
 ## Nothing installed: the skill file
 

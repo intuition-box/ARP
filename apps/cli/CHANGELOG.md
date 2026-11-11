@@ -3,7 +3,7 @@
 `@arp-protocol/cli`. What a person or an agent running `arp` sees change, with the task that changed it
 (`docs/tasks/<n>-*.md` in the repository). Everything writes on Intuition testnet 13579 only.
 
-## 0.0.6 — unreleased
+## 0.0.6 — published 2026-11-11
 
 - **Breaking: the line request is version 6** (task 127, ADR `0192`). It signs two more fields, `version`
   and `evidence`. A line sent by 0.0.5 is refused by a sponsoring service built from today's `main`

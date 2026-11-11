@@ -35,7 +35,7 @@ reads the addresses an agent published and whether each one answers.
 **Use.** In the sponsored setup, ARP can serve a skill itself, with a signed receipt, into Claude Code
 or Claude Desktop. The receipt records access, not use. Up to 0.0.5 this needs a content server you run yourself
 ([the steps](docs/26_DEMO_PLAN.md)); from 0.0.6 the CLI defaults to ARP's hosted one,
-`https://content.arp.intuition.box`, once it is deployed (task 131), and it covers 521 of the 662 skills on testnet 13579
+`https://content.arp.intuition.box`, live since 2026-11-11 (task 131), and it covers 521 of the 662 skills on testnet 13579
 ([task 31](docs/tasks/31-arp-serves-the-content-and-signs-the-access.md)).
 
 **Vouch.** After it runs, the agent can write a public line: what it used, in which domain, whether it
@@ -59,7 +59,7 @@ own test agents, so this part shows how it works, not what anyone else found.
 
 In Claude Code, with Node 22: `claude plugin marketplace add intuition-box/ARP`, then
 `claude plugin install arp@arp`. The plugin carries its own copy of the CLI, which is also on npm as
-[`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-protocol/cli) 0.0.5 and in the official MCP
+[`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-protocol/cli) 0.0.6 and in the official MCP
 Registry as `io.github.Wieedze/arp`.
 
 **Every other route, and the state of each** (Claude Desktop by hand, the hosted connector at

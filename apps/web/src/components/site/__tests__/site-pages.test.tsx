@@ -44,7 +44,7 @@ describe("the site's own pages (task 74)", () => {
         renderAt("/test-identities");
         expect(await screen.findByRole("heading", {name: "Hidden here"})).toBeTruthy();
         expect(screen.getByText("0xE596096F4176b682E300d73963e7B04B383C1AA1")).toBeTruthy();
-        expect(screen.getByText("13579:1 to 13579:44")).toBeTruthy();
+        expect(screen.getByText("13579:1 to 13579:45")).toBeTruthy();
     });
 
     it("links the docs, the code on intuition-box, and the six legal pages from the footer", () => {
