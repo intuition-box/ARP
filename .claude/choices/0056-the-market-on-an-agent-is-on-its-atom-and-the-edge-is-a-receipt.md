@@ -11,6 +11,9 @@ the framing in one line — _« soit on mise sur un agent soit on retire notre m
 market donc pas un signal, juste une bourse d'agents et d'outils »_ — which is decision 5 below and
 the reason the exit shipped with this change rather than after it.
 
+> **Narrowed by ADR `0193`, 2026-11-11.** The web page on an agent offers no market and no
+> declaration card; the atom vault and the `uses` edge stand for the protocol and the MCP tools.
+
 Amends ADR `0046` §2 on one point. `0046`'s **reasoning** stands intact.
 
 ## Context

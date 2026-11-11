@@ -411,7 +411,7 @@ function AgentTrustPanelBody() {
                     </div>
 
                     {/* No market on an agent: support stays on skills and tools (the user,
-                        2026-11-11, reversing ADR `0056`'s market on agents). Absent when the graph
+                        2026-11-11, ADR `0193` narrowing ADR `0056`). Absent when the graph
                         has no atom: nothing can point at it. */}
                     {backingAtomId === null ? null : (
                         <Block title="Relations" label="Every declaration about this agent">

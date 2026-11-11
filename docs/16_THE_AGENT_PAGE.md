@@ -108,6 +108,9 @@ Exists elsewhere in the product and moves here.
 
 ### 7. Three ways to add to the record, and they are different acts
 
+> **2026-11-11, ADR `0193`:** the web page on an agent offers neither "Back it" nor "Declare you used
+> it" any more; both stay reachable through the MCP tools.
+
 - **Back it** — put TRUST on its atom. Anyone, any reason, withdrawable. It stays yours; it is not a
   payment to the agent.
 - **Declare you used it** — write the edge. Costs from 0.1 TRUST on mainnet and from 0.001 on

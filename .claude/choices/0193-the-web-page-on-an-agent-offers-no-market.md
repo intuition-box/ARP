@@ -46,12 +46,11 @@ both. Skill and tool pages keep their market and their declaration card.
 
 **Neutral (worth knowing):**
 - The sigil's Saffron core still lights for a viewer who holds a position taken elsewhere.
-- The ratings tab keeps its stake control on a trust provider's claim: that is ADR `0017`'s, not
-  `0056`'s.
+- After this the agent page has no stake control at all: the rating rows lost theirs on 2026-10-27
+  (`components/agent/RatingRow.tsx`) and only display the positions on a provider's claim.
 
 ## References
 
 - Related ADR: `.claude/choices/0056-the-market-on-an-agent-is-on-its-atom-and-the-edge-is-a-receipt.md`
-- Related ADR: `.claude/choices/0017-arp-stakes-real-trust-on-mainnet.md`
 - Related task: `docs/tasks/128-the-agent-page-is-for-reading.md`
 - Related rule: `.claude/rules/ui.md`
