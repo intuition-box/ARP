@@ -1,7 +1,8 @@
 import {useId, useRef, useState} from "react";
+import {useSearchParams} from "react-router-dom";
 import {useAccount, useSwitchChain} from "wagmi";
 
-import {DEFAULT_IDENTITY_REGISTRY} from "@arp-protocol/core";
+import {DEFAULT_IDENTITY_REGISTRY, type IdentityAtomPlan} from "@arp-protocol/core";
 
 import {Hint} from "../components/brand/Hint";
 import {
@@ -31,6 +32,7 @@ import {ConnectPrompt} from "../components/onboarding/ConnectPrompt";
 import {controlClass} from "../lib/control-class";
 import {useAgentImport} from "../hooks/use-agent-import";
 import {useChainChoice} from "../lib/chain-choice";
+import {identityRegistryFor} from "../lib/deployments";
 import {buildImportConsent, type ImportConsent, type ImportedAgent} from "../services/agent-import";
 import {formatTrust, truncateMiddle} from "../services/trust-format";
 
@@ -53,11 +55,38 @@ import {formatTrust, truncateMiddle} from "../services/trust-format";
  *      reputation — half of `docs/12` — has nothing to attach to.
  */
 
-const LOOKUP_CHAINS: {id: number; label: string; note: string}[] = [
-    {id: 8453, label: "Base (8453)", note: "mirrored into the Intuition graph"},
-    {id: 56, label: "BSC (56)", note: "registry only — the graph does not mirror it"},
-    {id: 1, label: "Ethereum (1)", note: "registry only — the graph does not mirror it"},
+/**
+ * Intuition testnet 13579 is the one chain an agent is imported from today: it is where the mint on
+ * this page lands, so a mint followed by "link your agent wallet" ends here. Base, BSC and Ethereum are
+ * shown and not offered (the user, 2026-11-11, task 129): their agents are real, and importing them is
+ * not released yet.
+ */
+const TESTNET_CHAIN_ID = 13579;
+const LOOKUP_CHAINS: {id: number; label: string; note: string; soon?: true}[] = [
+    {
+        id: TESTNET_CHAIN_ID,
+        label: "Intuition Testnet (13579)",
+        note: "where an agent minted here lands",
+    },
+    {id: 8453, label: "Base (8453) · soon to be released", note: "", soon: true},
+    {id: 56, label: "BSC (56) · soon to be released", note: "", soon: true},
+    {id: 1, label: "Ethereum (1) · soon to be released", note: "", soon: true},
 ];
+
+/** The registry a chain's agents live in: ARP's own on 13579, the canonical one elsewhere. */
+function registryOf(chainId: number) {
+    return identityRegistryFor(chainId) ?? DEFAULT_IDENTITY_REGISTRY;
+}
+
+/** `?chain=13579&id=40`, as the mint links here; anything else falls back to an empty form. */
+function prefillOf(params: URLSearchParams): {chainId: number; tokenId: string} {
+    const chain = Number(params.get("chain"));
+    const id = params.get("id") ?? "";
+    const offered = LOOKUP_CHAINS.some(
+        (option) => option.id === chain && option.soon === undefined,
+    );
+    return {chainId: offered ? chain : TESTNET_CHAIN_ID, tokenId: /^\d+$/.test(id) ? id : ""};
+}
 
 const inputClass =
     "mt-2 block w-full bg-transparent border border-[color:var(--color-rule-strong)] px-3 py-1.5 " +
@@ -67,14 +96,31 @@ function errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
 }
 
+/**
+ * The agent's atom, taken from the identity plan once its record is on chain (task 129). The graph
+ * finds an agent by its record's name, and a record written from this page is not pinned, so the
+ * graph cannot name it yet; the plan already holds its id, which is the one resolution would return.
+ */
+function withAtom(current: ProvenPhase, plan: IdentityAtomPlan): ProvenPhase {
+    return {
+        ...current,
+        proven: {
+            ...current.proven,
+            atom: {atomId: plan.identityAtom, label: null, caip19: plan.caip19},
+        },
+    };
+}
+
 export function AgentImport() {
     const {address: connected, isConnected, chainId: walletChainId} = useAccount();
     const {switchChainAsync, isPending: isSwitching} = useSwitchChain();
     const actions = useAgentImport();
     const fieldId = useId();
 
-    const [chainId, setChainId] = useState(8453);
-    const [tokenId, setTokenId] = useState("");
+    const [searchParams] = useSearchParams();
+    const [prefill] = useState(() => prefillOf(searchParams));
+    const [chainId, setChainId] = useState(prefill.chainId);
+    const [tokenId, setTokenId] = useState(prefill.tokenId);
     const [phase, setPhase] = useState<Phase>({step: "idle"});
     /**
      * Bumped by every check and every edit to the chain or token, so a registry reply that lands
@@ -127,7 +173,7 @@ export function AgentImport() {
                   ref: {
                       chainId: proven.chainId,
                       tokenId: proven.tokenId,
-                      registry: DEFAULT_IDENTITY_REGISTRY,
+                      registry: registryOf(proven.chainId),
                   },
                   caip19: proven.caip19,
                   owner: proven.owner,
@@ -165,6 +211,7 @@ export function AgentImport() {
         try {
             const verdict = await actions.verifyOwnership({
                 chainId,
+                registry: registryOf(chainId),
                 tokenId: trimmedToken,
                 connected,
             });
@@ -173,7 +220,11 @@ export function AgentImport() {
                 return;
             }
             const [atom, operatingAccount] = await Promise.all([
-                actions.resolveAtom({chainId, tokenId: trimmedToken}),
+                actions.resolveAtom({
+                    chainId,
+                    tokenId: trimmedToken,
+                    registry: registryOf(chainId),
+                }),
                 actions.deriveOperatingAccount(verdict.owner),
             ]);
             settle(
@@ -261,12 +312,13 @@ export function AgentImport() {
             const priced = await actions.planIdentity({
                 chainId: proven.chainId,
                 tokenId: proven.tokenId,
-                registry: DEFAULT_IDENTITY_REGISTRY,
+                registry: registryOf(proven.chainId),
             });
-            updateProven(proven, (current) => ({
-                ...current,
-                identity: {stage: "priced", plan: priced, error: null},
-            }));
+            updateProven(proven, (current) =>
+                priced.calls.length === 0
+                    ? withAtom(current, priced)
+                    : {...current, identity: {stage: "priced", plan: priced, error: null}},
+            );
         } catch (error) {
             updateProven(proven, (current) => ({
                 ...current,
@@ -286,10 +338,12 @@ export function AgentImport() {
         }));
         try {
             const result = await actions.publishIdentity(identityPlan);
-            updateProven(from, (current) => ({
-                ...current,
-                identity: {stage: "sent", plan: identityPlan, result: result.txs},
-            }));
+            updateProven(from, (current) =>
+                withAtom(
+                    {...current, identity: {stage: "sent", plan: identityPlan, result: result.txs}},
+                    identityPlan,
+                ),
+            );
         } catch (error) {
             updateProven(from, (current) => ({
                 ...current,
@@ -362,7 +416,7 @@ export function AgentImport() {
                             className={`${inputClass} text-[length:var(--text-body-sm)]`}
                         >
                             {LOOKUP_CHAINS.map((chain) => (
-                                <option key={chain.id} value={chain.id}>
+                                <option key={chain.id} value={chain.id} disabled={chain.soon}>
                                     {chain.label}
                                 </option>
                             ))}

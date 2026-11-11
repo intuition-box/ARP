@@ -48,18 +48,26 @@ const PLAN = {
 } as unknown as ImportLinkPlan;
 
 const verifyOwnership = vi.fn(async (params: {chainId: number; tokenId: string}) => owned(params));
+const resolveAtom = vi.fn(
+    async (): Promise<{atomId: string; label: string | null; caip19: string} | null> => ({
+        atomId: ATOM,
+        label: null,
+        caip19: "eip155:13579/erc721:0x/1",
+    }),
+);
+const planIdentity = vi.fn();
 const signConsent = vi.fn(async () => ({signature: SIGNATURE, chainId: 13579}));
 const publishLink = vi.fn(async () => ({tripleTx: SIGNATURE}));
 
 vi.mock("../hooks/use-agent-import", () => ({
     useAgentImport: () => ({
         verifyOwnership,
-        resolveAtom: async () => ({atomId: ATOM, label: null, caip19: "eip155:8453/erc721:0x/1"}),
+        resolveAtom,
         deriveOperatingAccount: async () => ACCOUNT,
         signConsent,
         planLink: async () => PLAN,
         publishLink,
-        planIdentity: vi.fn(),
+        planIdentity,
         publishIdentity: vi.fn(),
     }),
 }));
@@ -83,7 +91,7 @@ beforeEach(() => {
 async function proveToken(tokenId: string) {
     fireEvent.change(screen.getByLabelText("Token id"), {target: {value: tokenId}});
     fireEvent.click(screen.getByRole("button", {name: "Check ownership"}));
-    await screen.findByText(`Agent 8453:${tokenId} is yours.`);
+    await screen.findByText(`Agent 13579:${tokenId} is yours.`);
 }
 
 describe("AgentImport after a rejected re-sign", () => {
@@ -123,9 +131,59 @@ describe("AgentImport when the token is edited during the ownership check", () =
         await screen.findByRole("button", {name: "Reading the registry…"});
 
         fireEvent.change(screen.getByLabelText("Token id"), {target: {value: "2"}});
-        await act(async () => resolve(owned({chainId: 8453, tokenId: "1"})));
+        await act(async () => resolve(owned({chainId: 13579, tokenId: "1"})));
 
         expect(screen.queryByText(/is yours\./)).toBeNull();
         expect(screen.getByRole("button", {name: "Sign the statement"})).toBeDisabled();
+    });
+});
+
+describe("AgentImport after a mint (task 129)", () => {
+    it("opens on the minted agent, reads ARP's testnet registry, and offers no other chain yet", async () => {
+        render(
+            <MemoryRouter initialEntries={["/start/agent?have=yes&chain=13579&id=40"]}>
+                <ChainChoiceContext.Provider value={{choice: TESTNET, setMainnet: () => {}}}>
+                    <AgentImport />
+                </ChainChoiceContext.Provider>
+            </MemoryRouter>,
+        );
+        expect(screen.getByLabelText("Token id")).toHaveValue("40");
+        const chain = screen.getByLabelText("Registry chain");
+        expect(chain).toHaveValue("13579");
+        for (const soon of ["Base (8453)", "BSC (56)", "Ethereum (1)"]) {
+            const option = screen.getByRole("option", {
+                name: new RegExp(soon.replace(/[()]/g, "\\$&")),
+            });
+            expect(option).toBeDisabled();
+            expect(option).toHaveTextContent("soon to be released");
+        }
+
+        fireEvent.click(screen.getByRole("button", {name: "Check ownership"}));
+        await screen.findByText("Agent 13579:40 is yours.");
+        expect(verifyOwnership).toHaveBeenCalledWith(
+            expect.objectContaining({
+                chainId: 13579,
+                tokenId: "40",
+                registry: "0xC165A2AD2E540A4069E02834009161E2b4490d5A",
+            }),
+        );
+    });
+});
+
+describe("AgentImport for an agent whose record is not pinned (task 129)", () => {
+    it("takes the atom from the identity plan once the record is on chain, and offers the link", async () => {
+        resolveAtom.mockResolvedValueOnce(null);
+        planIdentity.mockResolvedValueOnce({
+            caip19: "eip155:13579/erc721:0x/1",
+            identityAtom: ATOM,
+            calls: [],
+            totalValue: 0n,
+        });
+        render(<AgentImport />, {wrapper: Provider});
+        await proveToken("1");
+        fireEvent.click(screen.getByRole("button", {name: "Sign the statement"}));
+        fireEvent.click(await screen.findByRole("button", {name: "Price the public record"}));
+        fireEvent.click(await screen.findByRole("button", {name: "Price the link"}));
+        await screen.findByRole("button", {name: /Publish the link/});
     });
 });

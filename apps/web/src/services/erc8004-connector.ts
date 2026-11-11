@@ -129,13 +129,14 @@ export function erc8004RegistryClient(): Erc8004Client {
  * combined client for a handle and treating whatever comes back as an atom id
  * is how a term id gets confused with a string. One source, one meaning.
  */
-export function erc8004GraphClient(): Erc8004Client {
-    const existing = clients.get(GRAPH_ONLY_KEY);
+export function erc8004GraphClient(graphqlUrl: string = ERC8004_GRAPHQL_URL): Erc8004Client {
+    const key = `${GRAPH_ONLY_KEY}|${graphqlUrl}`;
+    const existing = clients.get(key);
     if (existing !== undefined) return existing;
     const client = createErc8004Client({
-        sources: [intuitionSource({graphqlUrl: ERC8004_GRAPHQL_URL})],
+        sources: [intuitionSource({graphqlUrl})],
     });
-    clients.set(GRAPH_ONLY_KEY, client);
+    clients.set(key, client);
     return client;
 }
 

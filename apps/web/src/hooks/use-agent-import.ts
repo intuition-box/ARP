@@ -22,6 +22,7 @@ import {
     submitIdentityAtom,
     type IdentityAtomSubmission,
 } from "../services/agent-identity-atom";
+import {erc8004GraphClient} from "../services/erc8004-connector";
 import {createUserSmartAccount} from "../services/smart-account";
 import {connectedWalletClient} from "./wallet-client";
 
@@ -49,10 +50,11 @@ export function useAgentImport() {
         (params: {
             chainId: number;
             tokenId: string;
+            registry: Address;
             connected: Address;
         }): Promise<OwnershipVerdict> =>
             verifyAgentOwnership({
-                ref: {chainId: params.chainId, tokenId: params.tokenId},
+                ref: {chainId: params.chainId, tokenId: params.tokenId, registry: params.registry},
                 connected: params.connected,
             }),
         [],
@@ -60,8 +62,21 @@ export function useAgentImport() {
 
     /** The connector's preflight against the Intuition mainnet indexer. */
     const resolveAtom = useCallback(
-        (params: {chainId: number; tokenId: string}): Promise<CanonicalAgentAtom | null> =>
-            resolveCanonicalAgentAtom({ref: params}),
+        (params: {
+            chainId: number;
+            tokenId: string;
+            registry: Address;
+        }): Promise<CanonicalAgentAtom | null> =>
+            // An agent on testnet 13579 has its atom in the testnet graph; every other chain's agents
+            // are mirrored into mainnet's (task 129).
+            resolveCanonicalAgentAtom({
+                ref: params,
+                client: erc8004GraphClient(
+                    params.chainId === intuitionTestnet.id
+                        ? choiceFor(false).graphqlUrl
+                        : undefined,
+                ),
+            }),
         [],
     );
 

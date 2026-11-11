@@ -299,7 +299,7 @@ function Minted({result}: {result: MintResult}) {
                 </a>
             </p>
             <Link
-                to="/start/agent?have=yes"
+                to={`/start/agent?have=yes&chain=${result.chainId}&id=${result.tokenId}`}
                 className={`mt-4 inline-block text-[length:var(--text-body-sm)] ${linkClass}`}
             >
                 Now link your agent wallet →
