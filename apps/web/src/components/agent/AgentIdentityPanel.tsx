@@ -36,8 +36,7 @@ import {Sigil} from "../brand/Sigil";
  * **Who is this agent and who operates it** (task 112, ADR `0182`): what it can be called with and
  * what it asks for is Before you call's, in the content column, so this card holds the identity and
  * nothing else. Registry, chain and token id are one line, because together they are one fact: where
- * it is registered. The registration file is a link, since everything Before you call says is read
- * from it.
+ * it is registered.
  */
 
 /**
@@ -168,7 +167,7 @@ export function AgentIdentityPanel({view}: {view: TrustPanelView}) {
             </div>
 
             {/* The plumbing. True, necessary, and never the first question — so it is set quieter
-                and below, instead of competing with the two above it. */}
+                and below, instead of competing with the one above it. */}
             <div className="mt-8 grid gap-y-3">
                 <Field label="Registered">
                     {explorerUrl !== null ? (

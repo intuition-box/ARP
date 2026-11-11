@@ -3,7 +3,8 @@ import {LABEL} from "../../lib/atom-page";
 /**
  * The frame "Before you install" (a skill) and "Before you call" (an agent) share (task 112, ADR
  * `0182`): a label with its caveat and its date, a one-line summary, then one row per question. They
- * sit in the content column, under the name and before the description, where a person decides.
+ * sit in the content column, near the top, where a person decides: a skill's before its description,
+ * an agent's after it (task 128).
  */
 
 export const steel = "text-[color:var(--color-steel)]";
@@ -42,7 +43,7 @@ export function BeforeSection({
                 rows
             ) : (
                 <details>
-                    <summary className={`cursor-pointer text-[13px] ${steel} hover:text-[color:var(--color-silver)]`}>
+                    <summary className={`cursor-pointer text-[length:var(--text-body-sm)] ${steel} hover:text-[color:var(--color-silver)]`}>
                         Details
                     </summary>
                     {rows}

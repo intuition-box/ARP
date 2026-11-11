@@ -134,7 +134,7 @@ function AgentTrustPanelBody() {
     const [searchParams, setSearchParams] = useSearchParams();
     const baseId = useId();
 
-    // The ratings' stake control and the vault it lands in must be the same curve.
+    // The curve the ratings' market figures and the viewer's vault (the sigil) are read at.
     // Until the chain read resolves this is undefined and the package default is
     // used, which is correct on mainnet today; if the chain ever reports another
     // curve the query key changes and the profile refetches against it.
@@ -167,7 +167,7 @@ function AgentTrustPanelBody() {
      *
      * Built from the view rather than fixed: "Not read" is offered only when something actually
      * failed — an always-present "nothing failed" tab is a row of reassurance, which is not
-     * information. Declarations are not a tab: they are the Relations block below the market.
+     * information. Declarations are not a tab: they are the Relations block below the tabs.
      *
      * **Ratings last** (task 95, the user, 2026-11-10): a provider's score comes after what the
      * agent is and how to reach it. The lines themselves ride the Relations field's loupe.
@@ -414,14 +414,12 @@ function AgentTrustPanelBody() {
                         2026-11-11, reversing ADR `0056`'s market on agents). Absent when the graph
                         has no atom: nothing can point at it. */}
                     {backingAtomId === null ? null : (
-                        <>
-                            <Block title="Relations" label="Every declaration about this agent">
-                                <AgentClaims
-                                    atomId={backingAtomId}
-                                    name={view.name ?? `Token ${view.tokenId}`}
-                                />
-                            </Block>
-                        </>
+                        <Block title="Relations" label="Every declaration about this agent">
+                            <AgentClaims
+                                atomId={backingAtomId}
+                                name={view.name ?? `Token ${view.tokenId}`}
+                            />
+                        </Block>
                     )}
                 </>
             )}
