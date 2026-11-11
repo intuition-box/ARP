@@ -126,7 +126,9 @@ A line written by ARP's sponsoring service rests on a request the agent signed: 
 
 1. the signature recovers, over `typed_data`, to the record's `payer`;
 2. `typed_data.message.payment` is this settlement: `<network>/tx/<settlement_tx>`, the hash in lower case;
-3. `typed_data.message.outcome` is the record's `outcome`.
+3. `typed_data.message`'s `outcome`, `reason`, `domain` and `endpoint` are the record's, an empty string standing for `null`.
+
+The third matters because the service keeps a request before it sends the line: a kept request can belong to a send that reverted, after which the line for that payment was written another way, with other words.
 
 With viem, in TypeScript:
 
@@ -135,7 +137,9 @@ import {verifyTypedData} from "viem";
 
 const {typed_data, signature} = record.signed_request;
 const signed = await verifyTypedData({...typed_data, address: record.payer, signature});
-const same = typed_data.message.payment === `${record.network}/tx/${record.settlement_tx.toLowerCase()}` && typed_data.message.outcome === record.outcome;
+const m = typed_data.message;
+const same = m.payment === `${record.network}/tx/${record.settlement_tx.toLowerCase()}` && m.outcome === record.outcome &&
+  m.reason === (record.reason ?? "") && m.domain === (record.domain ?? "") && m.endpoint === (record.endpoint ?? "");
 // signed && same === record.signed_by_payer
 ```
 
@@ -145,7 +149,8 @@ const same = typed_data.message.payment === `${record.network}/tx/${record.settl
 
 `signed_by_payer` is `false`, and the reason is in the record:
 
-- **when `signed_request` is `null`**: the sponsoring service wrote the line before it kept requests, as for every x402 line written up to 2026-11-11, or the writer sent the line's transactions itself, which signs transactions and no request, or the feed was built without reading the service (`signed_requests_from` is `null`);
+- **when `signed_request` is `null`**: the sponsoring service kept no request for this payment, because it wrote the line before it kept requests (task 121), as for every record in the feeds today, or because the line was written without it; or the feed was built without reading the service (`signed_requests_from` is `null`);
+- **when a word differs**: the kept request names another outcome, reason, domain or URL than the line on chain;
 - **when the agent's `agentWallet` paid and the address that holds the agent signed.** `payer` and `writer` differ, the signature recovers to `writer`, and the payer signed nothing. That is the honest answer, not a fault: the line is still the holder's word about a payment its agent's wallet made.
 
 `signed_requests_from`, beside the records, says where the requests were read: the sponsoring service's `GET /line-request`. Ask it yourself with `?payment=<network>/tx/<settlement_tx>`; it answers the request as the agent posted it, or `404`.

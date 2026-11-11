@@ -335,12 +335,16 @@ describe("the request the payer signed (task 121, ADR 0188)", () => {
         expect(feed.records[0]?.signed_request?.signature).toBe(signed.signature);
     });
 
-    it("says false when the signed request names another outcome, another payment or another signer", async () => {
-        const record = {network: "eip155:8453", settlement_tx: TX, outcome: "failed" as const, payer: AGENT.address};
+    it("says false when the signed request names another word, another payment or another signer", async () => {
+        const record = {network: "eip155:8453", settlement_tx: TX, outcome: "failed" as const, reason: "no-delivery", domain: "data", endpoint: CALLED, payer: AGENT.address};
         expect(await signedByPayer(record, await published())).toBe(true);
         expect(await signedByPayer(record, await published({outcome: "worked", reason: ""}))).toBe(false);
         expect(await signedByPayer(record, await published({payment: `eip155:8453/tx/0x${"ab".repeat(32)}`}))).toBe(false);
         expect(await signedByPayer(record, await published({}, HOLDER))).toBe(false);
+        // A request kept for a send that reverted, then a line written otherwise with other words.
+        expect(await signedByPayer(record, await published({reason: "not-the-right-tool"}))).toBe(false);
+        expect(await signedByPayer(record, await published({domain: ""}))).toBe(false);
+        expect(await signedByPayer({...record, endpoint: null}, await published())).toBe(false);
         expect(await signedByPayer(record, null)).toBe(false);
     });
 

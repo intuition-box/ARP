@@ -88,9 +88,10 @@ export type X402FeedRecord = {
     /** When the payment level was written, as the index says. */
     written_at: string;
     /**
-     * The `LineRequest` the writer signed and ARP's sponsoring service wrote this line from, as typed data
-     * and its signature (ADR `0188`). `null` when the feed was built without the service's store, for a line
-     * written before task 121, or for one the writer sent itself, which signs transactions and no request.
+     * The `LineRequest` ARP's sponsoring service kept for this payment, as typed data and its signature (ADR
+     * `0188`). `null` when the feed was built without the service's store, or when the service kept none for
+     * this payment: a line it wrote before it kept requests, or one written without it. A kept request can be
+     * one whose send reverted; `signed_by_payer` says whether its words are this line's.
      */
     signed_request: X402SignedRequest | null;
     /** {@link signedByPayer} over this record: a reader recomputes it from the record alone. */
@@ -215,24 +216,29 @@ function isoOf(at: string): string {
 }
 
 /**
- * Whether a record's payer signed the request its line was written from (ADR `0188`). True only when all
- * three hold, each checkable by anyone from the record alone:
+ * Whether a record's payer signed the words of its line (ADR `0188`). True only when all of these hold,
+ * each checkable by anyone from the record alone:
  *
  * 1. the signature recovers, over `typed_data`, to the record's `payer`;
  * 2. the signed `payment` names this settlement, `<network>/tx/<settlement_tx>` in lower case;
- * 3. the signed `outcome` is this record's outcome.
+ * 3. the signed `outcome`, `reason`, `domain` and `endpoint` are the record's, `""` standing for `null`.
+ *
+ * The fourth binding matters: a request is kept before the line is sent, so a kept one can belong to a send
+ * that reverted, after which the same payment's line was written some other way. Any word that differs
+ * gives `false`.
  *
  * So a payment made by the agent's `agentWallet` while the line is signed by the address that holds the
  * agent gives `false`: the payer did not sign. That is the answer, not a fault.
  */
 export async function signedByPayer(
-    record: Pick<X402FeedRecord, "network" | "settlement_tx" | "outcome" | "payer">,
+    record: Pick<X402FeedRecord, "network" | "settlement_tx" | "outcome" | "reason" | "domain" | "endpoint" | "payer">,
     signed: X402SignedRequest | null,
 ): Promise<boolean> {
     if (signed === null) return false;
     const {message} = signed.typed_data;
     if (message.payment !== paymentAtomLabel({network: record.network, txHash: record.settlement_tx})) return false;
     if (message.outcome !== record.outcome) return false;
+    if (message.reason !== (record.reason ?? "") || message.domain !== (record.domain ?? "") || message.endpoint !== (record.endpoint ?? "")) return false;
     try {
         // JSON carries `expiresAt` as a number; viem's types ask a bigint, and a value that is neither throws here.
         const typedData = {...signed.typed_data, message: {...message, expiresAt: BigInt(message.expiresAt)}};

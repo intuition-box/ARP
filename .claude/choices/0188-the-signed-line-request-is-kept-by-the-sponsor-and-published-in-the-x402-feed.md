@@ -41,7 +41,9 @@ line's standing, but not that the payer signed the words.
    published as `null`. A store that does not answer stops the build, as a paying chain does.
 4. **`signed_by_payer` is recomputable from the record alone** (`signedByPayer`): the signature recovers
    over `typed_data` to `payer`, the signed `payment` is `<network>/tx/<settlement_tx>`, and the signed
-   `outcome` is the record's. A payment made by the `agentWallet` while the line is signed by the address
+   `outcome`, `reason`, `domain` and `endpoint` are the record's (`""` for `null`). The last binding is
+   needed because a request is kept before the send: a kept one can belong to a send that reverted, after
+   which the same payment's line was written another way, with other words. A payment made by the `agentWallet` while the line is signed by the address
    that holds the agent gives `false`: the payer signed nothing, and that is the answer.
 5. **Schema stays `arp.x402-outcomes/3`.** Three fields are added and none changes meaning; ADR `0186`
    bumped the schema for a change of meaning, which this is not.
@@ -92,7 +94,8 @@ in the feed tells that from two writers. Said in `x402-feed.md`.
 
 ## Consequences
 
-- Every x402 line written up to 2026-11-11 has no kept request: the two records of the rebuilt test feed
+- Every x402 line written before the sponsoring service runs this code has no kept request, hosted
+  lines included until it is redeployed: the two records of the rebuilt test feed
   carry `signed_request: null`, `signed_by_payer: false`, and the main feed has no record. A `true`
   appears only for a line written by a sponsoring service running this code.
 - The hosted service's `/data` now holds a third file whose loss is unrecoverable, beside the ledger.
