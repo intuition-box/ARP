@@ -82,7 +82,7 @@ export async function prepareUsageContext(params: {
     reason?: UsageReason;
     /**
      * The x402 payment the outcome refers to, as `paymentLevelLabel` writes it: the payment and, since task
-     * 93, the exact URL paid (ADRs `0159`, `0162`). Only with an outcome. Its format is the caller's to
+     * 93, the exact URL paid with its values removed (ADRs `0159`, `0162`, `0186`). Only with an outcome. Its format is the caller's to
      * check: this plans the triple and reads no paying chain.
      */
     payment?: string;

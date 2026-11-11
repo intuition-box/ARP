@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-109 entries, one per completed task. Written by `task-verifier` on a pass.
+110 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -115,3 +115,4 @@
 | [103](103-every-install-route.md) | `docs/tasks/114-every-install-route.md` | PASS | Every way to install ARP, listed in one place |
 | [104](104-the-hol-adapter.md) | `docs/tasks/115-the-hol-adapter.md` (A and B only; C, D, E wait for the user's return) | PASS (second pass; first failed on two one-line items) | The HOL adapter, deliverables A and B |
 | [106](106-x402-test-feed.md) | `docs/tasks/118-x402-test-feed.md` | PASS | A separate x402 test feed for Base Sepolia |
+| [107](107-an-endpoint-url-without-its-values.md) | `docs/tasks/119-an-endpoint-url-without-its-values.md` | PASS | An x402 endpoint's URL is written without its values |
