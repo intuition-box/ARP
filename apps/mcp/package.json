@@ -20,7 +20,7 @@
   "scripts": {
     "start": "bun run src/server.ts",
     "build": "bun run --cwd ../../packages/protocol build && bun build src/server.ts src/fetch-skill.ts src/session-log.ts --outdir dist --entry-naming 'arp-[name].js' --target=bun --external viem --external 'viem/*' --banner '#!/usr/bin/env bun'",
-    "test": "bun run --cwd ../../packages/protocol build && vitest run",
+    "test": "bun run --cwd ../../packages/protocol build && vitest run --coverage",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
