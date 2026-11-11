@@ -1,6 +1,6 @@
 # Task 120 — An endpoint's last purchase, checked by nohumans.directory, beside ARP's lines
 
-**Status:** verified 2026-11-11, `task-verifier` PASS (after three punch-list rounds), post-mortem `.claude/learning/108-an-endpoints-last-purchase.md`. Rebased onto `1a291387`; on `worktree-agent-a224f9c8704fd6774`, not pushed. `ui-reviewer` PASS.
+**Status:** verified 2026-11-11, `task-verifier` PASS (after three punch-list rounds), post-mortem `.claude/learning/108-an-endpoints-last-purchase.md`. Rebased onto `1a291387`; on `main`, not pushed. `ui-reviewer` PASS.
 **ADR:** `0187` (read on demand, the card's states, the `RepoPage` dispatch).
 **Rules:** `code.md`, `ui.md`, `claims.md`, `workflow.md`, `portability.md`.
 **Required skills:** `arp-contributing`.
