@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-122 entries, one per completed task. Written by `task-verifier` on a pass.
+123 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -128,3 +128,4 @@
 | [117](117-the-import-after-a-mint.md) | `docs/tasks/129-the-import-after-a-mint.md` | PASS (round 2; round 1 failed on missing tests and an uncited third-party claim) | The import after a mint |
 | [118](118-load-on-the-hosted-surfaces.md) | `docs/tasks/130-load-on-the-hosted-surfaces.md` | PASS (second pass; the first failed on one claim and flagged one gate defect) | The hosted surfaces under a crowd |
 | [119](119-a-hosted-content-server.md) | `docs/tasks/131-a-hosted-content-server.md` | PASS (second pass; the first failed on three stale doc copies) | A hosted content server |
+| [120](120-the-install-page-says-what-runs.md) | `docs/tasks/132-the-install-page-says-what-runs.md` | PASS (round 2) | The install page says what runs today |

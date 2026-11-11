@@ -1,6 +1,6 @@
 # Task 132 — The install page says what runs today
 
-**Status:** done 2026-11-11, branch `docs/132-install-doc`, written by arp-97. Task 132, post-mortem
+**Status:** done 2026-11-11, branch `docs/132-install-doc`, written by arp-97. `task-verifier` PASS on round 2, post-mortem `.claude/learning/120-the-install-page-says-what-runs.md`. Task 132, post-mortem
 `120`, no ADR, allocated by the orchestrator.
 **Rules:** `claims.md`, `workflow.md`. Docs only.
 **Required skills:** `arp-contributing` (tone).
