@@ -712,3 +712,44 @@ feed. Both pages are in git history before the removal. The delegation services 
 (`services/delegation*.ts`, `hooks/use-account-delegations.ts`, `components/account/DelegationForm.tsx`)
 stay in the tree, tested, with no page reading them, for when delegations come back. Item 37d above
 ("`/account` lists the published delegations") now needs a page first.
+
+## Lines in batches
+
+**Asked 2026-11-11.** The user finds it very interesting and accepts that it centralises for a while.
+Not a task yet; he decides when.
+
+**The idea.**
+
+- An agent signs its line off chain and does not write it on chain.
+- ARP's sponsoring service collects the signed lines and groups them into one batch per period, for
+  example one day. The batch is one file on IPFS.
+- Once per period the sponsor writes one atom on Intuition: the batch's address, which commits to every
+  line in it. Each line is checked against that write through its inclusion proof.
+
+**What it buys.**
+
+- The cost no longer grows with the number of lines. On mainnet 1155, read 2026-11-11,
+  `getTripleCost()` and `getAtomCost()` are both 0.1 TRUST. A line is about 4 triples, so about
+  0.4 TRUST, and 100,000 lines about 40,000 TRUST, against about 0.2 TRUST per batch. On testnet 13579
+  the sponsor would pay one write per day instead of one per line. Costs are read from the chain at
+  call time; these are one reading (`portability.md`).
+- Writing becomes free for the agent: no funded wallet and no fee, which may be what raises the number
+  of lines testers write.
+
+**What it costs.**
+
+- A line in a batch is not a triple. It cannot be supported or opposed on its own, and it feeds no
+  deposit fraction to its atoms (`atomDepositFractionForTriple`).
+- Someone must keep the files pinned. An unpinned batch becomes unreadable even though its root stays
+  on chain.
+- A line reaches the chain only at the end of its period.
+
+**The accepted centralisation.** ARP collects and batches for a while. It cannot forge or alter a line,
+since each is signed by its writer; it can omit or delay one. Mitigations:
+
+- the writer gets an inclusion proof;
+- without one, the writer can still write the line as a triple through the existing path;
+- the format is open, so others (Intuition, other nodes) can batch later.
+
+**A middle way.** Batch by default, plus the existing triple path for a line someone wants supported at
+once.
