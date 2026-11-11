@@ -25,7 +25,7 @@
         "README.md"
     ],
     "scripts": {
-        "test": "bun run --cwd ../graphql build && vitest run",
+        "test": "bun run --cwd ../graphql build && vitest run --coverage",
         "test:watch": "bun run --cwd ../graphql build && vitest",
         "build": "bun run --cwd ../graphql build && tsc -p tsconfig.build.json",
         "lint": "bun run --cwd ../graphql build && tsc --noEmit -p tsconfig.json",
