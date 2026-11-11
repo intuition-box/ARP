@@ -22,6 +22,7 @@ import {
   TRANSFER_TOPIC,
   X402_DEFAULT_NETWORKS,
   x402Policy,
+  type X402TermsReading,
   type X402TransferReads,
   type MultiVaultReads,
   type PreparedCall,
@@ -2313,6 +2314,10 @@ describe('POST /line', () => {
         payment: '',
         endpoint: '',
         need: '',
+        payTo: '',
+        asset: '',
+        price: '',
+        termsAt: 0,
         nonce: keccak256(stringToBytes(`line-${++nonce}`)),
         expiresAt: Math.floor(NOW / 1000) + 600,
         ...over,
@@ -2502,8 +2507,10 @@ describe('POST /line', () => {
         },
         ...over,
       });
+    /** What the seller's 402 asked, as the payer signs it (ADR 0189): the transfer's own payee, asset and amount. */
+    const TERMS = { payTo: CALLEE.address, asset: USDC, price: '20000', termsAt: Math.floor(NOW / 1000) - 90 };
     const withPayment = (over: Record<string, unknown> = {}) =>
-      request({ domain: '', reason: 'no-delivery', payment: `eip155:8453/tx/${TX}`, endpoint: CALLED, ...over });
+      request({ domain: '', reason: 'no-delivery', payment: `eip155:8453/tx/${TX}`, endpoint: CALLED, ...TERMS, ...over });
 
     test('writes the exact URL called in the payment atom, as paid with no value (ADRs 0162, 0186)', async () => {
       const w = seeded();
@@ -2536,7 +2543,8 @@ describe('POST /line', () => {
         expect((await post(service, { request: signed })).status).toBe(200);
         const answer = await get(service, `eip155:8453/tx/${TX}`);
         expect(answer.status).toBe(200);
-        expect(answer.body).toEqual(JSON.parse(JSON.stringify(signed)));
+        // No reading configured: kept, and said to be unchecked (ADR 0189).
+        expect(answer.body).toEqual({ ...JSON.parse(JSON.stringify(signed)), payee_check: 'unchecked', payee_checked_at: null });
         const { request: message, signature } = answer.body as { request: Parameters<typeof signLineRequest>[0]; signature: Hex }; // the body checked equal to `signed` above
         expect(await verifyTypedData({ ...lineRequestTypedData(message, CHAIN), address: AGENT.address, signature })).toBe(true);
       });
@@ -2554,7 +2562,7 @@ describe('POST /line', () => {
         expect(refused.status).toBe(422);
         expect(requests.get(`eip155:8453/tx/${TX}`)).toBeNull();
         const plain = await signLineRequest(
-          { ...(await request()).request, payment: '', endpoint: '' },
+          { ...(await request()).request, payment: '', endpoint: '', payTo: '', asset: '', price: '', termsAt: 0 },
           CHAIN,
           AGENT,
         );
@@ -2570,11 +2578,104 @@ describe('POST /line', () => {
           const second = await withPayment();
           const store = new LineRequestStore(path);
           store.keep(first, NOW);
-          store.keep(second, NOW + 1);
-          expect(new LineRequestStore(path).get(`eip155:8453/tx/${TX}`)).toEqual(JSON.parse(JSON.stringify(second)));
+          store.keep(second, NOW + 1, { status: 'live', checkedAt: 1_800_000_000 });
+          expect(new LineRequestStore(path).get(`eip155:8453/tx/${TX}`)).toEqual({
+            signed: JSON.parse(JSON.stringify(second)),
+            payee: { check: 'live', checkedAt: 1_800_000_000 },
+          });
         } finally {
           rmSync(dir, { recursive: true, force: true });
         }
+      });
+    });
+
+    describe('went to the endpoint, for its price (task 122, ADR 0189)', () => {
+      const OWN = getAddress(`0x${'0d'.repeat(20)}`);
+      const PAID_AT = Math.floor(NOW / 1000) - 60;
+      const offer = (payTo: Address = CALLEE.address, amount = '20000') => ({ network: 'eip155:8453', asset: USDC, payTo, amount });
+      const checked = (
+        w: World,
+        readings: { probe?: X402TermsReading | null; live?: X402TermsReading | null },
+        requests = new LineRequestStore(null),
+        asked: string[] = [],
+      ) =>
+        paid(w, base(AGENT.address), {
+          lines: {
+            inContextOf: IN_CONTEXT,
+            subject: async () => 'other',
+            toolUrl: async () => TOOL_URL,
+            payments: { policy: x402Policy(X402_DEFAULT_NETWORKS), readsFor: () => base(AGENT.address) },
+            requests,
+            x402Terms: {
+              probe: async (endpoint) => (asked.push(`probe ${endpoint}`), readings.probe ?? null),
+              live: async (endpoint) => (asked.push(`live ${endpoint}`), readings.live ?? null),
+            },
+          },
+        });
+
+      test('writes a line whose terms the probe read before the payment, and keeps the check', async () => {
+        const requests = new LineRequestStore(null);
+        const asked: string[] = [];
+        const w = seeded();
+        const answer = await post(checked(w, { probe: { at: PAID_AT - 3_600, offers: [offer()] } }, requests, asked), { request: await withPayment() });
+        expect(answer.status).toBe(200);
+        expect(requests.get(`eip155:8453/tx/${TX}`)?.payee).toEqual({ check: 'probe', checkedAt: PAID_AT - 3_600 });
+        // The probe is asked by the tool's canonical URL; agreeing, nothing reads the endpoint live.
+        expect(asked).toEqual(['probe https://seller.example/x402/weather?a=&b=']);
+      });
+
+      test('refuses terms naming the payer’s own wallet by the probe reading, when the endpoint is dark', async () => {
+        const w = seeded();
+        const answer = await post(checked(w, { probe: { at: PAID_AT - 60, offers: [offer()] } }), {
+          request: await withPayment({ payTo: OWN }),
+        });
+        // The transfer went to the seller, so the terms naming another payee fail first, on chain.
+        expect(answer.status).toBe(422);
+        expect(answer.body.rule).toBe('payment');
+        expect(w.sent).toHaveLength(0);
+      });
+
+      test('refuses terms that match the transfer but not the endpoint, before anything is sent', async () => {
+        const w = seeded();
+        // The probe saw the endpoint ask for payment to someone else: the transfer did not go to the endpoint.
+        const answer = await post(checked(w, { probe: { at: PAID_AT - 60, offers: [offer(OWN)] } }), { request: await withPayment() });
+        expect(answer.status).toBe(422);
+        expect(answer.body.rule).toBe('payee');
+        expect(w.sent).toHaveLength(0);
+      });
+
+      test('reads the endpoint live when the probe has nothing, with the URL the agent signed', async () => {
+        const requests = new LineRequestStore(null);
+        const asked: string[] = [];
+        const answer = await post(checked(seeded(), { live: { at: PAID_AT + 30, offers: [offer()] } }, requests, asked), { request: await withPayment() });
+        expect(answer.status).toBe(200);
+        expect(asked.at(-1)).toBe(`live ${CALLED}`);
+        expect(requests.get(`eip155:8453/tx/${TX}`)?.payee).toEqual({ check: 'live', checkedAt: PAID_AT + 30 });
+      });
+
+      test('writes the line unchecked with no probe reading and a dead endpoint', async () => {
+        const requests = new LineRequestStore(null);
+        expect((await post(checked(seeded(), {}, requests), { request: await withPayment() })).status).toBe(200);
+        expect(requests.get(`eip155:8453/tx/${TX}`)?.payee).toEqual({ check: 'unchecked', checkedAt: null });
+      });
+
+      test('refuses a transfer for less than the signed price, or of another asset', async () => {
+        for (const over of [{ price: '20001' }, { asset: getAddress(`0x${'cd'.repeat(20)}`) }]) {
+          const w = seeded();
+          const answer = await post(checked(w, { live: { at: PAID_AT, offers: [offer()] } }), { request: await withPayment(over) });
+          expect(answer.status).toBe(422);
+          expect(answer.body.rule).toBe('payment');
+          expect(w.sent).toHaveLength(0);
+        }
+      });
+
+      test('reads no endpoint for a payment that already backs a line', async () => {
+        const asked: string[] = [];
+        const service = checked(seeded(), { live: { at: PAID_AT, offers: [offer()] } }, new LineRequestStore(null), asked);
+        expect((await post(service, { request: await withPayment() })).status).toBe(200);
+        const before = asked.length;
+        expect((await post(service, { request: await withPayment() })).status).toBe(409);
+        expect(asked).toHaveLength(before);
       });
     });
 

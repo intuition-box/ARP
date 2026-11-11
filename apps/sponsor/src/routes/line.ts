@@ -1,7 +1,9 @@
 import {
   checkLineLimits,
+  checkPayee,
   checkX402Payment,
   exactEndpointNamesTool,
+  lineTermsOf,
   isRedactedEndpointUrl,
   isToolUrl,
   normaliseToolUrl,
@@ -15,7 +17,9 @@ import {
   planSponsoredDeposit,
   prepareUsageContext,
   verifyLineRequest,
+  type PayeeCheck,
   type SignedLineRequest,
+  type X402Terms,
 } from '@arp-protocol/core';
 import { getAddress, type Address, type Hex } from 'viem';
 import { SPONSOR_CHAIN_ID } from '../key-file.ts';
@@ -42,6 +46,13 @@ import { chainUnreadable, json, REGISTRY, type Body, type SponsorContext } from 
  * (`redactEndpointUrl`), and this refuses with 422 `rule: 'endpoint-private'` a URL that still carries a
  * query value, a fragment, credentials or a path segment that looks personal, and a tool atom whose URL
  * does. It refuses rather than reduces: the agent signed the URL, and a value it signed is not written.
+ *
+ * **To the endpoint, for its price** (task 122, ADR `0189`): the request signs the terms the payer paid
+ * against. The transfer must match them (`checkX402Payment`), and they must match ARP's probe's reading of
+ * the endpoint's `402` from before the payment, or a live read of it now (`checkPayee`); a reading that
+ * disagrees refuses with 422 `rule: 'payee'`. Neither readable writes the line all the same, and keeps
+ * `unchecked` beside its request, which the feed counts apart. The live read connects to the URL the agent
+ * signed, through the same pinned client as `/list-tool`, and only after its payment has checked on chain.
  *
  * **What was missing, or added** (task 97, ADR `0166`): `(reason, needs, ffmpeg)` on a missing-program or
  * missing-key failure, `(outcome, with, ffmpeg)` on a worked line. Written only when the skill's own SKILL.md,
@@ -99,11 +110,18 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
       422,
     );
   }
+  let payee: PayeeCheck = { status: 'unchecked', checkedAt: null };
   if (payment !== null) {
     const payments = lines.payments ?? null;
     if (payments === null) {
       return json({ error: 'a line with a payment is not configured on this service', rule: 'config' }, 503);
     }
+    // Checked again under the lock below. Here so that a replay costs no read of somebody else's endpoint.
+    if (ledger.has('line', `line-payment:${request.payment}`)) {
+      return json({ error: 'this payment already backs a line', rule: 'payment' }, 409);
+    }
+    const terms = lineTermsOf(request) as X402Terms; // a payment's terms, checked by `verifyLineRequest`
+    let paidAt = 0;
     if (!payments.policy.has(payment.network)) {
       return json(
         { error: `network ${payment.network} is not one this service reads: ${[...payments.policy.keys()].join(', ')}`, rule: 'network' },
@@ -122,9 +140,11 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
       payers,
       policy: payments.policy,
       reads: payments.readsFor(payment.network),
+      terms,
     });
     if (checked.status === 'unreadable') return chainUnreadable(checked.reason);
     if (checked.status === 'refused') return json({ error: `the payment does not check: ${checked.reason}`, rule: 'payment' }, 422);
+    paidAt = checked.paidAt;
 
     if (lines.toolUrl === undefined) {
       return json({ error: 'a line with a payment is not configured on this service', rule: 'config' }, 503);
@@ -144,6 +164,20 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
     }
     if (!exactEndpointNamesTool(request.endpoint, toolUrl)) {
       return json({ error: `${request.endpoint} is not a spelling of the tool's URL ${toolUrl}`, rule: 'endpoint' }, 422);
+    }
+
+    // ADR `0189`: the terms must be the endpoint's, by a reading the payer does not control.
+    const readings = lines.x402Terms ?? null;
+    const endpoint = request.endpoint;
+    const canonical = normaliseToolUrl(toolUrl);
+    payee = await checkPayee({
+      terms,
+      paidAt,
+      probe: readings === null ? null : await readings.probe(canonical, paidAt),
+      live: async () => (readings === null ? null : readings.live(endpoint)),
+    });
+    if (payee.status === 'refused') {
+      return json({ error: `the terms are not the endpoint's: ${payee.reason}`, rule: 'payee' }, 422);
     }
   }
 
@@ -257,7 +291,7 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
     for (const call of calls) assertMultiVault(call);
 
     // Kept before the first send, as the spend is reserved: a line that lands always has its request (ADR `0188`).
-    if (payment !== null) lines.requests?.keep(signed, now());
+    if (payment !== null) lines.requests?.keep(signed, now(), payee);
     ledger.reserve({ kind: 'line', subject: agent, value, at: now(), key, termId: usesId });
     const transactions: Hex[] = [];
     // A revert frees the reservation only when nothing landed. Terms already paid for stay counted, and
@@ -292,8 +326,9 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
 
 /**
  * `GET /line-request?payment=eip155:<chain>/tx/<hash>`: the request an agent signed for the x402 line that
- * names this payment, as it posted it, or 404 (task 121, ADR `0188`). Read-only, and nothing in it is new:
- * every field but the nonce, the expiry and the signature is already on chain in the line.
+ * names this payment, as it posted it, or 404 (task 121, ADR `0188`). Read-only. Every field but the nonce,
+ * the expiry, the terms and the signature is already on chain in the line; beside them, `payee_check` and
+ * `payee_checked_at` (unix seconds) say which reading named the terms as the endpoint's (ADR `0189`).
  */
 export function lineRequest(ctx: SponsorContext, url: URL): Response {
   const store = ctx.options.lines?.requests ?? null;
@@ -302,8 +337,10 @@ export function lineRequest(ctx: SponsorContext, url: URL): Response {
   if (parsePaymentAtomLabel(payment) === null) {
     return json({ error: 'payment is eip155:<chain>/tx/<hash>, lower case', rule: 'payment' }, 400);
   }
-  const signed = store.get(payment);
-  return signed === null ? json({ error: 'no signed request is kept for this payment' }, 404) : json(signed);
+  const kept = store.get(payment);
+  if (kept === null) return json({ error: 'no signed request is kept for this payment' }, 404);
+  // The payee check beside the request (ADR `0189`): ARP's word on which reading named the signed terms.
+  return json({ ...kept.signed, payee_check: kept.payee.check, payee_checked_at: kept.payee.checkedAt });
 }
 
 /**

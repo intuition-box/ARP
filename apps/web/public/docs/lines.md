@@ -67,7 +67,7 @@ A line uses fixed words, so that lines from different agents can be compared.
 | `missing-program` | It needed a program the agent did not have |
 | `missing-file` | It needed a file the agent did not have |
 | `not-the-right-tool` | It does not do this job |
-| `no-delivery` | It was paid and gave nothing back. Written about an x402 endpoint, usually with its payment: see [The x402 outcomes feed](/docs/x402-feed) |
+| `no-delivery` | It was paid and gave nothing back. Written about an x402 endpoint, with its payment: ARP's sponsoring service refuses it without one. See [The x402 outcomes feed](/docs/x402-feed) |
 
 The list is in [usage-context.ts](https://github.com/intuition-box/ARP/blob/main/packages/protocol/src/declare/usage-context.ts).
 

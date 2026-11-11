@@ -27235,16 +27235,16 @@ var init_list_tool = __esm(() => {
 // ../../packages/protocol/dist/sponsor/line.js
 function lineRequestTypedData(request, chainId) {
   return {
-    domain: { name: "ARP Line Request", version: "4", chainId },
+    domain: { name: "ARP Line Request", version: LINE_REQUEST_VERSION, chainId },
     types: LINE_REQUEST_TYPES,
     primaryType: "LineRequest",
-    message: { ...request, expiresAt: BigInt(request.expiresAt) }
+    message: { ...request, termsAt: BigInt(request.termsAt), expiresAt: BigInt(request.expiresAt) }
   };
 }
 async function signLineRequest(request, chainId, signer) {
   return { request, chainId, signature: await signer.signTypedData(lineRequestTypedData(request, chainId)) };
 }
-var LINE_REQUEST_TYPES;
+var LINE_REQUEST_TYPES, LINE_REQUEST_VERSION = "5";
 var init_line = __esm(() => {
   LINE_REQUEST_TYPES = {
     LineRequest: [
@@ -27258,6 +27258,10 @@ var init_line = __esm(() => {
       { name: "payment", type: "string" },
       { name: "endpoint", type: "string" },
       { name: "need", type: "string" },
+      { name: "payTo", type: "string" },
+      { name: "asset", type: "string" },
+      { name: "price", type: "string" },
+      { name: "termsAt", type: "uint256" },
       { name: "nonce", type: "bytes32" },
       { name: "expiresAt", type: "uint256" }
     ]
@@ -35421,6 +35425,9 @@ async function approveSponsor(config, agent, ref, approval) {
 }
 async function writeLine(config, agent, asked) {
   const input = asked.payment === undefined ? asked : { ...asked, toolUrl: redactEndpointUrl(asked.toolUrl) };
+  if (input.payment !== undefined && input.terms === undefined)
+    throw new Error("a line with a payment names the terms it paid against");
+  const terms = input.payment === undefined ? null : input.terms ?? null;
   const state = await ensureAgent(config, agent);
   const ref = { agentRegistry: registryRef(config), agentId: state.agentId };
   await ensureIdentity(config, state);
@@ -35463,6 +35470,10 @@ async function writeLine(config, agent, asked) {
       payment: input.payment === undefined ? "" : paymentAtomLabel(input.payment),
       endpoint: input.payment === undefined ? "" : input.toolUrl,
       need: input.need ?? "",
+      payTo: terms?.payTo ?? "",
+      asset: terms?.asset ?? "",
+      price: terms?.price ?? "",
+      termsAt: terms?.receivedAt ?? 0,
       nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
       expiresAt: expiresAt()
     }, DESKTOP_CHAIN_ID, agent.account);
@@ -35724,6 +35735,12 @@ function lineFromArgs(args, env = process.env) {
   }
   if (args.paymentTx !== undefined && !/^0x[0-9a-fA-F]{64}$/.test(args.paymentTx))
     return new Error("--payment-tx is a 32-byte transaction hash");
+  const terms = termsFromArgs(args);
+  if (terms instanceof Error)
+    return terms;
+  if (args.reason === "no-delivery" && args.paymentTx === undefined) {
+    return new Error("--reason no-delivery means paid, nothing received: it takes --payment-tx and --network");
+  }
   let toolUrl = args.toolUrl;
   if (args.paymentTx !== undefined) {
     if (!isExactEndpointUrl(args.toolUrl)) {
@@ -35765,8 +35782,34 @@ function lineFromArgs(args, env = process.env) {
     ...args.reason === undefined ? {} : { reason: args.reason },
     ...args.parent === undefined || args.why === undefined ? {} : { newDomain: { parent: args.parent, why: args.why.trim() } },
     ...args.paymentTx === undefined || args.network === undefined ? {} : { payment: { network: args.network, txHash: args.paymentTx.toLowerCase() } },
+    ...terms === null ? {} : { terms },
     ...need === undefined ? {} : { need }
   };
+}
+function termsFromArgs(args) {
+  const given = [args.payTo, args.asset, args.price, args.termsAt];
+  if (args.paymentTx === undefined) {
+    return given.every((value) => value === undefined) ? null : new Error(`${TERMS_FLAGS.join(", ")} follow --payment-tx`);
+  }
+  if (given.some((value) => value === undefined)) {
+    return new Error(`with --payment-tx, name the terms the 402 gave and you paid against: ${TERMS_FLAGS.join(" ")}`);
+  }
+  const { payTo, asset, price, termsAt } = args;
+  if (!/^0x[0-9a-fA-F]{40}$/.test(payTo))
+    return new Error("--pay-to is the 402's payTo address");
+  if (!/^0x[0-9a-fA-F]{40}$/.test(asset))
+    return new Error("--asset is the 402's asset address");
+  if (!/^[1-9][0-9]{0,77}$/.test(price))
+    return new Error("--price is the 402's amount, a positive integer in the asset's smallest unit");
+  const receivedAt = /^[0-9]+$/.test(termsAt) ? Number(termsAt) : Math.floor(Date.parse(termsAt) / 1000);
+  if (!Number.isSafeInteger(receivedAt) || receivedAt <= 0)
+    return new Error("--terms-at is when the 402 was received: unix seconds or ISO 8601");
+  if (receivedAt > Math.floor(Date.now() / 1000) + 300)
+    return new Error("--terms-at is in the future");
+  return { payTo, asset, price, receivedAt };
+}
+function matchesTerms(payment, terms) {
+  return payment.transfers.some((transfer) => transfer.payTo.toLowerCase() === terms.payTo.toLowerCase() && transfer.asset.toLowerCase() === terms.asset.toLowerCase() && BigInt(transfer.amount) >= BigInt(terms.price));
 }
 async function readLinePayment(input, reading) {
   if (input.payment === undefined)
@@ -35799,6 +35842,11 @@ async function writeLineChecked(steps, input) {
     if (steps.payments === undefined)
       throw new Error("this build reads no payment network");
     payment = await readLinePayment(input, steps.payments);
+    if (input.terms === undefined)
+      throw new Error("a line with a payment names the terms it paid against");
+    if (payment !== null && !matchesTerms(payment, input.terms)) {
+      throw new Error(`no transfer in ${input.payment.txHash} pays ${input.terms.payTo} at least ${input.terms.price} of ${input.terms.asset}: check --pay-to, --asset and --price`);
+    }
   }
   if (input.domain !== undefined) {
     const domain = normaliseCategoryLabel(input.domain);
@@ -35831,12 +35879,14 @@ async function writeLineHere(input) {
     payments: x402Reading(lineNetworks(), process.env)
   }, input);
 }
+var TERMS_FLAGS;
 var init_line2 = __esm(() => {
   init_dist2();
   init_config();
   init_domain_words2();
   init_handlers();
   init_loop();
+  TERMS_FLAGS = ["--pay-to", "--asset", "--price", "--terms-at"];
 });
 
 // ../mcp/src/share-ask.ts
@@ -47359,7 +47409,8 @@ usage
                      --outcome worked|failed [--domain <category>] [--reason <reason>]
                      [--payment-tx <hash> --network eip155:8453]  an x402 payment, read on Base;
                      with it, --tool is the exact URL you paid, written
-                     with its values removed
+                     with its values removed, and the 402's terms you paid
+                     against: --pay-to --asset --price --terms-at
                      [--needs <name>] or [--with <name>]  the program or variable name that was
                      missing, or that you added; written only if the skill's SKILL.md names it
   arp init           add the MCP server and the hook to every runtime found here
@@ -47503,6 +47554,8 @@ async function run(argv) {
        [--payment-tx <hash> --network eip155:8453]   the x402 payment this outcome refers to;
                                                      --tool is then the exact URL you paid;
                                                      its values are removed before anything is signed
+` + `       [--pay-to <0x…> --asset <0x…> --price <units> --terms-at <unix|ISO>]   with --payment-tx: the 402's
+` + `                                                     payTo, asset and amount you paid against, and when it came
        [--needs <name>]   with missing-program or missing-key: the program or variable name (never a value)
        [--with <name>]    with --outcome worked: what you had to add; either is written only if the SKILL.md names it
 `);
@@ -47519,6 +47572,10 @@ async function run(argv) {
         why: flag("why"),
         paymentTx: flag("payment-tx"),
         network: flag("network"),
+        payTo: flag("pay-to"),
+        asset: flag("asset"),
+        price: flag("price"),
+        termsAt: flag("terms-at"),
         needs: flag("needs"),
         with: flag("with")
       });

@@ -115,21 +115,24 @@ describe("buildX402Feed", () => {
                 written_at: "2026-11-09T20:00:00.000Z",
                 signed_request: null,
                 signed_by_payer: false,
+                price: null,
+                payee_check: "unchecked",
+                payee_checked_at: null,
             },
         ]);
         expect(feed.signed_requests_from).toBeNull();
-        // Keyed by the canonical URL, so every spelling of one endpoint counts under one key.
-        expect(feed.by_endpoint[ENDPOINT]).toEqual({records: 1, worked: 0, failed: 1, no_delivery: 1, payers: 1});
+        // Keyed by the canonical URL, so every spelling of one endpoint counts under one key; no terms, so unchecked.
+        expect(feed.by_endpoint[ENDPOINT]).toEqual({records: 0, worked: 0, failed: 0, no_delivery: 0, payers: 0, unchecked: 1});
         expect(feed.skipped).toEqual({count: 0, reasons: {}});
         expect(feed.trace.chain).toBe("eip155:13579");
-        expect(feed.schema).toBe("arp.x402-outcomes/3");
+        expect(feed.schema).toBe("arp.x402-outcomes/4");
         expect(feed.note).toContain("3 distinct wallets");
     });
 
     it("keeps a line older than task 93 with its canonical URL, and says the exact one is unknown", async () => {
         const feed = await buildX402Feed(config(line(0, PAYER.toLowerCase(), TX, "failed", null)));
         expect(feed.records.map((r) => [r.endpoint, r.endpoint_canonical])).toEqual([[null, ENDPOINT]]);
-        expect(feed.by_endpoint[ENDPOINT]?.records).toBe(1);
+        expect(feed.by_endpoint[ENDPOINT]?.unchecked).toBe(1);
     });
 
     it("reads the exact URL from the atom's data, whole, where the index's label is cut at 256", async () => {
@@ -293,6 +296,11 @@ describe("the request the payer signed (task 121, ADR 0188)", () => {
         payment: `eip155:8453/tx/${TX.toLowerCase()}`,
         endpoint: CALLED,
         need: "",
+        // What the recorded settlement paid: Base's USDC, 0.02, to `PAY_TO`.
+        payTo: PAY_TO,
+        asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        price: "20000",
+        termsAt: 1_762_716_700,
         nonce: keccak256(stringToBytes("n")),
         expiresAt: 1_762_718_000,
         ...over,
@@ -316,7 +324,7 @@ describe("the request the payer signed (task 121, ADR 0188)", () => {
         expect(feed.signed_requests_from).toBe("http://127.0.0.1:3200/line-request");
         // What a reader does with the file: parse it, hand the typed data to viem, name the payer.
         const read = JSON.parse(JSON.stringify(record?.signed_request)) as X402SignedRequest;
-        expect(read.typed_data.domain).toEqual({name: "ARP Line Request", version: "4", chainId: 13579});
+        expect(read.typed_data.domain).toEqual({name: "ARP Line Request", version: "5", chainId: 13579});
         // As parsed: `expiresAt` is a number, which viem's types call a bigint and its encoder takes as either.
         const typedData = read.typed_data as unknown as Parameters<typeof verifyTypedData>[0];
         expect(await verifyTypedData({...typedData, address: AGENT.address, signature: read.signature})).toBe(true);
@@ -358,6 +366,39 @@ describe("the request the payer signed (task 121, ADR 0188)", () => {
     it("writes nothing when the store does not answer", async () => {
         const down = {source: "http://127.0.0.1:3200/line-request", read: async () => Promise.reject(new Error("fetch failed"))};
         await expect(buildX402Feed(config(line(0, PAYER.toLowerCase()), {signedRequests: down}))).rejects.toThrow(/fetch failed/);
+    });
+
+    describe("the payment went to the endpoint, for its price (task 122, ADR 0189)", () => {
+        const feedWith = async (over: Partial<LineRequest>, payee: {payee_check?: string; payee_checked_at?: number} = {}) => {
+            const signed = await signLineRequest(request(AGENT.address, over), 13579, AGENT);
+            return buildX402Feed(
+                config(line(0, AGENT.address.toLowerCase()), {readsFor: () => recordedReads(paidBy(AGENT.address)), signedRequests: store({...signed, ...payee})}),
+            );
+        };
+
+        it("counts a record whose terms the probe's reading named, with its price and the reading's time", async () => {
+            const feed = await feedWith({}, {payee_check: "probe", payee_checked_at: 1_762_700_000});
+            expect(feed.records.map((r) => [r.price, r.payee_check, r.payee_checked_at])).toEqual([["20000", "probe", "2025-11-09T14:53:20.000Z"]]);
+            expect(feed.by_endpoint[ENDPOINT]).toEqual({records: 1, worked: 0, failed: 1, no_delivery: 1, payers: 1, unchecked: 0});
+        });
+
+        it("keeps a record the service could not check, and counts it apart", async () => {
+            const feed = await feedWith({});
+            expect(feed.records.map((r) => [r.price, r.payee_check, r.payee_checked_at])).toEqual([["20000", "unchecked", null]]);
+            expect(feed.by_endpoint[ENDPOINT]).toMatchObject({records: 0, unchecked: 1});
+            // A check the service names in no form this reads is no check.
+            expect((await feedWith({}, {payee_check: "doctor", payee_checked_at: 1})).records[0]?.payee_check).toBe("unchecked");
+        });
+
+        it("leaves out a transfer to another payee, of another asset, or for less than the terms", async () => {
+            for (const over of [{payTo: OTHER}, {asset: `0x${"cd".repeat(20)}`}, {price: "20001"}]) {
+                const feed = await feedWith(over, {payee_check: "live", payee_checked_at: 1_762_716_700});
+                expect(feed.records).toEqual([]);
+                expect(feed.skipped.reasons).toEqual({"the transfer does not match the terms the payer signed": 1});
+            }
+            // Overpaying is not underpaying: a client may pay more than it was asked.
+            expect((await feedWith({price: "19999"}, {payee_check: "live", payee_checked_at: 1_762_716_700})).records).toHaveLength(1);
+        });
     });
 });
 

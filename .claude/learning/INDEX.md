@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-115 entries, one per completed task. Written by `task-verifier` on a pass.
+116 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -118,6 +118,7 @@
 | [107](107-an-endpoint-url-without-its-values.md) | `docs/tasks/119-an-endpoint-url-without-its-values.md` | PASS | An x402 endpoint's URL is written without its values |
 | [108](108-an-endpoints-last-purchase.md) | `docs/tasks/120-an-endpoints-last-purchase.md` | PASS (fourth pass | An endpoint's last purchase, checked by nohumans.directory, beside ARP's lines |
 | [109](109-the-payer-signed-the-line.md) | `docs/tasks/121-the-payer-signed-the-line.md` | PASS (second round) | A reader can check that an x402 line was signed by the wallet that paid |
+| [110](110-an-x402-payment-went-to-the-endpoint.md) | `docs/tasks/122-an-x402-payment-went-to-the-endpoint.md` | PASS (second round) | An x402 line's payment went to the endpoint, for its price |
 | [111](111-a-tool-url-without-its-values.md) | `docs/tasks/123-a-tool-url-without-its-values.md` | PASS | A tool URL is never listed with a value in it |
 | [112](112-the-dev-server-reads-the-source.md) | `docs/tasks/124-the-dev-server-reads-the-source.md` | PASS | What runs from the checkout reads `packages/protocol/src`, not a stale `dist/` |
 | [113](113-a-402-is-not-a-refusal.md) | `docs/tasks/125-a-402-is-not-a-refusal.md` | PASS (second pass; the first failed on two doc sites) | The hook tells x402's first 402 from a refusal, and a refusal from paid with nothing back |

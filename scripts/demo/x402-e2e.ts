@@ -13,6 +13,7 @@
  *     printed. Its address is checked against `--agent` before anything is signed with it.
  *  4. "Nothing usable" is detected: a 2xx with an empty body, or one that is not JSON.
  *  5. The line goes through the normal `arp line` path, `--reason no-delivery --payment-tx --network`,
+ *     with the 402's terms it paid against (`--pay-to --asset --price --terms-at`, task 122, ADR `0189`),
  *     to the sponsoring service at `ARP_SPONSOR` (default `http://127.0.0.1:3200`), which writes on 13579.
  *  6. The feed is built with Base Sepolia enabled into `~/.arp/x402-e2e/feed.json` (not the site's
  *     copy), and the record is checked: payer = the agent, pay_to = the seller, amount = the price, and
@@ -125,6 +126,8 @@ try {
         stop(`the 402 is not the offer expected: ${JSON.stringify(offer)}`);
     }
     say(`2. ${seller.url} answers 402, x402 v${required.x402Version}: exact, ${offer.network}, ${formatUnits(BigInt(offer.amount), 6)} USDC to ${offer.payTo}`);
+    // The terms the line signs it paid against (task 122, ADR `0189`): this offer, and when it came.
+    const termsArgs = ["--pay-to", offer.payTo, "--asset", offer.asset, "--price", offer.amount, "--terms-at", String(Math.floor(Date.now() / 1000))];
 
     // The guard every signature here goes through: this offer, and nothing wider.
     const onlyThisOffer = (_version: number, offers: PaymentRequirements[]): PaymentRequirements => {
@@ -254,7 +257,7 @@ try {
     const sponsorBalance = await testnet.getBalance({address: sponsor});
     say(`5. sponsor ${sponsor}: ${formatEther(sponsorBalance)} tTRUST on 13579`);
 
-    const lineArgs = ["run", "apps/cli/src/cli.ts", "line", "--tool", seller.url, "--outcome", "failed", "--reason", "no-delivery", "--payment-tx", txHash, "--network", BASE_SEPOLIA];
+    const lineArgs = ["run", "apps/cli/src/cli.ts", "line", "--tool", seller.url, "--outcome", "failed", "--reason", "no-delivery", "--payment-tx", txHash, "--network", BASE_SEPOLIA, ...termsArgs];
     if (domain !== undefined) lineArgs.push("--domain", domain);
     const line = spawnSync("bun", lineArgs, {encoding: "utf8", env: {...process.env, ARP_TARGET: "testnet", ARP_SPONSOR: sponsorUrl}, timeout: 600_000});
     if (line.status !== 0) stop(`arp line failed (${line.status}): ${line.stderr.trim()}. Rerun with --payment-tx ${txHash}`);

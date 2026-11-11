@@ -3,6 +3,7 @@
  *  ```
  *  GET  /probe            every target's latest reading, and its last 24 hours
  *  GET  /probe?days=7     the same over 7 days (at most 30)
+ *  GET  /x402?target=<label>&before=<ISO>   an x402 endpoint's last answered offers before then
  *  GET  /healthz          how many targets, and when the last cycle ran
  *  cron                   one cycle every five minutes (`wrangler.jsonc`)
  *  ```
@@ -82,6 +83,17 @@ export async function handle(
     return json(probeAnswer(TARGETS, rows, days), 200, { 'cache-control': 'public, max-age=60' });
   }
 
+  if (request.method === 'GET' && url.pathname === '/x402') {
+    // ADR 0189: the reading an x402 line's terms are checked against, the most recent before its payment.
+    const target = url.searchParams.get('target') ?? '';
+    const before = Date.parse(url.searchParams.get('before') ?? '');
+    if (target === '' || Number.isNaN(before)) return json({ error: 'GET /x402?target=<label>&before=<ISO 8601>' }, 400);
+    const found = await store.latestX402(target, new Date(before).toISOString());
+    if (found === null) return json({ error: `no x402 reading of ${target} before ${new Date(before).toISOString()}` }, 404);
+    const { offers } = JSON.parse(found.detail ?? '{"offers":[]}') as { offers: unknown[] }; // written by `read` as JSON
+    return json({ measuredBy: 'ARP, from Cloudflare', reading: { target: found.target, at: found.at, offers } });
+  }
+
   if (request.method === 'GET' && url.pathname === '/healthz') {
     const rows = await store.since(new Date(now() - 3_600_000).toISOString());
     return json({
@@ -91,7 +103,7 @@ export async function handle(
     });
   }
 
-  return json({ error: 'GET /probe or GET /healthz' }, 404);
+  return json({ error: 'GET /probe, GET /x402 or GET /healthz' }, 404);
 }
 
 export default {

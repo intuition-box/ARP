@@ -9,13 +9,20 @@
  *
  *  Neither outcome is good or bad here. `asks-for-auth` is a server answering; `no-answer` is a
  *  read that failed from Cloudflare at that minute. The page states which, and when (ADR `0093`).
+ *
+ *  **An x402 endpoint** answers `initialize` with `402` and its payment requirements. Its offers (network,
+ *  asset, payee, amount) are kept as the reading's detail, `x402`: they are the endpoint's own published
+ *  terms, not something it said about a caller (task 122, ADR `0189`).
  */
+// By path, as the hook imports pure modules: the file has no import, so the Worker carries no viem.
+import { x402OffersOf } from '../../../packages/protocol/src/x402-terms.ts';
 import type { Target } from './targets.ts';
 
 export type Outcome =
   | 'answers' // an endpoint returned a JSON-RPC result to `initialize`
   | 'asks-for-auth' // 401 with the MCP authorization spec's `resource_metadata`: an MCP server behind OAuth
   | 'refuses' // 401 or 403 without it: something answered, nothing says it is MCP
+  | 'x402' // 402 with x402 payment requirements: `detail` keeps the offers (task 122, ADR 0189)
   | 'http-error' // any other status
   | 'not-mcp' // 2xx, but no JSON-RPC result in the body
   | 'no-answer' // network failure or timeout
@@ -96,6 +103,16 @@ async function readEndpoint(
     // 401 is any API closed to anonymous callers, and reading it as an MCP server would be a guess.
     const isMcpAuth = /resource_metadata=/i.test(response.headers.get('www-authenticate') ?? '');
     return { ...base, outcome: isMcpAuth ? 'asks-for-auth' : 'refuses', http, detail: null };
+  }
+  if (http === 402) {
+    // Who the endpoint asks to be paid, on which network, in what, for how much: the dated reading an x402
+    // line's signed terms are checked against once the endpoint no longer answers (ADR 0189). The offers
+    // only, never the rest of the answer.
+    const body = await response.text();
+    const offers = x402OffersOf(http, (name) => response.headers.get(name), body);
+    return offers === null
+      ? { ...base, outcome: 'http-error', http, detail: null }
+      : { ...base, outcome: 'x402', http, detail: JSON.stringify({ offers }) };
   }
   if (!response.ok) {
     await response.body?.cancel();

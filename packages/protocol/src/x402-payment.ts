@@ -3,6 +3,7 @@ import {createPublicClient, getAddress, hexToBigInt, http, isHex, keccak256, str
 import {ChainUnreadableError, isTransactionAbsent} from "./chain-errors.js";
 import {normaliseToolUrl} from "./declare/tool-thing.js";
 import {isRedactedEndpointUrl} from "./endpoint-redaction.js";
+import type {X402Terms} from "./x402-terms.js";
 
 /**
  * The payment an x402 line refers to, and the check of it at read time (task 89, ADR `0159`).
@@ -177,6 +178,9 @@ export function transfersIn(
  * - Several transfers from those addresses in one transaction are refused: which one the line is
  *   about cannot be told, and a guess would be ARP's word, not the payer's.
  * - A transfer to the payer itself, or of nothing, pays no one.
+ * - With `terms` (task 122, ADR `0189`), the transfer must be on their network, in their asset, to their
+ *   payee, for at least their amount: a client may overpay, never underpay. Whether the terms are the
+ *   endpoint's is `checkPayee`'s question (`x402-terms.ts`), not this one's.
  *
  * `refused` is an answer about the payment. `unreadable` is the chain not answering, and says nothing.
  */
@@ -185,6 +189,7 @@ export async function checkX402Payment(params: {
     payers: readonly Address[];
     policy: X402NetworkPolicy;
     reads: X402TransferReads;
+    terms?: X402Terms;
 }): Promise<X402PaymentCheck> {
     const {ref, policy, reads} = params;
     const allowed = policy.get(ref.network);
@@ -207,6 +212,19 @@ export async function checkX402Payment(params: {
     const transfer = from[0] as X402Transfer; // length checked above
     if (transfer.payTo === transfer.payer) return {status: "refused", reason: "the transfer pays its own sender"};
     if (transfer.amount === 0n) return {status: "refused", reason: "the transfer moves nothing"};
+    const {terms} = params;
+    if (terms !== undefined) {
+        if (terms.network !== ref.network) return {status: "refused", reason: `the terms are on ${terms.network}, the payment on ${ref.network}`};
+        if (transfer.asset.toLowerCase() !== terms.asset.toLowerCase()) {
+            return {status: "refused", reason: `the transfer moves ${transfer.asset}, the terms name ${terms.asset}`};
+        }
+        if (transfer.payTo.toLowerCase() !== terms.payTo.toLowerCase()) {
+            return {status: "refused", reason: `the transfer pays ${transfer.payTo}, the terms name ${terms.payTo}`};
+        }
+        if (transfer.amount < terms.amount) {
+            return {status: "refused", reason: `the transfer moves ${transfer.amount}, less than the terms' ${terms.amount}`};
+        }
+    }
     let block;
     try {
         block = await reads.getBlock({blockNumber: receipt.blockNumber});

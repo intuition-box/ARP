@@ -142,7 +142,7 @@ describe("writeLine", () => {
 });
 
 describe("writeLine with what was missing (ADR 0166)", () => {
-    it("signs the name in the request, under version 4", async () => {
+    it("signs the name in the request, under version 5", async () => {
         let signed: SignedLineRequest | undefined;
         const {config, agent} = setup((body) => {
             signed = body.request;
@@ -194,6 +194,8 @@ describe("writeLine with a domain the tree lacks", () => {
 
 describe("lineFromArgs", () => {
     const args = {toolUrl: "https://github.com/a/b?skill=s", domain: undefined, reason: undefined};
+    /** The four terms flags, as the 402 gave them (ADR 0189). */
+    const TERMS_ARGS = {payTo: SPONSOR, asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", price: "20000", termsAt: "1762716700"};
 
     it("takes closed words", () => {
         expect(lineFromArgs({...args, outcome: "failed", reason: "missing-key", domain: "video"})).toEqual({
@@ -216,9 +218,10 @@ describe("lineFromArgs", () => {
 
     it("takes an x402 payment as a network and a hash, together (ADR 0159)", () => {
         const tx = `0x${"EF".repeat(32)}`;
-        expect(lineFromArgs({...args, outcome: "failed", reason: "no-delivery", paymentTx: tx, network: "eip155:8453"})).toMatchObject({
+        expect(lineFromArgs({...args, ...TERMS_ARGS, outcome: "failed", reason: "no-delivery", paymentTx: tx, network: "eip155:8453"})).toMatchObject({
             reason: "no-delivery",
             payment: {network: "eip155:8453", txHash: tx.toLowerCase()},
+            terms: {payTo: SPONSOR, asset: TERMS_ARGS.asset, price: "20000", receivedAt: 1_762_716_700},
         });
         expect(lineFromArgs({...args, outcome: "failed", paymentTx: tx})).toBeInstanceOf(Error);
         expect(lineFromArgs({...args, outcome: "failed", paymentTx: tx, network: "base"})).toBeInstanceOf(Error);
@@ -228,7 +231,7 @@ describe("lineFromArgs", () => {
 
     it("takes a network the operator added by configuration, and says why a bad setting fails (task 91)", () => {
         const tx = `0x${"ef".repeat(32)}`;
-        const sepolia = {...args, outcome: "failed", reason: "no-delivery", paymentTx: tx, network: "eip155:84532"};
+        const sepolia = {...args, ...TERMS_ARGS, outcome: "failed", reason: "no-delivery", paymentTx: tx, network: "eip155:84532"};
         expect(lineFromArgs(sepolia, {})).toBeInstanceOf(Error);
         const env = {ARP_X402_NETWORKS: "eip155:84532=0x036CbD53842c5426634e7929541eC2318f3dCF7e", ARP_X402_RPC_84532: "https://sepolia.base.org"};
         expect(lineFromArgs(sepolia, env)).toMatchObject({payment: {network: "eip155:84532", txHash: tx}});
@@ -239,7 +242,7 @@ describe("lineFromArgs", () => {
 
     it("asks a paid line for the exact URL called, scheme included (ADR 0162)", () => {
         const tx = `0x${"ab".repeat(32)}`;
-        const paid = {...args, outcome: "failed", reason: "no-delivery", paymentTx: tx, network: "eip155:8453"};
+        const paid = {...args, ...TERMS_ARGS, outcome: "failed", reason: "no-delivery", paymentTx: tx, network: "eip155:8453"};
         expect(lineFromArgs({...paid, toolUrl: "http://127.0.0.1:4021/x402-demo/no-delivery"})).toMatchObject({
             toolUrl: "http://127.0.0.1:4021/x402-demo/no-delivery",
         });
@@ -251,6 +254,25 @@ describe("lineFromArgs", () => {
         expect(lineFromArgs({...paid, toolUrl: "https://user:pass@api.example.com/weather"})).toBeInstanceOf(Error);
         // A skill's URL without a payment keeps its value: it is the skill's name.
         expect(lineFromArgs({...args, outcome: "worked", toolUrl: "https://github.com/o/r?skill=s"})).toMatchObject({toolUrl: "https://github.com/o/r?skill=s"});
+    });
+
+    it("asks a payment for the terms it paid against, all four, and nothing else for them (ADR 0189)", () => {
+        const paid = {...args, outcome: "failed", reason: "no-delivery", paymentTx: `0x${"ab".repeat(32)}`, network: "eip155:8453"};
+        expect(lineFromArgs({...paid, ...TERMS_ARGS, termsAt: "2025-11-09T19:31:40Z"})).toMatchObject({terms: {receivedAt: 1_762_716_700}});
+        for (const missing of ["payTo", "asset", "price", "termsAt"] as const) {
+            const {[missing]: _dropped, ...three} = TERMS_ARGS;
+            expect(lineFromArgs({...paid, ...three})).toBeInstanceOf(Error);
+        }
+        for (const bad of [{payTo: "0x12"}, {asset: "usdc"}, {price: "0.02"}, {price: "0"}, {termsAt: "yesterday"}, {termsAt: "99999999999"}]) {
+            expect(lineFromArgs({...paid, ...TERMS_ARGS, ...bad})).toBeInstanceOf(Error);
+        }
+        expect(lineFromArgs({...args, outcome: "failed", reason: "missing-key", ...TERMS_ARGS})).toBeInstanceOf(Error);
+    });
+
+    it("refuses no-delivery without a payment: it means paid, nothing received", () => {
+        const refused = lineFromArgs({...args, outcome: "failed", reason: "no-delivery"});
+        expect(refused).toBeInstanceOf(Error);
+        expect((refused as Error).message).toContain("--payment-tx"); // checked to be an Error on the line above
     });
 
     it("takes --needs on a missing program or key, and --with on a worked line (ADR 0166)", () => {
@@ -372,7 +394,34 @@ describe("writeLineChecked", () => {
             getBlock: async () => ({timestamp: 1n}),
         });
         const payments = (withLogs: boolean) => ({policy: x402Policy(X402_DEFAULT_NETWORKS), readsFor: () => reads(withLogs)});
-        const PAID = {...INPUT, reason: "no-delivery", payment: {network: "eip155:8453", txHash: TX}} as const;
+        const TERMS = {payTo: SPONSOR, asset: USDC, price: "20000", receivedAt: 1_762_716_700};
+        const PAID = {...INPUT, reason: "no-delivery", payment: {network: "eip155:8453", txHash: TX}, terms: TERMS} as const;
+
+        it("refuses terms the payment does not match, before any key, and a payment without terms", async () => {
+            const {config, asked} = setup(() => ok);
+            let keys = 0;
+            const steps = {config, isCategory: async () => true, payments: payments(true), agent: () => {
+                keys += 1;
+                throw new Error("no key in this test");
+            }};
+            for (const terms of [{...TERMS, payTo: account.address}, {...TERMS, price: "20001"}, {...TERMS, asset: SPONSOR}]) {
+                await expect(writeLineChecked(steps, {...PAID, terms})).rejects.toThrow("check --pay-to, --asset and --price");
+            }
+            const {terms: _none, ...bare} = PAID;
+            await expect(writeLineChecked(steps, bare)).rejects.toThrow("names the terms it paid against");
+            expect(asked).toEqual([]);
+            expect(keys).toBe(0);
+        });
+
+        it("signs the terms beside the payment (ADR 0189)", async () => {
+            let signed: SignedLineRequest | undefined;
+            const {config, agent} = setup((body) => {
+                signed = body.request;
+                return ok;
+            });
+            await writeLineChecked({config, isCategory: async () => true, payments: payments(true), agent: () => agent}, PAID);
+            expect(signed?.request).toMatchObject({payTo: SPONSOR, asset: USDC, price: "20000", termsAt: 1_762_716_700});
+        });
 
         it("reads the payment before any key, and refuses one that moves no accepted asset", async () => {
             const {config, asked} = setup(() => ok);

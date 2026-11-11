@@ -417,6 +417,17 @@ export {
     type X402Transfer,
     type X402TransferReads,
 } from "./x402-payment.js";
+/** The terms an x402 payment was made against, and whether they are the endpoint's (task 122, ADR `0189`). */
+export {
+    checkPayee,
+    readingDisagrees,
+    x402OffersOf,
+    type PayeeCheck,
+    type PayeeSource,
+    type X402Offer,
+    type X402Terms,
+    type X402TermsReading,
+} from "./x402-terms.js";
 /** What an x402 endpoint URL may carry onto the chain: values removed before signing (task 119, ADR `0186`). */
 export {
     EndpointNotRedactableError,
@@ -1032,6 +1043,8 @@ export {
     LINE_REQUEST_TYPES,
     lineRequestTypedData,
     lineRequestTypedDataJson,
+    LINE_REQUEST_VERSION,
+    lineTermsOf,
     signLineRequest,
     verifyLineRequest,
     type LineRequest,

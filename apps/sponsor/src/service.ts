@@ -73,6 +73,7 @@ import type {
   StrictIdentityAtom,
   TypedDataVerifier,
   X402NetworkPolicy,
+  X402TermsReading,
   X402TransferReads,
 } from '@arp-protocol/core';
 import { redactUrls, refuseForeignRequest } from '@arp-protocol/core/node';
@@ -227,6 +228,16 @@ export type SponsorOptions = {
      * `0188`). Absent, the line is written as before and that route answers 503.
      */
     requests?: LineRequestStore | null;
+    /**
+     * The readings an x402 line's signed terms are checked against (task 122, ADR `0189`): ARP's probe's most
+     * recent reading of the endpoint's `402` before the payment (`before`, unix seconds; `null` when it has
+     * none or does not answer), and a live read of the URL paid (`null` when it answers no `402`). Absent,
+     * every line with a payment is kept as `unchecked`.
+     */
+    x402Terms?: {
+      probe(endpoint: string, before: number): Promise<X402TermsReading | null>;
+      live(endpoint: string): Promise<X402TermsReading | null>;
+    } | null;
   } | null;
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;

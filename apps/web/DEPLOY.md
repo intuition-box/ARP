@@ -132,6 +132,7 @@ by the image.
 | `SPONSOR_CONTENT_SIGNERS` | no | the content servers whose receipts unlock a deposit |
 | `GITHUB_TOKEN` | no | raises GitHub's limit of 60 requests an hour, for listing checks. A secret |
 | `SPONSOR_LINE_REQUESTS` | no | where the request each x402 line was signed with is kept, served at `GET /line-request` for the x402 feed; default `/data/line-requests.jsonl`. Keep it on the volume: it is the only copy (ADR `0188`) |
+| `ARP_PROBE_URL` | no | ARP's probe (`apps/probe`), whose dated reading of an x402 endpoint's `402` checks a line's signed terms once the endpoint is dark. Unset, only a live read checks them (ADR `0189`) |
 | `SPONSOR_ENDPOINT_CHECKS_PER_HOUR` | no | how many non-GitHub URLs `/list-tool` asks whether they are a tool, in an hour; default 60 (ADR `0163`) |
 
 Never set `ARP_ALLOW_PRIVATE_PROBE` here: it lets `/list-tool` connect to private addresses, which

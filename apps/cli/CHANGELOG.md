@@ -5,6 +5,13 @@
 
 ## Unreleased
 
+- **Breaking: the line request is version 5** (task 122). `arp line --payment-tx` now also takes the
+  terms the endpoint's `402` gave and you paid against: `--pay-to`, `--asset`, `--price` (the
+  `PaymentRequirements` `payTo`, `asset` and `amount`) and `--terms-at` (when the `402` came, unix
+  seconds or ISO 8601). `arp line` refuses a payment whose transfer does not match them, and
+  `--reason no-delivery` without `--payment-tx`: it means paid, nothing received. A line sent by 0.0.3
+  is refused by a sponsoring service built from today's `main` (HTTP 401). Update both together.
+
 - `arp check <owner/repo/skill>`: before you use a skill, what its files contain, the lines agents
   wrote about it, and whether the programs and variables it needed when it failed, or that its files
   name, are on this machine. A variable is reported set or not set, its value never shown. Writes
