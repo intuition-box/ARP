@@ -5,6 +5,20 @@
 
 ## 0.0.6 — unreleased
 
+- **Breaking: the line request is version 6** (task 127, ADR `0192`). It signs two more fields, `version`
+  and `evidence`. A line sent by 0.0.5 is refused by a sponsoring service built from today's `main`
+  (HTTP 401), and a line sent by 0.0.6 by a sponsoring service built before it. Update the CLI and the
+  sponsoring service together.
+- **A line names the version of a skill it is about.** The hook records the digest of the skill's
+  directory where it ran (the content receipt's digest, ADR `0185`), and a shared line is then written
+  about `(skill, version, sha256:<digest>)`. `arp line --skill-dir <path>` does the same by hand. The
+  sponsoring service writes the version only when it is the skill's directory at its repository's `HEAD`,
+  or the digest of a receipt ARP's node signed for you; otherwise the line is written without one, so a
+  local edit names no version.
+- **A line can be backed by a content receipt.** When this machine holds a receipt from ARP's content
+  server over the same files (`arp_get_skill`, `receipts.jsonl`), the line adds
+  `(outcome, has evidence, content-receipt:<hash>)`, and the sponsoring service serves the receipt at
+  `GET /receipt?hash=`. It says the files were served to your key, never that they were used.
 - **`arp_get_skill` and `arp_declare_used` work off this machine** (task 131, ADR `0196`). In sponsored
   mode the content server now defaults to ARP's hosted one, `https://content.arp.intuition.box`
   (`config.contentDefault`), which signs the receipt the sponsoring service asks for. They used to

@@ -114,7 +114,23 @@ export {
      * is absent from `docs/07`'s tables, and it carries zero edges on mainnet 1155.
      */
     IS_A_SUB_DOMAIN_OF as INTUITION_IS_A_SUB_DOMAIN_OF,
+    /** The predicate a skill's version hangs on, `(skill, version, sha256:<digest>)` (task 127, ADR `0192`). */
+    VERSION as INTUITION_VERSION_TERM_ID,
 } from "./sources/intuition/terms.js";
+
+/** A skill's version, where it hangs, and what backs a line (task 127, ADR `0192`). */
+export {digestOfVersionLabel, isVersionDigest, manifestOfHashes, VERSION_LABEL_PREFIX, versionAtomLabel} from "./skill-version.js";
+export {planVersionedUse, type VersionedUsePlan} from "./declare/versioned-use.js";
+export {
+    HAS_EVIDENCE_LABEL,
+    checkReceiptEvidence,
+    CONTENT_RECEIPT_EVIDENCE_PREFIX,
+    contentReceiptHash,
+    isReceiptHash,
+    receiptEvidenceLabel,
+    receiptHashOfEvidenceLabel,
+    type ReceiptEvidenceVerdict,
+} from "./line-evidence.js";
 
 export {
     erc8004RegistrySource,
@@ -730,6 +746,8 @@ export {
     readEdgeWriters,
     readThingUrl,
     getPulseUsage,
+    usageOnVersion,
+    versionedSubject,
     workedInDomain,
     type PulseDeclaration,
     type PulseLine,
@@ -1027,6 +1045,7 @@ export {
     githubRepoOf,
     planToolListing,
     signListToolRequest,
+    subjectTypeOf,
     SOURCE_PREDICATE,
     verifyListToolRequest,
     type ListToolRequest,
@@ -1052,12 +1071,15 @@ export {
     LINE_MAX_DOMAIN_LENGTH,
     LINE_MAX_TTL_SECONDS,
     LINE_REQUEST_TYPES,
+    LINE_REQUEST_TYPES_V5,
+    readArchivedLineRequest,
     lineRequestTypedData,
     lineRequestTypedDataJson,
     LINE_REQUEST_VERSION,
     lineTermsOf,
     signLineRequest,
     verifyLineRequest,
+    type ArchivedLineRequestV5,
     type LineRequest,
     type LineRequestSigner,
     type LineRequestTypedDataJson,

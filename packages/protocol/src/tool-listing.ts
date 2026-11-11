@@ -15,7 +15,8 @@ import {
 } from "@arp-protocol/graphql";
 import {getAddress} from "viem";
 
-import {SAME_AS, USES} from "./sources/intuition/terms.js";
+import {versionedSubject} from "./pulse-usage.js";
+import {SAME_AS, USES, VERSION} from "./sources/intuition/terms.js";
 import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
 /**
@@ -263,7 +264,8 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
 
     for (const row of rows) {
         if (!isRecord(row)) continue;
-        const object = row["object"];
+        // A use of a version is a use of the skill it versions (ADR `0192`).
+        const object = isRecord(row["object"]) ? row["object"] : versionedSubject(row);
         if (!isRecord(object)) continue;
         const atomId = readString(object, "term_id");
         if (atomId === null) continue;
@@ -352,6 +354,7 @@ export async function getToolWallets(
         });
     const data = await transport.request(TOOL_WALLETS_QUERY, {
         uses: USES,
+        version: VERSION,
         sameAs: SAME_AS,
         atomId,
         sponsor: getAddress(config.sponsor.trim().toLowerCase()),

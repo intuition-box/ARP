@@ -1,0 +1,108 @@
+{
+  "at": "2026-11-11T15:55:51.636Z",
+  "hasType": "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced",
+  "chains": {
+    "1155": [
+      {
+        "label": "AIAgent",
+        "termId": "0x800342c0ded1c288e69f39a2dc96d8cff9b242e9f573193e6e0a849e5315d3e9",
+        "data": "ipfs://bafkreifsxneex7xwjlc4avzs35byis2yrclufcd4y2yugtjbfhvssi7obm",
+        "hasTypeEdgesAsObject": 28648,
+        "triplesAsPredicate": 0
+      },
+      {
+        "label": "MCP Server",
+        "termId": "0xb52bb294a1cbf67a3fccc6bc8423e0758a11acfeb60caf6a0465ffca9ec3ae79",
+        "data": "ipfs://bafkreiaifu74ya6lkdmr5oa4zxnjvvwkes5bif6k2kgil6w3akwtypngoq",
+        "hasTypeEdgesAsObject": 68,
+        "triplesAsPredicate": 0
+      },
+      {
+        "label": "Skill",
+        "termId": "0xba57c5daf6c9b8b7821406db1bff01427b385a4a041f2ddd5cf004e80949610c",
+        "data": "ipfs://bafkreifxw6isqsvekrrw7crka33vq2tpxqoqpbgbog3hoofh6ycdqyvmzq",
+        "hasTypeEdgesAsObject": 0,
+        "triplesAsPredicate": 0
+      },
+      {
+        "label": "Tool",
+        "termId": "0x57ca9d1913cd9fd4d00fae083bbf5760fd7c4b947dbe235307f03ec43568aca8",
+        "data": "ipfs://bafkreibf65dejprupxmn65ffaqedb7pzg47rum4bqjf42cq3cxi4ydehge",
+        "hasTypeEdgesAsObject": 0,
+        "triplesAsPredicate": 0
+      },
+      {
+        "label": "Tool",
+        "termId": "0x4a8c7317928dc1909089ee791c1507466d5d317aecba52822975783bfd0db108",
+        "data": "ipfs://bafkreightk2mlixesruw56evukshmnru663uyegeinl3342i6dhtxfhn6y",
+        "hasTypeEdgesAsObject": 0,
+        "triplesAsPredicate": 0
+      },
+      {
+        "label": "version",
+        "termId": "0x9622ec9e9e8265253328648119d02f85234737b991cf34ac9416b163b6e10230",
+        "data": "version",
+        "hasTypeEdgesAsObject": 0,
+        "triplesAsPredicate": 0
+      }
+    ],
+    "13579": [
+      {
+        "label": "AIAgent",
+        "termId": "0x800342c0ded1c288e69f39a2dc96d8cff9b242e9f573193e6e0a849e5315d3e9",
+        "data": "ipfs://bafkreifsxneex7xwjlc4avzs35byis2yrclufcd4y2yugtjbfhvssi7obm",
+        "hasTypeEdgesAsObject": 289,
+        "triplesAsPredicate": 0
+      },
+      {
+        "label": "AIAgent",
+        "termId": "0x976c5fc3c73fe575654cdb60a306dfd7035a6b641c5e9ea9a113bf8d163df9be",
+        "data": "AIAgent",
+        "hasTypeEdgesAsObject": 0,
+        "triplesAsPredicate": 0
+      },
+      {
+        "label": "MCP Server",
+        "termId": "0xb52bb294a1cbf67a3fccc6bc8423e0758a11acfeb60caf6a0465ffca9ec3ae79",
+        "data": "ipfs://bafkreiaifu74ya6lkdmr5oa4zxnjvvwkes5bif6k2kgil6w3akwtypngoq",
+        "hasTypeEdgesAsObject": 72,
+        "triplesAsPredicate": 0
+      },
+      {
+        "label": "MCP Server",
+        "termId": "0x3737a36fafedc0bdb3934507ad5859c9b49f753b631e0b458be826f04b1d829e",
+        "data": "MCP Server",
+        "hasTypeEdgesAsObject": 0,
+        "triplesAsPredicate": 0
+      },
+      {
+        "label": "Skill",
+        "termId": "0xba57c5daf6c9b8b7821406db1bff01427b385a4a041f2ddd5cf004e80949610c",
+        "data": "ipfs://bafkreifxw6isqsvekrrw7crka33vq2tpxqoqpbgbog3hoofh6ycdqyvmzq",
+        "hasTypeEdgesAsObject": 6,
+        "triplesAsPredicate": 0
+      },
+      {
+        "label": "has version",
+        "termId": "0xa0a6412e47f4fb53b51c93ed7a822b11ccc68f0a9609daec6902b9d02585254e",
+        "data": "ipfs://bafkreiaj6gasgqfbu6i7jvb4gwiv7avcqbryeyplih6a7xynecemolkivi",
+        "hasTypeEdgesAsObject": 0,
+        "triplesAsPredicate": 0
+      },
+      {
+        "label": "version",
+        "termId": "0x9622ec9e9e8265253328648119d02f85234737b991cf34ac9416b163b6e10230",
+        "data": "version",
+        "hasTypeEdgesAsObject": 0,
+        "triplesAsPredicate": 28
+      },
+      {
+        "label": "version of",
+        "termId": "0x5fa259372242f05735b7bedffa3e121c909526470460f0f121ac4920abdef0f0",
+        "data": "{\"@context\":\"https://schema.org\",\"@type\":\"Thing\",\"description\":\"The subject is o…",
+        "hasTypeEdgesAsObject": 0,
+        "triplesAsPredicate": 12
+      }
+    ]
+  }
+}

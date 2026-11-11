@@ -10,7 +10,9 @@ import {
 } from "../declare/multivault.js";
 import {isToolUrl, normaliseToolUrl, toolAtomUri, toolThing} from "../declare/tool-thing.js";
 import type {PreparedCall} from "../declare/types.js";
+import {HAS_TYPE, MCP_SERVER_TYPE, SKILL_TYPE} from "../sources/intuition/terms.js";
 import {assertPublishableToolUrl} from "../tool-url-values.js";
+import type {ToolForm} from "./tool-forms.js";
 
 /**
  * A sponsored tool listing (ADR `0123`, `docs/tasks/53` 53c): the atoms and the one triple that make
@@ -20,7 +22,17 @@ import {assertPublishableToolUrl} from "../tool-url-values.js";
  * repository's atom and `(skill, source, repository)`. It writes no `uses` edge and labels nothing
  * declared or proven. Each term is born at `cost + minDeposit` (ADR `0053`), so the payer holds its
  * first position.
+ *
+ * **Since task 127** (ADR `0192`) it also says what the subject is, once: `(subject, has type, Skill)` for a
+ * skill, `(subject, has type, MCP Server)` for an endpoint that answered MCP. Any other form gets no type: a
+ * repository, a plugin or an x402 endpoint has no type atom on chain that the ecosystem writes to.
  */
+
+/** The type a listed subject is given, or `null`: a skill by its URL, an MCP endpoint by what it answered. */
+export function subjectTypeOf(url: string, form: ToolForm | null): Hex | null {
+    if (skillRefFromUrl(normaliseToolUrl(url)) !== null) return SKILL_TYPE;
+    return form === "mcp-endpoint" ? MCP_SERVER_TYPE : null;
+}
 
 /**
  * `source`: a plain-string atom, so its id follows from the word and is the same on 1155 and 13579
@@ -35,6 +47,15 @@ export type ToolListingPlan = {
     atomId: Hex;
     /** For a skill, the repository it is in; `null` for any other tool. */
     repository: {url: string; atomId: Hex; sourceTripleId: Hex} | null;
+    /** Whether the tool's atom was already on chain. */
+    toolOnChain: boolean;
+    /**
+     * Everything is on chain but the type triple: the one case a listing is not admitted again (ADR `0163`), since
+     * a skill's type follows from its URL. Anything else to create is admitted first, whoever created the atom.
+     */
+    onlyType: boolean;
+    /** `(tool, has type, <type>)`, when the subject has a type (`subjectTypeOf`); `null` otherwise. */
+    type: {atomId: Hex; tripleId: Hex} | null;
     /** The Things whose atoms this plan creates, to pin before sending so they are readable. */
     toPin: AgentThing[];
     calls: PreparedCall[];
@@ -109,6 +130,8 @@ export async function planToolListing(params: {
     reads: MultiVaultReads;
     /** The `owner/repo` spelling to list a GitHub URL under ({@link chooseRepoSpelling}). */
     repoFullName?: string;
+    /** What the admission found it to be, when it was asked. A skill's type follows from its URL without it. */
+    form?: ToolForm | null;
 }): Promise<ToolListingPlan> {
     const {reads} = params;
     if (!isToolUrl(params.url)) throw new Error(`${params.url} is not a tool URL`);
@@ -125,11 +148,14 @@ export async function planToolListing(params: {
     ]);
     const sourceTripleId =
         repoId === null ? null : await reads.tripleId(atomId, SOURCE_PREDICATE, repoId);
+    const typeAtom = subjectTypeOf(url, params.form ?? null);
+    const typeTripleId = typeAtom === null ? null : await reads.tripleId(atomId, HAS_TYPE, typeAtom);
 
-    const [toolOn, repoOn, sourceOn, atomCost, tripleCost, minDeposit] = await Promise.all([
+    const [toolOn, repoOn, sourceOn, typeOn, atomCost, tripleCost, minDeposit] = await Promise.all([
         reads.termExists(atomId),
         repoId === null ? Promise.resolve(true) : reads.termExists(repoId),
         sourceTripleId === null ? Promise.resolve(true) : reads.termExists(sourceTripleId),
+        typeTripleId === null ? Promise.resolve(true) : reads.termExists(typeTripleId),
         reads.atomCost(),
         reads.tripleCost(),
         reads.minDeposit(),
@@ -177,6 +203,16 @@ export async function planToolListing(params: {
             why: `${url} has source ${repoUrl}`,
         });
     }
+    if (!typeOn && typeAtom !== null) {
+        calls.push({
+            kind: "create-triple",
+            chainId: reads.chainId,
+            to: reads.address,
+            value: tripleAssets,
+            data: encodeCreateTriples([{subjectId: atomId, predicateId: HAS_TYPE, objectId: typeAtom, assets: tripleAssets}]),
+            why: `${url} has type ${typeAtom === SKILL_TYPE ? "Skill" : "MCP Server"}`,
+        });
+    }
 
     return {
         url,
@@ -185,6 +221,9 @@ export async function planToolListing(params: {
             repoUrl === null || repoId === null || sourceTripleId === null
                 ? null
                 : {url: repoUrl, atomId: repoId, sourceTripleId},
+        toolOnChain: toolOn,
+        onlyType: toolOn && repoOn && sourceOn && !typeOn,
+        type: typeAtom === null || typeTripleId === null ? null : {atomId: typeAtom, tripleId: typeTripleId},
         toPin,
         calls,
         totalValue: calls.reduce((sum, call) => sum + call.value, 0n),

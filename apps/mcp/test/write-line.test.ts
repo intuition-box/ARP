@@ -3,6 +3,8 @@ import {tmpdir} from "node:os";
 import {join} from "node:path";
 
 import {
+    contentReceiptHash,
+    signContentReceipt,
     TRANSFER_TOPIC,
     verifyCategoryRequest,
     verifyLineRequest,
@@ -10,6 +12,7 @@ import {
     x402Policy,
     type DomainResolution,
     type SignedCategoryRequest,
+    type SignedContentReceipt,
     type SignedLineRequest,
     type X402TransferReads,
 } from "@arp-protocol/core";
@@ -93,6 +96,34 @@ describe("writeLine", () => {
         expect(asked).toEqual(["/", "/list-tool", "/line"]);
         expect(signed?.request).toMatchObject({tool: ATOM, domain: "", outcome: "failed", reason: "missing-key", agentId: "7"});
         expect(await verifyLineRequest(signed, Math.floor(Date.now() / 1000))).toEqual({status: "valid", address: account.address});
+    });
+
+    it("names the version, with the receipt held over the same files, and drops a version the sponsor does not find published (task 127)", async () => {
+        const digest = `0x${"d1".repeat(32)}`;
+        const bodies: {request: SignedLineRequest; receipt?: SignedContentReceipt}[] = [];
+        const {config, agent} = setup((body, calls) => {
+            bodies.push(body as (typeof bodies)[number]);
+            return calls === 2 ? {status: 422, body: {error: "not the skill at HEAD", rule: "version"}} : ok;
+        });
+        const node = privateKeyToAccount(`0x${"33".repeat(32)}`);
+        const served = await signContentReceipt(
+            {atom: ATOM, url: "https://github.com/canonical/repo?skill=s", path: "s", digest: digest as Hex, to: account.address, servedAt: 1, nonce: `0x${"01".repeat(32)}`},
+            13579,
+            node,
+        );
+        writeFileSync(join(config.stateDir, "receipts.jsonl"), `${JSON.stringify({atom: ATOM, url: served.receipt.url, skill: "s", receipt: served})}\n`);
+
+        const backed = await writeLine(config, agent, {...INPUT, version: digest});
+        expect(backed).toMatchObject({version: digest, backed: true});
+        expect(bodies[0]?.request.request).toMatchObject({version: digest, evidence: contentReceiptHash(served.receipt, 13579)});
+        expect(bodies[0]?.receipt?.signature).toBe(served.signature);
+
+        // Another digest: the receipt is over other files and backs nothing; the sponsor refuses the version.
+        const plain = await writeLine(config, agent, {...INPUT, version: `0x${"d2".repeat(32)}`});
+        expect(plain).toMatchObject({version: null, backed: false});
+        expect(bodies[1]?.request.request).toMatchObject({version: `0x${"d2".repeat(32)}`, evidence: ""});
+        expect(bodies[2]?.request.request).toMatchObject({version: "", evidence: ""});
+        expect(bodies[2]?.receipt).toBeUndefined();
     });
 
     it("sends the approval once when the sponsor asks for it, then writes", async () => {
@@ -196,6 +227,15 @@ describe("lineFromArgs", () => {
     const args = {toolUrl: "https://github.com/a/b?skill=s", domain: undefined, reason: undefined};
     /** The four terms flags, as the 402 gave them (ADR 0189). */
     const TERMS_ARGS = {payTo: SPONSOR, asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", price: "20000", termsAt: "1762716700"};
+
+    it("reads the version from --skill-dir, for a skill's URL only (task 127)", () => {
+        const dir = mkdtempSync(join(tmpdir(), "arp-skill-"));
+        dirs.push(dir);
+        writeFileSync(join(dir, "SKILL.md"), "# s");
+        expect(lineFromArgs({...args, outcome: "worked", skillDir: dir})).toMatchObject({version: expect.stringMatching(/^0x[0-9a-f]{64}$/)});
+        expect(lineFromArgs({...args, toolUrl: "https://github.com/a/b", outcome: "worked", skillDir: dir})).toBeInstanceOf(Error);
+        expect(lineFromArgs({...args, outcome: "worked", skillDir: join(dir, "absent")})).toBeInstanceOf(Error);
+    });
 
     it("takes closed words", () => {
         expect(lineFromArgs({...args, outcome: "failed", reason: "missing-key", domain: "video"})).toEqual({
@@ -326,7 +366,7 @@ describe("writeLineChecked", () => {
         const seen: unknown[] = [];
         const write = (async (_config: unknown, _agent: unknown, input: unknown) => {
             seen.push(input);
-            return {toolUrl: "", termId: ATOM, levels: [], created: true, transactions: []};
+            return {toolUrl: "", termId: ATOM, levels: [], created: true, transactions: [], version: null, backed: false};
         }) as Parameters<typeof writeLineChecked>[0]["write"];
         const steps = {config, isCategory: async (label: string) => label === "design" || label === "video", agent: () => agent, write};
         await writeLineChecked(steps, {...INPUT, domain: " Slides ", newDomain: {parent: "Design", why: "decks"}});
@@ -341,7 +381,7 @@ describe("writeLineChecked", () => {
         const seen: unknown[] = [];
         const write = (async (_c: unknown, _a: unknown, input: unknown) => {
             seen.push(input);
-            return {toolUrl: "", termId: ATOM, levels: [], created: true, transactions: []};
+            return {toolUrl: "", termId: ATOM, levels: [], created: true, transactions: [], version: null, backed: false};
         }) as Parameters<typeof writeLineChecked>[0]["write"];
         const resolve = async (word: string): Promise<DomainResolution> =>
             word === "slides"

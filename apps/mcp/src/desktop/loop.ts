@@ -30,11 +30,13 @@ import {
 
 import {
   bundleMatchesReceipt,
+  contentReceiptHash,
   contentRequestTypedData,
   contentsFileOf,
   contentsLines,
   encodeApproveDeposit,
   INTUITION_USES_TERM_ID,
+  isVersionDigest,
   multiVaultDeclareAbi,
   paymentAtomLabel,
   readSkillContents,
@@ -196,6 +198,28 @@ function receiptFor(config: LoopConfig, atom: Hex): ReceiptLine | null {
   return lines.reverse().find((line) => line.atom.toLowerCase() === atom.toLowerCase()) ?? null;
 }
 
+/**
+ * The latest receipt this machine holds for `atom` over `digest`, served to `agent` (task 127, ADR `0192`): what
+ * backs a line on that version. A receipt over other files, or for another key, backs nothing here.
+ */
+function receiptOver(config: LoopConfig, atom: Hex, digest: string, agent: Address): SignedContentReceipt | null {
+  const file = join(config.stateDir, 'receipts.jsonl');
+  if (!existsSync(file)) return null;
+  const rows = readFileSync(file, 'utf8').split('\n').filter((line) => line.trim() !== '');
+  for (const row of rows.reverse()) {
+    let line: ReceiptLine;
+    try {
+      line = JSON.parse(row) as ReceiptLine; // written by `getSkill` only
+    } catch {
+      continue;
+    }
+    const { receipt } = line.receipt;
+    if (receipt.atom.toLowerCase() !== atom.toLowerCase() || receipt.digest.toLowerCase() !== digest.toLowerCase()) continue;
+    if (receipt.to?.toLowerCase() === agent.toLowerCase()) return line.receipt;
+  }
+  return null;
+}
+
 /** The skill's files, served to this agent with a receipt that names it, verified before it is kept. */
 export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex): Promise<ServedSkill> {
   const nonce = keccak256(stringToBytes(`${atom}-${Date.now()}`));
@@ -350,9 +374,27 @@ export type LineInput = {
    * SKILL.md names it, and refuses the line otherwise.
    */
   need?: string;
+  /**
+   * The skill's directory digest where it ran (`bundleManifest`, ADR `0185`): the line is then about that version,
+   * `(agent, uses, (skill, version, sha256:<digest>))` (task 127, ADR `0192`), and backed by a receipt this machine
+   * holds over the same digest, when it holds one. A digest the sponsor does not find published is dropped, and
+   * the line written without a version: a local edit writes none.
+   */
+  version?: string;
 };
-/** `toolUrl` is the spelling it was listed under, which can differ from the one asked: GitHub's own wins. */
-export type WrittenLine = { toolUrl: string; termId: Hex; levels: Hex[]; created: boolean; transactions: Hex[] };
+/**
+ * `toolUrl` is the spelling it was listed under, which can differ from the one asked: GitHub's own wins. `version`
+ * is the digest the line was written on, `null` when it names none; `backed` says a receipt backs it.
+ */
+export type WrittenLine = {
+  toolUrl: string;
+  termId: Hex;
+  levels: Hex[];
+  created: boolean;
+  transactions: Hex[];
+  version: string | null;
+  backed: boolean;
+};
 
 /**
  * Writes one form B line about a tool through ARP's sponsoring service (ADR `0144`): the tool is listed if it
@@ -409,7 +451,12 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, asked: L
   const wait = config.sleep ?? ((ms: number) => new Promise<void>((done) => setTimeout(done, ms)));
   const deadline = Date.now() + (config.indexerWaitMs ?? 120_000);
   let approved = false;
+  // ADR `0192`: a version only for a skill's directory, never beside a payment, and its receipt when one is held.
+  let version = input.payment === undefined && input.version !== undefined && isVersionDigest(input.version) ? input.version : '';
+  let withReceipt = true;
+  const backing = () => (version === '' || !withReceipt ? null : receiptOver(config, tool, version, agent.address));
   for (;;) {
+    const receipt = backing();
     const request = await signLineRequest(
       {
         agent: agent.address,
@@ -425,13 +472,15 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, asked: L
         asset: terms?.asset ?? '',
         price: terms?.price ?? '',
         termsAt: terms?.receivedAt ?? 0,
+        version,
+        evidence: receipt === null ? '' : contentReceiptHash(receipt.receipt, receipt.chainId),
         nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
         expiresAt: expiresAt(),
       },
       DESKTOP_CHAIN_ID,
       agent.account,
     );
-    const answer = await post(config, '/line', { request });
+    const answer = await post(config, '/line', receipt === null ? { request } : { request, receipt });
     if (answer.status === 200) {
       return {
         toolUrl: String(listed.body['url']),
@@ -439,7 +488,19 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, asked: L
         levels: answer.body['levels'] as Hex[], // the service's own answer
         created: answer.body['created'] === true,
         transactions: answer.body['transactions'] as Hex[], // the service's own answer
+        version: version === '' ? null : version,
+        backed: receipt !== null,
       };
+    }
+    // Not a published version: the files here differ from the skill's (ADR `0185`), so the line names none.
+    if (answer.status === 422 && answer.body['rule'] === 'version' && version !== '') {
+      version = '';
+      continue;
+    }
+    // A receipt this sponsor does not accept backs nothing there; the line stands without it.
+    if (answer.status === 422 && answer.body['rule'] === 'evidence' && receipt !== null) {
+      withReceipt = false;
+      continue;
     }
     const error = String(answer.body['error'] ?? '');
     const notIndexedYet =

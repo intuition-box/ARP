@@ -26,6 +26,8 @@ const request = (over: Partial<LineRequest> = {}): LineRequest => ({
     endpoint: CALLED,
     need: "",
     ...TERMS,
+    version: "",
+    evidence: "",
     nonce: keccak256(stringToBytes("n")),
     expiresAt: NOW + 600,
     ...over,
@@ -37,7 +39,7 @@ describe("the line request, version 5 (ADRs 0159, 0162, 0166, 0189)", () => {
         expect(await verifyLineRequest(signed, NOW)).toEqual({status: "valid", address: AGENT.address});
         const swapped = {...signed, request: {...signed.request, payment: `eip155:8453/tx/0x${"aa".repeat(32)}`}};
         expect((await verifyLineRequest(swapped, NOW)).status).toBe("mismatch");
-        expect(lineRequestTypedData(request(), 13579).domain.version).toBe("5");
+        expect(lineRequestTypedData(request(), 13579).domain.version).toBe("6");
     });
 
     it("signs the terms the payer paid against, and reads them back", async () => {

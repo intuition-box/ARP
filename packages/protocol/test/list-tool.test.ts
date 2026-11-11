@@ -16,6 +16,7 @@ import {
     SOURCE_PREDICATE,
     verifyListToolRequest,
 } from "../src/sponsor/list-tool.js";
+import {SKILL_TYPE} from "../src/sources/intuition/terms.js";
 
 const MILLI = 10n ** 15n;
 const MULTIVAULT: Address = "0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91";
@@ -43,12 +44,13 @@ describe("planToolListing", () => {
         expect(plan.toPin.map((t) => t.url)).toEqual(["https://example.com/mcp"]);
     });
 
-    it("plans a skill, its repository and (skill, source, repository)", async () => {
+    it("plans a skill, its repository, (skill, source, repository) and (skill, has type, Skill)", async () => {
         const plan = await planToolListing({url: "github.com/a/b?skill=c", reads: reads()});
         expect(plan.repository?.url).toBe("https://github.com/a/b");
-        expect(plan.calls.map((c) => c.kind)).toEqual(["create-atom", "create-triple"]);
+        expect(plan.calls.map((c) => c.kind)).toEqual(["create-atom", "create-triple", "create-triple"]);
         expect(plan.calls[1]?.data).toContain(SOURCE_PREDICATE.slice(2));
-        expect(plan.totalValue).toBe(6n * MILLI);
+        expect(plan.calls[2]?.data).toContain(SKILL_TYPE.slice(2));
+        expect(plan.totalValue).toBe(8n * MILLI);
     });
 
     it("plans only what is missing, and nothing when everything exists", async () => {
@@ -60,7 +62,7 @@ describe("planToolListing", () => {
         });
         expect(partial.toPin.map((t) => t.url)).toEqual(["https://github.com/a/b?skill=c"]);
         const all = new Set(
-            [first.atomId, first.repository!.atomId, first.repository!.sourceTripleId].map((id) =>
+            [first.atomId, first.repository!.atomId, first.repository!.sourceTripleId, first.type!.tripleId].map((id) =>
                 id.toLowerCase(),
             ),
         );

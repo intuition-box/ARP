@@ -19,6 +19,7 @@ import {thingDocument, thingUriOfDigest} from "./declare/thing-cid.js";
 import {toolThing} from "./declare/tool-thing.js";
 import {BECAUSE_LABEL, HAS_OUTCOME_LABEL} from "./declare/usage-words.js";
 import {findToolAtoms, getPulseUsage, type PulseUsage, type PulseUsageConfig} from "./pulse-usage.js";
+import {VERSION} from "./sources/intuition/terms.js";
 
 /** A skill's GitHub URL, as `arp_pulse` computes it (`toolUriOf`), or `null` when the source is not `owner/repo`. */
 export function skillUrlOf(source: string, skill: string): string | null {
@@ -57,6 +58,8 @@ export async function readSkillLines(atomUri: string, config: SkillLinesConfig):
         ...config,
         hasOutcome,
         because,
+        // A line on a version of the skill is a line about the skill (ADR `0192`).
+        version: VERSION,
         ...(needs === undefined ? {} : {needs}),
         ...(withId === undefined ? {} : {with: withId}),
     });

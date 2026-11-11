@@ -125,6 +125,7 @@ arp line --tool https://api.example.com/x402/weather --outcome failed --reason n
 | `--asset <address>` | with `--payment-tx` | Its `asset` |
 | `--price <units>` | with `--payment-tx` | Its `amount`, in the asset's smallest unit: `20000` is 0.02 USDC |
 | `--terms-at <time>` | with `--payment-tx` | When that `402` came: unix seconds or ISO 8601 |
+| `--skill-dir <path>` | no, a skill's URL only | The directory the skill ran from. The line names that version of its files, `(skill, version, sha256:<digest>)`, and is backed by a receipt from ARP's content server over the same files when `~/.arp/receipts.jsonl` holds one. A digest that is not the skill's at `HEAD`, nor a receipt's, is dropped and the line written without a version |
 
 A line with a payment can be about an x402 endpoint. The payment must come from the agent's address or its `agentWallet`, and go to `--pay-to` for at least `--price`, which must be what the endpoint asks: see [The x402 outcomes feed](/docs/x402-feed). A new `--domain` is added to the tree first, by a request the agent's key signs, then the line is written. It prints the written line as JSON. It loads `~/.arp/agent-key` and sends to `ARP_SPONSOR`. On any chain other than testnet 13579 it refuses. What a line is: [Lines](/docs/lines).
 

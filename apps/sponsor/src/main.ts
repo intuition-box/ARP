@@ -68,11 +68,12 @@ import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
+import { LineReceiptStore } from './line-receipts.ts';
 import { LineRequestStore } from './line-requests.ts';
 import { liveTerms, probeTerms } from './x402-terms-read.ts';
 import { listenFrom, type Listen } from './listen.ts';
 import { categoryLog, categoryTree, compoundsFrom, lineSubjectCheck, lineToolUrl, toolCheck } from './categories.ts';
-import { resolveOnGitHubCached, skillMarkdownOnGitHub } from './github.ts';
+import { resolveOnGitHubCached, skillDigestOnGitHub, skillMarkdownOnGitHub } from './github.ts';
 import { DEFAULT_ENDPOINT_CHECKS_PER_HOUR, pinnedAsk, toolAdmitter } from './admit-tool.ts';
 import { repoSpellingsOnGraph } from './indexer.ts';
 import { intuitionJsonPinner, intuitionPinner } from './pin.ts';
@@ -126,8 +127,10 @@ const PIN_KEY = (process.env.INTUITION_PIN_API_KEY ?? '').trim();
 let LEDGER: string;
 let CATEGORY_LOG: string;
 let LINE_REQUESTS: string;
+let LINE_RECEIPTS: string;
 let ledger: SponsorLedger;
 let lineRequests: LineRequestStore;
+let lineReceipts: LineReceiptStore;
 try {
   LEDGER = stateFile(process.env.SPONSOR_LEDGER, 'sponsor-ledger.jsonl');
   CATEGORY_LOG = stateFile(process.env.SPONSOR_CATEGORY_LOG, 'category-log.jsonl');
@@ -135,6 +138,9 @@ try {
   LINE_REQUESTS = stateFile(process.env.SPONSOR_LINE_REQUESTS, 'line-requests.jsonl');
   ledger = new SponsorLedger(LEDGER);
   lineRequests = new LineRequestStore(LINE_REQUESTS);
+  // ADR `0192`: the content receipt behind each line backed by one, the one copy, served at GET /receipt.
+  LINE_RECEIPTS = stateFile(process.env.SPONSOR_LINE_RECEIPTS, 'line-receipts.jsonl');
+  lineReceipts = new LineReceiptStore(LINE_RECEIPTS);
 } catch (error) {
   fail(String(error instanceof Error ? error.message : error));
 }
@@ -395,6 +401,9 @@ const service = createSponsor({
     // ADR `0159`: an x402 line's payment, read on its own network. Read-only; this key never signs there.
     payments: x402Reading(x402NetworksFrom(X402_DEFAULT_NETWORKS, process.env), process.env),
     requests: lineRequests,
+    // ADR `0192`: a line's version is the skill's directory at HEAD, or one an accepted node's receipt names.
+    receipts: lineReceipts,
+    skillDigest: (url) => skillDigestOnGitHub(url),
     // ADR `0189`: the terms an x402 line signed, checked against the probe's reading or a live one.
     x402Terms: {
       probe: PROBE_URL === '' ? async () => null : probeTerms(PROBE_URL, { log: (line) => process.stderr.write(`${line}\n`) }),
@@ -481,6 +490,7 @@ export async function main(): Promise<void> {
   );
   process.stderr.write(`  ledger     ${LEDGER}\n`);
   process.stderr.write(`  requests   ${LINE_REQUESTS}\n`);
+  process.stderr.write(`  receipts   ${LINE_RECEIPTS}\n`);
   process.stderr.write(`  x402 terms ${PROBE_URL === '' ? 'live read only (no ARP_PROBE_URL)' : `probe ${PROBE_URL}, then a live read`}\n`);
   process.stderr.write(
     `  publish    ${PIN_KEY === '' ? 'off (no INTUITION_PIN_API_KEY)' : 'on (delegation register, task 37c)'}\n`,

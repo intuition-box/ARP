@@ -13,6 +13,7 @@ import {
     readString,
 } from "@arp-protocol/graphql";
 import {parseCaip19} from "./caip.js";
+import {versionedSubject} from "./pulse-usage.js";
 import {CAPABILITY_PREDICATE_IDS, USES} from "./sources/intuition/terms.js";
 import {mapMarketSide} from "./sources/intuition/map.js";
 import {provenanceFor} from "./provenance.js";
@@ -240,7 +241,8 @@ export async function getAtomStanding(
         const tripleId = readString(row, "term_id");
         const predicate = readRecord(row, "predicate");
         const predicateId = predicate === null ? null : readString(predicate, "term_id");
-        const object = readRecord(row, "object");
+        // A use of a version is a claim about the skill it versions (ADR `0192`).
+        const object = readRecord(row, "object") ?? versionedSubject(row);
         const objectId = object === null ? null : readString(object, "term_id");
         // Dropped rather than guessed, for the same reason an incoming edge is: the predicate is
         // what the claim says and the object is what it says it about. Neither has a default.
@@ -420,7 +422,8 @@ export async function getDeclaredModulesFor(
     for (const row of rows) {
         if (!isRecord(row)) continue;
         const subject = readRecord(row, "subject");
-        const object = readRecord(row, "object");
+        // A use of a version is a use of the skill it versions (ADR `0192`).
+        const object = readRecord(row, "object") ?? versionedSubject(row);
         const subjectId = subject === null ? null : readString(subject, "term_id");
         const objectId = object === null ? null : readString(object, "term_id");
         if (subjectId === null || objectId === null) continue;

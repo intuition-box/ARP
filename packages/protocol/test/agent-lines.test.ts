@@ -2,6 +2,7 @@ import {
     PULSE_QUALIFIERS_QUERY,
     PULSE_SUBJECT_USES_QUERY,
     PULSE_USES_QUERY,
+    PULSE_VERSIONED_USES_QUERY,
     type GraphqlTransport,
 } from "@arp-protocol/graphql";
 import {describe, expect, it} from "vitest";
@@ -41,7 +42,7 @@ function transport(uses: Use[], qualifiers: Qualifier[]): GraphqlTransport {
                         .map((row) => ({object: {term_id: row.object_id, label: `label ${row.object_id}`}})),
                 };
             }
-            if (query === PULSE_USES_QUERY) {
+            if (query === PULSE_USES_QUERY || query === PULSE_VERSIONED_USES_QUERY) {
                 const {tools} = variables as {tools: string[]}; // this query's own variables
                 return {triples: uses.filter((row) => tools.includes(row.object_id))};
             }

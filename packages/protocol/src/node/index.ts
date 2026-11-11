@@ -26,3 +26,4 @@ export {
     stateFile,
     type LocalRequestPolicy,
 } from "./local-state.js";
+export {skillDirectoryDigest} from "./skill-directory.js";

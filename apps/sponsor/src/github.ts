@@ -10,7 +10,8 @@
  *  `admit-tool.ts`'s question, asked only when a listing would create something (task 94, ADR
  *  `0163`); any other URL passes here and is asked there.
  */
-import { rawContentUrl, resolveContentPath, skillRefFromUrl, type RepositoryFile } from '@arp-protocol/core';
+import { rawContentUrl, resolveContentPath, serveSkillBundle, skillRefFromUrl, type RepositoryFile } from '@arp-protocol/core';
+import type { Hex } from 'viem';
 
 const FETCH_TIMEOUT_MS = 10_000;
 
@@ -150,4 +151,72 @@ async function readSkillMarkdown(url: string, token: string | undefined, fetchIm
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`raw.githubusercontent.com answered HTTP ${response.status} for ${resolved.path}`);
   return (await response.text()).slice(0, SKILL_MARKDOWN_MAX_BYTES);
+}
+
+const digestCache = new Map<string, { at: number; digest: string | null }>();
+
+/**
+ * The skill's directory digest at its repository's `HEAD`, as the content server computes it (`serveSkillBundle`,
+ * `bundleManifest`, ADR `0185`): what `POST /line` checks a line's version against when no receipt names it
+ * (task 127, ADR `0192`). `null` when the URL names no single skill directory, or it is past the bundle's caps.
+ * Throws when GitHub does not answer. Two API requests (the commit, its tree) and one raw read per file,
+ * remembered for ten minutes per URL.
+ */
+export async function skillDigestOnGitHub(
+  url: string,
+  options: { token?: string | undefined; fetch?: typeof fetch; now?: number } = {},
+): Promise<string | null> {
+  const now = options.now ?? Date.now();
+  const hit = digestCache.get(url);
+  if (hit !== undefined && now - hit.at < CACHE_MS) return hit.digest;
+  const digest = await readSkillDigest(url, options.token ?? process.env.GITHUB_TOKEN?.trim(), options.fetch ?? fetch);
+  digestCache.delete(url);
+  digestCache.set(url, { at: now, digest });
+  if (digestCache.size > CACHE_ENTRIES) digestCache.delete(digestCache.keys().next().value ?? url);
+  return digest;
+}
+
+async function readSkillDigest(url: string, token: string | undefined, fetchImpl: typeof fetch): Promise<string | null> {
+  const ref = skillRefFromUrl(url);
+  if (ref === null || !/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(ref.repo)) return null;
+  const headers: Record<string, string> = { accept: 'application/vnd.github+json', 'user-agent': 'arp-sponsor' };
+  if (token !== undefined && token.length > 0) headers.authorization = `Bearer ${token}`;
+  const commitResponse = await fetchImpl(`https://api.github.com/repos/${ref.repo}/commits/HEAD`, {
+    headers,
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (commitResponse.status === 404 || commitResponse.status === 409 || commitResponse.status === 422) return null;
+  if (!commitResponse.ok) throw new Error(`GitHub answered HTTP ${commitResponse.status} for ${ref.repo}`);
+  // GitHub's commit shape; the sha is checked on the next line.
+  const { sha } = (await commitResponse.json()) as { sha?: unknown };
+  if (typeof sha !== 'string' || !/^[0-9a-f]{40}$/.test(sha)) throw new Error(`GitHub gave no commit for ${ref.repo}`);
+  const atom: Hex = `0x${'0'.repeat(64)}`;
+  const answer = await serveSkillBundle(atom, {
+    chainId: 0,
+    index: new Map([[atom, url]]),
+    pin: () => sha,
+    listing: async (repo, commit) => {
+      const response = await fetchImpl(`https://api.github.com/repos/${repo}/git/trees/${commit}?recursive=1`, {
+        headers,
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+      if (!response.ok) throw new Error(`GitHub answered HTTP ${response.status} for ${repo}`);
+      // GitHub's tree API shape; each entry's `type` is checked below.
+      const tree = (await response.json()) as { tree?: { path: string; type: string; sha: string }[] };
+      return (tree.tree ?? []).filter((entry) => entry.type === 'blob').map((entry) => ({ path: entry.path, sha: entry.sha }));
+    },
+    raw: async (rawUrl) => {
+      const response = await fetchImpl(rawUrl, { headers: { 'user-agent': 'arp-sponsor' }, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+      if (response.status !== 200 && response.status !== 404) {
+        throw new Error(`raw.githubusercontent.com answered HTTP ${response.status}`);
+      }
+      return { code: response.status, bytes: new Uint8Array(await response.arrayBuffer()) };
+    },
+    // Nothing is signed: only the digest is read.
+    signer: null,
+    to: null,
+    nonce: atom,
+    now: () => 0,
+  });
+  return answer.status === 'served' ? answer.digest.toLowerCase() : null;
 }

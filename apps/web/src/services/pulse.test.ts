@@ -13,6 +13,7 @@ vi.mock("@arp-protocol/core", () => ({
     githubPulseSource: () => ({}),
     BECAUSE_LABEL: "because",
     HAS_OUTCOME_LABEL: "has outcome",
+    INTUITION_VERSION_TERM_ID: "0x9622ec9e9e8265253328648119d02f85234737b991cf34ac9416b163b6e10230",
     multiVaultReads: () => ({atomId: mocks.atomId}),
     readPulse: mocks.readPulse,
     toolAtomUri: (url: string) => `ipfs://${url}`,

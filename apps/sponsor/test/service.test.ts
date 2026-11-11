@@ -18,6 +18,8 @@ import {
   lineRequestTypedData,
   signLineRequest,
   signListToolRequest,
+  contentReceiptHash,
+  INTUITION_VERSION_TERM_ID,
   thingUri,
   TRANSFER_TOPIC,
   X402_DEFAULT_NETWORKS,
@@ -48,6 +50,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { lineSubjectCheck } from '../src/categories.ts';
 import { assertSponsorChain, KeyFileError, readKeyFile } from '../src/key-file.ts';
 import { SponsorLedger } from '../src/ledger.ts';
+import { LineReceiptStore } from '../src/line-receipts.ts';
 import { LineRequestStore } from '../src/line-requests.ts';
 import { intuitionJsonPinner } from '../src/pin.ts';
 import { nullOnRevert } from '../src/routes/context.ts';
@@ -1603,9 +1606,10 @@ describe('POST /list-tool', () => {
         return thingUri(thing);
       },
       resolveTool: async () => ({ ok: true }),
+      // A form with no type (ADR `0192`), so a listing here is one atom; the typed forms are tested apart.
       admitTool: async (url) => {
         admitted.push(url);
-        return { ok: true, form: 'mcp-endpoint' };
+        return { ok: true, form: 'a2a-card' };
       },
       listToolOrigins: ['http://localhost:5173'],
       ...over,
@@ -1630,7 +1634,7 @@ describe('POST /list-tool', () => {
   test('says what the URL was listed as', async () => {
     const res = await call(listing(world()), '/list-tool', { url: TOOL });
     expect(res.status).toBe(200);
-    expect(res.body.form).toBe('mcp-endpoint');
+    expect(res.body.form).toBe('a2a-card');
     expect(admitted).toEqual([TOOL]);
   });
 
@@ -1762,11 +1766,57 @@ describe('POST /list-tool', () => {
     const w = world();
     const res = await call(listing(w), '/list-tool', { url: SKILL });
     expect(res.status).toBe(200);
-    expect(w.sent.map((c) => c.kind)).toEqual(['create-atom', 'create-triple']);
+    // The atoms, `(skill, source, repository)`, and `(skill, has type, Skill)` (ADR `0192`).
+    expect(w.sent.map((c) => c.kind)).toEqual(['create-atom', 'create-triple', 'create-triple']);
     expect(w.sent[0]!.value).toBe(4n * MILLI);
     expect(pinned).toEqual([SKILL, 'https://github.com/a/b']);
     expect(res.body.repositoryAtomId).toBeDefined();
     expect(res.body.sourceTriple).toBeDefined();
+  });
+
+  test('types an MCP endpoint, and gives a listed skill its type without asking again (task 127, ADR 0192)', async () => {
+    const w = world();
+    const mcp = await call(listing(w, { admitTool: async () => ({ ok: true, form: 'mcp-endpoint' }) }), '/list-tool', { url: TOOL });
+    expect(mcp.status).toBe(200);
+    const typed = w.sent.at(-1);
+    expect(typed?.kind).toBe('create-triple');
+    const args = decodeFunctionData({ abi: multiVaultDeclareAbi, data: typed!.data }).args;
+    expect((args?.[2] as Hex[])[0]).toBe('0xb52bb294a1cbf67a3fccc6bc8423e0758a11acfeb60caf6a0465ffca9ec3ae79');
+
+    const v = world();
+    const plan = await planToolListing({ url: SKILL, reads: fakeReads(v) });
+    for (const id of [plan.atomId, plan.repository!.atomId, plan.repository!.sourceTripleId]) v.terms.add(id.toLowerCase());
+    const asked: string[] = [];
+    const again = await call(
+      listing(v, {
+        admitTool: async (url) => {
+          asked.push(url);
+          return { ok: false, rule: 'not-a-tool', reason: 'no' };
+        },
+      }),
+      '/list-tool',
+      { url: SKILL },
+    );
+    expect(again.status).toBe(200);
+    expect(asked).toEqual([]);
+    expect(v.sent.map((c) => c.kind)).toEqual(['create-triple']);
+
+    // Somebody else's atom with no repository behind it: what would be created is admitted first (ADR 0163).
+    const u = world();
+    u.terms.add(plan.atomId.toLowerCase());
+    const refused = await call(
+      listing(u, {
+        admitTool: async (url) => {
+          asked.push(url);
+          return { ok: false, rule: 'not-a-tool', reason: 'no' };
+        },
+      }),
+      '/list-tool',
+      { url: SKILL },
+    );
+    expect(refused.status).toBe(422);
+    expect(asked).toHaveLength(1);
+    expect(u.sent).toHaveLength(0);
   });
 
   test('answers created: false, and spends nothing, when the tool is already listed', async () => {
@@ -1791,6 +1841,7 @@ describe('POST /list-tool', () => {
       canonical.atomId,
       canonical.repository!.atomId,
       canonical.repository!.sourceTripleId,
+      canonical.type!.tripleId,
     ])
       w.terms.add(id.toLowerCase());
     const service = listing(w, {
@@ -1816,7 +1867,7 @@ describe('POST /list-tool', () => {
       url: 'https://github.com/leonxlnx/taste-skill?skill=design-taste-frontend',
       reads: fakeReads(w),
     });
-    for (const id of [seeded.atomId, seeded.repository!.atomId, seeded.repository!.sourceTripleId])
+    for (const id of [seeded.atomId, seeded.repository!.atomId, seeded.repository!.sourceTripleId, seeded.type!.tripleId])
       w.terms.add(id.toLowerCase());
     const service = listing(w, {
       resolveTool: async () => ({ ok: true, fullName: 'Leonxlnx/taste-skill' }),
@@ -2318,6 +2369,8 @@ describe('POST /line', () => {
         asset: '',
         price: '',
         termsAt: 0,
+        version: '',
+        evidence: '',
         nonce: keccak256(stringToBytes(`line-${++nonce}`)),
         expiresAt: Math.floor(NOW / 1000) + 600,
         ...over,
@@ -2799,6 +2852,98 @@ describe('POST /line', () => {
       const service = lineService(w, { lines: { inContextOf: IN_CONTEXT, subject: async () => 'other' } });
       expect((await post(service, { request: await withPayment() })).status).toBe(503);
       expect(w.sent).toHaveLength(0);
+    });
+  });
+
+  describe('on a version, backed by a receipt (task 127, ADR 0192)', () => {
+    const SKILL_URL = 'https://github.com/acme/video-kit?skill=cut-silences';
+    const DIGEST = `0x${'d1'.repeat(32)}`;
+    const versionedService = (w: World, over: Partial<NonNullable<Parameters<typeof createSponsor>[0]['lines']>> = {}) =>
+      lineService(w, {
+        lines: {
+          inContextOf: IN_CONTEXT,
+          subject: async () => 'github',
+          toolUrl: async () => SKILL_URL,
+          skillDigest: async () => DIGEST,
+          receipts: new LineReceiptStore(null),
+          ...over,
+        },
+      });
+    const receipt = (over: Record<string, unknown> = {}, signer = NODE) =>
+      signContentReceipt(
+        {
+          atom: TOOL,
+          url: SKILL_URL,
+          path: 'skills/cut-silences',
+          digest: DIGEST as Hex,
+          to: AGENT.address,
+          servedAt: Math.floor(NOW / 1000) - 60,
+          nonce: keccak256(stringToBytes('served')),
+          commit: 'a'.repeat(40),
+          ...over,
+        },
+        CHAIN,
+        signer,
+      );
+    const versionId = () => keccak256(stringToHex(`sha256:${'d1'.repeat(32)}`));
+    const vTriple = () => keccak256(`0x${TOOL.slice(2)}${INTUITION_VERSION_TERM_ID.slice(2)}${versionId().slice(2)}`);
+
+    test('writes V = (skill, version, digest) and the use of V, when the digest is the skill at HEAD', async () => {
+      const w = seeded();
+      const answer = await post(versionedService(w), { request: await request({ version: DIGEST }) });
+      expect(answer.status).toBe(200);
+      expect(answer.body.versionTripleId).toBe(vTriple());
+      const triples = w.sent.filter((c) => c.kind === 'create-triple').map((c) => decodeFunctionData({ abi: multiVaultDeclareAbi, data: c.data }).args);
+      // V first, then T1 = (agent, uses, V), then the levels on T1.
+      expect(triples[0]?.[0]).toEqual([TOOL]);
+      expect(triples[0]?.[1]).toEqual([INTUITION_VERSION_TERM_ID]);
+      expect(triples[1]?.[0]).toEqual([SUBJECT]);
+      expect(triples[1]?.[2]).toEqual([vTriple()]);
+      // No position on V: it is the skill's, not the agent's claim.
+      const deposited = w.sent.filter((c) => c.kind === 'deposit').map((c) => decodeFunctionData({ abi: depositAbi, data: c.data }).args[1]);
+      expect(deposited).not.toContain(vTriple());
+      expect(deposited).toContain((answer.body.levels as Hex[])[0]);
+    });
+
+    test('writes nothing for a digest that is not the skill at HEAD, nor for a tool that is not a skill', async () => {
+      const w = seeded();
+      const local = await post(versionedService(w, { skillDigest: async () => `0x${'d9'.repeat(32)}` }), { request: await request({ version: DIGEST }) });
+      expect(local.status).toBe(422);
+      expect(local.body.rule).toBe('version');
+      const repo = await post(versionedService(w, { toolUrl: async () => 'https://github.com/acme/video-kit' }), { request: await request({ version: DIGEST }) });
+      expect(repo.status).toBe(422);
+      expect(repo.body.rule).toBe('version');
+      expect(w.sent).toHaveLength(0);
+    });
+
+    test('adds (outcome, has evidence, content-receipt:<hash>) for a receipt over the same digest, and keeps it', async () => {
+      const w = seeded();
+      const receipts = new LineReceiptStore(null);
+      const signed = await receipt();
+      const hash = contentReceiptHash(signed.receipt, CHAIN);
+      // The receipt alone makes the digest published: HEAD is not read.
+      const service = versionedService(w, { receipts, skillDigest: async () => { throw new Error('not read'); } });
+      const answer = await post(service, { request: await request({ version: DIGEST, evidence: hash }), receipt: signed });
+      expect(answer.status).toBe(200);
+      expect(w.sent.some((c) => c.kind === 'create-atom' && c.data.includes(stringToHex(`content-receipt:${hash}`).slice(2)))).toBe(true);
+      expect(w.sent.some((c) => c.kind === 'create-atom' && c.data.includes(stringToHex('has evidence').slice(2)))).toBe(true);
+      expect(receipts.get(hash)).toEqual(signed);
+      const served = await service.fetch(new Request(`http://sponsor/receipt?hash=${hash}`, { headers: { host: 'sponsor' } }));
+      expect(served.status).toBe(200);
+      expect(((await served.json()) as { signature: string }).signature).toBe(signed.signature);
+    });
+
+    test('refuses a receipt over other files, for another caller, or from a node it does not accept', async () => {
+      for (const signed of [await receipt({ digest: `0x${'d2'.repeat(32)}` }), await receipt({ to: STRANGER.address }), await receipt({}, STRANGER)]) {
+        const w = seeded();
+        const answer = await post(versionedService(w), {
+          request: await request({ version: DIGEST, evidence: contentReceiptHash(signed.receipt, CHAIN) }),
+          receipt: signed,
+        });
+        expect(answer.status).toBe(422);
+        expect(answer.body.rule).toBe('evidence');
+        expect(w.sent).toHaveLength(0);
+      }
     });
   });
 

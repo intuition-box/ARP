@@ -13,6 +13,7 @@ query RecentDeclarations($uses: String!, $sameAs: String!, $limit: Int!) {
     transaction_hash
     subject { term_id label }
     object { term_id label }
+    object_term { triple { predicate_id subject { term_id label } object { label } } }
     term {
       total_assets
       vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) { position_count }

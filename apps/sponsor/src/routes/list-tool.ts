@@ -42,6 +42,10 @@ export const MAX_TOOL_URL_LENGTH = 2_048;
  * fragment or a path segment that looks personal is refused with 422 `rule: 'endpoint-private'` and the form
  * that would be accepted as `listable`, before it is fetched, signed for or pinned. A GitHub URL is rebuilt
  * by `canonicalToolUrl` and keeps only `?skill=`, so it always passes.
+ *
+ * **And what it is, once** (task 127, ADR `0192`): `(tool, has type, Skill)` for a skill, `(tool, has type, MCP
+ * Server)` for an endpoint that answered MCP (`subjectTypeOf`). A skill already listed without its type gets it
+ * on its next listing, without being admitted again: its type follows from its URL.
  */
 export async function listTool(ctx: SponsorContext, body: Body): Promise<Response> {
   const { options, chainId, reads, limits, ledger, now, exclusive, assertMultiVault } = ctx;
@@ -137,16 +141,16 @@ export async function listTool(ctx: SponsorContext, body: Body): Promise<Respons
     });
   }
 
+  // Set once the URL is admitted, so the answer says what it was listed as, and the plan types it.
+  let form: ToolForm | null = null;
   const plan = () =>
-    planToolListing({ url: pasted, reads, ...(repoFullName ? { repoFullName } : {}) });
+    planToolListing({ url: pasted, reads, form, ...(repoFullName ? { repoFullName } : {}) });
   let first;
   try {
     first = await plan();
   } catch (error) {
     return chainUnreadable(String(error instanceof Error ? error.message : error));
   }
-  // Set once the URL is admitted, so the answer says what it was listed as.
-  let form: ToolForm | null = null;
   const answer = (listed: typeof first, transactions: Hex[], created: boolean) =>
     json({
       url: listed.url,
@@ -178,24 +182,26 @@ export async function listTool(ctx: SponsorContext, body: Body): Promise<Respons
   if (!early.ok) return json({ error: early.reason, rule: 'limit' }, 429);
 
   // Only what would be created is checked (task 94, ADR `0163`): an atom already on the graph,
-  // seeded or listed before, answers above without being asked again.
-  let admitted;
-  try {
-    admitted = await admitTool(first.url, repoFullName ?? found.fullName);
-  } catch (error) {
-    const response = json(
-      {
-        error: `the URL could not be checked: ${String(error instanceof Error ? error.message : error)}`,
-        rule: 'resolves',
-        retry: true,
-      },
-      503,
-    );
-    response.headers.set('retry-after', '60');
-    return response;
+  // seeded or listed before, answers above without being asked again, or only gets its type.
+  let admitted: Awaited<ReturnType<typeof admitTool>> | null = null;
+  if (!first.onlyType) {
+    try {
+      admitted = await admitTool(first.url, repoFullName ?? found.fullName);
+    } catch (error) {
+      const response = json(
+        {
+          error: `the URL could not be checked: ${String(error instanceof Error ? error.message : error)}`,
+          rule: 'resolves',
+          retry: true,
+        },
+        503,
+      );
+      response.headers.set('retry-after', '60');
+      return response;
+    }
   }
-  if (!admitted.ok) return json({ error: admitted.reason, rule: admitted.rule }, 422);
-  form = admitted.form;
+  if (admitted !== null && !admitted.ok) return json({ error: admitted.reason, rule: admitted.rule }, 422);
+  if (admitted !== null && admitted.ok) form = admitted.form;
   for (const thing of first.toPin) {
     const uri = await pinThing(thing).catch(() => null);
     if (uri !== thingUri(thing)) {

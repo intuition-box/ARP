@@ -19,6 +19,8 @@ A line can stop at any level. "This agent uses this tool" alone is a line. Each 
 
 A line about a paid x402 call can add one more statement on its outcome: paid with a given transaction. See [The x402 outcomes feed](/docs/x402-feed).
 
+A line about a skill can name which version of its files was used. The version is the sha256 of the skill's directory, and it hangs from the skill: `(skill, version, sha256:<digest>)`. The line is then about that statement rather than the skill, so lines on one version meet in one place and a reader still finds them under the skill. ARP's sponsoring service writes a version only when it is the skill's directory as published on GitHub, or the one ARP's content server served the agent; a local edit names no version. When the agent holds the content server's receipt for those files, the outcome adds `has evidence` naming that receipt: it says the files were served to the agent's key, never that they were used. The receipt is at `GET /receipt?hash=` on the sponsoring service, and anyone can check its signature and recompute its digest.
+
 Every line about a skill is also collected in one file a registry can read: [the skill lines feed](/docs/skill-lines-feed).
 
 ## What a line is on the public graph

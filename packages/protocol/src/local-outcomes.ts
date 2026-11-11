@@ -1,4 +1,5 @@
 import {needKindOf} from "./declare/line-need.js";
+import {isVersionDigest} from "./skill-version.js";
 
 /**
  * What the model said about a skill it used, at the end of its final reply (task 100, ADR `0169`, ADR `0179`). The
@@ -27,6 +28,8 @@ export type LocalOutcome = {
     domain?: string;
     outcome: OutcomeAnswer;
     with?: string;
+    /** The skill's directory digest where it ran, computed by the hook (task 127, ADR `0192`). */
+    version?: string;
 };
 
 /** The answer line, exactly: `arp: <skill> worked|failed|unsure`. Anything else is not an answer. */
@@ -57,6 +60,7 @@ export function parseLocalOutcomes(text: string): LocalOutcome[] {
             const row = JSON.parse(line) as Record<string, unknown>; // read field by field below
             const {at, session, skill, source, domain, outcome} = row;
             const named = row["with"];
+            const version = row["version"];
             if (typeof at !== "string" || typeof session !== "string" || typeof skill !== "string") continue;
             if (typeof outcome !== "string" || !isOutcomeAnswer(outcome)) continue;
             rows.push({
@@ -68,6 +72,7 @@ export function parseLocalOutcomes(text: string): LocalOutcome[] {
                 outcome,
                 // `with` stands only on a worked answer, and only in a name's shape.
                 ...(outcome === "worked" && typeof named === "string" && needKindOf(named) !== null ? {with: named} : {}),
+                ...(isVersionDigest(version) ? {version} : {}),
             });
         } catch {
             continue;

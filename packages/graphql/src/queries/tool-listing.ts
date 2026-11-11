@@ -45,6 +45,7 @@ query ToolListing(${variables}) {
       type
       value { thing { url } }
     }
+    object_term { triple { predicate_id subject { term_id label data type value { thing { url } } } object { label } } }
     term {
       total_assets
       vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) { position_count total_assets }
@@ -80,14 +81,14 @@ query SponsoredWallets($uses: String!, $sponsor: String!, $limit: Int!) {
 
 /** What the sponsor deposited on one tool, wallet by wallet. The same edges `/tools` counts for that tool. */
 export const TOOL_WALLETS_QUERY = `
-query ToolWallets($uses: String!, $sameAs: String!, $atomId: String!, $sponsor: String!, $limit: Int!) {
+query ToolWallets($uses: String!, $version: String!, $sameAs: String!, $atomId: String!, $sponsor: String!, $limit: Int!) {
   deposits(
     where: {
       sender_id: {_eq: $sponsor}
       receiver_id: {_neq: $sponsor}
       term: {triple: {
         predicate_id: {_eq: $uses}
-        object_id: {_eq: $atomId}
+        _or: [{object_id: {_eq: $atomId}}, {object_term: {triple: {subject_id: {_eq: $atomId}, predicate_id: {_eq: $version}}}}]
         subject: {as_subject_triples: {predicate_id: {_eq: $sameAs}}}
       }}
     }

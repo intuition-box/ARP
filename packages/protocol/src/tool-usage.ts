@@ -11,7 +11,7 @@ import {
     TOOL_USAGE_QUERY,
 } from "@arp-protocol/graphql";
 import {mapMarketSide} from "./sources/intuition/map.js";
-import {USES} from "./sources/intuition/terms.js";
+import {USES, VERSION} from "./sources/intuition/terms.js";
 import type {MarketSide, Provenance} from "./types.js";
 import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
@@ -147,6 +147,9 @@ export async function getToolUsage(
             uses: USES,
             curveId: config.curveId === undefined ? DEFAULT_CURVE_ID : String(config.curveId),
             ...(attestor === undefined ? {} : {attestor}),
+            // A use of a version of the tool is a use of the tool (ADR `0192`). Last, so an error that prints the
+            // variables cut at a length shows the caller's own first, as before.
+            version: VERSION,
         },
     );
 

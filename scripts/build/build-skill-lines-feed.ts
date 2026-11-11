@@ -26,6 +26,7 @@ import {
     INTUITION_HAS_TAG_MAINNET,
     INTUITION_IS_A_SUB_DOMAIN_OF,
     INTUITION_USES_TERM_ID,
+    INTUITION_VERSION_TERM_ID,
     readDomainTree,
     readThingUrl,
     skillRefFromUrl,
@@ -76,7 +77,8 @@ const usage = new Map<string, PulseUsage>();
 for (let index = 0; index < tools.length; index += 20) {
     const batch = await getPulseUsage(
         tools.slice(index, index + 20).map((tool) => tool.atomId),
-        {graphqlUrl, inContextOf: deployment.arp.endpointBinding.inContextOf, hasOutcome, because, needs, with: withAtom, payers, transport},
+        // `version`: a line on a version of a skill is a line about the skill (ADR `0192`).
+        {graphqlUrl, inContextOf: deployment.arp.endpointBinding.inContextOf, hasOutcome, because, needs, with: withAtom, version: INTUITION_VERSION_TERM_ID, payers, transport},
     );
     for (const [key, value] of batch) usage.set(key, value);
 }

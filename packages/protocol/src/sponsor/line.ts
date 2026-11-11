@@ -1,7 +1,9 @@
-import {getAddress, isAddress, isHex, recoverTypedDataAddress, type Address, type Hex} from "viem";
+import {getAddress, isAddress, isHex, recoverTypedDataAddress, type Address, type Hex, type TypedDataDefinition} from "viem";
 
 import {isUsageOutcome, isUsageReason, type UsageOutcome, type UsageReason} from "../declare/usage-context.js";
 import {needShapeProblem} from "../declare/line-need.js";
+import {isReceiptHash} from "../line-evidence.js";
+import {isVersionDigest} from "../skill-version.js";
 import {isExactEndpointUrl, parsePaymentAtomLabel} from "../x402-payment.js";
 import type {X402Terms} from "../x402-terms.js";
 
@@ -41,6 +43,12 @@ import type {X402Terms} from "../x402-terms.js";
  * transfer against them, and them against a reading the payer does not control (`checkPayee`). Version 5
  * also refuses `no-delivery` without a payment: it means "paid, nothing received". A version 4 request no
  * longer verifies.
+ *
+ * **Version 6** (task 127, ADR `0192`) adds `version` and `evidence`. `version` is the skill's directory digest
+ * (ADR `0185`), and with it the line is about `V = (skill, version, sha256:<digest>)` rather than the skill:
+ * `T1 = (agent, uses, V)`. `evidence` is the EIP-712 hash of a content receipt ARP's node signed for this agent,
+ * over the same digest (`line-evidence.ts`); the receipt travels beside the request and becomes the level
+ * `(T3, has evidence, content-receipt:<hash>)`. Both `""` for none. A version 5 request no longer verifies.
  */
 export const LINE_REQUEST_TYPES = {
     LineRequest: [
@@ -58,13 +66,15 @@ export const LINE_REQUEST_TYPES = {
         {name: "asset", type: "string"},
         {name: "price", type: "string"},
         {name: "termsAt", type: "uint256"},
+        {name: "version", type: "string"},
+        {name: "evidence", type: "string"},
         {name: "nonce", type: "bytes32"},
         {name: "expiresAt", type: "uint256"},
     ],
 } as const;
 
 /** The typed data's domain version, one constant, so the request, its JSON and the feed cannot disagree. */
-export const LINE_REQUEST_VERSION = "5";
+export const LINE_REQUEST_VERSION = "6";
 
 export const LINE_MAX_TTL_SECONDS = 3_600;
 /** Longer than any category in the tree. Free text is refused later by the tree itself. */
@@ -99,6 +109,10 @@ export type LineRequest = {
     price: string;
     /** With a payment, when the payer received those terms, unix seconds; `0` without one. */
     termsAt: number;
+    /** A skill's directory digest, `0x` and 64 lower-case hex (`bundleManifest`, ADR `0185`), or `""`. Never with a payment. */
+    version: string;
+    /** The EIP-712 hash of a content receipt over `version` (`contentReceiptHash`), or `""`. Only with a version. */
+    evidence: string;
     nonce: Hex;
     /** Unix seconds. */
     expiresAt: number;
@@ -126,15 +140,72 @@ export function lineRequestTypedData(request: LineRequest, chainId: number) {
  * no `bigint`. viem's `verifyTypedData` and `recoverTypedDataAddress` take it as it is; a tool built on
  * `eth_signTypedData_v4` adds `EIP712Domain` from the domain's three fields, which it leaves out.
  */
-export type LineRequestTypedDataJson = {
-    domain: {name: "ARP Line Request"; version: typeof LINE_REQUEST_VERSION; chainId: number};
-    types: typeof LINE_REQUEST_TYPES;
-    primaryType: "LineRequest";
-    message: LineRequest;
-};
+export type LineRequestTypedDataJson =
+    | {
+          domain: {name: "ARP Line Request"; version: typeof LINE_REQUEST_VERSION; chainId: number};
+          types: typeof LINE_REQUEST_TYPES;
+          primaryType: "LineRequest";
+          message: LineRequest;
+      }
+    | {
+          domain: {name: "ARP Line Request"; version: "5"; chainId: number};
+          types: typeof LINE_REQUEST_TYPES_V5;
+          primaryType: "LineRequest";
+          message: ArchivedLineRequestV5;
+      };
 
 export function lineRequestTypedDataJson(request: LineRequest, chainId: number): LineRequestTypedDataJson {
     return {domain: {name: "ARP Line Request", version: LINE_REQUEST_VERSION, chainId}, types: LINE_REQUEST_TYPES, primaryType: "LineRequest", message: {...request}};
+}
+
+/**
+ * The version 5 struct, kept **to read** what the sponsoring service archived before version 6 (ADR `0188`'s store),
+ * so a request a payer signed then still reads as signed in the x402 feed. `/line` never accepts one.
+ */
+export const LINE_REQUEST_TYPES_V5 = {
+    LineRequest: LINE_REQUEST_TYPES.LineRequest.filter((field) => field.name !== "version" && field.name !== "evidence") as Exclude<
+        (typeof LINE_REQUEST_TYPES.LineRequest)[number],
+        {name: "version"} | {name: "evidence"}
+    >[],
+};
+
+export type ArchivedLineRequestV5 = Omit<LineRequest, "version" | "evidence">;
+
+function lineRequestTypedDataV5(request: ArchivedLineRequestV5, chainId: number) {
+    const {version: _version, evidence: _evidence, ...rest} = request as LineRequest; // a v5 request has neither; dropped if present
+    return {
+        domain: {name: "ARP Line Request", version: "5", chainId} as const,
+        types: LINE_REQUEST_TYPES_V5,
+        primaryType: "LineRequest" as const,
+        message: {...rest, termsAt: BigInt(request.termsAt), expiresAt: BigInt(request.expiresAt)},
+    };
+}
+
+/**
+ * A request the service archived, read for what it is: version 6 when it carries `version`, else version 5. `typed`
+ * is its typed data in JSON, for the feed. Shape, expiry relative to `now` and signature are checked as `/line` would.
+ */
+export async function readArchivedLineRequest(
+    stored: unknown,
+    now: number,
+): Promise<{verdict: LineRequestVerdict; request: LineRequest; typed: LineRequestTypedDataJson} | null> {
+    if (typeof stored !== "object" || stored === null) return null;
+    const {request, chainId} = stored as Partial<SignedLineRequest>; // checked by the verifier below
+    if (typeof request !== "object" || request === null || typeof chainId !== "number") return null;
+    if ("version" in request) {
+        return {verdict: await verifyLineRequest(stored, now), request, typed: lineRequestTypedDataJson(request, chainId)};
+    }
+    const filled = {...(request as ArchivedLineRequestV5), version: "", evidence: ""};
+    const verdict = await verifyWith({...stored, request: filled}, now, (_checked, id) =>
+        lineRequestTypedDataV5(request as ArchivedLineRequestV5, id), // the fields were checked on `filled`, the same ones
+    );
+    const typed: LineRequestTypedDataJson = {
+        domain: {name: "ARP Line Request", version: "5", chainId},
+        types: LINE_REQUEST_TYPES_V5,
+        primaryType: "LineRequest",
+        message: {...(request as ArchivedLineRequestV5)},
+    };
+    return {verdict, request: filled, typed};
 }
 
 export type LineRequestSigner = {
@@ -163,12 +234,21 @@ const isBytes32 = (value: unknown): value is Hex => typeof value === "string" &&
 
 /** Every field is read before the signer is recovered. `now` is unix seconds. */
 export async function verifyLineRequest(signed: unknown, now: number): Promise<LineRequestVerdict> {
+    return verifyWith(signed, now, lineRequestTypedData);
+}
+
+async function verifyWith(
+    signed: unknown,
+    now: number,
+    typedData: (request: LineRequest, chainId: number) => TypedDataDefinition,
+): Promise<LineRequestVerdict> {
     if (typeof signed !== "object" || signed === null) return {status: "malformed", reason: "no request"};
     const {request, chainId, signature} = signed as Partial<SignedLineRequest>; // each field is checked below
     if (typeof request !== "object" || request === null) return {status: "malformed", reason: "no request"};
     if (typeof chainId !== "number" || !Number.isInteger(chainId)) return {status: "malformed", reason: "chainId"};
     if (typeof signature !== "string" || !isHex(signature)) return {status: "malformed", reason: "signature"};
-    const {agent, agentRegistry, agentId, tool, domain, outcome, reason, payment, endpoint, need, payTo, asset, price, termsAt, nonce, expiresAt} = request;
+    const {agent, agentRegistry, agentId, tool, domain, outcome, reason, payment, endpoint, need, payTo, asset, price, termsAt, version, evidence, nonce, expiresAt} =
+        request;
     if (typeof agent !== "string" || !isAddress(agent)) return {status: "malformed", reason: "agent"};
     if (typeof agentRegistry !== "string" || typeof agentId !== "string") return {status: "malformed", reason: "agent reference"};
     if (!isBytes32(tool)) return {status: "malformed", reason: "tool"};
@@ -202,6 +282,14 @@ export async function verifyLineRequest(signed: unknown, now: number): Promise<L
         }
         if (termsAt === 0) return {status: "malformed", reason: "a payment names when its terms were received"};
     }
+    if (typeof version !== "string" || (version !== "" && !isVersionDigest(version))) {
+        return {status: "malformed", reason: "version is a sha256 digest, 0x and 64 lower-case hex, or empty"};
+    }
+    if (version !== "" && payment !== "") return {status: "malformed", reason: "a version names a skill's directory, and a paid endpoint has none"};
+    if (typeof evidence !== "string" || (evidence !== "" && !isReceiptHash(evidence))) {
+        return {status: "malformed", reason: "evidence is a receipt hash, 0x and 64 lower-case hex, or empty"};
+    }
+    if (evidence !== "" && version === "") return {status: "malformed", reason: "evidence is over a version: it names the files it backs"};
     if (!isBytes32(nonce)) return {status: "malformed", reason: "nonce"};
     if (typeof expiresAt !== "number" || !Number.isInteger(expiresAt)) return {status: "malformed", reason: "expiresAt"};
     if (expiresAt <= now) return {status: "expired", expiresAt};
@@ -209,7 +297,7 @@ export async function verifyLineRequest(signed: unknown, now: number): Promise<L
     if (termsAt > expiresAt) return {status: "malformed", reason: "the terms were received after the request expires"};
     let recovered: Address;
     try {
-        recovered = await recoverTypedDataAddress({...lineRequestTypedData(request as LineRequest, chainId), signature}); // checked above
+        recovered = await recoverTypedDataAddress({...typedData(request as LineRequest, chainId), signature}); // checked above
     } catch {
         return {status: "malformed", reason: "signature"};
     }

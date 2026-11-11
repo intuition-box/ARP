@@ -6064,10 +6064,69 @@ var init_local_state = __esm(() => {
   HELD_HERE = new Set;
 });
 
+// ../../packages/protocol/dist/skill-version.js
+function isVersionDigest(value) {
+  return typeof value === "string" && DIGEST.test(value);
+}
+function digestOfVersionLabel(label) {
+  const match = label === null || label === undefined ? null : LABEL.exec(label);
+  return match === null ? null : `0x${match[1]}`;
+}
+function manifestOfHashes(files) {
+  return [...files].sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0).map((file) => `${file.sha256}  ${file.path}
+`).join("");
+}
+var DIGEST, LABEL;
+var init_skill_version = __esm(() => {
+  DIGEST = /^0x[0-9a-f]{64}$/;
+  LABEL = /^sha256:([0-9a-f]{64})$/;
+});
+
+// ../../packages/protocol/dist/node/skill-directory.js
+import { createHash } from "node:crypto";
+import { lstatSync, readdirSync, readFileSync as readFileSync2 } from "node:fs";
+import { join as join2 } from "node:path";
+function skillDirectoryDigest(directory) {
+  const files = [];
+  let total = 0;
+  const walk2 = (dir, prefix) => {
+    for (const name of readdirSync(dir)) {
+      const full = join2(dir, name);
+      const path = prefix === "" ? name : `${prefix}/${name}`;
+      const stat = lstatSync(full);
+      if (stat.isDirectory()) {
+        if (!walk2(full, path))
+          return false;
+      } else if (stat.isFile()) {
+        total += stat.size;
+        if (files.length >= MAX_FILES || total > MAX_TOTAL)
+          return false;
+        files.push({ path, sha256: createHash("sha256").update(readFileSync2(full)).digest("hex") });
+      }
+    }
+    return true;
+  };
+  try {
+    if (!walk2(directory, ""))
+      return null;
+  } catch {
+    return null;
+  }
+  if (files.length === 0)
+    return null;
+  return `0x${createHash("sha256").update(manifestOfHashes(files)).digest("hex")}`;
+}
+var MAX_FILES = 300, MAX_TOTAL;
+var init_skill_directory = __esm(() => {
+  init_skill_version();
+  MAX_TOTAL = 8 * 1048576;
+});
+
 // ../../packages/protocol/dist/node/index.js
 var exports_node = {};
 __export(exports_node, {
   stateFile: () => stateFile,
+  skillDirectoryDigest: () => skillDirectoryDigest,
   serveFetch: () => serveFetch,
   refuseMovedState: () => refuseMovedState,
   refuseForeignRequest: () => refuseForeignRequest,
@@ -6092,6 +6151,7 @@ __export(exports_node, {
 var init_node2 = __esm(() => {
   init_serve();
   init_local_state();
+  init_skill_directory();
 });
 
 // ../../packages/graphql/dist/http.js
@@ -6453,6 +6513,7 @@ query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor
     term_id
     predicate { term_id label }
     object { term_id label type }
+    object_term { triple { predicate_id subject { term_id label type } object { label } } }
     term {
       ${VAULT_SIDE}
       vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
@@ -6599,6 +6660,7 @@ query ToolListing(${variables}) {
       type
       value { thing { url } }
     }
+    object_term { triple { predicate_id subject { term_id label data type value { thing { url } } } object { label } } }
     term {
       total_assets
       vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) { position_count total_assets }
@@ -6639,6 +6701,35 @@ var PULSE_USES_QUERY = `query PulseUses($tools: [String!]!, $uses: String!, $lim
             account_id
         }
     }
+}`, PULSE_VERSIONED_USES_QUERY = `query PulseUsesWithVersions($tools: [String!]!, $uses: String!, $version: String!, $limit: Int!) {
+    triples(
+        where: {
+            predicate_id: {_eq: $uses}
+            _or: [{object_id: {_in: $tools}}, {object_term: {triple: {subject_id: {_in: $tools}, predicate_id: {_eq: $version}}}}]
+        }
+        limit: $limit
+    ) {
+        term_id
+        object_id
+        creator_id
+        created_at
+        subject {
+            term_id
+            label
+        }
+        object_term {
+            triple {
+                subject_id
+                predicate_id
+                object {
+                    label
+                }
+            }
+        }
+        positions(where: {shares: {_gt: "0"}}) {
+            account_id
+        }
+    }
 }`, PULSE_QUALIFIERS_QUERY = `query PulseQualifiers($edges: [String!]!, $predicates: [String!]!, $writers: [String!]!, $limit: Int!) {
     triples(where: {subject_id: {_in: $edges}, predicate_id: {_in: $predicates}}, limit: $limit) {
         term_id
@@ -6668,6 +6759,19 @@ var PULSE_USES_QUERY = `query PulseUses($tools: [String!]!, $uses: String!, $lim
             term_id
             label
             data
+        }
+        object_term {
+            triple {
+                predicate_id
+                subject {
+                    term_id
+                    label
+                    data
+                }
+                object {
+                    label
+                }
+            }
         }
     }
 }`, AGENT_IDENTITIES_QUERY = `query AgentIdentities($atoms: [String!]!, $sameAs: String!, $limit: Int!) {
@@ -6737,13 +6841,13 @@ var VAULT_SIDE2 = `
     }`, TOOL_USAGE_QUERY, ATTESTED_TOOL_USAGE_QUERY;
 var init_tool_usage = __esm(() => {
   TOOL_USAGE_QUERY = `
-query ToolUsage($toolId: String!, $uses: String!, $curveId: numeric!) {
+query ToolUsage($toolId: String!, $uses: String!, $version: String!, $curveId: numeric!) {
   tool: atoms(where: {term_id: {_eq: $toolId}}, limit: 1) {
     term_id
     label
     data
   }
-  triples(where: {predicate_id: {_eq: $uses}, object_id: {_eq: $toolId}}, limit: 200) {
+  triples(where: {predicate_id: {_eq: $uses}, _or: [{object_id: {_eq: $toolId}}, {object_term: {triple: {subject_id: {_eq: $toolId}, predicate_id: {_eq: $version}}}}]}, limit: 200) {
     term_id
     subject {
       term_id
@@ -6755,7 +6859,7 @@ query ToolUsage($toolId: String!, $uses: String!, $curveId: numeric!) {
   }
 }`;
   ATTESTED_TOOL_USAGE_QUERY = `
-query AttestedToolUsage($toolId: String!, $uses: String!, $curveId: numeric!, $attestor: String!) {
+query AttestedToolUsage($toolId: String!, $uses: String!, $version: String!, $curveId: numeric!, $attestor: String!) {
   tool: atoms(where: {term_id: {_eq: $toolId}}, limit: 1) {
     term_id
     label
@@ -6763,7 +6867,7 @@ query AttestedToolUsage($toolId: String!, $uses: String!, $curveId: numeric!, $a
   }
   triples(where: {
     predicate_id: {_eq: $uses},
-    object_id: {_eq: $toolId},
+    _or: [{object_id: {_eq: $toolId}}, {object_term: {triple: {subject_id: {_eq: $toolId}, predicate_id: {_eq: $version}}}}],
     term: {positions: {account_id: {_eq: $attestor}}}
   }, limit: 200) {
     term_id
@@ -19699,6 +19803,7 @@ var init__esm = __esm(() => {
   init_toHex();
   init_keccak256();
   init_sha2562();
+  init_hashTypedData();
   init_recoverMessageAddress();
   init_recoverTypedDataAddress();
   init_verifyMessage2();
@@ -20180,7 +20285,7 @@ var init_erc8004_registry = __esm(() => {
 });
 
 // ../../packages/protocol/dist/sources/intuition/terms.js
-var SAME_AS = "0xbeebfb7d177cbd96ffc239d2196c72ec346efe81f39dc595773f13d83506f5f0", HAS_TYPE = "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced", IMPLEMENT = "0xfa02609bfde5a9a7ba18fa8afc1c42bc643edfaf7d44e3ce9e50835290d03324", ERC8004 = "0x595ba5059b23a9aa4d64deff324ff3d957866715d5b7b8015eebc9009bab78b2", AVAILABLE_ON = "0xa974ce85010776bb6eb81e4492bdb8712f127aa75ae737f02cbe80e72409f7d3", USE = "0x9ddda4ac2477ec6908e9561ab31ccd767bf3642e0ed0531fd61d447badd896ab", COMPATIBLE_WITH = "0xaf3ca6cd6db1cc57c5ae68b1177ba1fd426488bd781494166ab8cb0ed28a6ea3", HAS_TAG = "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5", HAS_CATEGORY = "0x96c20ddd7f83034666e200aa976cbe2249946bf76a7c66333212be82f284ad4b", IS_A_SUB_DOMAIN_OF = "0x9c2e2f2018dbfaa74fd3fd86cd54a62b16e771936f5d342e3751db8d0c046f80", HAS_TRUST_PROVIDER = "0xdc3c5639b39f9b6553b75b37c47fa4810961392b28956234ba9f401a98f43888", HAS_TRUST_ASSESSMENT = "0x7f455fb041f766c3f24552db4c943888c6778c2475d4f2d434b84ad03298457c", USES = "0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800", TRUST_PREDICATE_IDS, CAPABILITY_PREDICATE_IDS;
+var SAME_AS = "0xbeebfb7d177cbd96ffc239d2196c72ec346efe81f39dc595773f13d83506f5f0", HAS_TYPE = "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced", IMPLEMENT = "0xfa02609bfde5a9a7ba18fa8afc1c42bc643edfaf7d44e3ce9e50835290d03324", ERC8004 = "0x595ba5059b23a9aa4d64deff324ff3d957866715d5b7b8015eebc9009bab78b2", VERSION = "0x9622ec9e9e8265253328648119d02f85234737b991cf34ac9416b163b6e10230", AVAILABLE_ON = "0xa974ce85010776bb6eb81e4492bdb8712f127aa75ae737f02cbe80e72409f7d3", USE = "0x9ddda4ac2477ec6908e9561ab31ccd767bf3642e0ed0531fd61d447badd896ab", COMPATIBLE_WITH = "0xaf3ca6cd6db1cc57c5ae68b1177ba1fd426488bd781494166ab8cb0ed28a6ea3", HAS_TAG = "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5", HAS_CATEGORY = "0x96c20ddd7f83034666e200aa976cbe2249946bf76a7c66333212be82f284ad4b", IS_A_SUB_DOMAIN_OF = "0x9c2e2f2018dbfaa74fd3fd86cd54a62b16e771936f5d342e3751db8d0c046f80", HAS_TRUST_PROVIDER = "0xdc3c5639b39f9b6553b75b37c47fa4810961392b28956234ba9f401a98f43888", HAS_TRUST_ASSESSMENT = "0x7f455fb041f766c3f24552db4c943888c6778c2475d4f2d434b84ad03298457c", USES = "0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800", TRUST_PREDICATE_IDS, CAPABILITY_PREDICATE_IDS;
 var init_terms = __esm(() => {
   TRUST_PREDICATE_IDS = [HAS_TRUST_PROVIDER, HAS_TRUST_ASSESSMENT];
   CAPABILITY_PREDICATE_IDS = [
@@ -21285,6 +21390,167 @@ var init_listing = __esm(() => {
   };
 });
 
+// ../../packages/protocol/dist/receipt.js
+function contentReceiptDomain(chainId, version5 = "1") {
+  return { name: "ARP Content Receipt", version: version5, chainId };
+}
+function contentRequestDomain(chainId) {
+  return { name: "ARP Content Request", version: "1", chainId };
+}
+function contentRequestTypedData(atom, nonce, chainId) {
+  return {
+    domain: contentRequestDomain(chainId),
+    types: CONTENT_REQUEST_TYPES,
+    primaryType: "ContentRequest",
+    message: { atom, nonce }
+  };
+}
+async function recoverContentRequester(atom, nonce, chainId, signature) {
+  if (!isHex(signature) || signature.length < 132)
+    return null;
+  try {
+    return await recoverTypedDataAddress2({
+      ...contentRequestTypedData(atom, nonce, chainId),
+      signature
+    });
+  } catch {
+    return null;
+  }
+}
+function contentDigest(bytes) {
+  return sha2563(bytes);
+}
+function contentReceiptTypedData(receipt, chainId) {
+  const message = {
+    atom: receipt.atom,
+    url: receipt.url,
+    path: receipt.path,
+    digest: receipt.digest,
+    to: receipt.to ?? UNAUTHENTICATED,
+    servedAt: BigInt(receipt.servedAt),
+    nonce: receipt.nonce
+  };
+  if (receipt.commit === undefined) {
+    return {
+      domain: contentReceiptDomain(chainId, "1"),
+      types: CONTENT_RECEIPT_TYPES,
+      primaryType: "ContentReceipt",
+      message
+    };
+  }
+  return {
+    domain: contentReceiptDomain(chainId, "2"),
+    types: CONTENT_RECEIPT_TYPES_V2,
+    primaryType: "ContentReceipt",
+    message: { ...message, commit: receipt.commit }
+  };
+}
+async function signContentReceipt(receipt, chainId, signer) {
+  const data = contentReceiptTypedData(receipt, chainId);
+  return {
+    receipt,
+    chainId,
+    node: getAddress(signer.address),
+    signature: await signer.signTypedData(data)
+  };
+}
+function malformed(reason) {
+  return { status: "malformed", reason };
+}
+async function verifyContentReceipt(signed) {
+  const { receipt, chainId, node, signature } = signed;
+  if (!isAddress(node))
+    return malformed("node is not an address");
+  if (!isHex(signature))
+    return malformed("signature is not hex");
+  if (!isHex(receipt.atom) || receipt.atom.length !== 66)
+    return malformed("atom is not bytes32");
+  if (!isHex(receipt.digest) || receipt.digest.length !== 66) {
+    return malformed("digest is not bytes32");
+  }
+  if (!isHex(receipt.nonce) || receipt.nonce.length !== 66)
+    return malformed("nonce is not bytes32");
+  if (receipt.to !== null && !isAddress(receipt.to))
+    return malformed("to is not an address");
+  if (!Number.isInteger(receipt.servedAt) || receipt.servedAt < 0) {
+    return malformed("servedAt is not a unix timestamp");
+  }
+  if (!Number.isInteger(chainId) || chainId <= 0)
+    return malformed("chainId is not a chain id");
+  if (receipt.commit !== undefined && !/^[0-9a-f]{40}$/.test(receipt.commit)) {
+    return malformed("commit is not a 40-character git sha");
+  }
+  const declared = getAddress(node);
+  let recovered;
+  try {
+    recovered = await recoverTypedDataAddress2({
+      ...contentReceiptTypedData(receipt, chainId),
+      signature
+    });
+  } catch (error) {
+    return malformed(error instanceof Error ? error.message : String(error));
+  }
+  if (recovered !== declared)
+    return { status: "mismatch", declared, recovered };
+  return {
+    status: "valid",
+    signer: recovered,
+    namesNobody: receipt.to === null || getAddress(receipt.to) === UNAUTHENTICATED
+  };
+}
+function corroborationOf(receipt, signer, receiver, accepted = []) {
+  const served = receipt.to === null ? UNAUTHENTICATED : getAddress(receipt.to);
+  if (served === UNAUTHENTICATED)
+    return { status: "names-nobody" };
+  const holder = getAddress(receiver);
+  if (served !== holder)
+    return { status: "other-caller", servedTo: served };
+  const who = getAddress(signer);
+  if (who === holder)
+    return { status: "self-signed", signer: holder };
+  if (accepted.some((address) => isAddress(address) && getAddress(address) === who)) {
+    return { status: "second-party", signer: who };
+  }
+  return { status: "unknown-signer", signer: who };
+}
+function receiptMatchesContent(receipt, bytes) {
+  return contentDigest(bytes) === receipt.digest.toLowerCase();
+}
+var CONTENT_RECEIPT_TYPES, CONTENT_RECEIPT_TYPES_V2, CONTENT_REQUEST_TYPES, UNAUTHENTICATED = "0x0000000000000000000000000000000000000000";
+var init_receipt = __esm(() => {
+  init__esm();
+  CONTENT_RECEIPT_TYPES = {
+    ContentReceipt: [
+      { name: "atom", type: "bytes32" },
+      { name: "url", type: "string" },
+      { name: "path", type: "string" },
+      { name: "digest", type: "bytes32" },
+      { name: "to", type: "address" },
+      { name: "servedAt", type: "uint256" },
+      { name: "nonce", type: "bytes32" }
+    ]
+  };
+  CONTENT_RECEIPT_TYPES_V2 = {
+    ContentReceipt: [...CONTENT_RECEIPT_TYPES.ContentReceipt, { name: "commit", type: "string" }]
+  };
+  CONTENT_REQUEST_TYPES = {
+    ContentRequest: [
+      { name: "atom", type: "bytes32" },
+      { name: "nonce", type: "bytes32" }
+    ]
+  };
+});
+
+// ../../packages/protocol/dist/line-evidence.js
+function contentReceiptHash(receipt, chainId) {
+  return hashTypedData(contentReceiptTypedData(receipt, chainId)).toLowerCase();
+}
+var HAS_EVIDENCE_LABEL = "has evidence";
+var init_line_evidence = __esm(() => {
+  init__esm();
+  init_receipt();
+});
+
 // ../../packages/protocol/dist/verify/declaration.js
 function classifyEndpoint(raw) {
   if (typeof raw !== "string" || raw.trim().length === 0) {
@@ -21397,7 +21663,8 @@ async function getToolUsage(toolAtomId, config) {
     toolId: toolAtomId,
     uses: USES,
     curveId: config.curveId === undefined ? DEFAULT_CURVE_ID : String(config.curveId),
-    ...attestor === undefined ? {} : { attestor }
+    ...attestor === undefined ? {} : { attestor },
+    version: VERSION
   });
   const toolRows = Array.isArray(data["tool"]) ? data["tool"] : [];
   const tool = toolRows.length > 0 && isRecord(toolRows[0]) ? toolRows[0] : null;
@@ -22681,6 +22948,428 @@ var init_arp = __esm(() => {
   init_x402_networks();
 });
 
+// ../../packages/protocol/dist/declare/line-need.js
+function needKindOf2(name) {
+  if (PROGRAM_NAME2.test(name))
+    return "program";
+  if (KEY_NAME2.test(name))
+    return "key";
+  return null;
+}
+function needKindOfReason2(reason) {
+  if (reason === "missing-program")
+    return "program";
+  if (reason === "missing-key")
+    return "key";
+  return null;
+}
+function namedInSkill2(name, markdown) {
+  const kind = needKindOf2(name);
+  if (kind === null)
+    return false;
+  const pattern = new RegExp(`(?<![A-Za-z0-9_+.-])${escaped(name)}(?![A-Za-z0-9_+-])(?!\\.[A-Za-z0-9])`, kind === "program" ? "i" : "");
+  return pattern.test(markdown);
+}
+function publishableNeed2(name, markdown, kind) {
+  const shape2 = needKindOf2(name);
+  if (shape2 === null || kind !== undefined && shape2 !== kind)
+    return null;
+  return namedInSkill2(name, markdown) ? name : null;
+}
+function needShapeProblem2(params) {
+  const { need, outcome, reason } = params;
+  if (need === "")
+    return null;
+  const shape2 = needKindOf2(need);
+  if (shape2 === null)
+    return "a need is a program name (ffmpeg) or an environment variable's name (OPENAI_API_KEY)";
+  if (outcome === "worked")
+    return reason === "" ? null : "a worked line has no reason";
+  const wanted = needKindOfReason2(reason);
+  if (wanted === null)
+    return "a need follows a missing-program or missing-key failure";
+  return shape2 === wanted ? null : `${reason} names ${wanted === "program" ? "a program" : "an environment variable"}`;
+}
+var NEEDS_LABEL2 = "needs", WITH_LABEL2 = "with", PROGRAM_NAME2, KEY_NAME2, escaped = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+var init_line_need = __esm(() => {
+  PROGRAM_NAME2 = /^[a-z0-9][a-z0-9._+-]{0,39}$/;
+  KEY_NAME2 = /^[A-Z][A-Z0-9_]{2,63}$/;
+});
+
+// ../../packages/protocol/dist/declare/usage-words.js
+var USAGE_OUTCOMES2, HAS_OUTCOME_LABEL2 = "has outcome", USAGE_REASONS2, BECAUSE_LABEL2 = "because";
+var init_usage_words = __esm(() => {
+  USAGE_OUTCOMES2 = ["worked", "failed"];
+  USAGE_REASONS2 = ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"];
+});
+
+// ../../packages/protocol/dist/pulse-usage.js
+async function findToolAtoms(uris, config) {
+  const out = new Map;
+  if (uris.length === 0)
+    return out;
+  const transport = config.transport ?? createGraphqlTransport({
+    url: config.graphqlUrl,
+    fetch: config.fetch ?? defaultFetch(),
+    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  });
+  const data = await transport.request(PULSE_ATOMS_QUERY, { uris: [...uris], limit: uris.length });
+  const rows = Array.isArray(data["atoms"]) ? data["atoms"].filter(isRecord) : [];
+  for (const row of rows) {
+    const id = readString(row, "term_id");
+    const uri = readString(row, "data");
+    if (id !== null && uri !== null)
+      out.set(uri, id);
+  }
+  return out;
+}
+async function findDeclaredTools(domains, config) {
+  if (domains.length === 0)
+    return [];
+  const transport = config.transport ?? createGraphqlTransport({
+    url: config.graphqlUrl,
+    fetch: config.fetch ?? defaultFetch(),
+    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  });
+  const edges = rowsOf(await transport.request(PULSE_DOMAIN_EDGES_QUERY, { domains: [...domains], predicate: config.inContextOf, limit: DEFAULT_LIMIT })).map((row) => readString(row, "subject_id")).filter((id) => id !== null);
+  if (edges.length === 0)
+    return [];
+  const rows = rowsOf(await transport.request(PULSE_EDGE_TOOLS_QUERY, { edges, uses: USES, limit: DEFAULT_LIMIT }));
+  const out = new Map;
+  for (const row of rows) {
+    const object = readRecord(row, "object") ?? versionedSubject(row);
+    const atomId = object === null ? null : readString(object, "term_id");
+    if (object === null || atomId === null || out.has(atomId))
+      continue;
+    const label = readString(object, "label");
+    const uri = readString(object, "data");
+    const fromLabel = label !== null && label.includes("?skill=") ? `https://${label.replace(/^https?:\/\//, "")}` : null;
+    const url = fromLabel ?? (uri === null || config.readThing === undefined ? null : await config.readThing(uri));
+    if (url !== null)
+      out.set(atomId, { atomId, url });
+  }
+  return [...out.values()];
+}
+async function readThingUrl(uri, fetcher = defaultFetch()) {
+  if (!uri.startsWith("ipfs://"))
+    return null;
+  try {
+    const body = await readIpfsJson(uri, fetcher, DEFAULT_TIMEOUT_MS);
+    const url = isRecord(body) ? readString(body, "url") : null;
+    return url !== null && url.includes("?skill=") ? url : null;
+  } catch {
+    return null;
+  }
+}
+function workedInDomain(usage, domain) {
+  const rows = (usage?.declarations ?? []).filter((row) => row.lines.some((line) => line.domain === domain && line.outcome === "worked"));
+  return new Set(rows.map((row) => row.writer.toLowerCase())).size;
+}
+async function readEdgeWriters(edges, config) {
+  const out = new Map;
+  if (edges.length === 0)
+    return out;
+  const transport = config.transport ?? createGraphqlTransport({
+    url: config.graphqlUrl,
+    fetch: config.fetch ?? defaultFetch(),
+    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  });
+  const rows = rowsOf(await transport.request(PULSE_EDGE_WRITERS_QUERY, { edges: [...edges], limit: edges.length }));
+  for (const row of rows) {
+    const id = readString(row, "term_id");
+    const writer = readString(row, "creator_id");
+    if (id !== null && writer !== null)
+      out.set(id.toLowerCase(), writer);
+  }
+  return out;
+}
+async function getPulseUsage(toolAtomIds, config) {
+  const transport = config.transport ?? createGraphqlTransport({
+    url: config.graphqlUrl,
+    fetch: config.fetch ?? defaultFetch(),
+    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  });
+  const limit = Math.min(config.limit ?? DEFAULT_LIMIT, DEFAULT_LIMIT);
+  const key = (id) => id.toLowerCase();
+  const empty = () => ({
+    declarations: [],
+    agents: 0,
+    wallets: 0,
+    byDomain: {},
+    byOutcome: {},
+    byReason: {},
+    byNeed: {},
+    byWith: {},
+    byOthers: [],
+    truncated: false
+  });
+  const out = new Map(toolAtomIds.map((id) => [key(id), empty()]));
+  if (toolAtomIds.length === 0)
+    return out;
+  const edgeRows = rowsOf(config.version === undefined ? await transport.request(PULSE_USES_QUERY, { tools: [...toolAtomIds], uses: USES, limit }) : await transport.request(PULSE_VERSIONED_USES_QUERY, { tools: [...toolAtomIds], uses: USES, version: config.version, limit }));
+  const wanted = new Set(toolAtomIds.map(key));
+  const edges = new Map;
+  const NESTED_CAP = 100;
+  let truncated = edgeRows.length >= limit;
+  for (const row of edgeRows) {
+    const tripleId = readString(row, "term_id");
+    const versioned = versionOf(row, config.version);
+    const tool = versioned?.tool ?? readString(row, "object_id");
+    if (versioned === null && config.version !== undefined && !wanted.has(key(tool ?? "")))
+      continue;
+    const writer = readString(row, "creator_id");
+    const subject = readRecord(row, "subject");
+    const atomId = subject === null ? null : readString(subject, "term_id");
+    if (tripleId === null || tool === null || writer === null || subject === null || atomId === null)
+      continue;
+    const edgeHolders = (Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : []).map((holder) => readString(holder, "account_id")).filter((account) => account !== null);
+    const declaration = (wallet, declaredAt) => ({
+      tripleId,
+      ...versioned === null ? {} : { version: versioned.digest },
+      agent: { atomId, label: readString(subject, "label") },
+      writer: wallet,
+      holders: edgeHolders,
+      declaredAt,
+      domains: [],
+      outcomes: [],
+      lines: []
+    });
+    const declarers = new Map([[key(writer), declaration(writer, readString(row, "created_at"))]]);
+    const holders = Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : [];
+    if (holders.length >= NESTED_CAP)
+      truncated = true;
+    for (const holder of holders) {
+      const wallet = readString(holder, "account_id");
+      if (wallet !== null && !declarers.has(key(wallet)))
+        declarers.set(key(wallet), declaration(wallet, null));
+    }
+    edges.set(key(tripleId), { tool: key(tool), declarers });
+  }
+  const payers = new Set(config.payers.map(key));
+  const writers = [...new Set([...edges.values()].flatMap((edge) => [...edge.declarers.values()].map((row) => row.writer)))];
+  const qualifiers = async (subjects, predicates) => subjects.length === 0 ? [] : rowsOf(await transport.request(PULSE_QUALIFIERS_QUERY, { edges: subjects, predicates, writers, limit }));
+  const pass = (rows) => {
+    truncated = truncated || rows.length >= limit;
+    return rows;
+  };
+  const standing = (row, edge, below) => {
+    const holders = Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : [];
+    if (holders.length >= NESTED_CAP)
+      truncated = true;
+    const wallets = [readString(row, "creator_id"), ...holders.map((holder) => readString(holder, "account_id"))];
+    return new Set(wallets.filter((wallet) => wallet !== null).map(key).filter((wallet) => edge.declarers.has(wallet) && !payers.has(wallet) && (below === undefined || below.has(wallet))));
+  };
+  const parts = (row) => {
+    const object = readRecord(row, "object");
+    return {
+      termId: readString(row, "term_id"),
+      subjectId: readString(row, "subject_id"),
+      predicateId: readString(row, "predicate_id"),
+      writer: readString(row, "creator_id"),
+      value: object === null ? null : readString(object, "label")
+    };
+  };
+  const isOutcome = (value) => USAGE_OUTCOMES2.some((word) => word === value);
+  const isReason = (value) => USAGE_REASONS2.some((word) => word === value);
+  const contexts = new Map;
+  const outcomes = new Map;
+  const others = (edge, row, predicate) => out.get(edge.tool)?.byOthers.push({
+    tripleId: row.termId ?? "",
+    writer: row.writer ?? "",
+    predicate,
+    value: row.value ?? ""
+  });
+  const onEdge = pass(await qualifiers([...edges.keys()], [config.inContextOf, config.hasOutcome]));
+  for (const row of onEdge) {
+    const line = parts(row);
+    const edge = line.subjectId === null ? undefined : edges.get(key(line.subjectId));
+    if (edge === undefined || line.predicateId === null || line.writer === null || line.value === null || line.termId === null)
+      continue;
+    const isOutcomeLine = key(line.predicateId) === key(config.hasOutcome);
+    if (isOutcomeLine && !isOutcome(line.value))
+      continue;
+    const wallets = standing(row, edge);
+    if (wallets.size === 0) {
+      others(edge, line, isOutcomeLine ? "outcome" : "context");
+    } else if (isOutcomeLine && isOutcome(line.value)) {
+      outcomes.set(key(line.termId), { edge, domain: null, form: "sibling", outcome: line.value, wallets, reasons: new Map, named: new Map });
+    } else {
+      contexts.set(key(line.termId), { edge, domain: line.value, wallets });
+    }
+  }
+  const onContext = pass(await qualifiers([...contexts.keys()], [config.hasOutcome]));
+  for (const row of onContext) {
+    const line = parts(row);
+    const context = line.subjectId === null ? undefined : contexts.get(key(line.subjectId));
+    if (context === undefined || line.value === null || line.termId === null || !isOutcome(line.value))
+      continue;
+    const wallets = standing(row, context.edge, context.wallets);
+    if (wallets.size === 0) {
+      others(context.edge, line, "outcome");
+    } else {
+      outcomes.set(key(line.termId), { edge: context.edge, domain: context.domain, form: "nested", outcome: line.value, wallets, reasons: new Map, named: new Map });
+    }
+  }
+  const reading = (predicate) => predicate !== undefined;
+  const failures = [...outcomes.entries()].filter(([, found]) => found.outcome === "failed").map(([id]) => id);
+  const worked = [...outcomes.entries()].filter(([, found]) => found.outcome === "worked").map(([id]) => id);
+  const withId = config.with;
+  const onOutcome = pass(await qualifiers(reading(withId) ? [...failures, ...worked] : failures, [config.because, ...reading(withId) ? [withId] : []]));
+  const reasonTerms = new Map;
+  const addName = (found, wallets, name) => {
+    for (const wallet of wallets) {
+      const given = found.named.get(wallet) ?? [];
+      if (!given.includes(name))
+        given.push(name);
+      found.named.set(wallet, given);
+    }
+  };
+  for (const row of onOutcome) {
+    const line = parts(row);
+    const found = line.subjectId === null ? undefined : outcomes.get(key(line.subjectId));
+    if (found === undefined || line.value === null || line.predicateId === null)
+      continue;
+    if (withId !== undefined && key(line.predicateId) === key(withId)) {
+      if (found.outcome !== "worked" || needKindOf2(line.value) === null)
+        continue;
+      const wallets2 = standing(row, found.edge, found.wallets);
+      if (wallets2.size === 0)
+        others(found.edge, line, "with");
+      addName(found, wallets2, line.value);
+      continue;
+    }
+    if (found.outcome !== "failed" || !isReason(line.value))
+      continue;
+    const wallets = standing(row, found.edge, found.wallets);
+    if (wallets.size === 0)
+      others(found.edge, line, "reason");
+    for (const wallet of wallets) {
+      const given = found.reasons.get(wallet) ?? [];
+      if (!given.includes(line.value))
+        given.push(line.value);
+      found.reasons.set(wallet, given);
+    }
+    if (line.termId !== null && wallets.size > 0 && needKindOfReason2(line.value) !== null) {
+      reasonTerms.set(key(line.termId), { found, reason: line.value, wallets });
+    }
+  }
+  const needsId = config.needs;
+  if (reading(needsId)) {
+    const onReason = pass(await qualifiers([...reasonTerms.keys()], [needsId]));
+    for (const row of onReason) {
+      const line = parts(row);
+      const reason = line.subjectId === null ? undefined : reasonTerms.get(key(line.subjectId));
+      if (reason === undefined || line.value === null)
+        continue;
+      const kind = needKindOf2(line.value);
+      if (kind === null || kind !== needKindOfReason2(reason.reason))
+        continue;
+      const wallets = standing(row, reason.found.edge, reason.wallets);
+      if (wallets.size === 0)
+        others(reason.found.edge, line, "needs");
+      addName(reason.found, wallets, line.value);
+    }
+  }
+  for (const { edge, domain, wallets } of contexts.values()) {
+    for (const wallet of wallets)
+      edge.declarers.get(wallet)?.domains.push(domain);
+  }
+  const ordered = [...outcomes.values()].sort((a, b) => Number(b.form === "nested") - Number(a.form === "nested"));
+  for (const found of ordered) {
+    for (const wallet of found.wallets) {
+      const declaration = found.edge.declarers.get(wallet);
+      if (declaration === undefined)
+        continue;
+      const reasons = found.reasons.get(wallet) ?? [];
+      const named = found.named.get(wallet) ?? [];
+      const field = found.outcome === "failed" ? "needs" : "with";
+      if (!declaration.outcomes.includes(found.outcome))
+        declaration.outcomes.push(found.outcome);
+      const domains = found.form === "nested" ? [found.domain] : declaration.domains.length > 0 ? declaration.domains : [null];
+      for (const domain of domains) {
+        const same = declaration.lines.find((line) => line.domain === domain && line.outcome === found.outcome);
+        if (same === undefined) {
+          declaration.lines.push({ domain, outcome: found.outcome, reasons, form: found.form, ...named.length === 0 ? {} : { [field]: named } });
+        } else {
+          same.reasons = [...new Set([...same.reasons, ...reasons])];
+          if (named.length > 0)
+            same[field] = [...new Set([...same[field] ?? [], ...named])];
+        }
+      }
+    }
+  }
+  for (const { tool, declarers } of edges.values()) {
+    const rows = [...declarers.values()].filter((row, at) => at === 0 || row.domains.length > 0 || row.lines.length > 0);
+    out.get(tool)?.declarations.push(...rows);
+  }
+  for (const usage of out.values()) {
+    usage.truncated = truncated;
+    usage.agents = new Set(usage.declarations.map((declaration) => key(declaration.agent.atomId))).size;
+    usage.wallets = new Set(usage.declarations.map((declaration) => key(declaration.writer)).filter((wallet) => !payers.has(wallet))).size;
+    for (const declaration of usage.declarations) {
+      for (const domain of declaration.domains)
+        usage.byDomain[domain] = (usage.byDomain[domain] ?? 0) + 1;
+      for (const outcome of declaration.outcomes)
+        usage.byOutcome[outcome] = (usage.byOutcome[outcome] ?? 0) + 1;
+      for (const reason of new Set(declaration.lines.flatMap((line) => line.reasons))) {
+        usage.byReason[reason] = (usage.byReason[reason] ?? 0) + 1;
+      }
+      const byNeed = usage.byNeed ??= {};
+      for (const name of new Set(declaration.lines.flatMap((line) => line.needs ?? [])))
+        byNeed[name] = (byNeed[name] ?? 0) + 1;
+      const byWith = usage.byWith ??= {};
+      for (const name of new Set(declaration.lines.flatMap((line) => line.with ?? [])))
+        byWith[name] = (byWith[name] ?? 0) + 1;
+    }
+    if (config.version !== undefined) {
+      const wallets = new Map;
+      for (const declaration of usage.declarations) {
+        if (declaration.version === undefined || payers.has(key(declaration.writer)))
+          continue;
+        const seen = wallets.get(declaration.version) ?? new Set;
+        seen.add(key(declaration.writer));
+        wallets.set(declaration.version, seen);
+      }
+      usage.byVersion = Object.fromEntries([...wallets].map(([digest, seen]) => [digest, seen.size]));
+    }
+  }
+  return out;
+}
+function versionedSubject(row) {
+  const term = readRecord(row, "object_term");
+  const triple = term === null ? null : readRecord(term, "triple");
+  if (triple === null || readString(triple, "predicate_id")?.toLowerCase() !== VERSION)
+    return null;
+  const object = readRecord(triple, "object");
+  if (digestOfVersionLabel(object === null ? null : readString(object, "label")) === null)
+    return null;
+  return readRecord(triple, "subject");
+}
+function versionOf(row, version5) {
+  if (version5 === undefined)
+    return null;
+  const term = readRecord(row, "object_term");
+  const triple = term === null ? null : readRecord(term, "triple");
+  if (triple === null)
+    return null;
+  const predicate = readString(triple, "predicate_id");
+  const tool = readString(triple, "subject_id");
+  const object = readRecord(triple, "object");
+  const digest = digestOfVersionLabel(object === null ? null : readString(object, "label"));
+  if (predicate === null || predicate.toLowerCase() !== version5.toLowerCase() || tool === null || digest === null)
+    return null;
+  return { tool, digest };
+}
+var DEFAULT_LIMIT = 250, rowsOf = (data) => Array.isArray(data["triples"]) ? data["triples"].filter(isRecord) : [];
+var init_pulse_usage = __esm(() => {
+  init_dist();
+  init_line_need();
+  init_usage_words();
+  init_skill_version();
+  init_terms();
+  init_probe();
+});
+
 // ../../packages/protocol/dist/tool-listing.js
 function hostedAtFrom(object) {
   const value = object["value"];
@@ -22761,7 +23450,7 @@ async function listTools2(config) {
   for (const row of rows) {
     if (!isRecord(row))
       continue;
-    const object = row["object"];
+    const object = isRecord(row["object"]) ? row["object"] : versionedSubject(row);
     if (!isRecord(object))
       continue;
     const atomId = readString(object, "term_id");
@@ -22829,6 +23518,7 @@ var INTUITION_MAX_PAGE = 250, DEFAULT_EDGE_LIMIT, ADDRESS;
 var init_tool_listing2 = __esm(() => {
   init_dist();
   init__esm();
+  init_pulse_usage();
   init_terms();
   init_intuition();
   DEFAULT_EDGE_LIMIT = INTUITION_MAX_PAGE;
@@ -23307,7 +23997,7 @@ async function findAgents(domain, config) {
     timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
   });
   const curveId = config.curveId ?? Number(DEFAULT_CURVE_ID);
-  const limit = config.limit ?? DEFAULT_LIMIT;
+  const limit = config.limit ?? DEFAULT_LIMIT2;
   const data = await transport.request(FIND_AGENTS_QUERY, {
     domain: term,
     predicates: [...config.predicates ?? CAPABILITY_PREDICATES],
@@ -23348,7 +24038,7 @@ async function findAgents(domain, config) {
   });
   return { agents, truncated: rows.length >= limit, curveId, domain: term };
 }
-var DEFAULT_LIMIT = 25, CAPABILITY_PREDICATES;
+var DEFAULT_LIMIT2 = 25, CAPABILITY_PREDICATES;
 var init_discover = __esm(() => {
   init_dist();
   init_terms();
@@ -24409,7 +25099,7 @@ function readSkillFacts(markdown, filesInDirectory, repositoryFiles = filesInDir
     files: filesInDirectory.length,
     bytes: filesInDirectory.reduce((total, file) => total + file.size, 0),
     scripts: filesInDirectory.filter((file) => SCRIPT3.test(file.path)).length,
-    keys: [...new Set(markdown.match(KEY_NAME2) ?? [])],
+    keys: [...new Set(markdown.match(KEY_NAME3) ?? [])],
     paidWords: [...new Set((markdown.match(PAID_WORD) ?? []).map((word) => word.toLowerCase()))],
     hosts: [...new Set(hosts)],
     runsAbsentFiles: absentFiles(markdown, repositoryFiles),
@@ -24524,7 +25214,7 @@ async function readPulse(result, source, depth) {
   const inDirectory = listing.files.filter((file) => file.path.startsWith(prefix));
   const scripts = withinReadCap(filesItRuns(located.markdown, listing.files), listing.files);
   const scriptTexts = await Promise.all(scripts.map(async (file) => ({ file, text: await source.file(result.source, file) })));
-  const keysInScriptsItRuns = scriptTexts.map(({ file, text }) => ({ file, keys: [...new Set(text?.match(KEY_NAME2) ?? [])] })).filter((entry) => entry.keys.length > 0);
+  const keysInScriptsItRuns = scriptTexts.map(({ file, text }) => ({ file, keys: [...new Set(text?.match(KEY_NAME3) ?? [])] })).filter((entry) => entry.keys.length > 0);
   const relative = (path) => path.startsWith(prefix) ? path.slice(prefix.length) : path;
   const fetched = new Set(scriptTexts.filter((entry) => entry.text !== null).map((entry) => entry.file));
   const others = depth === undefined ? [] : await readDirectory(source, result.source, inDirectory, new Set([located.file.path, ...fetched]), depth.directory.by);
@@ -24682,7 +25372,7 @@ ${path}`;
     quota: () => ({ ...quota })
   };
 }
-var MAX_SKILL_FILES_READ = 200, MAX_SCRIPTS_READ = 5, MAX_DIRECTORY_FILES_READ = 80, NOT_TEXT, GITHUB_READ_TIMEOUT_MS = 1e4, INSTALLER_ORDER, RESULT, RESULT_NO_COUNT, ANSI, KEY_NAME2, PAID_WORD, HOST, NOT_A_SERVICE, LOOKS_LIKE_A_FILE, SCRIPT3, RUNS_FILE, PLACEHOLDER, MAX_NAME_READS = 12, NAME_BATCH = 6, wordsOf = (text) => text.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 1), SCRIPT_READ_CAP, NOT_CODE_DIRECTORY;
+var MAX_SKILL_FILES_READ = 200, MAX_SCRIPTS_READ = 5, MAX_DIRECTORY_FILES_READ = 80, NOT_TEXT, GITHUB_READ_TIMEOUT_MS = 1e4, INSTALLER_ORDER, RESULT, RESULT_NO_COUNT, ANSI, KEY_NAME3, PAID_WORD, HOST, NOT_A_SERVICE, LOOKS_LIKE_A_FILE, SCRIPT3, RUNS_FILE, PLACEHOLDER, MAX_NAME_READS = 12, NAME_BATCH = 6, wordsOf = (text) => text.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 1), SCRIPT_READ_CAP, NOT_CODE_DIRECTORY;
 var init_pulse = __esm(() => {
   init_skill_contents();
   init_skill_requires();
@@ -24727,7 +25417,7 @@ var init_pulse = __esm(() => {
   RESULT = /^(\S+?)@(.+?) ([\d.,]+[KMB]?) installs?\s*$/;
   RESULT_NO_COUNT = /^(\S+?)@(.+?)\s*$/;
   ANSI = /\u001b\[[0-9;]*m/g;
-  KEY_NAME2 = /\b[A-Z][A-Z0-9_]*(?:API_KEY|APIKEY|_TOKEN|_SECRET)\b/g;
+  KEY_NAME3 = /\b[A-Z][A-Z0-9_]*(?:API_KEY|APIKEY|_TOKEN|_SECRET)\b/g;
   PAID_WORD = /\b(pricing|paid|subscription|credits?|billing|free tier|per minute)\b/gi;
   HOST = /https?:\/\/([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
   NOT_A_SERVICE = /(^|\.)(github\.com|githubusercontent\.com|example\.(com|org|net))$/;
@@ -24813,61 +25503,6 @@ var init_sharing_state = __esm(() => {
   SHARING_HOWS = ["init", "command", "desktop", "asked-once", "asked-always", "asked-no"];
 });
 
-// ../../packages/protocol/dist/declare/line-need.js
-function needKindOf2(name) {
-  if (PROGRAM_NAME2.test(name))
-    return "program";
-  if (KEY_NAME3.test(name))
-    return "key";
-  return null;
-}
-function needKindOfReason2(reason) {
-  if (reason === "missing-program")
-    return "program";
-  if (reason === "missing-key")
-    return "key";
-  return null;
-}
-function namedInSkill2(name, markdown) {
-  const kind = needKindOf2(name);
-  if (kind === null)
-    return false;
-  const pattern = new RegExp(`(?<![A-Za-z0-9_+.-])${escaped(name)}(?![A-Za-z0-9_+-])(?!\\.[A-Za-z0-9])`, kind === "program" ? "i" : "");
-  return pattern.test(markdown);
-}
-function publishableNeed2(name, markdown, kind) {
-  const shape2 = needKindOf2(name);
-  if (shape2 === null || kind !== undefined && shape2 !== kind)
-    return null;
-  return namedInSkill2(name, markdown) ? name : null;
-}
-function needShapeProblem2(params) {
-  const { need, outcome, reason } = params;
-  if (need === "")
-    return null;
-  const shape2 = needKindOf2(need);
-  if (shape2 === null)
-    return "a need is a program name (ffmpeg) or an environment variable's name (OPENAI_API_KEY)";
-  if (outcome === "worked")
-    return reason === "" ? null : "a worked line has no reason";
-  const wanted = needKindOfReason2(reason);
-  if (wanted === null)
-    return "a need follows a missing-program or missing-key failure";
-  return shape2 === wanted ? null : `${reason} names ${wanted === "program" ? "a program" : "an environment variable"}`;
-}
-var NEEDS_LABEL2 = "needs", WITH_LABEL2 = "with", PROGRAM_NAME2, KEY_NAME3, escaped = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-var init_line_need = __esm(() => {
-  PROGRAM_NAME2 = /^[a-z0-9][a-z0-9._+-]{0,39}$/;
-  KEY_NAME3 = /^[A-Z][A-Z0-9_]{2,63}$/;
-});
-
-// ../../packages/protocol/dist/declare/usage-words.js
-var USAGE_OUTCOMES2, HAS_OUTCOME_LABEL2 = "has outcome", USAGE_REASONS2, BECAUSE_LABEL2 = "because";
-var init_usage_words = __esm(() => {
-  USAGE_OUTCOMES2 = ["worked", "failed"];
-  USAGE_REASONS2 = ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"];
-});
-
 // ../../packages/protocol/dist/declare/usage-context.js
 function isUsageOutcome2(value) {
   return USAGE_OUTCOMES2.some((outcome) => outcome === value);
@@ -24883,6 +25518,9 @@ async function prepareUsageContext2(params) {
   }
   if (params.payment !== undefined && params.outcome === undefined) {
     return { status: "refused", rule: "payment_without_outcome", detail: "a payment is attached to an outcome" };
+  }
+  if (params.evidence !== undefined && params.outcome === undefined) {
+    return { status: "refused", rule: "evidence_without_outcome", detail: "evidence is attached to an outcome" };
   }
   if (params.need !== undefined) {
     const problem = params.outcome === undefined ? "a need is attached to an outcome" : needShapeProblem2({ need: params.need, outcome: params.outcome, reason: params.reason ?? "" });
@@ -24986,6 +25624,12 @@ async function prepareUsageContext2(params) {
     const nameId = await atom(params.need, `the name "${params.need}"`);
     needTripleId = await triple(needSubject, predicate, nameId, `say it ${label} ${params.need}`);
   }
+  let evidenceTripleId = null;
+  if (params.evidence !== undefined && outcomeTripleId !== null) {
+    const predicate = await atom(HAS_EVIDENCE_LABEL, `the word "${HAS_EVIDENCE_LABEL}"`);
+    const evidenceId = await atom(params.evidence, `the evidence ${params.evidence}`);
+    evidenceTripleId = await triple(outcomeTripleId, predicate, evidenceId, `say this outcome has evidence ${params.evidence}`);
+  }
   return {
     status: "planned",
     chainId: reads.chainId,
@@ -24994,6 +25638,7 @@ async function prepareUsageContext2(params) {
     reasonTripleId,
     paymentTripleId,
     needTripleId,
+    evidenceTripleId,
     calls,
     alreadyWritten,
     totalValue: calls.reduce((sum, call2) => sum + call2.value, 0n)
@@ -25012,6 +25657,7 @@ function budgetRefusal2(totalValue, budget) {
 }
 var init_usage_context = __esm(() => {
   init__esm();
+  init_line_evidence();
   init_x402_payment();
   init_line_need();
   init_multivault();
@@ -25028,7 +25674,7 @@ function parseLocalFailures(text) {
       continue;
     try {
       const row = JSON.parse(line);
-      const { at, skill, source, domain, reason, need } = row;
+      const { at, skill, source, domain, reason, need, version: version5 } = row;
       if (typeof at !== "string" || typeof skill !== "string" || typeof reason !== "string")
         continue;
       if (!isUsageReason2(reason))
@@ -25040,7 +25686,8 @@ function parseLocalFailures(text) {
         source: typeof source === "string" ? source : null,
         ...typeof domain === "string" ? { domain } : {},
         reason,
-        ...named ? { need } : {}
+        ...named ? { need } : {},
+        ...isVersionDigest(version5) ? { version: version5 } : {}
       });
     } catch {
       continue;
@@ -25063,6 +25710,7 @@ function yourFailures(rows, skill, source) {
 }
 var init_local_failures = __esm(() => {
   init_line_need();
+  init_skill_version();
   init_usage_context();
 });
 
@@ -25080,6 +25728,7 @@ function parseLocalOutcomes(text) {
       const row = JSON.parse(line);
       const { at, session, skill, source, domain, outcome } = row;
       const named = row["with"];
+      const version5 = row["version"];
       if (typeof at !== "string" || typeof session !== "string" || typeof skill !== "string")
         continue;
       if (typeof outcome !== "string" || !isOutcomeAnswer(outcome))
@@ -25091,7 +25740,8 @@ function parseLocalOutcomes(text) {
         source: typeof source === "string" ? source : null,
         ...typeof domain === "string" ? { domain } : {},
         outcome,
-        ...outcome === "worked" && typeof named === "string" && needKindOf2(named) !== null ? { with: named } : {}
+        ...outcome === "worked" && typeof named === "string" && needKindOf2(named) !== null ? { with: named } : {},
+        ...isVersionDigest(version5) ? { version: version5 } : {}
       });
     } catch {
       continue;
@@ -25102,6 +25752,7 @@ function parseLocalOutcomes(text) {
 var OUTCOME_ANSWERS;
 var init_local_outcomes = __esm(() => {
   init_line_need();
+  init_skill_version();
   OUTCOME_ANSWERS = ["worked", "failed", "unsure"];
 });
 
@@ -25146,7 +25797,8 @@ function installedFromReceipts(text) {
 }
 function sharedLineKey(line) {
   const base2 = `${line.toolUrl}\x00${line.domain ?? ""}\x00${line.outcome === "failed" ? line.reason : "worked"}`;
-  return line.need === undefined ? base2 : `${base2}\x00${line.need}`;
+  const withNeed = line.need === undefined ? base2 : `${base2}\x00${line.need}`;
+  return line.version === undefined ? withNeed : `${withNeed}\x00version:${line.version}`;
 }
 function decideShare(params) {
   const lines = new Map;
@@ -25183,7 +25835,8 @@ function decideShare(params) {
       outcome: "failed",
       ...failure.domain === undefined ? {} : { domain: failure.domain },
       reason: failure.reason,
-      ...failure.need === undefined ? {} : { need: failure.need }
+      ...failure.need === undefined ? {} : { need: failure.need },
+      ...failure.version === undefined ? {} : { version: failure.version }
     });
   }
   for (const answer of params.outcomes ?? []) {
@@ -25196,7 +25849,8 @@ function decideShare(params) {
       toolUrl,
       outcome: "worked",
       ...answer.domain === undefined ? {} : { domain: answer.domain },
-      ...answer.with === undefined ? {} : { need: answer.with }
+      ...answer.with === undefined ? {} : { need: answer.with },
+      ...answer.version === undefined ? {} : { version: answer.version }
     });
   }
   return { lines: [...lines.values()], keptLocal: [...keptLocal.values()] };
@@ -25288,331 +25942,6 @@ var init_pulse_score = __esm(() => {
   SIGNAL_WEIGHTS = { near: 0.5, proven: 1 };
 });
 
-// ../../packages/protocol/dist/pulse-usage.js
-async function findToolAtoms(uris, config) {
-  const out = new Map;
-  if (uris.length === 0)
-    return out;
-  const transport = config.transport ?? createGraphqlTransport({
-    url: config.graphqlUrl,
-    fetch: config.fetch ?? defaultFetch(),
-    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
-  });
-  const data = await transport.request(PULSE_ATOMS_QUERY, { uris: [...uris], limit: uris.length });
-  const rows = Array.isArray(data["atoms"]) ? data["atoms"].filter(isRecord) : [];
-  for (const row of rows) {
-    const id = readString(row, "term_id");
-    const uri = readString(row, "data");
-    if (id !== null && uri !== null)
-      out.set(uri, id);
-  }
-  return out;
-}
-async function findDeclaredTools(domains, config) {
-  if (domains.length === 0)
-    return [];
-  const transport = config.transport ?? createGraphqlTransport({
-    url: config.graphqlUrl,
-    fetch: config.fetch ?? defaultFetch(),
-    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
-  });
-  const edges = rowsOf(await transport.request(PULSE_DOMAIN_EDGES_QUERY, { domains: [...domains], predicate: config.inContextOf, limit: DEFAULT_LIMIT2 })).map((row) => readString(row, "subject_id")).filter((id) => id !== null);
-  if (edges.length === 0)
-    return [];
-  const rows = rowsOf(await transport.request(PULSE_EDGE_TOOLS_QUERY, { edges, uses: USES, limit: DEFAULT_LIMIT2 }));
-  const out = new Map;
-  for (const row of rows) {
-    const object = readRecord(row, "object");
-    const atomId = object === null ? null : readString(object, "term_id");
-    if (object === null || atomId === null || out.has(atomId))
-      continue;
-    const label = readString(object, "label");
-    const uri = readString(object, "data");
-    const fromLabel = label !== null && label.includes("?skill=") ? `https://${label.replace(/^https?:\/\//, "")}` : null;
-    const url = fromLabel ?? (uri === null || config.readThing === undefined ? null : await config.readThing(uri));
-    if (url !== null)
-      out.set(atomId, { atomId, url });
-  }
-  return [...out.values()];
-}
-async function readThingUrl(uri, fetcher = defaultFetch()) {
-  if (!uri.startsWith("ipfs://"))
-    return null;
-  try {
-    const body = await readIpfsJson(uri, fetcher, DEFAULT_TIMEOUT_MS);
-    const url = isRecord(body) ? readString(body, "url") : null;
-    return url !== null && url.includes("?skill=") ? url : null;
-  } catch {
-    return null;
-  }
-}
-function workedInDomain(usage, domain) {
-  const rows = (usage?.declarations ?? []).filter((row) => row.lines.some((line) => line.domain === domain && line.outcome === "worked"));
-  return new Set(rows.map((row) => row.writer.toLowerCase())).size;
-}
-async function readEdgeWriters(edges, config) {
-  const out = new Map;
-  if (edges.length === 0)
-    return out;
-  const transport = config.transport ?? createGraphqlTransport({
-    url: config.graphqlUrl,
-    fetch: config.fetch ?? defaultFetch(),
-    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
-  });
-  const rows = rowsOf(await transport.request(PULSE_EDGE_WRITERS_QUERY, { edges: [...edges], limit: edges.length }));
-  for (const row of rows) {
-    const id = readString(row, "term_id");
-    const writer = readString(row, "creator_id");
-    if (id !== null && writer !== null)
-      out.set(id.toLowerCase(), writer);
-  }
-  return out;
-}
-async function getPulseUsage(toolAtomIds, config) {
-  const transport = config.transport ?? createGraphqlTransport({
-    url: config.graphqlUrl,
-    fetch: config.fetch ?? defaultFetch(),
-    timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS
-  });
-  const limit = Math.min(config.limit ?? DEFAULT_LIMIT2, DEFAULT_LIMIT2);
-  const key = (id) => id.toLowerCase();
-  const empty = () => ({
-    declarations: [],
-    agents: 0,
-    wallets: 0,
-    byDomain: {},
-    byOutcome: {},
-    byReason: {},
-    byNeed: {},
-    byWith: {},
-    byOthers: [],
-    truncated: false
-  });
-  const out = new Map(toolAtomIds.map((id) => [key(id), empty()]));
-  if (toolAtomIds.length === 0)
-    return out;
-  const edgeRows = rowsOf(await transport.request(PULSE_USES_QUERY, { tools: [...toolAtomIds], uses: USES, limit }));
-  const edges = new Map;
-  const NESTED_CAP = 100;
-  let truncated = edgeRows.length >= limit;
-  for (const row of edgeRows) {
-    const tripleId = readString(row, "term_id");
-    const tool = readString(row, "object_id");
-    const writer = readString(row, "creator_id");
-    const subject = readRecord(row, "subject");
-    const atomId = subject === null ? null : readString(subject, "term_id");
-    if (tripleId === null || tool === null || writer === null || subject === null || atomId === null)
-      continue;
-    const edgeHolders = (Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : []).map((holder) => readString(holder, "account_id")).filter((account) => account !== null);
-    const declaration = (wallet, declaredAt) => ({
-      tripleId,
-      agent: { atomId, label: readString(subject, "label") },
-      writer: wallet,
-      holders: edgeHolders,
-      declaredAt,
-      domains: [],
-      outcomes: [],
-      lines: []
-    });
-    const declarers = new Map([[key(writer), declaration(writer, readString(row, "created_at"))]]);
-    const holders = Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : [];
-    if (holders.length >= NESTED_CAP)
-      truncated = true;
-    for (const holder of holders) {
-      const wallet = readString(holder, "account_id");
-      if (wallet !== null && !declarers.has(key(wallet)))
-        declarers.set(key(wallet), declaration(wallet, null));
-    }
-    edges.set(key(tripleId), { tool: key(tool), declarers });
-  }
-  const payers = new Set(config.payers.map(key));
-  const writers = [...new Set([...edges.values()].flatMap((edge) => [...edge.declarers.values()].map((row) => row.writer)))];
-  const qualifiers = async (subjects, predicates) => subjects.length === 0 ? [] : rowsOf(await transport.request(PULSE_QUALIFIERS_QUERY, { edges: subjects, predicates, writers, limit }));
-  const pass = (rows) => {
-    truncated = truncated || rows.length >= limit;
-    return rows;
-  };
-  const standing = (row, edge, below) => {
-    const holders = Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : [];
-    if (holders.length >= NESTED_CAP)
-      truncated = true;
-    const wallets = [readString(row, "creator_id"), ...holders.map((holder) => readString(holder, "account_id"))];
-    return new Set(wallets.filter((wallet) => wallet !== null).map(key).filter((wallet) => edge.declarers.has(wallet) && !payers.has(wallet) && (below === undefined || below.has(wallet))));
-  };
-  const parts = (row) => {
-    const object = readRecord(row, "object");
-    return {
-      termId: readString(row, "term_id"),
-      subjectId: readString(row, "subject_id"),
-      predicateId: readString(row, "predicate_id"),
-      writer: readString(row, "creator_id"),
-      value: object === null ? null : readString(object, "label")
-    };
-  };
-  const isOutcome = (value) => USAGE_OUTCOMES2.some((word) => word === value);
-  const isReason = (value) => USAGE_REASONS2.some((word) => word === value);
-  const contexts = new Map;
-  const outcomes = new Map;
-  const others = (edge, row, predicate) => out.get(edge.tool)?.byOthers.push({
-    tripleId: row.termId ?? "",
-    writer: row.writer ?? "",
-    predicate,
-    value: row.value ?? ""
-  });
-  const onEdge = pass(await qualifiers([...edges.keys()], [config.inContextOf, config.hasOutcome]));
-  for (const row of onEdge) {
-    const line = parts(row);
-    const edge = line.subjectId === null ? undefined : edges.get(key(line.subjectId));
-    if (edge === undefined || line.predicateId === null || line.writer === null || line.value === null || line.termId === null)
-      continue;
-    const isOutcomeLine = key(line.predicateId) === key(config.hasOutcome);
-    if (isOutcomeLine && !isOutcome(line.value))
-      continue;
-    const wallets = standing(row, edge);
-    if (wallets.size === 0) {
-      others(edge, line, isOutcomeLine ? "outcome" : "context");
-    } else if (isOutcomeLine && isOutcome(line.value)) {
-      outcomes.set(key(line.termId), { edge, domain: null, form: "sibling", outcome: line.value, wallets, reasons: new Map, named: new Map });
-    } else {
-      contexts.set(key(line.termId), { edge, domain: line.value, wallets });
-    }
-  }
-  const onContext = pass(await qualifiers([...contexts.keys()], [config.hasOutcome]));
-  for (const row of onContext) {
-    const line = parts(row);
-    const context = line.subjectId === null ? undefined : contexts.get(key(line.subjectId));
-    if (context === undefined || line.value === null || line.termId === null || !isOutcome(line.value))
-      continue;
-    const wallets = standing(row, context.edge, context.wallets);
-    if (wallets.size === 0) {
-      others(context.edge, line, "outcome");
-    } else {
-      outcomes.set(key(line.termId), { edge: context.edge, domain: context.domain, form: "nested", outcome: line.value, wallets, reasons: new Map, named: new Map });
-    }
-  }
-  const reading = (predicate) => predicate !== undefined;
-  const failures = [...outcomes.entries()].filter(([, found]) => found.outcome === "failed").map(([id]) => id);
-  const worked = [...outcomes.entries()].filter(([, found]) => found.outcome === "worked").map(([id]) => id);
-  const withId = config.with;
-  const onOutcome = pass(await qualifiers(reading(withId) ? [...failures, ...worked] : failures, [config.because, ...reading(withId) ? [withId] : []]));
-  const reasonTerms = new Map;
-  const addName = (found, wallets, name) => {
-    for (const wallet of wallets) {
-      const given = found.named.get(wallet) ?? [];
-      if (!given.includes(name))
-        given.push(name);
-      found.named.set(wallet, given);
-    }
-  };
-  for (const row of onOutcome) {
-    const line = parts(row);
-    const found = line.subjectId === null ? undefined : outcomes.get(key(line.subjectId));
-    if (found === undefined || line.value === null || line.predicateId === null)
-      continue;
-    if (withId !== undefined && key(line.predicateId) === key(withId)) {
-      if (found.outcome !== "worked" || needKindOf2(line.value) === null)
-        continue;
-      const wallets2 = standing(row, found.edge, found.wallets);
-      if (wallets2.size === 0)
-        others(found.edge, line, "with");
-      addName(found, wallets2, line.value);
-      continue;
-    }
-    if (found.outcome !== "failed" || !isReason(line.value))
-      continue;
-    const wallets = standing(row, found.edge, found.wallets);
-    if (wallets.size === 0)
-      others(found.edge, line, "reason");
-    for (const wallet of wallets) {
-      const given = found.reasons.get(wallet) ?? [];
-      if (!given.includes(line.value))
-        given.push(line.value);
-      found.reasons.set(wallet, given);
-    }
-    if (line.termId !== null && wallets.size > 0 && needKindOfReason2(line.value) !== null) {
-      reasonTerms.set(key(line.termId), { found, reason: line.value, wallets });
-    }
-  }
-  const needsId = config.needs;
-  if (reading(needsId)) {
-    const onReason = pass(await qualifiers([...reasonTerms.keys()], [needsId]));
-    for (const row of onReason) {
-      const line = parts(row);
-      const reason = line.subjectId === null ? undefined : reasonTerms.get(key(line.subjectId));
-      if (reason === undefined || line.value === null)
-        continue;
-      const kind = needKindOf2(line.value);
-      if (kind === null || kind !== needKindOfReason2(reason.reason))
-        continue;
-      const wallets = standing(row, reason.found.edge, reason.wallets);
-      if (wallets.size === 0)
-        others(reason.found.edge, line, "needs");
-      addName(reason.found, wallets, line.value);
-    }
-  }
-  for (const { edge, domain, wallets } of contexts.values()) {
-    for (const wallet of wallets)
-      edge.declarers.get(wallet)?.domains.push(domain);
-  }
-  const ordered = [...outcomes.values()].sort((a, b) => Number(b.form === "nested") - Number(a.form === "nested"));
-  for (const found of ordered) {
-    for (const wallet of found.wallets) {
-      const declaration = found.edge.declarers.get(wallet);
-      if (declaration === undefined)
-        continue;
-      const reasons = found.reasons.get(wallet) ?? [];
-      const named = found.named.get(wallet) ?? [];
-      const field = found.outcome === "failed" ? "needs" : "with";
-      if (!declaration.outcomes.includes(found.outcome))
-        declaration.outcomes.push(found.outcome);
-      const domains = found.form === "nested" ? [found.domain] : declaration.domains.length > 0 ? declaration.domains : [null];
-      for (const domain of domains) {
-        const same = declaration.lines.find((line) => line.domain === domain && line.outcome === found.outcome);
-        if (same === undefined) {
-          declaration.lines.push({ domain, outcome: found.outcome, reasons, form: found.form, ...named.length === 0 ? {} : { [field]: named } });
-        } else {
-          same.reasons = [...new Set([...same.reasons, ...reasons])];
-          if (named.length > 0)
-            same[field] = [...new Set([...same[field] ?? [], ...named])];
-        }
-      }
-    }
-  }
-  for (const { tool, declarers } of edges.values()) {
-    const rows = [...declarers.values()].filter((row, at) => at === 0 || row.domains.length > 0 || row.lines.length > 0);
-    out.get(tool)?.declarations.push(...rows);
-  }
-  for (const usage of out.values()) {
-    usage.truncated = truncated;
-    usage.agents = new Set(usage.declarations.map((declaration) => key(declaration.agent.atomId))).size;
-    usage.wallets = new Set(usage.declarations.map((declaration) => key(declaration.writer)).filter((wallet) => !payers.has(wallet))).size;
-    for (const declaration of usage.declarations) {
-      for (const domain of declaration.domains)
-        usage.byDomain[domain] = (usage.byDomain[domain] ?? 0) + 1;
-      for (const outcome of declaration.outcomes)
-        usage.byOutcome[outcome] = (usage.byOutcome[outcome] ?? 0) + 1;
-      for (const reason of new Set(declaration.lines.flatMap((line) => line.reasons))) {
-        usage.byReason[reason] = (usage.byReason[reason] ?? 0) + 1;
-      }
-      const byNeed = usage.byNeed ??= {};
-      for (const name of new Set(declaration.lines.flatMap((line) => line.needs ?? [])))
-        byNeed[name] = (byNeed[name] ?? 0) + 1;
-      const byWith = usage.byWith ??= {};
-      for (const name of new Set(declaration.lines.flatMap((line) => line.with ?? [])))
-        byWith[name] = (byWith[name] ?? 0) + 1;
-    }
-  }
-  return out;
-}
-var DEFAULT_LIMIT2 = 250, rowsOf = (data) => Array.isArray(data["triples"]) ? data["triples"].filter(isRecord) : [];
-var init_pulse_usage = __esm(() => {
-  init_dist();
-  init_line_need();
-  init_usage_words();
-  init_terms();
-  init_probe();
-});
-
 // ../../packages/protocol/dist/hire-receipt.js
 function hireReceiptV1Domain(chainId) {
   return { name: "ARP Hire Receipt", version: "1", chainId };
@@ -25667,7 +25996,7 @@ async function signHireReceipt(receipt, domain, signer) {
     signature: await signer.signTypedData(hireReceiptTypedData(receipt, domain.chainId, verifyingContract))
   };
 }
-function malformed(reason) {
+function malformed2(reason) {
   return { status: "malformed", reason };
 }
 function isBytes32(value) {
@@ -25707,22 +26036,22 @@ function isV2(signed) {
 }
 async function verifyHireReceipt(signed) {
   if (signed.format !== "eip712")
-    return malformed("format is not eip712");
+    return malformed2("format is not eip712");
   const version5 = signed.receipt.version;
   if (version5 !== 1 && version5 !== 2)
-    return malformed(`unknown version ${String(version5)}`);
+    return malformed2(`unknown version ${String(version5)}`);
   const reason = malformedFields(signed);
   if (reason !== null)
-    return malformed(reason);
+    return malformed2(reason);
   if (isV2(signed)) {
     if (!isAddress(signed.verifyingContract)) {
-      return malformed("verifyingContract is not an address");
+      return malformed2("verifyingContract is not an address");
     }
     if (!isBytes32(signed.receipt.termId))
-      return malformed("termId is not bytes32");
+      return malformed2("termId is not bytes32");
     const { expiresAt, issuedAt } = signed.receipt;
     if (!Number.isInteger(expiresAt) || expiresAt < issuedAt) {
-      return malformed("expiresAt is not a unix timestamp at or after issuedAt");
+      return malformed2("expiresAt is not a unix timestamp at or after issuedAt");
     }
   }
   const declared = getAddress(signed.agent);
@@ -25736,7 +26065,7 @@ async function verifyHireReceipt(signed) {
       signature: signed.signature
     });
   } catch (error) {
-    return malformed(error instanceof Error ? error.message : String(error));
+    return malformed2(error instanceof Error ? error.message : String(error));
   }
   if (recovered !== declared)
     return { status: "mismatch", declared, recovered };
@@ -26046,157 +26375,6 @@ var init_agent_pulse = __esm(() => {
     "but",
     "else"
   ]);
-});
-
-// ../../packages/protocol/dist/receipt.js
-function contentReceiptDomain(chainId, version5 = "1") {
-  return { name: "ARP Content Receipt", version: version5, chainId };
-}
-function contentRequestDomain(chainId) {
-  return { name: "ARP Content Request", version: "1", chainId };
-}
-function contentRequestTypedData(atom, nonce, chainId) {
-  return {
-    domain: contentRequestDomain(chainId),
-    types: CONTENT_REQUEST_TYPES,
-    primaryType: "ContentRequest",
-    message: { atom, nonce }
-  };
-}
-async function recoverContentRequester(atom, nonce, chainId, signature) {
-  if (!isHex(signature) || signature.length < 132)
-    return null;
-  try {
-    return await recoverTypedDataAddress2({
-      ...contentRequestTypedData(atom, nonce, chainId),
-      signature
-    });
-  } catch {
-    return null;
-  }
-}
-function contentDigest(bytes) {
-  return sha2563(bytes);
-}
-function contentReceiptTypedData(receipt, chainId) {
-  const message = {
-    atom: receipt.atom,
-    url: receipt.url,
-    path: receipt.path,
-    digest: receipt.digest,
-    to: receipt.to ?? UNAUTHENTICATED,
-    servedAt: BigInt(receipt.servedAt),
-    nonce: receipt.nonce
-  };
-  if (receipt.commit === undefined) {
-    return {
-      domain: contentReceiptDomain(chainId, "1"),
-      types: CONTENT_RECEIPT_TYPES,
-      primaryType: "ContentReceipt",
-      message
-    };
-  }
-  return {
-    domain: contentReceiptDomain(chainId, "2"),
-    types: CONTENT_RECEIPT_TYPES_V2,
-    primaryType: "ContentReceipt",
-    message: { ...message, commit: receipt.commit }
-  };
-}
-async function signContentReceipt(receipt, chainId, signer) {
-  const data = contentReceiptTypedData(receipt, chainId);
-  return {
-    receipt,
-    chainId,
-    node: getAddress(signer.address),
-    signature: await signer.signTypedData(data)
-  };
-}
-function malformed2(reason) {
-  return { status: "malformed", reason };
-}
-async function verifyContentReceipt(signed) {
-  const { receipt, chainId, node, signature } = signed;
-  if (!isAddress(node))
-    return malformed2("node is not an address");
-  if (!isHex(signature))
-    return malformed2("signature is not hex");
-  if (!isHex(receipt.atom) || receipt.atom.length !== 66)
-    return malformed2("atom is not bytes32");
-  if (!isHex(receipt.digest) || receipt.digest.length !== 66) {
-    return malformed2("digest is not bytes32");
-  }
-  if (!isHex(receipt.nonce) || receipt.nonce.length !== 66)
-    return malformed2("nonce is not bytes32");
-  if (receipt.to !== null && !isAddress(receipt.to))
-    return malformed2("to is not an address");
-  if (!Number.isInteger(receipt.servedAt) || receipt.servedAt < 0) {
-    return malformed2("servedAt is not a unix timestamp");
-  }
-  if (!Number.isInteger(chainId) || chainId <= 0)
-    return malformed2("chainId is not a chain id");
-  if (receipt.commit !== undefined && !/^[0-9a-f]{40}$/.test(receipt.commit)) {
-    return malformed2("commit is not a 40-character git sha");
-  }
-  const declared = getAddress(node);
-  let recovered;
-  try {
-    recovered = await recoverTypedDataAddress2({
-      ...contentReceiptTypedData(receipt, chainId),
-      signature
-    });
-  } catch (error) {
-    return malformed2(error instanceof Error ? error.message : String(error));
-  }
-  if (recovered !== declared)
-    return { status: "mismatch", declared, recovered };
-  return {
-    status: "valid",
-    signer: recovered,
-    namesNobody: receipt.to === null || getAddress(receipt.to) === UNAUTHENTICATED
-  };
-}
-function corroborationOf(receipt, signer, receiver, accepted = []) {
-  const served = receipt.to === null ? UNAUTHENTICATED : getAddress(receipt.to);
-  if (served === UNAUTHENTICATED)
-    return { status: "names-nobody" };
-  const holder = getAddress(receiver);
-  if (served !== holder)
-    return { status: "other-caller", servedTo: served };
-  const who = getAddress(signer);
-  if (who === holder)
-    return { status: "self-signed", signer: holder };
-  if (accepted.some((address) => isAddress(address) && getAddress(address) === who)) {
-    return { status: "second-party", signer: who };
-  }
-  return { status: "unknown-signer", signer: who };
-}
-function receiptMatchesContent(receipt, bytes) {
-  return contentDigest(bytes) === receipt.digest.toLowerCase();
-}
-var CONTENT_RECEIPT_TYPES, CONTENT_RECEIPT_TYPES_V2, CONTENT_REQUEST_TYPES, UNAUTHENTICATED = "0x0000000000000000000000000000000000000000";
-var init_receipt = __esm(() => {
-  init__esm();
-  CONTENT_RECEIPT_TYPES = {
-    ContentReceipt: [
-      { name: "atom", type: "bytes32" },
-      { name: "url", type: "string" },
-      { name: "path", type: "string" },
-      { name: "digest", type: "bytes32" },
-      { name: "to", type: "address" },
-      { name: "servedAt", type: "uint256" },
-      { name: "nonce", type: "bytes32" }
-    ]
-  };
-  CONTENT_RECEIPT_TYPES_V2 = {
-    ContentReceipt: [...CONTENT_RECEIPT_TYPES.ContentReceipt, { name: "commit", type: "string" }]
-  };
-  CONTENT_REQUEST_TYPES = {
-    ContentRequest: [
-      { name: "atom", type: "bytes32" },
-      { name: "nonce", type: "bytes32" }
-    ]
-  };
 });
 
 // ../../packages/protocol/dist/content-serve.js
@@ -27258,7 +27436,7 @@ function lineRequestTypedData(request, chainId) {
 async function signLineRequest(request, chainId, signer) {
   return { request, chainId, signature: await signer.signTypedData(lineRequestTypedData(request, chainId)) };
 }
-var LINE_REQUEST_TYPES, LINE_REQUEST_VERSION = "5";
+var LINE_REQUEST_TYPES, LINE_REQUEST_VERSION = "6", LINE_REQUEST_TYPES_V5;
 var init_line = __esm(() => {
   LINE_REQUEST_TYPES = {
     LineRequest: [
@@ -27276,9 +27454,14 @@ var init_line = __esm(() => {
       { name: "asset", type: "string" },
       { name: "price", type: "string" },
       { name: "termsAt", type: "uint256" },
+      { name: "version", type: "string" },
+      { name: "evidence", type: "string" },
       { name: "nonce", type: "bytes32" },
       { name: "expiresAt", type: "uint256" }
     ]
+  };
+  LINE_REQUEST_TYPES_V5 = {
+    LineRequest: LINE_REQUEST_TYPES.LineRequest.filter((field) => field.name !== "version" && field.name !== "evidence")
   };
 });
 
@@ -27431,6 +27614,8 @@ var init_dist2 = __esm(() => {
   init_caip();
   init_intuition();
   init_terms();
+  init_skill_version();
+  init_line_evidence();
   init_declaration();
   init_probe();
   init_tool_usage2();
@@ -27478,9 +27663,9 @@ var init_dist2 = __esm(() => {
 
 // ../node/src/node-key.ts
 import { homedir as homedir2 } from "node:os";
-import { join as join2 } from "node:path";
+import { join as join3 } from "node:path";
 function nodeKeyPath(env, home = homedir2()) {
-  return env["ARP_NODE_KEY_FILE"] ?? join2(arpHome(env, home), "node.key");
+  return env["ARP_NODE_KEY_FILE"] ?? join3(arpHome(env, home), "node.key");
 }
 function asPrivateKey(raw, where) {
   const trimmed = raw.trim();
@@ -27623,7 +27808,7 @@ __export(exports_node_init, {
   NODE_INIT_EXIT: () => NODE_INIT_EXIT
 });
 import { mkdirSync as mkdirSync2, writeFileSync as writeFileSync2 } from "node:fs";
-import { dirname as dirname2, join as join3 } from "node:path";
+import { dirname as dirname2, join as join4 } from "node:path";
 function parseNodeInitFlags(args) {
   const flags = {
     agentRegistry: null,
@@ -27698,7 +27883,7 @@ async function nodeInit(flags, io) {
     return NODE_INIT_EXIT.failed;
   }
   io.err(`node key   ${key.account.address}  (${key.source === "env" ? "AGENT_PRIVATE_KEY" : key.path})`);
-  const messagePath = join3(io.home, ".arp", "handshake-message.txt");
+  const messagePath = join4(io.home, ".arp", "handshake-message.txt");
   const result = await register({
     directoryUrl: directory,
     agent: { agentRegistry, agentId },
@@ -27727,8 +27912,8 @@ async function nodeInit(flags, io) {
     io.err(`arp init --node: ${result.step} refused: ${result.reason}`);
     return NODE_INIT_EXIT.failed;
   }
-  const bindingPath = join3(io.home, ".arp", "node-binding.json");
-  const documentPath = join3(io.home, ".arp", "node-binding.document.json");
+  const bindingPath = join4(io.home, ".arp", "node-binding.json");
+  const documentPath = join4(io.home, ".arp", "node-binding.document.json");
   writePrivate(bindingPath, `${JSON.stringify(result.binding, null, 2)}
 `);
   writePrivate(documentPath, endpointBindingDocument(result.binding));
@@ -27766,11 +27951,11 @@ __export(exports_share, {
   describe: () => describe,
   decide: () => decide
 });
-import { appendFileSync as appendFileSync2, existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync2, rmSync, writeFileSync as writeFileSync3 } from "node:fs";
-import { join as join4 } from "node:path";
+import { appendFileSync as appendFileSync2, existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3, rmSync, writeFileSync as writeFileSync3 } from "node:fs";
+import { join as join5 } from "node:path";
 function shared(env) {
   const keys = new Set;
-  for (const row of (read(join4(env.arpHome, "shared-failures.jsonl")) ?? "").split(`
+  for (const row of (read(join5(env.arpHome, "shared-failures.jsonl")) ?? "").split(`
 `)) {
     if (row.trim() === "")
       continue;
@@ -27784,7 +27969,7 @@ function shared(env) {
 }
 function onceGrants(env) {
   const grants = [];
-  for (const row of (read(join4(env.arpHome, "share-once.jsonl")) ?? "").split(`
+  for (const row of (read(join5(env.arpHome, "share-once.jsonl")) ?? "").split(`
 `)) {
     try {
       const { session, skill } = JSON.parse(row);
@@ -27811,20 +27996,20 @@ function granted(text, grants, since = null) {
 `);
 }
 function decide(env) {
-  const choice = sharingChoiceOf(read(join4(env.arpHome, "sharing.json")));
-  const on = isSharingOn(read(join4(env.arpHome, "sharing.json")));
+  const choice = sharingChoiceOf(read(join5(env.arpHome, "sharing.json")));
+  const on = isSharingOn(read(join5(env.arpHome, "sharing.json")));
   const since = on && choice?.how === "asked-always" && choice.at !== null ? choice.at : null;
   const grants = on && since === null ? [] : onceGrants(env);
-  const failuresAll = read(join4(env.arpHome, "failures.jsonl")) ?? "";
-  const outcomesAll = read(join4(env.arpHome, "outcomes.jsonl")) ?? "";
+  const failuresAll = read(join5(env.arpHome, "failures.jsonl")) ?? "";
+  const outcomesAll = read(join5(env.arpHome, "outcomes.jsonl")) ?? "";
   const failuresText = since === null ? failuresAll : granted(failuresAll, grants, since);
   const outcomesText = since === null ? outcomesAll : granted(outcomesAll, grants, since);
   const earlier = rowCount(failuresAll) + rowCount(outcomesAll) - rowCount(failuresText) - rowCount(outcomesText);
   const installed = [
-    ...installedFromSkillLock(read(join4(env.home, ".agents", ".skill-lock.json"))),
-    ...installedFromSkillLock(read(join4(env.cwd, "skills-lock.json"))),
-    ...installedFromReceipts(read(join4(env.arpHome, "receipts.jsonl"))),
-    ...installedFromReceipts(read(join4(env.cwd, ".arp", "receipts.jsonl")))
+    ...installedFromSkillLock(read(join5(env.home, ".agents", ".skill-lock.json"))),
+    ...installedFromSkillLock(read(join5(env.cwd, "skills-lock.json"))),
+    ...installedFromReceipts(read(join5(env.arpHome, "receipts.jsonl"))),
+    ...installedFromReceipts(read(join5(env.cwd, ".arp", "receipts.jsonl")))
   ];
   const alreadyShared = shared(env);
   const all = decideShare({
@@ -27849,11 +28034,11 @@ function decide(env) {
 }
 function setSharing(env, on, how = "command", now = new Date) {
   mkdirSync3(env.arpHome, { recursive: true });
-  writeFileSync3(join4(env.arpHome, "sharing.json"), sharingFileText(on, how, now));
+  writeFileSync3(join5(env.arpHome, "sharing.json"), sharingFileText(on, how, now));
 }
 async function withSendLock(env, send3, now = Date.now) {
   mkdirSync3(env.arpHome, { recursive: true });
-  const path = join4(env.arpHome, LOCK);
+  const path = join5(env.arpHome, LOCK);
   const take = () => {
     try {
       writeFileSync3(path, `${JSON.stringify({ pid: process.pid, at: new Date(now()).toISOString() })}
@@ -27866,7 +28051,7 @@ async function withSendLock(env, send3, now = Date.now) {
   if (!take()) {
     let at = 0;
     try {
-      at = Date.parse(JSON.parse(readFileSync2(path, "utf8")).at ?? "");
+      at = Date.parse(JSON.parse(readFileSync3(path, "utf8")).at ?? "");
     } catch {
       at = 0;
     }
@@ -27885,7 +28070,7 @@ async function withSendLock(env, send3, now = Date.now) {
 function logSend(env, result, now = new Date) {
   mkdirSync3(env.arpHome, { recursive: true });
   const row = { at: now.toISOString(), sent: result.sent, failed: result.failed, ...result.firstError === null ? {} : { error: result.firstError } };
-  appendFileSync2(join4(env.arpHome, "share-log.jsonl"), `${JSON.stringify(row)}
+  appendFileSync2(join5(env.arpHome, "share-log.jsonl"), `${JSON.stringify(row)}
 `);
 }
 async function sendShared(env, write) {
@@ -27898,7 +28083,7 @@ async function sendShared(env, write) {
   for (const line of lines) {
     try {
       await write(line);
-      appendFileSync2(join4(env.arpHome, "shared-failures.jsonl"), `${JSON.stringify(line)}
+      appendFileSync2(join5(env.arpHome, "shared-failures.jsonl"), `${JSON.stringify(line)}
 `);
       sent += 1;
     } catch (error) {
@@ -27937,7 +28122,7 @@ function describe(decision) {
 `)}
 `;
 }
-var read = (path) => existsSync2(path) ? readFileSync2(path, "utf8") : null, nameOf = (skill) => skill.split(":").pop() ?? skill, rowCount = (text) => text.split(`
+var read = (path) => existsSync2(path) ? readFileSync3(path, "utf8") : null, nameOf = (skill) => skill.split(":").pop() ?? skill, rowCount = (text) => text.split(`
 `).filter((row) => row.trim() !== "").length, LOCK = "share-send.lock", STALE_MS, WHY, HOW;
 var init_share = __esm(() => {
   init_dist2();
@@ -34428,7 +34613,7 @@ var init_data2 = __esm(() => {
 
 // ../mcp/src/content.ts
 import { existsSync as existsSync3, writeFileSync as writeFileSync4 } from "node:fs";
-import { dirname as dirname3, join as join5 } from "node:path";
+import { dirname as dirname3, join as join6 } from "node:path";
 function catalogueFor(chainId) {
   const held = catalogues.get(chainId);
   if (held !== undefined)
@@ -34453,7 +34638,7 @@ function pinFor(chainId) {
   return (repo) => repos[repo]?.commit ?? null;
 }
 function ignoreOwnDirectory(keyPath) {
-  const ignore = join5(dirname3(keyPath), ".gitignore");
+  const ignore = join6(dirname3(keyPath), ".gitignore");
   try {
     if (!existsSync3(ignore))
       writeFileSync4(ignore, `*
@@ -35265,9 +35450,9 @@ var init_tool_search = __esm(() => {
 
 // ../mcp/src/desktop/agent-key.ts
 import { homedir as homedir3 } from "node:os";
-import { join as join6 } from "node:path";
+import { join as join7 } from "node:path";
 function agentKeyPath(home = homedir3()) {
-  return join6(arpHome(process.env, home), "agent-key");
+  return join7(arpHome(process.env, home), "agent-key");
 }
 function loadOrCreateAgentKey(path = agentKeyPath(), options = {}) {
   return privateKeyToAccount(loadOrCreateKeyFile(path, options).key);
@@ -35354,8 +35539,8 @@ async function submitCategory(request, deps) {
 }
 
 // ../mcp/src/desktop/skill-gate.ts
-import { existsSync as existsSync4, mkdirSync as mkdirSync4, readFileSync as readFileSync3, writeFileSync as writeFileSync5, appendFileSync as appendFileSync3 } from "node:fs";
-import { dirname as dirname4, join as join7 } from "node:path";
+import { existsSync as existsSync4, mkdirSync as mkdirSync4, readFileSync as readFileSync4, writeFileSync as writeFileSync5, appendFileSync as appendFileSync3 } from "node:fs";
+import { dirname as dirname4, join as join8 } from "node:path";
 function installPrompt(receipt, files, installPath, context) {
   const ref = skillRefFromUrl(receipt.receipt.url);
   const prompt = renderSkillPrompt(reviewSkill({
@@ -35374,19 +35559,19 @@ function installPrompt(receipt, files, installPath, context) {
 function installFiles(skillsDir, skill, files) {
   if (!SAFE_SKILL_NAME.test(skill))
     throw new Error(`${skill} is not a plain directory name; nothing was installed`);
-  const dir = join7(skillsDir, skill);
+  const dir = join8(skillsDir, skill);
   const clash = files.find((file) => {
-    const path = join7(dir, file.path);
-    return existsSync4(path) && !Buffer.from(readFileSync3(path)).equals(Buffer.from(file.bytes));
+    const path = join8(dir, file.path);
+    return existsSync4(path) && !Buffer.from(readFileSync4(path)).equals(Buffer.from(file.bytes));
   });
   if (clash !== undefined) {
-    throw new Error(`${join7(dir, clash.path)} already exists with different contents; nothing was installed. ` + `Remove ${dir} to install this skill there.`);
+    throw new Error(`${join8(dir, clash.path)} already exists with different contents; nothing was installed. ` + `Remove ${dir} to install this skill there.`);
   }
   for (const file of files) {
-    mkdirSync4(dirname4(join7(dir, file.path)), { recursive: true });
-    writeFileSync5(join7(dir, file.path), file.bytes);
+    mkdirSync4(dirname4(join8(dir, file.path)), { recursive: true });
+    writeFileSync5(join8(dir, file.path), file.bytes);
   }
-  return join7(dir, "SKILL.md");
+  return join8(dir, "SKILL.md");
 }
 function recordInstall(projectReceipts, skill, receipt) {
   mkdirSync4(dirname4(projectReceipts), { recursive: true });
@@ -35401,8 +35586,8 @@ var init_skill_gate = __esm(() => {
 });
 
 // ../mcp/src/desktop/loop.ts
-import { appendFileSync as appendFileSync4, existsSync as existsSync5, mkdirSync as mkdirSync5, readFileSync as readFileSync4, writeFileSync as writeFileSync6 } from "node:fs";
-import { join as join8 } from "node:path";
+import { appendFileSync as appendFileSync4, existsSync as existsSync5, mkdirSync as mkdirSync5, readFileSync as readFileSync5, writeFileSync as writeFileSync6 } from "node:fs";
+import { join as join9 } from "node:path";
 async function json(response) {
   return await response.json().catch(() => ({}));
 }
@@ -35426,21 +35611,42 @@ async function post2(config, path, body) {
   return { status: response.status, body: await json(response) };
 }
 function readAgent(config) {
-  const file = join8(config.stateDir, "agent.json");
-  return existsSync5(file) ? JSON.parse(readFileSync4(file, "utf8")) : null;
+  const file = join9(config.stateDir, "agent.json");
+  return existsSync5(file) ? JSON.parse(readFileSync5(file, "utf8")) : null;
 }
 function writeAgent(config, state) {
   mkdirSync5(config.stateDir, { recursive: true, mode: 448 });
-  writeFileSync6(join8(config.stateDir, "agent.json"), `${JSON.stringify(state)}
+  writeFileSync6(join9(config.stateDir, "agent.json"), `${JSON.stringify(state)}
 `, { mode: 384 });
 }
 function receiptFor(config, atom) {
-  const file = join8(config.stateDir, "receipts.jsonl");
+  const file = join9(config.stateDir, "receipts.jsonl");
   if (!existsSync5(file))
     return null;
-  const lines = readFileSync4(file, "utf8").split(`
+  const lines = readFileSync5(file, "utf8").split(`
 `).filter((line) => line.trim() !== "").map((line) => JSON.parse(line));
   return lines.reverse().find((line) => line.atom.toLowerCase() === atom.toLowerCase()) ?? null;
+}
+function receiptOver(config, atom, digest, agent) {
+  const file = join9(config.stateDir, "receipts.jsonl");
+  if (!existsSync5(file))
+    return null;
+  const rows = readFileSync5(file, "utf8").split(`
+`).filter((line) => line.trim() !== "");
+  for (const row of rows.reverse()) {
+    let line;
+    try {
+      line = JSON.parse(row);
+    } catch {
+      continue;
+    }
+    const { receipt } = line.receipt;
+    if (receipt.atom.toLowerCase() !== atom.toLowerCase() || receipt.digest.toLowerCase() !== digest.toLowerCase())
+      continue;
+    if (receipt.to?.toLowerCase() === agent.toLowerCase())
+      return line.receipt;
+  }
+  return null;
 }
 async function getSkill(config, agent, atom) {
   const nonce = keccak256(stringToBytes(`${atom}-${Date.now()}`));
@@ -35474,13 +35680,13 @@ async function getSkill(config, agent, atom) {
   const ref = skillRefFromUrl(signed.receipt.url);
   mkdirSync5(config.stateDir, { recursive: true, mode: 448 });
   const line = { atom: signed.receipt.atom, url: signed.receipt.url, skill: ref?.skill ?? null, receipt: signed };
-  appendFileSync4(join8(config.stateDir, "receipts.jsonl"), `${JSON.stringify(line)}
+  appendFileSync4(join9(config.stateDir, "receipts.jsonl"), `${JSON.stringify(line)}
 `);
   const contains = contentsLines(readSkillContents(files.map((file) => contentsFileOf(file.path, file.bytes))));
   const served = { atom: signed.receipt.atom, url: signed.receipt.url, name: ref?.skill ?? signed.receipt.url, text: new TextDecoder().decode(skillMd.bytes), contains };
   if (config.skillsDir === undefined || ref === null || !SAFE_SKILL_NAME.test(ref.skill))
     return served;
-  const prompt = installPrompt(signed, files, join8(config.skillsDir, ref.skill), config.reviewContext?.(signed.receipt.url) ?? { committedAt: null, thirdParty: [] });
+  const prompt = installPrompt(signed, files, join9(config.skillsDir, ref.skill), config.reviewContext?.(signed.receipt.url) ?? { committedAt: null, thirdParty: [] });
   const answer = config.ask === undefined ? "unavailable" : await config.ask(prompt);
   if (answer !== "accepted")
     return { ...served, notInstalled: answer, files: files.length };
@@ -35581,7 +35787,11 @@ async function writeLine(config, agent, asked) {
   const wait2 = config.sleep ?? ((ms) => new Promise((done) => setTimeout(done, ms)));
   const deadline = Date.now() + (config.indexerWaitMs ?? 120000);
   let approved = false;
+  let version5 = input.payment === undefined && input.version !== undefined && isVersionDigest(input.version) ? input.version : "";
+  let withReceipt = true;
+  const backing = () => version5 === "" || !withReceipt ? null : receiptOver(config, tool, version5, agent.address);
   for (;; ) {
+    const receipt = backing();
     const request = await signLineRequest({
       agent: agent.address,
       ...ref,
@@ -35596,18 +35806,30 @@ async function writeLine(config, agent, asked) {
       asset: terms?.asset ?? "",
       price: terms?.price ?? "",
       termsAt: terms?.receivedAt ?? 0,
+      version: version5,
+      evidence: receipt === null ? "" : contentReceiptHash(receipt.receipt, receipt.chainId),
       nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
       expiresAt: expiresAt()
     }, DESKTOP_CHAIN_ID, agent.account);
-    const answer = await post2(config, "/line", { request });
+    const answer = await post2(config, "/line", receipt === null ? { request } : { request, receipt });
     if (answer.status === 200) {
       return {
         toolUrl: String(listed.body["url"]),
         termId: answer.body["termId"],
         levels: answer.body["levels"],
         created: answer.body["created"] === true,
-        transactions: answer.body["transactions"]
+        transactions: answer.body["transactions"],
+        version: version5 === "" ? null : version5,
+        backed: receipt !== null
       };
+    }
+    if (answer.status === 422 && answer.body["rule"] === "version" && version5 !== "") {
+      version5 = "";
+      continue;
+    }
+    if (answer.status === 422 && answer.body["rule"] === "evidence" && receipt !== null) {
+      withReceipt = false;
+      continue;
     }
     const error = String(answer.body["error"] ?? "");
     const notIndexedYet = answer.status === 403 && /no identity atom on the graph/.test(error) || answer.status === 422 && answer.body["retry"] === true || answer.status === 503 && answer.body["retry"] === true || answer.status === 422 && answer.body["rule"] === "unknown_domain" && input.newDomain !== undefined;
@@ -35897,6 +36119,16 @@ function lineFromArgs(args, env = process.env) {
     if (args.paymentTx !== undefined)
       return new Error("--needs and --with name a skill's word; a paid endpoint has no SKILL.md");
   }
+  let version5 = null;
+  if (args.skillDir !== undefined) {
+    if (args.paymentTx !== undefined)
+      return new Error("--skill-dir names a skill's files; a paid endpoint has none");
+    if (skillRefFromUrl(toolUrl) === null)
+      return new Error("--skill-dir follows a skill URL, https://github.com/<owner>/<repo>?skill=<name>");
+    version5 = skillDirectoryDigest(args.skillDir);
+    if (version5 === null)
+      return new Error(`--skill-dir ${args.skillDir} is not a directory this can read, or holds more than 300 files`);
+  }
   return {
     toolUrl,
     outcome: args.outcome,
@@ -35905,7 +36137,8 @@ function lineFromArgs(args, env = process.env) {
     ...args.parent === undefined || args.why === undefined ? {} : { newDomain: { parent: args.parent, why: args.why.trim() } },
     ...args.paymentTx === undefined || args.network === undefined ? {} : { payment: { network: args.network, txHash: args.paymentTx.toLowerCase() } },
     ...terms === null ? {} : { terms },
-    ...need === undefined ? {} : { need }
+    ...need === undefined ? {} : { need },
+    ...version5 === null ? {} : { version: version5 }
   };
 }
 function termsFromArgs(args) {
@@ -36004,6 +36237,7 @@ async function writeLineHere(input) {
 var TERMS_FLAGS;
 var init_line2 = __esm(() => {
   init_dist2();
+  init_node2();
   init_config();
   init_domain_words2();
   init_handlers();
@@ -36013,12 +36247,12 @@ var init_line2 = __esm(() => {
 
 // ../mcp/src/share-ask.ts
 import { mkdirSync as mkdirSync6, writeFileSync as writeFileSync7 } from "node:fs";
-import { join as join9 } from "node:path";
+import { join as join10 } from "node:path";
 function applyDesktopShare(value, arpHome2) {
   if (value !== "true" && value !== "false")
     return null;
   mkdirSync6(arpHome2, { recursive: true });
-  writeFileSync7(join9(arpHome2, "sharing.json"), sharingFileText(value === "true", "desktop", new Date));
+  writeFileSync7(join10(arpHome2, "sharing.json"), sharingFileText(value === "true", "desktop", new Date));
   return value === "true";
 }
 var init_share_ask = __esm(() => {
@@ -36712,12 +36946,12 @@ var init_declare_need = __esm(() => {
 });
 
 // ../mcp/src/handlers/declare.ts
-import { readFileSync as readFileSync5 } from "node:fs";
+import { readFileSync as readFileSync6 } from "node:fs";
 async function readLocalReceipts() {
   const held = new Map;
   let text2;
   try {
-    text2 = readFileSync5(RECEIPTS_LOG, "utf8");
+    text2 = readFileSync6(RECEIPTS_LOG, "utf8");
   } catch {
     return held;
   }
@@ -36936,7 +37170,7 @@ async function declareSession(id, args) {
     raw2 = given;
   } else {
     try {
-      raw2 = readFileSync5(SESSION_LOG, "utf8");
+      raw2 = readFileSync6(SESSION_LOG, "utf8");
     } catch {
       return fail(id, -32602, `no log passed and ${SESSION_LOG} is not readable — wire apps/hook/src/hook.ts as a PostToolUse hook, or pass \`log\``);
     }
@@ -41979,16 +42213,16 @@ var init_pulse_readings2 = __esm(() => {
 });
 
 // ../mcp/src/pulse-cache.ts
-import { createHash } from "node:crypto";
-import { chmodSync as chmodSync2, mkdirSync as mkdirSync7, readFileSync as readFileSync6, writeFileSync as writeFileSync8 } from "node:fs";
-import { join as join10 } from "node:path";
+import { createHash as createHash2 } from "node:crypto";
+import { chmodSync as chmodSync2, mkdirSync as mkdirSync7, readFileSync as readFileSync7, writeFileSync as writeFileSync8 } from "node:fs";
+import { join as join11 } from "node:path";
 function diskListingCache(directory2, now = Date.now) {
-  const pathOf = (repo) => join10(directory2, `${createHash("sha256").update(repo).digest("hex")}.json`);
+  const pathOf = (repo) => join11(directory2, `${createHash2("sha256").update(repo).digest("hex")}.json`);
   return {
     async get(repo) {
       let stored;
       try {
-        stored = JSON.parse(readFileSync6(pathOf(repo), "utf8"));
+        stored = JSON.parse(readFileSync7(pathOf(repo), "utf8"));
       } catch {
         return null;
       }
@@ -42007,7 +42241,7 @@ function diskListingCache(directory2, now = Date.now) {
       return listing2;
     },
     async set(repo, listing2) {
-      if (listing2.files.length > MAX_FILES)
+      if (listing2.files.length > MAX_FILES2)
         return;
       mkdirSync7(directory2, { recursive: true, mode: 448 });
       chmodSync2(directory2, 448);
@@ -42042,7 +42276,7 @@ function memoryFileCache(now = Date.now) {
     }
   };
 }
-var DAY_MS = 86400000, MAX_FILES = 20000, isStored = (value) => {
+var DAY_MS = 86400000, MAX_FILES2 = 20000, isStored = (value) => {
   if (typeof value !== "object" || value === null)
     return false;
   const row = value;
@@ -42155,9 +42389,9 @@ function positiveSetting(raw2, fallback2) {
 var BUSY = "the server is running as many searches as it can; try again in a moment", CANCELLED = "the call was cancelled";
 
 // ../mcp/src/handlers/pulse.ts
-import { chmodSync as chmodSync3, existsSync as existsSync6, mkdirSync as mkdirSync8, readFileSync as readFileSync7, rmSync as rmSync2 } from "node:fs";
+import { chmodSync as chmodSync3, existsSync as existsSync6, mkdirSync as mkdirSync8, readFileSync as readFileSync8, rmSync as rmSync2 } from "node:fs";
 import { homedir as homedir4 } from "node:os";
-import { join as join11, delimiter } from "node:path";
+import { join as join12, delimiter } from "node:path";
 function within(work, ms, stop) {
   return new Promise((resolve3, reject) => {
     const quit = () => reject(new Error("no answer in time"));
@@ -42219,10 +42453,10 @@ function canSearch(env) {
   return !env.holdsAgentKey && env.setting !== "off";
 }
 function searchHome() {
-  return join11(arpHome(process.env, homedir4()), "skills-cli");
+  return join12(arpHome(process.env, homedir4()), "skills-cli");
 }
 function searchIsCached() {
-  return existsSync6(join11(searchHome(), ".npm", "_npx"));
+  return existsSync6(join12(searchHome(), ".npm", "_npx"));
 }
 async function search(query, timeoutMs, stop, firstDownload = false) {
   if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env["ARP_PULSE_SEARCH"] })) {
@@ -42232,7 +42466,7 @@ async function search(query, timeoutMs, stop, firstDownload = false) {
   try {
     mkdirSync8(home, { recursive: true, mode: 448 });
     chmodSync3(home, 448);
-    rmSync2(join11(home, ".npm", "_logs"), { recursive: true, force: true });
+    rmSync2(join12(home, ".npm", "_logs"), { recursive: true, force: true });
   } catch (error) {
     return { error: withoutPaths(error instanceof Error ? error.message.split(`
 `)[0] ?? "failed" : String(error)) };
@@ -42332,8 +42566,8 @@ function usageLine(usage, domain) {
 }
 function readYourFailures() {
   try {
-    const path = join11(arpHome(process.env, homedir4()), "failures.jsonl");
-    return existsSync6(path) ? parseLocalFailures(readFileSync7(path, "utf8")) : [];
+    const path = join12(arpHome(process.env, homedir4()), "failures.jsonl");
+    return existsSync6(path) ? parseLocalFailures(readFileSync8(path, "utf8")) : [];
   } catch {
     return [];
   }
@@ -42543,6 +42777,7 @@ async function answer(id, args, budget, cancelled) {
       graphqlUrl: GRAPHQL,
       inContextOf: IN_CONTEXT_OF,
       ...lineWordIds(found2),
+      version: VERSION,
       payers: LINE_PAYERS
     });
   };
@@ -42598,7 +42833,7 @@ async function answer(id, args, budget, cancelled) {
   const source = githubPulseSource({
     ...token === undefined ? { withRepository: false } : { token },
     signal: filesStop,
-    cache: diskListingCache(join11(arpHome(process.env, homedir4()), "pulse-listings")),
+    cache: diskListingCache(join12(arpHome(process.env, homedir4()), "pulse-listings")),
     files: processFileCache
   });
   const pulses = await readWindow(ordered, source, {
@@ -43100,8 +43335,18 @@ var init_usage_words2 = __esm(() => {
   USAGE_REASONS3 = ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"];
 });
 
+// ../../packages/protocol/src/skill-version.ts
+function digestOfVersionLabel2(label) {
+  const match = label === null || label === undefined ? null : LABEL2.exec(label);
+  return match === null ? null : `0x${match[1]}`;
+}
+var LABEL2;
+var init_skill_version2 = __esm(() => {
+  LABEL2 = /^sha256:([0-9a-f]{64})$/;
+});
+
 // ../../packages/protocol/src/sources/intuition/terms.ts
-var USES2 = "0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800";
+var VERSION2 = "0x9622ec9e9e8265253328648119d02f85234737b991cf34ac9416b163b6e10230", USES2 = "0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800";
 var init_terms2 = () => {};
 
 // ../../packages/protocol/src/pulse-usage.ts
@@ -43147,13 +43392,17 @@ async function getPulseUsage2(toolAtomIds, config) {
   const out = new Map(toolAtomIds.map((id) => [key(id), empty()]));
   if (toolAtomIds.length === 0)
     return out;
-  const edgeRows = rowsOf3(await transport.request(PULSE_USES_QUERY, { tools: [...toolAtomIds], uses: USES2, limit }));
+  const edgeRows = rowsOf3(config.version === undefined ? await transport.request(PULSE_USES_QUERY, { tools: [...toolAtomIds], uses: USES2, limit }) : await transport.request(PULSE_VERSIONED_USES_QUERY, { tools: [...toolAtomIds], uses: USES2, version: config.version, limit }));
+  const wanted = new Set(toolAtomIds.map(key));
   const edges = new Map;
   const NESTED_CAP = 100;
   let truncated = edgeRows.length >= limit;
   for (const row of edgeRows) {
     const tripleId = readString(row, "term_id");
-    const tool = readString(row, "object_id");
+    const versioned = versionOf2(row, config.version);
+    const tool = versioned?.tool ?? readString(row, "object_id");
+    if (versioned === null && config.version !== undefined && !wanted.has(key(tool ?? "")))
+      continue;
     const writer = readString(row, "creator_id");
     const subject = readRecord(row, "subject");
     const atomId = subject === null ? null : readString(subject, "term_id");
@@ -43162,6 +43411,7 @@ async function getPulseUsage2(toolAtomIds, config) {
     const edgeHolders = (Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : []).map((holder) => readString(holder, "account_id")).filter((account) => account !== null);
     const declaration = (wallet, declaredAt) => ({
       tripleId,
+      ...versioned === null ? {} : { version: versioned.digest },
       agent: { atomId, label: readString(subject, "label") },
       writer: wallet,
       holders: edgeHolders,
@@ -43357,14 +43607,41 @@ async function getPulseUsage2(toolAtomIds, config) {
       for (const name of new Set(declaration.lines.flatMap((line) => line.with ?? [])))
         byWith[name] = (byWith[name] ?? 0) + 1;
     }
+    if (config.version !== undefined) {
+      const wallets = new Map;
+      for (const declaration of usage.declarations) {
+        if (declaration.version === undefined || payers.has(key(declaration.writer)))
+          continue;
+        const seen = wallets.get(declaration.version) ?? new Set;
+        seen.add(key(declaration.writer));
+        wallets.set(declaration.version, seen);
+      }
+      usage.byVersion = Object.fromEntries([...wallets].map(([digest, seen]) => [digest, seen.size]));
+    }
   }
   return out;
+}
+function versionOf2(row, version5) {
+  if (version5 === undefined)
+    return null;
+  const term = readRecord(row, "object_term");
+  const triple = term === null ? null : readRecord(term, "triple");
+  if (triple === null)
+    return null;
+  const predicate = readString(triple, "predicate_id");
+  const tool = readString(triple, "subject_id");
+  const object = readRecord(triple, "object");
+  const digest = digestOfVersionLabel2(object === null ? null : readString(object, "label"));
+  if (predicate === null || predicate.toLowerCase() !== version5.toLowerCase() || tool === null || digest === null)
+    return null;
+  return { tool, digest };
 }
 var DEFAULT_LIMIT4 = 250, rowsOf3 = (data) => Array.isArray(data["triples"]) ? data["triples"].filter(isRecord) : [];
 var init_pulse_usage2 = __esm(() => {
   init_dist();
   init_line_need2();
   init_usage_words2();
+  init_skill_version2();
   init_terms2();
 });
 
@@ -43387,6 +43664,7 @@ async function readSkillLines(atomUri, config) {
     ...config,
     hasOutcome,
     because,
+    version: VERSION2,
     ...needs === undefined ? {} : { needs },
     ...withId === undefined ? {} : { with: withId }
   });
@@ -43434,6 +43712,7 @@ var init_failure_lines = __esm(() => {
   init_tool_thing2();
   init_usage_words2();
   init_pulse_usage2();
+  init_terms2();
 });
 
 // ../../packages/protocol/src/skill-requires.ts
@@ -44905,9 +45184,9 @@ __export(exports_check, {
   checkSkill: () => checkSkill,
   CHECK_BUDGET_MS: () => CHECK_BUDGET_MS
 });
-import { createHash as createHash2 } from "node:crypto";
+import { createHash as createHash3 } from "node:crypto";
 import { existsSync as existsSync7, statSync as statSync2 } from "node:fs";
-import { delimiter as delimiter2, join as join12 } from "node:path";
+import { delimiter as delimiter2, join as join13 } from "node:path";
 function skillRefOf(arg) {
   const part = /^[\w.-]+$/;
   const fromUrl = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/?\?skill=([^&#]+)$/.exec(arg.trim());
@@ -44938,7 +45217,7 @@ function thisMachine(env = process.env, platform = process.platform) {
   const exts = platform === "win32" ? (env["PATHEXT"] ?? ".EXE;.CMD;.BAT").split(";") : [""];
   return {
     hasProgram: (name) => dirs.some((dir) => exts.some((ext) => {
-      const path = join12(dir, name + ext);
+      const path = join13(dir, name + ext);
       try {
         return existsSync7(path) && statSync2(path).isFile();
       } catch {
@@ -44988,7 +45267,7 @@ async function checkSkill(ref, deps) {
   });
   const contents = readSkillInstall2({ kind: "github", repo: ref.repo, ref: null, subpath: null, skills: [ref.skill] }, source, deadline);
   const url = `https://github.com/${ref.repo}?skill=${encodeURIComponent(ref.skill)}`;
-  const { uri, label } = skillAtom(url, (text2) => createHash2("sha256").update(text2, "utf8").digest());
+  const { uri, label } = skillAtom(url, (text2) => createHash3("sha256").update(text2, "utf8").digest());
   const usage = readSkillLines(uri, {
     graphqlUrl: deps.env["INTUITION_GRAPHQL_URL"] ?? _13579_default.chain.graphqlUrl,
     inContextOf: IN_CONTEXT_OF2,
@@ -45033,10 +45312,10 @@ var init_classify = __esm(() => {
 });
 
 // ../hook/src/append.ts
-import { closeSync as closeSync2, constants, lstatSync, openSync as openSync2, writeSync as writeSync2 } from "node:fs";
+import { closeSync as closeSync2, constants, lstatSync as lstatSync2, openSync as openSync2, writeSync as writeSync2 } from "node:fs";
 import { dirname as dirname5 } from "node:path";
 function appendOwn(path, text2) {
-  if (lstatSync(dirname5(path)).isSymbolicLink())
+  if (lstatSync2(dirname5(path)).isSymbolicLink())
     throw new Error(`${dirname5(path)} is a symbolic link`);
   const flags = constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | (constants.O_NOFOLLOW ?? 0);
   const fd = openSync2(path, flags, 384);
@@ -45836,9 +46115,9 @@ var init_skill_nodes_13579 = __esm(() => {
 });
 
 // ../hook/src/skill-failure.ts
-import { existsSync as existsSync8, mkdirSync as mkdirSync9, readFileSync as readFileSync8 } from "node:fs";
+import { existsSync as existsSync8, mkdirSync as mkdirSync9, readFileSync as readFileSync9 } from "node:fs";
 import { homedir as homedir5 } from "node:os";
-import { dirname as dirname6, join as join13 } from "node:path";
+import { dirname as dirname6, join as join14 } from "node:path";
 function failureReason(text2) {
   if (MISSING_PROGRAM.test(text2))
     return "missing-program";
@@ -45877,19 +46156,19 @@ function contextOf(words, skill) {
   return domainInText2(words, WORDS) ?? SKILL_NODE[skill.split(":").pop() ?? skill] ?? null;
 }
 function skillDirectory(name, cwd) {
-  const roots = [join13(cwd, ".claude", "skills"), join13(homedir5(), ".claude", "skills")];
+  const roots = [join14(cwd, ".claude", "skills"), join14(homedir5(), ".claude", "skills")];
   const given = process.env["ARP_SKILLS_DIR"];
   if (given !== undefined && given !== "")
     roots.unshift(given);
-  return roots.map((root2) => join13(root2, name)).find((dir) => existsSync8(join13(dir, "SKILL.md"))) ?? null;
+  return roots.map((root2) => join14(root2, name)).find((dir) => existsSync8(join14(dir, "SKILL.md"))) ?? null;
 }
 function arpHome2() {
   const given = process.env["ARP_HOME"]?.trim();
-  return given !== undefined && given !== "" ? given : join13(homedir5(), ".arp");
+  return given !== undefined && given !== "" ? given : join14(homedir5(), ".arp");
 }
 function appendFailure(line) {
-  const path = join13(arpHome2(), "failures.jsonl");
-  const seen = existsSync8(path) ? readFileSync8(path, "utf8") : "";
+  const path = join14(arpHome2(), "failures.jsonl");
+  const seen = existsSync8(path) ? readFileSync9(path, "utf8") : "";
   const key = `"session":${JSON.stringify(line.session)},"skill":${JSON.stringify(line.skill)},`;
   if (seen.split(`
 `).some((row) => row.includes(key) && row.includes(`"reason":"${line.reason}"`)))
@@ -45923,9 +46202,9 @@ __export(exports_backfill, {
   readTranscript: () => readTranscript,
   backfill: () => backfill
 });
-import { readdirSync, readFileSync as readFileSync9, statSync as statSync3 } from "node:fs";
+import { readdirSync as readdirSync2, readFileSync as readFileSync10, statSync as statSync3 } from "node:fs";
 import { homedir as homedir6 } from "node:os";
-import { basename, join as join14 } from "node:path";
+import { basename, join as join15 } from "node:path";
 function blocksOf(content2) {
   return Array.isArray(content2) ? content2 : [];
 }
@@ -45938,7 +46217,7 @@ function textOf(content2) {
 function fromDisk(name, cwd) {
   try {
     const directory2 = skillDirectory(name, cwd);
-    return directory2 === null ? null : { name, directory: directory2, markdown: readFileSync9(join14(directory2, "SKILL.md"), "utf8") };
+    return directory2 === null ? null : { name, directory: directory2, markdown: readFileSync10(join15(directory2, "SKILL.md"), "utf8") };
   } catch {
     return null;
   }
@@ -46033,12 +46312,12 @@ function transcripts(root2) {
   const found2 = [];
   let names;
   try {
-    names = readdirSync(root2);
+    names = readdirSync2(root2);
   } catch {
     return found2;
   }
   for (const name of names) {
-    const path = join14(root2, name);
+    const path = join15(root2, name);
     try {
       if (statSync3(path).isDirectory())
         found2.push(...transcripts(path));
@@ -46050,14 +46329,14 @@ function transcripts(root2) {
   }
   return found2;
 }
-function backfill(root2 = join14(homedir6(), ".claude", "projects")) {
+function backfill(root2 = join15(homedir6(), ".claude", "projects")) {
   const files = transcripts(root2);
   let uses = 0;
   let added = 0;
   for (const file of files) {
     let text2;
     try {
-      text2 = readFileSync9(file, "utf8");
+      text2 = readFileSync10(file, "utf8");
     } catch {
       continue;
     }
@@ -46067,7 +46346,7 @@ function backfill(root2 = join14(homedir6(), ".claude", "projects")) {
       if (appendFailure(failure))
         added += 1;
   }
-  return { transcripts: files.length, uses, added, file: join14(arpHome2(), "failures.jsonl") };
+  return { transcripts: files.length, uses, added, file: join15(arpHome2(), "failures.jsonl") };
 }
 var BODY, lastPart = (name) => name.split(":").pop() ?? name;
 var init_backfill = __esm(() => {
@@ -46334,7 +46613,7 @@ var init_task = __esm(() => {
 // ../node/src/tunnel.ts
 import { spawn as spawnChild } from "node:child_process";
 import { accessSync, constants as constants2, statSync as statSync4 } from "node:fs";
-import { delimiter as delimiter3, join as join15 } from "node:path";
+import { delimiter as delimiter3, join as join16 } from "node:path";
 import { createInterface } from "node:readline";
 function isExecutable(path) {
   try {
@@ -46350,7 +46629,7 @@ function findOnPath(name, path, executable) {
   for (const dir of (path ?? "").split(delimiter3)) {
     if (dir.length === 0)
       continue;
-    const candidate = join15(dir, name);
+    const candidate = join16(dir, name);
     if (executable(candidate))
       return candidate;
   }
@@ -46853,8 +47132,8 @@ var init_edits = __esm(() => {
 });
 
 // src/install/targets.ts
-import { existsSync as existsSync9, readFileSync as readFileSync10 } from "node:fs";
-import { dirname as dirname7, join as join16 } from "node:path";
+import { existsSync as existsSync9, readFileSync as readFileSync11 } from "node:fs";
+import { dirname as dirname7, join as join17 } from "node:path";
 function namesOurServer(text2, cliPath) {
   return text2.includes("@arp-protocol/cli") || text2.includes(cliPath) || /apps[\\/]cli[\\/]dist[\\/]cli\.js/.test(text2) || /[\\/]dist[\\/]cli\.js/.test(text2) && text2.includes("ARP_TARGET") || /(?:packaging[\\/]claude[\\/]arp|plugins[\\/]cache[\\/]arp[\\/]arp[\\/][^\\/]+)[\\/]bin[\\/]arp\.js/.test(text2);
 }
@@ -46873,7 +47152,7 @@ function foreignRefusal(where) {
 }
 function read2(path) {
   try {
-    return existsSync9(path) ? readFileSync10(path, "utf8") : null;
+    return existsSync9(path) ? readFileSync11(path, "utf8") : null;
   } catch {
     return null;
   }
@@ -46885,7 +47164,7 @@ function npxLaunch(pkg, command = "mcp") {
   };
 }
 function commandsFor(env, cliPath, capture = false, sponsored = false, force = false) {
-  const hookFile = join16(env.home, ".arp", "bin", "hook.js");
+  const hookFile = join17(env.home, ".arp", "bin", "hook.js");
   const fromNpx = /[\\/]_npx[\\/]/.test(cliPath);
   const mcp = {
     ...fromNpx ? {
@@ -46895,7 +47174,7 @@ function commandsFor(env, cliPath, capture = false, sponsored = false, force = f
   };
   const hook = `"${env.node}" "${hookFile}"${capture ? " --capture" : ""}`;
   const send3 = fromNpx ? npxLaunch(`@arp-protocol/cli@${env.version}`, "share send --auto") : { command: env.node, args: [cliPath, "share", "send", "--auto"] };
-  return { mcp, hook, hookFile, sendFile: join16(dirname7(hookFile), "send.json"), send: send3, cliPath, capture, force };
+  return { mcp, hook, hookFile, sendFile: join17(dirname7(hookFile), "send.json"), send: send3, cliPath, capture, force };
 }
 function diffLines(before, after) {
   const lines = (value, sign3) => value === undefined || typeof value === "object" && value !== null && Object.keys(value).length === 0 ? [] : JSON.stringify(value, null, 2).split(`
@@ -46929,8 +47208,8 @@ function hasForeignServer(path, commands) {
 function claudeFiles(env, project) {
   const root2 = project ? env.cwd : env.home;
   return {
-    mcp: project ? join16(env.cwd, ".mcp.json") : join16(env.home, ".claude.json"),
-    settings: join16(root2, ".claude", "settings.json")
+    mcp: project ? join17(env.cwd, ".mcp.json") : join17(env.home, ".claude.json"),
+    settings: join17(root2, ".claude", "settings.json")
   };
 }
 function mcpEntry(server, typed) {
@@ -47044,8 +47323,8 @@ function hookStep(path, spec, commands, remove) {
 function jsonMcpRuntime(options) {
   const { id, name, dir, file, typed, binary, hook } = options;
   const root2 = (env, project) => project ? env.cwd : env.home;
-  const path = (env, project) => join16(root2(env, project), dir, file);
-  const hookPath = (env, project) => join16(root2(env, project), dir, hook.file);
+  const path = (env, project) => join17(root2(env, project), dir, file);
+  const hookPath = (env, project) => join17(root2(env, project), dir, hook.file);
   const mcpEdit = (commands) => (config) => withMcpServer(config, SERVER_NAME, commands === null ? null : mcpEntry(commands.mcp, typed));
   const steps = (env, commands, project, remove) => {
     const withHook = remove || commands.capture;
@@ -47074,7 +47353,7 @@ function jsonMcpRuntime(options) {
   return {
     id,
     name,
-    detect: (env) => env.which(binary) !== null || existsSync9(join16(env.home, dir)),
+    detect: (env) => env.which(binary) !== null || existsSync9(join17(env.home, dir)),
     install: (env, commands, project) => steps(env, commands, project, false),
     remove: (env, commands, project) => steps(env, commands, project, true),
     check: (env, _commands, project) => {
@@ -47085,7 +47364,7 @@ function jsonMcpRuntime(options) {
   };
 }
 function codexStep(env, entry, project, force = false) {
-  const path = join16(project ? env.cwd : env.home, ".codex", "config.toml");
+  const path = join17(project ? env.cwd : env.home, ".codex", "config.toml");
   const before = read2(path);
   const after = withCodexServer(before, entry, force);
   if (after instanceof Error) {
@@ -47125,7 +47404,7 @@ var init_targets = __esm(() => {
   claude = {
     id: "claude",
     name: "Claude Code",
-    detect: (env) => env.which("claude") !== null || existsSync9(join16(env.home, ".claude")),
+    detect: (env) => env.which("claude") !== null || existsSync9(join17(env.home, ".claude")),
     install: (env, commands, project) => [
       ...claudeMcpSteps(env, commands, project, false, true),
       claudeHookStep(env, commands, project, false)
@@ -47139,7 +47418,7 @@ var init_targets = __esm(() => {
   grok = {
     id: "grok",
     name: "Grok Build",
-    detect: (env) => env.which("grok") !== null || existsSync9(join16(env.home, ".grok")),
+    detect: (env) => env.which("grok") !== null || existsSync9(join17(env.home, ".grok")),
     install: (env, commands, project) => claude.detect(env) ? [{ kind: "skip", summary: "reads Claude Code's files, written above" }] : [
       ...claudeMcpSteps(env, commands, project, false, false),
       claudeHookStep(env, commands, project, false)
@@ -47177,17 +47456,17 @@ var init_targets = __esm(() => {
   codex2 = {
     id: "codex",
     name: "Codex",
-    detect: (env) => env.which("codex") !== null || existsSync9(join16(env.home, ".codex")),
+    detect: (env) => env.which("codex") !== null || existsSync9(join17(env.home, ".codex")),
     install: (env, commands, project) => [
       codexStep(env, commands.mcp, project, commands.force),
-      commands.capture ? hookStep(join16(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, false) : noHook(join16(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands)
+      commands.capture ? hookStep(join17(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, false) : noHook(join17(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands)
     ],
     remove: (env, commands, project) => [
       codexStep(env, null, project),
-      hookStep(join16(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, true)
+      hookStep(join17(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, true)
     ],
     check: (env, _commands, project) => {
-      const path = join16(project ? env.cwd : env.home, ".codex", "config.toml");
+      const path = join17(project ? env.cwd : env.home, ".codex", "config.toml");
       return [[`MCP server "arp" declared (${path})`, hasCodexServer(read2(path))]];
     }
   };
@@ -47220,7 +47499,7 @@ var init_targets = __esm(() => {
       file: "mcp-config.json",
       typed: true,
       binary: "copilot",
-      hook: { file: join16("hooks", "arp.json"), spec: COPILOT_HOOKS }
+      hook: { file: join17("hooks", "arp.json"), spec: COPILOT_HOOKS }
     })
   ];
 });
@@ -47239,13 +47518,13 @@ import {
   copyFileSync,
   existsSync as existsSync10,
   mkdirSync as mkdirSync10,
-  readFileSync as readFileSync11,
+  readFileSync as readFileSync12,
   renameSync,
   rmSync as rmSync3,
   statSync as statSync5,
   writeFileSync as writeFileSync9
 } from "node:fs";
-import { dirname as dirname8, join as join17 } from "node:path";
+import { dirname as dirname8, join as join18 } from "node:path";
 function parseFlags(args) {
   const flags = {
     yes: false,
@@ -47302,7 +47581,7 @@ function installsHook(runtimes, capture) {
 }
 function read3(path) {
   try {
-    return existsSync10(path) ? readFileSync11(path, "utf8") : null;
+    return existsSync10(path) ? readFileSync12(path, "utf8") : null;
   } catch {
     return null;
   }
@@ -47341,7 +47620,7 @@ function apply(env, step2) {
 }
 function hookFileStep(env, commands, remove) {
   const before = read3(commands.hookFile);
-  const after = remove ? null : read3(join17(env.dist, "hook.js"));
+  const after = remove ? null : read3(join18(env.dist, "hook.js"));
   if (!remove && after === null) {
     return {
       kind: "skip",
@@ -47454,8 +47733,8 @@ async function init(env, flags, cliPath) {
   return code;
 }
 async function offerSharing(env, flags) {
-  const home = env.arpHome ?? join17(env.home, ".arp");
-  const file = join17(home, "sharing.json");
+  const home = env.arpHome ?? join18(env.home, ".arp");
+  const file = join18(home, "sharing.json");
   const save = (on) => {
     mkdirSync10(home, { recursive: true });
     writeFileSync9(file, sharingFileText2(on, "init", env.now()));
@@ -47485,7 +47764,7 @@ async function uninstall(env, flags, cliPath) {
   }));
   plan.push({ runtime: "hook", steps: [hookFileStep(env, commands, true), sendFileStep(commands, true)] });
   const code = await change(env, flags, plan, "Remove");
-  const captures = join17(env.home, ".arp", "captures");
+  const captures = join18(env.home, ".arp", "captures");
   if (existsSync10(captures))
     env.out(`Captures kept in ${captures}. Delete them when you no longer need them.`);
   return code;
@@ -47502,7 +47781,7 @@ function doctor(env, flags, cliPath) {
   }
   if (installsHook(runtimes, false)) {
     const installed = read3(commands.hookFile);
-    const packaged = read3(join17(env.dist, "hook.js"));
+    const packaged = read3(join18(env.dist, "hook.js"));
     rows.push(["hook", `${commands.hookFile} present`, installed !== null]);
     if (installed !== null && packaged !== null) {
       rows.push([
@@ -47519,7 +47798,7 @@ function doctor(env, flags, cliPath) {
     `answers initialize (${commands.mcp.command} ${commands.mcp.args.join(" ")})`,
     answer2.stdout.includes('"name":"ARP"')
   ]);
-  const log = read3(join17(env.cwd, ".arp", "session.jsonl"));
+  const log = read3(join18(env.cwd, ".arp", "session.jsonl"));
   const last = log?.trim().split(`
 `).pop();
   let lastAt = null;
@@ -47532,7 +47811,7 @@ function doctor(env, flags, cliPath) {
   }
   for (const [where, what, ok] of rows)
     env.out(`${ok ? "ok  " : "FAIL"}  ${where.padEnd(12)} ${what}`);
-  env.out(`--    session log  ${lastAt === null ? `no call recorded in ${join17(env.cwd, ".arp")}` : `last call recorded ${lastAt}`}`);
+  env.out(`--    session log  ${lastAt === null ? `no call recorded in ${join18(env.cwd, ".arp")}` : `last call recorded ${lastAt}`}`);
   return rows.every(([, , ok]) => ok) ? EXIT.ok : EXIT.problems;
 }
 var EXIT, INITIALIZE;
@@ -47561,13 +47840,13 @@ __export(exports_env, {
 import { spawnSync } from "node:child_process";
 import { existsSync as existsSync11 } from "node:fs";
 import { homedir as homedir7 } from "node:os";
-import { delimiter as delimiter4, join as join18 } from "node:path";
+import { delimiter as delimiter4, join as join19 } from "node:path";
 import { createInterface as createInterface2 } from "node:readline/promises";
 function which(command) {
   for (const dir of (process.env.PATH ?? "").split(delimiter4)) {
     if (dir.length === 0)
       continue;
-    const candidate = join18(dir, command);
+    const candidate = join19(dir, command);
     if (existsSync11(candidate))
       return candidate;
   }
@@ -47576,7 +47855,7 @@ function which(command) {
 function processEnv(dist, version5) {
   return {
     home: homedir7(),
-    arpHome: process.env["ARP_HOME"]?.trim() || join18(homedir7(), ".arp"),
+    arpHome: process.env["ARP_HOME"]?.trim() || join19(homedir7(), ".arp"),
     cwd: process.cwd(),
     which,
     run: (argv, stdin, timeoutMs = 15000) => {
@@ -47815,6 +48094,8 @@ async function run(argv) {
 ` + `                                                     payTo, asset and amount you paid against, and when it came
        [--needs <name>]   with missing-program or missing-key: the program or variable name (never a value)
        [--with <name>]    with --outcome worked: what you had to add; either is written only if the SKILL.md names it
+       [--skill-dir <path>]   the directory the skill ran from: the line names that version of its files,
+                              backed by a receipt this machine holds over them; a local edit names none
 `);
         return EXIT2.usage;
       }
@@ -47834,7 +48115,8 @@ async function run(argv) {
         price: flag("price"),
         termsAt: flag("terms-at"),
         needs: flag("needs"),
-        with: flag("with")
+        with: flag("with"),
+        skillDir: flag("skill-dir")
       });
       if (input instanceof Error) {
         process.stderr.write(`arp line: ${input.message}

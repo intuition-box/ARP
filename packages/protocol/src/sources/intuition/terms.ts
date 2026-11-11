@@ -55,6 +55,34 @@ export const AI_AGENT =
     "0x800342c0ded1c288e69f39a2dc96d8cff9b242e9f573193e6e0a849e5315d3e9" as const;
 
 /**
+ * `MCP Server` and `Skill` — the type a listed subject is given, `(subject, has type, <type>)`, written once
+ * when it is listed (task 127, ADR `0192`). With {@link AI_AGENT} they are the three types ARP writes.
+ *
+ * Derived 2026-11-11 by `scripts/measure/subject-type-atoms.ts` (`data/measurements/subject-type-atoms-2026-11-11.json`):
+ * each label resolves to an IPFS-pinned atom with one id on 1155 and 13579, which carries the edges under
+ * {@link HAS_TYPE}, and on 13579 also to a plain-string atom (`0x3737a36f…` for `MCP Server`, `0x976c5fc3…` for
+ * `AIAgent`) with none under it. Under {@link HAS_TYPE}: `MCP Server` 68 edges on 1155 and 72 on 13579; `Skill` 0
+ * and 6; `AIAgent` 28,648 and 289. The plain-string atoms do carry edges on 13579 under the plain-string `has type`
+ * predicate (`0x3facdb2c…`, 268 uses there, 1 on 1155): 68 for `MCP Server`, 104 for `AIAgent`
+ * (`intuition-integrator`, 2026-11-11). ARP writes {@link HAS_TYPE}, the predicate 1155 uses, so it writes the atom
+ * that carries the edges under it.
+ */
+export const MCP_SERVER_TYPE =
+    "0xb52bb294a1cbf67a3fccc6bc8423e0758a11acfeb60caf6a0465ffca9ec3ae79" as const;
+
+export const SKILL_TYPE =
+    "0xba57c5daf6c9b8b7821406db1bff01427b385a4a041f2ddd5cf004e80949610c" as const;
+
+/**
+ * `version` — the predicate a skill's version hangs on, `(skill, version, sha256:<digest>)` (task 127, ADR `0192`).
+ * A plain-string atom, one id on both chains. Derived 2026-11-11 by `scripts/measure/subject-type-atoms.ts`: one
+ * atom by label on each chain; 28 triples use it as predicate on 13579, objects such as `1.0.0`, and 0 on 1155.
+ * `has version` (`0xa0a6412e…`) exists on 13579 only and is unused; `version of` (`0x5fa25937…`) runs the other way.
+ */
+export const VERSION =
+    "0x9622ec9e9e8265253328648119d02f85234737b991cf34ac9416b163b6e10230" as const;
+
+/**
  * `provided by` — the trust pattern's third edge, from an assessment source back to its provider.
  *
  * Published, and **nothing here traverses it**: ARP reads the two edges hanging off the agent and

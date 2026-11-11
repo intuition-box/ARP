@@ -1,6 +1,6 @@
 # 0185 — A skill's version is the digest of its directory, and a line will carry it
 
-**Status:** Accepted (the decision). Not built: the code waits for the user's return.
+**Status:** Accepted (the decision). ~~Not built: the code waits for the user's return.~~ **Built by task 127, and amended by ADR `0192`** (2026-11-11): the version hangs from the skill, `(skill, version, sha256:<digest>)`, and the line uses that triple; it is not a level of the line, as item 1 below says.
 **Date:** 2026-11-10
 **Triggered by:** `docs/tasks/115-the-hol-adapter.md`, deliverable C. The user chose « Empreinte du
 dossier » and « ADR maintenant, code au retour » (2026-11-10).

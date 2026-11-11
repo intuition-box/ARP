@@ -18,7 +18,8 @@
  *  | `POST /propose-category`| a new category, its parent edge and one skill's tag | `planCategory`'s rules, a daily cap |
  *  | `POST /line`    | one form B line, with the agent's position on each level | a registered agent's signature, daily caps |
  *
- *  Two routes read and spend nothing: `GET /`, and `GET /line-request?payment=<label>`, the request an
+ *  Three routes read and spend nothing: `GET /`, `GET /receipt?hash=<hash>`, the content receipt behind a
+ *  line (task 127, ADR `0192`), and `GET /line-request?payment=<label>`, the request an
  *  agent signed for an x402 line, kept for the feed (task 121, ADR `0188`).
  *
  *  `/mint-gas`, `/identity`, and the `uses` triple `/deposit` creates when it is missing, are ADR
@@ -83,6 +84,7 @@ import type { ToolResolution } from './github.ts';
 import type { ToolAdmission } from './admit-tool.ts';
 import type { RepoSpelling } from './indexer.ts';
 import type { SponsorLedger } from './ledger.ts';
+import type { LineReceiptStore } from './line-receipts.ts';
 import type { LineRequestStore } from './line-requests.ts';
 import { createContext, json, readBody, REGISTRY } from './routes/context.ts';
 import { deposit } from './routes/deposit.ts';
@@ -90,7 +92,7 @@ import { gas } from './routes/gas.ts';
 import { identity } from './routes/identity.ts';
 import { info } from './routes/info.ts';
 import { mintGas } from './routes/mint-gas.ts';
-import { line, lineRequest } from './routes/line.ts';
+import { line, lineReceipt, lineRequest } from './routes/line.ts';
 import { listTool } from './routes/list-tool.ts';
 import { proposeCategory, type CategoryLogEntry } from './routes/propose-category.ts';
 import { publish } from './routes/publish.ts';
@@ -229,6 +231,17 @@ export type SponsorOptions = {
      */
     requests?: LineRequestStore | null;
     /**
+     * Where a line's content receipt is kept, and `GET /receipt` reads it (task 127, ADR `0192`). Absent, a
+     * line that names evidence answers 503 and every other line is unchanged.
+     */
+    receipts?: LineReceiptStore | null;
+    /**
+     * The skill's directory digest at its repository's `HEAD` (`bundleManifest`, ADR `0185`), or `null` when the
+     * URL names no single skill directory. A line's version is written only when it is this digest or a receipt
+     * from an accepted node names it (ADR `0192`); absent, a version with no receipt answers 503.
+     */
+    skillDigest?(toolUrl: string): Promise<string | null>;
+    /**
      * The readings an x402 line's signed terms are checked against (task 122, ADR `0189`): ARP's probe's most
      * recent reading of the endpoint's `402` before the payment (`before`, unix seconds; `null` when it has
      * none or does not answer), and a live read of the URL paid (`null` when it answers no `402`). Absent,
@@ -287,11 +300,12 @@ export function createSponsor(options: SponsorOptions): {
   async function answer(request: Request, url: URL): Promise<Response> {
     if (request.method === 'GET' && url.pathname === '/') return json(info(ctx));
     if (request.method === 'GET' && url.pathname === '/line-request') return lineRequest(ctx, url);
+    if (request.method === 'GET' && url.pathname === '/receipt') return lineReceipt(ctx, url);
     if (request.method !== 'POST')
       return json(
         {
           error:
-            'GET /, GET /line-request, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category, /line',
+            'GET /, GET /line-request, GET /receipt, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category, /line',
         },
         404,
       );
@@ -309,7 +323,7 @@ export function createSponsor(options: SponsorOptions): {
       return json(
         {
           error:
-            'GET /, GET /line-request, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category, /line',
+            'GET /, GET /line-request, GET /receipt, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category, /line',
         },
         404,
       );

@@ -16,6 +16,7 @@ import {
   readDomainTree,
   redactEndpointUrl,
   resolveDomain,
+  skillRefFromUrl,
   type DomainResolution,
   USAGE_REASONS,
   transfersIn,
@@ -27,6 +28,7 @@ import {
   type X402Transfer,
   type X402TransferReads,
 } from '@arp-protocol/core';
+import { skillDirectoryDigest } from '@arp-protocol/core/node';
 import type { Hex } from 'viem';
 
 import { chainId, domainWalk } from './config.js';
@@ -64,6 +66,11 @@ export function lineFromArgs(args: {
   needs?: string | undefined;
   /** With a worked outcome: the program or variable's name the agent had to add (ADR `0166`). */
   with?: string | undefined;
+  /**
+   * The directory the skill ran from: its digest is the line's version (task 127, ADR `0192`). Only for a skill's
+   * URL, never with a payment.
+   */
+  skillDir?: string | undefined;
 }, env: Readonly<Record<string, string | undefined>> = process.env): LineInput | Error {
   if ((args.parent === undefined) !== (args.why === undefined)) return new Error('--parent and --why go together');
   if ((args.paymentTx === undefined) !== (args.network === undefined)) return new Error('--payment-tx and --network go together');
@@ -113,6 +120,13 @@ export function lineFromArgs(args: {
     if (problem !== null) return new Error(problem);
     if (args.paymentTx !== undefined) return new Error("--needs and --with name a skill's word; a paid endpoint has no SKILL.md");
   }
+  let version: string | null = null;
+  if (args.skillDir !== undefined) {
+    if (args.paymentTx !== undefined) return new Error("--skill-dir names a skill's files; a paid endpoint has none");
+    if (skillRefFromUrl(toolUrl) === null) return new Error('--skill-dir follows a skill URL, https://github.com/<owner>/<repo>?skill=<name>');
+    version = skillDirectoryDigest(args.skillDir);
+    if (version === null) return new Error(`--skill-dir ${args.skillDir} is not a directory this can read, or holds more than 300 files`);
+  }
   return {
     toolUrl,
     outcome: args.outcome,
@@ -126,6 +140,7 @@ export function lineFromArgs(args: {
       : { payment: { network: args.network, txHash: args.paymentTx.toLowerCase() as Hex } }), // checked above
     ...(terms === null ? {} : { terms }),
     ...(need === undefined ? {} : { need }),
+    ...(version === null ? {} : { version }),
   };
 }
 

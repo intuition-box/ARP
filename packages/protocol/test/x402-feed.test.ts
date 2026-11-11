@@ -6,7 +6,7 @@ import {describe, expect, it} from "vitest";
 import {readFileSync} from "node:fs";
 
 import {X402_DEFAULT_NETWORKS, X402_TEST_NETWORKS, x402FeedNetworks} from "../src/arp/x402-networks.js";
-import {lineRequestTypedDataJson, signLineRequest, type LineRequest} from "../src/sponsor/line.js";
+import {LINE_REQUEST_TYPES_V5, lineRequestTypedDataJson, signLineRequest, verifyLineRequest, type LineRequest} from "../src/sponsor/line.js";
 import {buildX402Feed, signedByPayer, type X402FeedConfig, type X402SignedRequest} from "../src/x402-feed.js";
 import {x402Policy, x402Reading, type X402TransferReads} from "../src/x402-payment.js";
 import {FIXTURE, PAYER, PAY_TO, recordedReads, TX, type Fixture} from "./x402-fixture.js";
@@ -301,6 +301,8 @@ describe("the request the payer signed (task 121, ADR 0188)", () => {
         asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
         price: "20000",
         termsAt: 1_762_716_700,
+        version: "",
+        evidence: "",
         nonce: keccak256(stringToBytes("n")),
         expiresAt: 1_762_718_000,
         ...over,
@@ -324,10 +326,27 @@ describe("the request the payer signed (task 121, ADR 0188)", () => {
         expect(feed.signed_requests_from).toBe("http://127.0.0.1:3200/line-request");
         // What a reader does with the file: parse it, hand the typed data to viem, name the payer.
         const read = JSON.parse(JSON.stringify(record?.signed_request)) as X402SignedRequest;
-        expect(read.typed_data.domain).toEqual({name: "ARP Line Request", version: "5", chainId: 13579});
+        expect(read.typed_data.domain).toEqual({name: "ARP Line Request", version: "6", chainId: 13579});
         // As parsed: `expiresAt` is a number, which viem's types call a bigint and its encoder takes as either.
         const typedData = read.typed_data as unknown as Parameters<typeof verifyTypedData>[0];
         expect(await verifyTypedData({...typedData, address: AGENT.address, signature: read.signature})).toBe(true);
+    });
+
+    it("still reads a version 5 request archived before version 6 (task 127)", async () => {
+        const {version: _version, evidence: _evidence, ...v5} = request(AGENT.address);
+        const typed = {
+            domain: {name: "ARP Line Request", version: "5", chainId: 13579} as const,
+            types: LINE_REQUEST_TYPES_V5,
+            primaryType: "LineRequest" as const,
+            message: {...v5, termsAt: BigInt(v5.termsAt), expiresAt: BigInt(v5.expiresAt)},
+        };
+        const archived = {request: v5, chainId: 13579, signature: await AGENT.signTypedData(typed)};
+        const feed = await buildX402Feed(config(line(0, AGENT.address.toLowerCase()), {readsFor: () => recordedReads(paidBy(AGENT.address)), signedRequests: store(archived)}));
+        const [record] = feed.records;
+        expect(record?.signed_by_payer).toBe(true);
+        expect(record?.signed_request?.typed_data.domain.version).toBe("5");
+        // The same fields read as version 6 do not recover: the struct differs, so it is not one.
+        expect((await verifyLineRequest({...archived, request: {...v5, version: "", evidence: ""}}, v5.expiresAt - 1)).status).toBe("mismatch");
     });
 
     it("says false when the agentWallet paid and the holder signed", async () => {

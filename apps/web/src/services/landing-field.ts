@@ -3,6 +3,7 @@ import {
     getPulseUsage,
     githubPulseSource,
     HAS_OUTCOME_LABEL,
+    INTUITION_VERSION_TERM_ID,
     listTools,
     multiVaultReads,
     readPulse,
@@ -365,6 +366,8 @@ export async function loadLandingField(
             inContextOf: vocabulary.inContextOf,
             hasOutcome: ids.hasOutcome,
             because: ids.because,
+            // A line on a version of the skill is a line about the skill (ADR `0192`).
+            version: INTUITION_VERSION_TERM_ID,
             payers: vocabulary.payers,
         });
         usage = read.get(lower(tool.atomId)) ?? null;

@@ -1,5 +1,6 @@
 import {stringToHex, type Address, type Hex} from "viem";
 
+import {HAS_EVIDENCE_LABEL} from "../line-evidence.js";
 import {PAID_WITH_LABEL} from "../x402-payment.js";
 import {NEEDS_LABEL, needShapeProblem, WITH_LABEL} from "./line-need.js";
 import {encodeCreateAtom, encodeCreateTriple, encodeDeposit, type MultiVaultReads} from "./multivault.js";
@@ -19,7 +20,11 @@ import {BECAUSE_LABEL, HAS_OUTCOME_LABEL, USAGE_OUTCOMES, USAGE_REASONS, type Us
  * T3 = (T2, has outcome, failed)
  * T4 = (T3, because, missing-key)
  * T5 = (T4, needs, OPENAI_API_KEY)     on a worked line instead: (T3, with, ffmpeg)
+ * E  = (T3, has evidence, content-receipt:<hash>)    what backs it, beside the rest (task 127, ADR `0192`)
  * ```
+ *
+ * With a version (ADR `0192`), T1's object is `V = (skill, version, sha256:<digest>)`: the caller plans `V` and
+ * T1, and this plans the levels on T1 the same way.
  *
  * With no domain, the outcome is about T1 itself.
  *
@@ -35,7 +40,14 @@ export {BECAUSE_LABEL, HAS_OUTCOME_LABEL, USAGE_OUTCOMES, USAGE_REASONS, type Us
 
 export type UsageContextRefusal = {
     status: "refused";
-    rule: "nothing_to_add" | "not_declared" | "unknown_domain" | "reason_without_failure" | "payment_without_outcome" | "need_shape";
+    rule:
+        | "nothing_to_add"
+        | "not_declared"
+        | "unknown_domain"
+        | "reason_without_failure"
+        | "payment_without_outcome"
+        | "need_shape"
+        | "evidence_without_outcome";
     detail: string;
 };
 
@@ -49,6 +61,8 @@ export type UsageContextPlan = {
     paymentTripleId: Hex | null;
     /** `(reason, needs, name)` on a failure, or `(outcome, with, name)` on a worked line (task 97, ADR `0166`). */
     needTripleId: Hex | null;
+    /** `(outcome, has evidence, evidence)`: what backs the line (task 127, ADR `0192`). */
+    evidenceTripleId: Hex | null;
     calls: PreparedCall[];
     /**
      * Qualifiers already on chain, which this plan does not create. Without a `declarer` nobody can
@@ -92,6 +106,11 @@ export async function prepareUsageContext(params: {
      * skill's SKILL.md names it is the caller's to check** (`publishableNeed`): this reads no content.
      */
     need?: string;
+    /**
+     * What backs the line, as its atom is labelled: `content-receipt:<hash>` (`receiptEvidenceLabel`, ADR `0192`).
+     * Only with an outcome. **Whether the receipt holds is the caller's to check** (`checkReceiptEvidence`).
+     */
+    evidence?: string;
     /** The predicate this chain's other nested claims use. Read from the deployment record. */
     inContextOf: Hex;
     /** Whether a label is a category under `tool`, read from the index. */
@@ -112,6 +131,9 @@ export async function prepareUsageContext(params: {
     }
     if (params.payment !== undefined && params.outcome === undefined) {
         return {status: "refused", rule: "payment_without_outcome", detail: "a payment is attached to an outcome"};
+    }
+    if (params.evidence !== undefined && params.outcome === undefined) {
+        return {status: "refused", rule: "evidence_without_outcome", detail: "evidence is attached to an outcome"};
     }
     if (params.need !== undefined) {
         const problem =
@@ -222,6 +244,12 @@ export async function prepareUsageContext(params: {
         const nameId = await atom(params.need, `the name "${params.need}"`);
         needTripleId = await triple(needSubject, predicate, nameId, `say it ${label} ${params.need}`);
     }
+    let evidenceTripleId: Hex | null = null;
+    if (params.evidence !== undefined && outcomeTripleId !== null) {
+        const predicate = await atom(HAS_EVIDENCE_LABEL, `the word "${HAS_EVIDENCE_LABEL}"`);
+        const evidenceId = await atom(params.evidence, `the evidence ${params.evidence}`);
+        evidenceTripleId = await triple(outcomeTripleId, predicate, evidenceId, `say this outcome has evidence ${params.evidence}`);
+    }
     return {
         status: "planned",
         chainId: reads.chainId,
@@ -230,6 +258,7 @@ export async function prepareUsageContext(params: {
         reasonTripleId,
         paymentTripleId,
         needTripleId,
+        evidenceTripleId,
         calls,
         alreadyWritten,
         totalValue: calls.reduce((sum, call) => sum + call.value, 0n),

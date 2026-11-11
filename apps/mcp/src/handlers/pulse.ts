@@ -9,6 +9,7 @@ import {
   fuseSearches,
   findToolAtoms,
   getPulseUsage,
+  INTUITION_VERSION_TERM_ID,
   githubPulseSource,
   groupByContent,
   entersList,
@@ -577,6 +578,8 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
       graphqlUrl: GRAPHQL,
       inContextOf: IN_CONTEXT_OF,
       ...lineWordIds(found),
+      // A line on a version of the skill is a line about the skill (ADR `0192`), read in the same request.
+      version: INTUITION_VERSION_TERM_ID,
       payers: LINE_PAYERS,
     });
   };

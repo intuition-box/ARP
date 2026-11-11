@@ -8,8 +8,8 @@ import {
     readString,
 } from "@arp-protocol/graphql";
 
-import {getPulseUsage, type PulseDeclaration, type PulseUsage, type PulseUsageConfig} from "./pulse-usage.js";
-import {USES} from "./sources/intuition/terms.js";
+import {getPulseUsage, versionedSubject, type PulseDeclaration, type PulseUsage, type PulseUsageConfig} from "./pulse-usage.js";
+import {USES, VERSION} from "./sources/intuition/terms.js";
 
 /**
  * An agent's lines, both ways (task 95): who used it, and what it used.
@@ -56,14 +56,15 @@ export async function getAgentLines(
     const rows = Array.isArray(data["triples"]) ? data["triples"].filter(isRecord) : [];
     const tools = new Map<string, {atomId: string; label: string | null}>();
     for (const row of rows) {
-        const object = readRecord(row, "object");
+        // A versioned use is read on the skill it versions (ADR `0192`).
+        const object = readRecord(row, "object") ?? versionedSubject(row);
         const atomId = object === null ? null : readString(object, "term_id");
         if (object === null || atomId === null || key(atomId) === agent) continue;
         tools.set(key(atomId), {atomId, label: readString(object, "label")});
     }
 
     const read = config.read ?? getPulseUsage;
-    const usage = await read([agentAtomId, ...[...tools.values()].map((tool) => tool.atomId)], {...config, transport});
+    const usage = await read([agentAtomId, ...[...tools.values()].map((tool) => tool.atomId)], {version: VERSION, ...config, transport}); // versioned skill lines too (ADR `0192`)
     const usedBy = usage.get(agent);
     if (usedBy === undefined) throw new Error("the usage read left out the agent it was asked about");
 

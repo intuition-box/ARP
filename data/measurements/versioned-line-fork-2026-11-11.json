@@ -1,0 +1,77 @@
+{
+  "rpc": "http://127.0.0.1:8546",
+  "chainId": 13579,
+  "skill": {
+    "url": "https://github.com/intuition-box/ARP?skill=arp",
+    "atomId": "0xee6f20f09cbf6623d40f22bc9f3e8574fac50e394c8f2cf7495bd7463d95242b",
+    "typeTriple": "0xca274fb357d43ea830e6dc53e1707b5a3553f62148dfbe7dbdcbd2ce6c028340",
+    "typeExists": true
+  },
+  "version": {
+    "digest": "0x02705b834f7fbdff9a60b0e46dfc8e19d64d2b8516d917a76810f3b50cd00cba",
+    "digestAtom": "0xf632cc70c0197727c603aaccc22594fee6678f93b30c69c619c106705f007b0b",
+    "V": "0xb46150d28752fe089cfa6c3fba6b22117a8cebcfef1b1ef9ae48758570dc6266",
+    "exists": true
+  },
+  "t1": {
+    "id": "0x28655ea73b731ce0a4b3ca186f048ffa62c65148c2db885f55fa6ccc3994f522",
+    "objectIsV": true,
+    "exists": true
+  },
+  "outcome": {
+    "id": "0x370daadce9982ab97880b67d39f23ece399c193fb41365433bc017da6c6a67cd",
+    "exists": true
+  },
+  "evidence": {
+    "label": "content-receipt:0x4053b1b17a1985a2aca5c3705ba6d372e2bed6ccb18c8aeef1462b6d9b8a9ff3",
+    "id": "0x424c2b68859f40d0f5b8d6cb57663e8bf51d4f6490b1b9bff7f45b56de1ff1fa",
+    "exists": true
+  },
+  "sent": [
+    {
+      "why": "https://github.com/intuition-box/ARP?skill=arp has type Skill",
+      "hash": "0xb0ab6667df63dc380142098b15c3901558fc0be1906a966976acb58a92f825d6",
+      "status": "success"
+    },
+    {
+      "why": "the version sha256:02705b834f7fbdff9a60b0e46dfc8e19d64d2b8516d917a76810f3b50cd00cba",
+      "hash": "0x81e5ce5349926165ec38eecba2777f7490de78c164ca5d28b5ed8c40321aa24d",
+      "status": "success"
+    },
+    {
+      "why": "the skill has version sha256:02705b834f7fbdff9a60b0e46dfc8e19d64d2b8516d917a76810f3b50cd00cba",
+      "hash": "0x2c365a86084c32baeb03414a82f44a17569013aa79a6b8bbb1b3bd674c28c5d4",
+      "status": "success"
+    },
+    {
+      "why": "a fork-only agent atom",
+      "hash": "0x3a630efe6ebd19e0bb5cb20fb29e845a7b322bf89e0a55a89941fb921ea44e33",
+      "status": "success"
+    },
+    {
+      "why": "T1 = (agent, uses, V)",
+      "hash": "0x808f5d4b23e0bce877bed80f5a795ac665f6a828c3e8a188a1d95372939f6d91",
+      "status": "success"
+    },
+    {
+      "why": "say this use worked",
+      "hash": "0x039627c0799482b830740f03c4c604e081f386fcdfa702dc0caa0224ce771c6d",
+      "status": "success"
+    },
+    {
+      "why": "the word \"backed by\"",
+      "hash": "0x5dac861cc797f675bebe2d981d419c648c0a32cd97ee9702214fe2d190735111",
+      "status": "success"
+    },
+    {
+      "why": "the evidence content-receipt:0x4053b1b17a1985a2aca5c3705ba6d372e2bed6ccb18c8aeef1462b6d9b8a9ff3",
+      "hash": "0xcde9840d7dd1164e07f86cdc5474ab32aeb1a09d831d83ca2836b16728583dbf",
+      "status": "success"
+    },
+    {
+      "why": "say this outcome is backed by content-receipt:0x4053b1b17a1985a2aca5c3705ba6d372e2bed6ccb18c8aeef1462b6d9b8a9ff3",
+      "hash": "0x7cc22300bc1bd13e49a533351d5c7996ce5e129fe4f3038ce20d3ce3bed0f1b4",
+      "status": "success"
+    }
+  ]
+}

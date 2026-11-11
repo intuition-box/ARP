@@ -3,6 +3,7 @@ import {
     getPulseUsage,
     githubPulseSource,
     HAS_OUTCOME_LABEL,
+    INTUITION_VERSION_TERM_ID,
     multiVaultReads,
     readPulse,
     toolAtomUri,
@@ -55,6 +56,8 @@ export async function loadPulse(source: string, skill: string, chain: PulseChain
             inContextOf: chain.inContextOf,
             hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
             because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
+            // A line on a version of the skill is a line about the skill (ADR `0192`).
+            version: INTUITION_VERSION_TERM_ID,
             payers: chain.linePayers,
         });
         return {pulse, atomId, usage: read.get(atomId.toLowerCase()) ?? null};

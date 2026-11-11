@@ -232,7 +232,9 @@ async function run(argv: readonly string[]): Promise<number> {
             '       [--pay-to <0x…> --asset <0x…> --price <units> --terms-at <unix|ISO>]   with --payment-tx: the 402\'s\n' +
             '                                                     payTo, asset and amount you paid against, and when it came\n' +
             '       [--needs <name>]   with missing-program or missing-key: the program or variable name (never a value)\n' +
-            '       [--with <name>]    with --outcome worked: what you had to add; either is written only if the SKILL.md names it\n',
+            '       [--with <name>]    with --outcome worked: what you had to add; either is written only if the SKILL.md names it\n' +
+            '       [--skill-dir <path>]   the directory the skill ran from: the line names that version of its files,\n' +
+            '                              backed by a receipt this machine holds over them; a local edit names none\n',
         );
         return EXIT.usage;
       }
@@ -253,6 +255,7 @@ async function run(argv: readonly string[]): Promise<number> {
         termsAt: flag('terms-at'),
         needs: flag('needs'),
         with: flag('with'),
+        skillDir: flag('skill-dir'),
       });
       if (input instanceof Error) {
         process.stderr.write(`arp line: ${input.message}\n`);

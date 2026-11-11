@@ -7,12 +7,12 @@ import {
     X402_REASONS_QUERY,
     type GraphqlTransport,
 } from "@arp-protocol/graphql";
-import {getAddress, recoverTypedDataAddress, type Address, type Hex} from "viem";
+import {getAddress, recoverTypedDataAddress, type Address, type Hex, type TypedDataDefinition} from "viem";
 
 import {normaliseToolUrl} from "./declare/tool-thing.js";
 import {isUsageOutcome, isUsageReason, type UsageOutcome} from "./declare/usage-context.js";
 import {redactEndpointUrl} from "./endpoint-redaction.js";
-import {lineRequestTypedDataJson, lineTermsOf, verifyLineRequest, type LineRequestTypedDataJson, type SignedLineRequest} from "./sponsor/line.js";
+import {lineTermsOf, readArchivedLineRequest, type LineRequestTypedDataJson, type SignedLineRequest} from "./sponsor/line.js";
 import {privateProbeTarget} from "./verify/probe.js";
 import {
     checkX402Payment,
@@ -269,7 +269,7 @@ export async function signedByPayer(
     if (message.reason !== (record.reason ?? "") || message.domain !== (record.domain ?? "") || message.endpoint !== (record.endpoint ?? "")) return false;
     try {
         // JSON carries `termsAt` and `expiresAt` as numbers; viem's types ask bigints, and a value that is neither throws here.
-        const typedData = {...signed.typed_data, message: {...message, termsAt: BigInt(message.termsAt), expiresAt: BigInt(message.expiresAt)}};
+        const typedData: TypedDataDefinition = {...signed.typed_data, message: {...message, termsAt: BigInt(message.termsAt), expiresAt: BigInt(message.expiresAt)}}; // version 5 or 6, its own types
         return getAddress(await recoverTypedDataAddress({...typedData, signature: signed.signature})) === getAddress(record.payer);
     } catch {
         return false;
@@ -285,9 +285,11 @@ async function signedRequestOf(stored: unknown): Promise<{signed: X402SignedRequ
     if (typeof stored !== "object" || stored === null) return null;
     const {request} = stored as Partial<SignedLineRequest>; // checked by `verifyLineRequest` below
     if (typeof request !== "object" || request === null || typeof request.expiresAt !== "number") return null;
-    if ((await verifyLineRequest(stored, request.expiresAt - 1)).status !== "valid") return null;
-    const {chainId, signature} = stored as SignedLineRequest; // valid, so these are its fields
-    return {signed: {typed_data: lineRequestTypedDataJson(request, chainId), signature}, request};
+    // A version 5 request archived before version 6 (task 127) still reads as the one the payer signed.
+    const read = await readArchivedLineRequest(stored, request.expiresAt - 1);
+    if (read === null || read.verdict.status !== "valid") return null;
+    const {signature} = stored as SignedLineRequest; // valid, so this is its field
+    return {signed: {typed_data: read.typed, signature}, request: read.request};
 }
 
 /** The service's payee check kept beside a request (ADR `0189`), or `unchecked` when it kept none this reads. */

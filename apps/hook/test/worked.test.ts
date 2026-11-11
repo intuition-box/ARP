@@ -66,6 +66,9 @@ test('the request names the closed line, and the answer at the end of the reply 
   const [line] = read('outcomes.jsonl');
   expect(line).toMatchObject({ session: 's1', skill: 'gadget', source: 'owner/repo', outcome: 'worked' });
   expect(line?.['with']).toBeUndefined();
+  // The version of the files that ran (task 127, ADR 0192): the digest of the skill's directory, as bundleManifest has it.
+  const manifest = `${new Bun.CryptoHasher('sha256').update(SKILL).digest('hex')}  SKILL.md\n`;
+  expect(line?.['version']).toBe(`0x${new Bun.CryptoHasher('sha256').update(manifest).digest('hex')}`);
 });
 
 test('Stop never prints, so it never continues the turn, with or without skills', () => {

@@ -11,13 +11,15 @@ import {
     PULSE_EDGE_WRITERS_QUERY,
     PULSE_QUALIFIERS_QUERY,
     PULSE_USES_QUERY,
+    PULSE_VERSIONED_USES_QUERY,
     readRecord,
     readString,
 } from "@arp-protocol/graphql";
 
 import {needKindOf, needKindOfReason} from "./declare/line-need.js";
 import {USAGE_OUTCOMES, USAGE_REASONS, type UsageOutcome, type UsageReason} from "./declare/usage-words.js";
-import {USES} from "./sources/intuition/terms.js";
+import {digestOfVersionLabel} from "./skill-version.js";
+import {USES, VERSION} from "./sources/intuition/terms.js";
 import {readIpfsJson} from "./verify/probe.js";
 
 /**
@@ -58,6 +60,11 @@ export type PulseLine = {
 
 export type PulseDeclaration = {
     tripleId: string;
+    /**
+     * The skill's directory digest this use names (task 127, ADR `0192`): the edge is `(agent, uses, V)` with
+     * `V = (skill, version, sha256:<digest>)`, rolled up here to the skill. Absent on a line that names no version.
+     */
+    version?: string;
     agent: {atomId: string; label: string | null};
     writer: string;
     /** Wallets holding a position on the line. A triple has one creator, so a later declarer is here. */
@@ -84,6 +91,11 @@ export type PulseUsage = {
     /** Declarations per name a failure said was missing, and per name a worked line said was added (ADR `0166`). */
     byNeed?: Record<string, number>;
     byWith?: Record<string, number>;
+    /**
+     * Distinct wallets per version digest, among the declarations that name one (ADR `0192`): "12 on the previous
+     * version, 0 on this one". Present only when versions were read (`PulseUsageConfig.version`).
+     */
+    byVersion?: Record<string, number>;
     byOthers: {tripleId: string; writer: string; predicate: "context" | "outcome" | "reason" | "needs" | "with"; value: string}[];
     /** The read stopped at its limit, so these are a floor. */
     truncated: boolean;
@@ -100,6 +112,11 @@ export type PulseUsageConfig = {
      */
     needs?: string;
     with?: string;
+    /**
+     * The `version` predicate (ADR `0192`). Given, a `uses` edge whose object is `(tool, version, sha256:<digest>)`
+     * is read as a line about the tool, on that version, in the same request. Absent, versioned lines are not seen.
+     */
+    version?: string;
     /**
      * Wallets that pay for lines and say nothing by it: the sponsoring service creates the terms of a
      * sponsored line, so as a creator it would read as saying every one of them (ADR `0144`). Their row
@@ -173,7 +190,8 @@ export async function findDeclaredTools(
     const rows = rowsOf(await transport.request(PULSE_EDGE_TOOLS_QUERY, {edges, uses: USES, limit: DEFAULT_LIMIT}));
     const out = new Map<string, {atomId: string; url: string}>();
     for (const row of rows) {
-        const object = readRecord(row, "object");
+        // A versioned use points at `(tool, version, sha256:<digest>)`, whose subject is the tool (ADR `0192`).
+        const object = readRecord(row, "object") ?? versionedSubject(row);
         const atomId = object === null ? null : readString(object, "term_id");
         if (object === null || atomId === null || out.has(atomId)) continue;
         const label = readString(object, "label");
@@ -261,15 +279,23 @@ export async function getPulseUsage(
     const out = new Map<string, PulseUsage>(toolAtomIds.map((id) => [key(id), empty()]));
     if (toolAtomIds.length === 0) return out;
 
-    const edgeRows = rowsOf(await transport.request(PULSE_USES_QUERY, {tools: [...toolAtomIds], uses: USES, limit}));
+    const edgeRows = rowsOf(
+        config.version === undefined
+            ? await transport.request(PULSE_USES_QUERY, {tools: [...toolAtomIds], uses: USES, limit})
+            : await transport.request(PULSE_VERSIONED_USES_QUERY, {tools: [...toolAtomIds], uses: USES, version: config.version, limit}),
+    );
     type Edge = {tool: string; declarers: Map<string, PulseDeclaration>};
+    const wanted = new Set(toolAtomIds.map(key));
     const edges = new Map<string, Edge>();
     /** The index caps a nested list at 100, with no order and no sign of the cut. */
     const NESTED_CAP = 100;
     let truncated = edgeRows.length >= limit;
     for (const row of edgeRows) {
         const tripleId = readString(row, "term_id");
-        const tool = readString(row, "object_id");
+        // A versioned use points at `(tool, version, sha256:<digest>)`: the tool is that triple's subject.
+        const versioned = versionOf(row, config.version);
+        const tool = versioned?.tool ?? readString(row, "object_id");
+        if (versioned === null && config.version !== undefined && !wanted.has(key(tool ?? ""))) continue;
         const writer = readString(row, "creator_id");
         const subject = readRecord(row, "subject");
         const atomId = subject === null ? null : readString(subject, "term_id");
@@ -280,6 +306,7 @@ export async function getPulseUsage(
             .filter((account): account is string => account !== null);
         const declaration = (wallet: string, declaredAt: string | null): PulseDeclaration => ({
             tripleId,
+            ...(versioned === null ? {} : {version: versioned.digest}),
             agent: {atomId, label: readString(subject, "label")},
             writer: wallet,
             holders: edgeHolders,
@@ -498,6 +525,72 @@ export async function getPulseUsage(
             const byWith = (usage.byWith ??= {});
             for (const name of new Set(declaration.lines.flatMap((line) => line.with ?? []))) byWith[name] = (byWith[name] ?? 0) + 1;
         }
+        if (config.version !== undefined) {
+            const wallets = new Map<string, Set<string>>();
+            for (const declaration of usage.declarations) {
+                if (declaration.version === undefined || payers.has(key(declaration.writer))) continue;
+                const seen = wallets.get(declaration.version) ?? new Set<string>();
+                seen.add(key(declaration.writer));
+                wallets.set(declaration.version, seen);
+            }
+            usage.byVersion = Object.fromEntries([...wallets].map(([digest, seen]) => [digest, seen.size]));
+        }
     }
     return out;
+}
+
+/** The tool atom a `uses` row's object names through `(tool, version, sha256:…)`, or `null` when its object is no version. */
+export function versionedSubject(row: Record<string, unknown>): Record<string, unknown> | null {
+    const term = readRecord(row, "object_term");
+    const triple = term === null ? null : readRecord(term, "triple");
+    if (triple === null || readString(triple, "predicate_id")?.toLowerCase() !== VERSION) return null;
+    // `(X, version, "1.0.0")` is somebody's version word, not a directory digest: only `sha256:` is ADR `0192`'s.
+    const object = readRecord(triple, "object");
+    if (digestOfVersionLabel(object === null ? null : readString(object, "label")) === null) return null;
+    return readRecord(triple, "subject");
+}
+
+/**
+ * The tool and digest a `uses` row names through `V = (tool, version, sha256:<digest>)`, or `null` when its object
+ * is not a version triple, or `version` was not asked for. A label that is not `sha256:` and 64 hex is no version.
+ */
+function versionOf(row: Record<string, unknown>, version: string | undefined): {tool: string; digest: string} | null {
+    if (version === undefined) return null;
+    const term = readRecord(row, "object_term");
+    const triple = term === null ? null : readRecord(term, "triple");
+    if (triple === null) return null;
+    const predicate = readString(triple, "predicate_id");
+    const tool = readString(triple, "subject_id");
+    const object = readRecord(triple, "object");
+    const digest = digestOfVersionLabel(object === null ? null : readString(object, "label"));
+    if (predicate === null || predicate.toLowerCase() !== version.toLowerCase() || tool === null || digest === null) return null;
+    return {tool, digest};
+}
+
+/**
+ * One version's share of a tool's usage (ADR `0192`): the declarations on `digest`, and nothing else, so a new
+ * digest starts at zero. Lines that name no version, and lines on other versions, stay in `usage` for a reader to show.
+ */
+export function usageOnVersion(usage: PulseUsage, digest: string, payers: readonly string[] = []): PulseUsage {
+    const paying = new Set(payers.map((payer) => payer.toLowerCase()));
+    const declarations = usage.declarations.filter((declaration) => declaration.version === digest.toLowerCase());
+    const writers = new Set(declarations.map((declaration) => declaration.writer.toLowerCase()).filter((wallet) => !paying.has(wallet)));
+    const count = (pick: (declaration: PulseDeclaration) => readonly string[]) => {
+        const counts: Record<string, number> = {};
+        for (const declaration of declarations) for (const word of new Set(pick(declaration))) counts[word] = (counts[word] ?? 0) + 1;
+        return counts;
+    };
+    return {
+        ...usage,
+        declarations,
+        agents: new Set(declarations.map((declaration) => declaration.agent.atomId.toLowerCase())).size,
+        wallets: writers.size,
+        byDomain: count((declaration) => declaration.domains),
+        byOutcome: count((declaration) => declaration.outcomes),
+        byReason: count((declaration) => declaration.lines.flatMap((line) => line.reasons)),
+        byNeed: count((declaration) => declaration.lines.flatMap((line) => line.needs ?? [])),
+        byWith: count((declaration) => declaration.lines.flatMap((line) => line.with ?? [])),
+        byVersion: {[digest.toLowerCase()]: writers.size},
+        byOthers: [],
+    };
 }

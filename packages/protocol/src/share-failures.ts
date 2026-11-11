@@ -20,8 +20,8 @@ import type {LocalOutcome} from "./local-outcomes.js";
  * would write a line about somebody else's repository.
  */
 export type SharedLine =
-    | {toolUrl: string; outcome: "failed"; domain?: string; reason: UsageReason; need?: string}
-    | {toolUrl: string; outcome: "worked"; domain?: string; need?: string};
+    | {toolUrl: string; outcome: "failed"; domain?: string; reason: UsageReason; need?: string; version?: string}
+    | {toolUrl: string; outcome: "worked"; domain?: string; need?: string; version?: string};
 
 /** What is known about where an installed skill came from. */
 export type InstalledSkill = {skill: string; source: string};
@@ -77,12 +77,14 @@ export function installedFromReceipts(text: string | null): InstalledSkill[] {
 
 /**
  * A key for one sentence: the same skill, domain, reason and need is one line, however often it failed. A
- * line without a need keeps the key it had before task 97, so what was already shared is not offered again.
+ * line without a need keeps the key it had before task 97, so what was already shared is not offered again. A version
+ * (task 127, ADR `0192`) makes a new sentence: the same result on other files is a line of its own.
  */
 export function sharedLineKey(line: SharedLine): string {
     // `worked` is no reason word, so a worked line's key never meets a failure's, and a failure keeps its old key.
     const base = `${line.toolUrl}\u0000${line.domain ?? ""}\u0000${line.outcome === "failed" ? line.reason : "worked"}`;
-    return line.need === undefined ? base : `${base}\u0000${line.need}`;
+    const withNeed = line.need === undefined ? base : `${base}\u0000${line.need}`;
+    return line.version === undefined ? withNeed : `${withNeed}\u0000version:${line.version}`;
 }
 
 export function decideShare(params: {
@@ -129,6 +131,7 @@ export function decideShare(params: {
             ...(failure.domain === undefined ? {} : {domain: failure.domain}),
             reason: failure.reason,
             ...(failure.need === undefined ? {} : {need: failure.need}),
+            ...(failure.version === undefined ? {} : {version: failure.version}),
         });
     }
     for (const answer of params.outcomes ?? []) {
@@ -140,6 +143,7 @@ export function decideShare(params: {
             outcome: "worked",
             ...(answer.domain === undefined ? {} : {domain: answer.domain}),
             ...(answer.with === undefined ? {} : {need: answer.with}),
+            ...(answer.version === undefined ? {} : {version: answer.version}),
         });
     }
     return {lines: [...lines.values()], keptLocal: [...keptLocal.values()]};

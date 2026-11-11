@@ -667,7 +667,7 @@ means nothing before testers write lines.
 
 ## One score per version of a skill
 
-**Decided 2026-11-10, ADR `0185`:** the version is the directory digest. The code waits for the user's return (task 115, C).
+**Decided 2026-11-10, ADR `0185`:** the version is the directory digest. **Built 2026-11-11 by task 127 (ADR `0192`):** it hangs from the skill, `(skill, version, sha256:<digest>)`, and a line uses that triple. What is still open here: a score that reads only the current version, which needs the current digest beside the search (`usageOnVersion` exists, nothing calls it yet).
 
 **Asked 2026-11-10**, while writing the HOL adapter sheet (`outreach/drafts/hol-arp-usage-adapter-2026-11-10.md`
 in the business-dev repository): _« il faudrait réfléchir au versioning aussi »_. This is task 61's

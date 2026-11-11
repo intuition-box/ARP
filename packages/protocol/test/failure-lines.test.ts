@@ -1,6 +1,6 @@
 import {createHash} from "node:crypto";
 
-import {PULSE_ATOMS_QUERY, PULSE_QUALIFIERS_QUERY, PULSE_USES_QUERY, type GraphqlTransport} from "@arp-protocol/graphql";
+import {PULSE_ATOMS_QUERY, PULSE_QUALIFIERS_QUERY, PULSE_USES_QUERY, PULSE_VERSIONED_USES_QUERY, type GraphqlTransport} from "@arp-protocol/graphql";
 import {describe, expect, it} from "vitest";
 
 import {toolAtomUri} from "../src/declare/tool-thing.js";
@@ -68,7 +68,7 @@ function index(
                 const known: Record<string, string> = {[URI]: TOOL, ...ID};
                 return {atoms: uris.filter((uri) => uri in known).map((uri) => ({term_id: known[uri], data: uri}))};
             }
-            if (query === PULSE_USES_QUERY) return {triples: uses};
+            if (query === PULSE_USES_QUERY || query === PULSE_VERSIONED_USES_QUERY) return {triples: uses};
             if (query === PULSE_QUALIFIERS_QUERY) {
                 const {edges, predicates} = variables as {edges: string[]; predicates: string[]}; // this query's own variables
                 return {triples: qualifiers.filter((row) => edges.includes(row["subject_id"] as string) && predicates.includes(row["predicate_id"] as string))};

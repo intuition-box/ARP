@@ -12,6 +12,7 @@ import {
     RECENT_QUERY,
     RECENT_STAKES_QUERY,
 } from "@arp-protocol/graphql";
+import {versionedSubject} from "./pulse-usage.js";
 import {SAME_AS, USES} from "./sources/intuition/terms.js";
 import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
@@ -105,7 +106,8 @@ export async function getRecentDeclarations(config: RecentConfig): Promise<Recen
         const tripleId = readString(row, "term_id");
         const at = readString(row, "created_at");
         const subject = readRecord(row, "subject");
-        const object = readRecord(row, "object");
+        // A use of a version is a use of the skill it versions (ADR `0192`).
+        const object = readRecord(row, "object") ?? versionedSubject(row);
         const subjectId = subject === null ? null : readString(subject, "term_id");
         const objectId = object === null ? null : readString(object, "term_id");
         // A row missing any of the four is dropped rather than guessed at: a declaration without a

@@ -14,9 +14,9 @@ function appendOwn(path, text) {
 }
 
 // ../hook/src/hook.ts
-import { existsSync as existsSync4, lstatSync as lstatSync2, mkdirSync as mkdirSync5, readFileSync as readFileSync5, writeFileSync as writeFileSync3 } from "node:fs";
+import { existsSync as existsSync4, lstatSync as lstatSync3, mkdirSync as mkdirSync5, readFileSync as readFileSync6, writeFileSync as writeFileSync3 } from "node:fs";
 import { homedir as homedir3 } from "node:os";
-import { dirname as dirname4, join as join6 } from "node:path";
+import { dirname as dirname4, join as join7 } from "node:path";
 // ../../packages/protocol/dist/declare/tool-thing.js
 class InvalidToolUrlError extends Error {
   input;
@@ -358,6 +358,7 @@ query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor
     term_id
     predicate { term_id label }
     object { term_id label type }
+    object_term { triple { predicate_id subject { term_id label type } object { label } } }
     term {
       ${VAULT_SIDE}
       vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
@@ -397,6 +398,7 @@ query ToolListing(${variables}) {
       type
       value { thing { url } }
     }
+    object_term { triple { predicate_id subject { term_id label data type value { thing { url } } } object { label } } }
     term {
       total_assets
       vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) { position_count total_assets }
@@ -421,6 +423,36 @@ var PULSE_USES_QUERY = `query PulseUses($tools: [String!]!, $uses: String!, $lim
         subject {
             term_id
             label
+        }
+        positions(where: {shares: {_gt: "0"}}) {
+            account_id
+        }
+    }
+}`;
+var PULSE_VERSIONED_USES_QUERY = `query PulseUsesWithVersions($tools: [String!]!, $uses: String!, $version: String!, $limit: Int!) {
+    triples(
+        where: {
+            predicate_id: {_eq: $uses}
+            _or: [{object_id: {_in: $tools}}, {object_term: {triple: {subject_id: {_in: $tools}, predicate_id: {_eq: $version}}}}]
+        }
+        limit: $limit
+    ) {
+        term_id
+        object_id
+        creator_id
+        created_at
+        subject {
+            term_id
+            label
+        }
+        object_term {
+            triple {
+                subject_id
+                predicate_id
+                object {
+                    label
+                }
+            }
         }
         positions(where: {shares: {_gt: "0"}}) {
             account_id
@@ -460,13 +492,13 @@ var VAULT_SIDE2 = `
       position_count
     }`;
 var TOOL_USAGE_QUERY = `
-query ToolUsage($toolId: String!, $uses: String!, $curveId: numeric!) {
+query ToolUsage($toolId: String!, $uses: String!, $version: String!, $curveId: numeric!) {
   tool: atoms(where: {term_id: {_eq: $toolId}}, limit: 1) {
     term_id
     label
     data
   }
-  triples(where: {predicate_id: {_eq: $uses}, object_id: {_eq: $toolId}}, limit: 200) {
+  triples(where: {predicate_id: {_eq: $uses}, _or: [{object_id: {_eq: $toolId}}, {object_term: {triple: {subject_id: {_eq: $toolId}, predicate_id: {_eq: $version}}}}]}, limit: 200) {
     term_id
     subject {
       term_id
@@ -478,7 +510,7 @@ query ToolUsage($toolId: String!, $uses: String!, $curveId: numeric!) {
   }
 }`;
 var ATTESTED_TOOL_USAGE_QUERY = `
-query AttestedToolUsage($toolId: String!, $uses: String!, $curveId: numeric!, $attestor: String!) {
+query AttestedToolUsage($toolId: String!, $uses: String!, $version: String!, $curveId: numeric!, $attestor: String!) {
   tool: atoms(where: {term_id: {_eq: $toolId}}, limit: 1) {
     term_id
     label
@@ -486,7 +518,7 @@ query AttestedToolUsage($toolId: String!, $uses: String!, $curveId: numeric!, $a
   }
   triples(where: {
     predicate_id: {_eq: $uses},
-    object_id: {_eq: $toolId},
+    _or: [{object_id: {_eq: $toolId}}, {object_term: {triple: {subject_id: {_eq: $toolId}, predicate_id: {_eq: $version}}}}],
     term: {positions: {account_id: {_eq: $attestor}}}
   }, limit: 200) {
     term_id
@@ -2814,7 +2846,7 @@ ${FOR_THE_AGENT}`
 }
 
 // ../hook/src/failure-answer.ts
-import { createHash } from "node:crypto";
+import { createHash as createHash2 } from "node:crypto";
 
 // ../../packages/protocol/src/declare/line-need.ts
 var NEEDS_LABEL3 = "needs";
@@ -2934,7 +2966,19 @@ var HAS_OUTCOME_LABEL3 = "has outcome";
 var USAGE_REASONS3 = ["missing-key", "missing-program", "missing-file", "not-the-right-tool", "no-delivery"];
 var BECAUSE_LABEL3 = "because";
 
+// ../../packages/protocol/src/skill-version.ts
+var LABEL = /^sha256:([0-9a-f]{64})$/;
+function digestOfVersionLabel2(label) {
+  const match = label === null || label === undefined ? null : LABEL.exec(label);
+  return match === null ? null : `0x${match[1]}`;
+}
+function manifestOfHashes2(files) {
+  return [...files].sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0).map((file) => `${file.sha256}  ${file.path}
+`).join("");
+}
+
 // ../../packages/protocol/src/sources/intuition/terms.ts
+var VERSION2 = "0x9622ec9e9e8265253328648119d02f85234737b991cf34ac9416b163b6e10230";
 var USES2 = "0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800";
 
 // ../../packages/protocol/src/pulse-usage.ts
@@ -2982,13 +3026,17 @@ async function getPulseUsage2(toolAtomIds, config) {
   const out = new Map(toolAtomIds.map((id) => [key(id), empty()]));
   if (toolAtomIds.length === 0)
     return out;
-  const edgeRows = rowsOf(await transport.request(PULSE_USES_QUERY, { tools: [...toolAtomIds], uses: USES2, limit }));
+  const edgeRows = rowsOf(config.version === undefined ? await transport.request(PULSE_USES_QUERY, { tools: [...toolAtomIds], uses: USES2, limit }) : await transport.request(PULSE_VERSIONED_USES_QUERY, { tools: [...toolAtomIds], uses: USES2, version: config.version, limit }));
+  const wanted = new Set(toolAtomIds.map(key));
   const edges = new Map;
   const NESTED_CAP = 100;
   let truncated = edgeRows.length >= limit;
   for (const row of edgeRows) {
     const tripleId = readString(row, "term_id");
-    const tool = readString(row, "object_id");
+    const versioned = versionOf(row, config.version);
+    const tool = versioned?.tool ?? readString(row, "object_id");
+    if (versioned === null && config.version !== undefined && !wanted.has(key(tool ?? "")))
+      continue;
     const writer = readString(row, "creator_id");
     const subject = readRecord(row, "subject");
     const atomId = subject === null ? null : readString(subject, "term_id");
@@ -2997,6 +3045,7 @@ async function getPulseUsage2(toolAtomIds, config) {
     const edgeHolders = (Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : []).map((holder) => readString(holder, "account_id")).filter((account) => account !== null);
     const declaration = (wallet, declaredAt) => ({
       tripleId,
+      ...versioned === null ? {} : { version: versioned.digest },
       agent: { atomId, label: readString(subject, "label") },
       writer: wallet,
       holders: edgeHolders,
@@ -3192,8 +3241,34 @@ async function getPulseUsage2(toolAtomIds, config) {
       for (const name of new Set(declaration.lines.flatMap((line) => line.with ?? [])))
         byWith[name] = (byWith[name] ?? 0) + 1;
     }
+    if (config.version !== undefined) {
+      const wallets = new Map;
+      for (const declaration of usage.declarations) {
+        if (declaration.version === undefined || payers.has(key(declaration.writer)))
+          continue;
+        const seen = wallets.get(declaration.version) ?? new Set;
+        seen.add(key(declaration.writer));
+        wallets.set(declaration.version, seen);
+      }
+      usage.byVersion = Object.fromEntries([...wallets].map(([digest, seen]) => [digest, seen.size]));
+    }
   }
   return out;
+}
+function versionOf(row, version) {
+  if (version === undefined)
+    return null;
+  const term = readRecord(row, "object_term");
+  const triple = term === null ? null : readRecord(term, "triple");
+  if (triple === null)
+    return null;
+  const predicate = readString(triple, "predicate_id");
+  const tool = readString(triple, "subject_id");
+  const object = readRecord(triple, "object");
+  const digest = digestOfVersionLabel2(object === null ? null : readString(object, "label"));
+  if (predicate === null || predicate.toLowerCase() !== version.toLowerCase() || tool === null || digest === null)
+    return null;
+  return { tool, digest };
 }
 
 // ../../packages/protocol/src/failure-lines.ts
@@ -3222,6 +3297,7 @@ async function readSkillLines(atomUri, config) {
     ...config,
     hasOutcome,
     because,
+    version: VERSION2,
     ...needs === undefined ? {} : { needs },
     ...withId === undefined ? {} : { with: withId }
   });
@@ -3436,9 +3512,9 @@ var _13579_default = {
 };
 
 // ../hook/src/skill-failure.ts
-import { existsSync, mkdirSync as mkdirSync2, readFileSync as readFileSync2 } from "node:fs";
+import { existsSync, mkdirSync as mkdirSync2, readFileSync as readFileSync3 } from "node:fs";
 import { homedir as homedir2 } from "node:os";
-import { dirname as dirname2, join as join3 } from "node:path";
+import { dirname as dirname2, join as join4 } from "node:path";
 
 // ../../packages/protocol/src/declare/label.ts
 function normaliseCategoryLabel2(raw) {
@@ -3457,6 +3533,43 @@ function domainInText2(text, words) {
     return label;
   const alias = Object.keys(words.aliases).filter((a) => words.labels.includes(words.aliases[a]) && hit(a)).sort((a, b) => b.length - a.length)[0];
   return alias === undefined ? null : words.aliases[alias];
+}
+
+// ../../packages/protocol/src/node/skill-directory.ts
+import { createHash } from "node:crypto";
+import { lstatSync as lstatSync2, readdirSync, readFileSync as readFileSync2 } from "node:fs";
+import { join as join3 } from "node:path";
+var MAX_FILES = 300;
+var MAX_TOTAL = 8 * 1048576;
+function skillDirectoryDigest(directory) {
+  const files = [];
+  let total = 0;
+  const walk = (dir, prefix) => {
+    for (const name of readdirSync(dir)) {
+      const full = join3(dir, name);
+      const path = prefix === "" ? name : `${prefix}/${name}`;
+      const stat = lstatSync2(full);
+      if (stat.isDirectory()) {
+        if (!walk(full, path))
+          return false;
+      } else if (stat.isFile()) {
+        total += stat.size;
+        if (files.length >= MAX_FILES || total > MAX_TOTAL)
+          return false;
+        files.push({ path, sha256: createHash("sha256").update(readFileSync2(full)).digest("hex") });
+      }
+    }
+    return true;
+  };
+  try {
+    if (!walk(directory, ""))
+      return null;
+  } catch {
+    return null;
+  }
+  if (files.length === 0)
+    return null;
+  return `0x${createHash("sha256").update(manifestOfHashes2(files)).digest("hex")}`;
 }
 // ../../data/catalogue/domain-aliases.json
 var domain_aliases_default = {
@@ -4449,7 +4562,7 @@ function answerOf(response) {
   }
   return null;
 }
-var searchesPath = (cwd) => join3(dirname2(process.env["ARP_SESSION_LOG"] ?? join3(cwd, ".arp", "session.jsonl")), "searches.jsonl");
+var searchesPath = (cwd) => join4(dirname2(process.env["ARP_SESSION_LOG"] ?? join4(cwd, ".arp", "session.jsonl")), "searches.jsonl");
 function recordSearch(call, cwd) {
   if (call.session === null)
     return;
@@ -4473,7 +4586,7 @@ function foundBySearch(cwd, session, skill) {
     return null;
   const name = skill.split(":").pop() ?? skill;
   let found = null;
-  for (const line of readFileSync2(path, "utf8").split(`
+  for (const line of readFileSync3(path, "utf8").split(`
 `)) {
     try {
       const row = JSON.parse(line);
@@ -4488,13 +4601,13 @@ function foundBySearch(cwd, session, skill) {
   }
   return found;
 }
-var readIfThere = (path) => existsSync(path) ? readFileSync2(path, "utf8") : null;
+var readIfThere = (path) => existsSync(path) ? readFileSync3(path, "utf8") : null;
 function installedSource(name, cwd) {
   const known = [
-    ...installedFromSkillLock(readIfThere(join3(homedir2(), ".agents", ".skill-lock.json"))),
-    ...installedFromSkillLock(readIfThere(join3(cwd, "skills-lock.json"))),
-    ...installedFromReceipts(readIfThere(join3(arpHome(), "receipts.jsonl"))),
-    ...installedFromReceipts(readIfThere(join3(cwd, ".arp", "receipts.jsonl")))
+    ...installedFromSkillLock(readIfThere(join4(homedir2(), ".agents", ".skill-lock.json"))),
+    ...installedFromSkillLock(readIfThere(join4(cwd, "skills-lock.json"))),
+    ...installedFromReceipts(readIfThere(join4(arpHome(), "receipts.jsonl"))),
+    ...installedFromReceipts(readIfThere(join4(cwd, ".arp", "receipts.jsonl")))
   ];
   const sources = new Set(known.filter((entry) => entry.skill === name).map((entry) => entry.source));
   return sources.size === 1 ? [...sources][0] ?? null : null;
@@ -4503,7 +4616,7 @@ function skillsOfSession(log, session) {
   if (!existsSync(log))
     return [];
   const skills = [];
-  for (const line of readFileSync2(log, "utf8").split(`
+  for (const line of readFileSync3(log, "utf8").split(`
 `)) {
     try {
       const row = JSON.parse(line);
@@ -4518,19 +4631,19 @@ function skillsOfSession(log, session) {
   return skills;
 }
 function skillDirectory(name, cwd) {
-  const roots = [join3(cwd, ".claude", "skills"), join3(homedir2(), ".claude", "skills")];
+  const roots = [join4(cwd, ".claude", "skills"), join4(homedir2(), ".claude", "skills")];
   const given = process.env["ARP_SKILLS_DIR"];
   if (given !== undefined && given !== "")
     roots.unshift(given);
-  return roots.map((root) => join3(root, name)).find((dir) => existsSync(join3(dir, "SKILL.md"))) ?? null;
+  return roots.map((root) => join4(root, name)).find((dir) => existsSync(join4(dir, "SKILL.md"))) ?? null;
 }
 function arpHome() {
   const given = process.env["ARP_HOME"]?.trim();
-  return given !== undefined && given !== "" ? given : join3(homedir2(), ".arp");
+  return given !== undefined && given !== "" ? given : join4(homedir2(), ".arp");
 }
 function appendFailure(line) {
-  const path = join3(arpHome(), "failures.jsonl");
-  const seen = existsSync(path) ? readFileSync2(path, "utf8") : "";
+  const path = join4(arpHome(), "failures.jsonl");
+  const seen = existsSync(path) ? readFileSync3(path, "utf8") : "";
   const key = `"session":${JSON.stringify(line.session)},"skill":${JSON.stringify(line.skill)},`;
   if (seen.split(`
 `).some((row) => row.includes(key) && row.includes(`"reason":"${line.reason}"`)))
@@ -4551,18 +4664,19 @@ function recordSkillFailure(call, cwd) {
   if (reason === null)
     return null;
   try {
-    const log = process.env["ARP_SESSION_LOG"] ?? join3(cwd, ".arp", "session.jsonl");
+    const log = process.env["ARP_SESSION_LOG"] ?? join4(cwd, ".arp", "session.jsonl");
     for (const skill of skillsOfSession(log, call.session)) {
       const directory = skillDirectory(skill.name, cwd);
       if (directory === null)
         continue;
-      const markdown = readFileSync2(join3(directory, "SKILL.md"), "utf8");
+      const markdown = readFileSync3(join4(directory, "SKILL.md"), "utf8");
       if (!askedBySkill(command, markdown, directory))
         continue;
       const search = foundBySearch(cwd, call.session, skill.name);
-      const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync2(call.transcript, "utf8")) : "";
+      const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync3(call.transcript, "utf8")) : "";
       const domain = search?.domain ?? contextOf(words, skill.name);
       const need = needOf(reason, failureText(call), markdown);
+      const version = skillDirectoryDigest(directory);
       const line = {
         at: new Date().toISOString(),
         session: call.session,
@@ -4570,7 +4684,8 @@ function recordSkillFailure(call, cwd) {
         source: skill.source ?? search?.source ?? installedSource(skill.name.split(":").pop() ?? skill.name, cwd),
         ...domain === null ? {} : { domain },
         reason,
-        ...need === null ? {} : { need }
+        ...need === null ? {} : { need },
+        ...version === null ? {} : { version }
       };
       return appendFailure(line) ? line : null;
     }
@@ -4583,7 +4698,7 @@ var ANSWER_MS = 3000;
 var WHERE = "Intuition testnet 13579";
 var IN_CONTEXT_OF = _13579_default.arp.endpointBinding.inContextOf;
 var PAYERS = [_13579_default.arp.deployer, _13579_default.arp.sponsor];
-var sha256 = (text) => createHash("sha256").update(text, "utf8").digest();
+var sha256 = (text) => createHash2("sha256").update(text, "utf8").digest();
 async function answerFailure(failure, env = process.env, fetcher) {
   if (env["ARP_FAILURE_LINES"] === "off" || failure.source === null)
     return null;
@@ -4624,8 +4739,8 @@ async function postToolUseFailure(payload) {
 
 // ../hook/src/share-ask.ts
 import { spawn } from "node:child_process";
-import { existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
-import { dirname as dirname3, join as join4 } from "node:path";
+import { existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync4, writeFileSync as writeFileSync2 } from "node:fs";
+import { dirname as dirname3, join as join5 } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // ../../packages/protocol/src/sharing-state.ts
@@ -4668,12 +4783,12 @@ function shareAnswerIn2(text) {
 // ../hook/src/share-ask.ts
 var isOff = () => process.env["ARP_SHARE_AUTO"]?.trim().toLowerCase() === "off";
 var GITHUB_REPO = /^[\w.-]+\/[\w.-]+$/;
-var readIfThere2 = (path) => existsSync2(path) ? readFileSync3(path, "utf8") : null;
+var readIfThere2 = (path) => existsSync2(path) ? readFileSync4(path, "utf8") : null;
 function shareQuestionFor() {
   return " Sharing is not set on this machine yet. If that line says worked or failed, ask the person once, right after it, " + "in their language: share this result as a public line on Intuition testnet? Three choices: yes, this once; " + "always (this result and every one from now on, sent at the end of each session; earlier ones stay here); no (not asked again). Say what would leave: " + "the skill's public address, its category, worked or failed with a closed reason, signed by this machine's own " + "ARP address. Never their prompts, files, paths, code or keys. Do not choose for them. At the end of your reply to " + "their answer, add one line: `arp-share: once`, `arp-share: always` or `arp-share: no`, the one they chose; if " + "they did not answer it, add none.";
 }
 function stateOf(home) {
-  const text = readIfThere2(join4(home, "share-question.json"));
+  const text = readIfThere2(join5(home, "share-question.json"));
   if (text === null)
     return null;
   try {
@@ -4687,14 +4802,14 @@ function stateOf(home) {
     return { at: "", session: "", skill: "", state: "put" };
   }
 }
-var writeState = (home, state) => writeFileSync2(join4(home, "share-question.json"), `${JSON.stringify(state)}
+var writeState = (home, state) => writeFileSync2(join5(home, "share-question.json"), `${JSON.stringify(state)}
 `);
 function offerShare(session, skill, source, cwd, now = new Date) {
   if (isOff())
     return false;
   try {
     const home = arpHome();
-    if (existsSync2(join4(home, "sharing.json")))
+    if (existsSync2(join5(home, "sharing.json")))
       return false;
     const state = stateOf(home);
     if (state !== null && (state.state !== "offered" || state.session === session))
@@ -4719,15 +4834,15 @@ function onStopShare(session, last, recorded, now = new Date) {
     if (state === null || state.session !== session)
       return;
     if (state.state === "put") {
-      if (existsSync2(join4(home, "sharing.json")))
+      if (existsSync2(join5(home, "sharing.json")))
         return;
       const answer = shareAnswerIn2(last);
       if (answer === null)
         return;
       const choice = choiceForAnswer2(answer);
-      writeFileSync2(join4(home, "sharing.json"), sharingFileText2(choice.on, choice.how, now));
+      writeFileSync2(join5(home, "sharing.json"), sharingFileText2(choice.on, choice.how, now));
       if (answer !== "no") {
-        appendOwn(join4(home, "share-once.jsonl"), `${JSON.stringify({ at: now.toISOString(), session, skill: state.skill })}
+        appendOwn(join5(home, "share-once.jsonl"), `${JSON.stringify({ at: now.toISOString(), session, skill: state.skill })}
 `);
       }
       writeState(home, { ...state, state: "answered", answer, at: now.toISOString() });
@@ -4746,10 +4861,10 @@ function senderOf(here = dirname3(fileURLToPath(import.meta.url))) {
   if (given !== undefined && given !== "")
     return { command: process.execPath, args: [given, ...send] };
   for (const name of ["arp.js", "cli.js"]) {
-    if (existsSync2(join4(here, name)))
-      return { command: process.execPath, args: [join4(here, name), ...send] };
+    if (existsSync2(join5(here, name)))
+      return { command: process.execPath, args: [join5(here, name), ...send] };
   }
-  const written = readIfThere2(join4(here, "send.json"));
+  const written = readIfThere2(join5(here, "send.json"));
   if (written === null)
     return null;
   try {
@@ -4763,7 +4878,7 @@ function senderOf(here = dirname3(fileURLToPath(import.meta.url))) {
   }
 }
 function onceFor(home, session) {
-  for (const line of (readIfThere2(join4(home, "share-once.jsonl")) ?? "").split(`
+  for (const line of (readIfThere2(join5(home, "share-once.jsonl")) ?? "").split(`
 `)) {
     try {
       if (JSON.parse(line).session === session)
@@ -4784,13 +4899,13 @@ async function sessionEnd(payload) {
   const cwd = typeof raw["cwd"] === "string" ? raw["cwd"] : process.cwd();
   try {
     const home = arpHome();
-    const choice = sharingChoiceOf2(readIfThere2(join4(home, "sharing.json")));
+    const choice = sharingChoiceOf2(readIfThere2(join5(home, "sharing.json")));
     if (choice?.on !== true && !onceFor(home, session))
       return null;
     const sender = senderOf();
     if (sender === null) {
       mkdirSync3(home, { recursive: true });
-      appendOwn(join4(home, "share-log.jsonl"), `${JSON.stringify({ at: new Date().toISOString(), sent: 0, failed: 0, error: "no arp program beside the hook; run arp share send" })}
+      appendOwn(join5(home, "share-log.jsonl"), `${JSON.stringify({ at: new Date().toISOString(), sent: 0, failed: 0, error: "no arp program beside the hook; run arp share send" })}
 `);
       return null;
     }
@@ -4804,8 +4919,8 @@ async function sessionEnd(payload) {
 }
 
 // ../hook/src/worked.ts
-import { existsSync as existsSync3, mkdirSync as mkdirSync4, readFileSync as readFileSync4 } from "node:fs";
-import { join as join5 } from "node:path";
+import { existsSync as existsSync3, mkdirSync as mkdirSync4, readFileSync as readFileSync5 } from "node:fs";
+import { join as join6 } from "node:path";
 
 // ../../packages/protocol/src/local-outcomes.ts
 var OUTCOME_ANSWERS2 = ["worked", "failed", "unsure"];
@@ -4857,7 +4972,7 @@ function rows(path) {
   if (!existsSync3(path))
     return [];
   const found = [];
-  for (const line of readFileSync4(path, "utf8").split(`
+  for (const line of readFileSync5(path, "utf8").split(`
 `)) {
     if (line.trim() === "")
       continue;
@@ -4873,7 +4988,7 @@ function withOf(skill, source, cwd, before) {
   const name = skill.split(":").pop() ?? skill;
   let need = null;
   let latest = "";
-  for (const row of rows(join5(arpHome(), "failures.jsonl"))) {
+  for (const row of rows(join6(arpHome(), "failures.jsonl"))) {
     const { skill: rowSkill, source: rowSource, need: rowNeed, at } = row;
     if (typeof rowSkill !== "string" || typeof rowNeed !== "string" || typeof at !== "string")
       continue;
@@ -4891,14 +5006,16 @@ function withOf(skill, source, cwd, before) {
   const directory = skillDirectory(name, cwd);
   if (directory === null)
     return null;
-  return publishableNeed3(need, readFileSync4(join5(directory, "SKILL.md"), "utf8"));
+  return publishableNeed3(need, readFileSync5(join6(directory, "SKILL.md"), "utf8"));
 }
 function record(input, asked, outcome, at) {
   const search = foundBySearch(input.cwd, input.session, asked.skill);
-  const words = input.transcript !== null && existsSync3(input.transcript) ? lastUserWords(readFileSync4(input.transcript, "utf8")) : "";
+  const words = input.transcript !== null && existsSync3(input.transcript) ? lastUserWords(readFileSync5(input.transcript, "utf8")) : "";
   const domain = search?.domain ?? contextOf(words, asked.skill);
   const source = asked.source ?? search?.source ?? installedSource(asked.skill.split(":").pop() ?? asked.skill, input.cwd);
   const named = outcome === "worked" ? withOf(asked.skill, source, input.cwd, at) : null;
+  const directory = skillDirectory(asked.skill.split(":").pop() ?? asked.skill, input.cwd);
+  const version = directory === null ? null : skillDirectoryDigest(directory);
   const line = {
     at,
     session: input.session,
@@ -4906,9 +5023,10 @@ function record(input, asked, outcome, at) {
     source,
     ...domain === null ? {} : { domain },
     outcome,
-    ...named === null ? {} : { with: named }
+    ...named === null ? {} : { with: named },
+    ...version === null ? {} : { version }
   };
-  appendOwn(join5(arpHome(), "outcomes.jsonl"), `${JSON.stringify(line)}
+  appendOwn(join6(arpHome(), "outcomes.jsonl"), `${JSON.stringify(line)}
 `);
 }
 function askOnSkill(session, skill, source, cwd = process.cwd(), now = new Date) {
@@ -4917,7 +5035,7 @@ function askOnSkill(session, skill, source, cwd = process.cwd(), now = new Date)
   try {
     const home = arpHome();
     mkdirSync4(home, { recursive: true });
-    const askedPath = join5(home, "asked.jsonl");
+    const askedPath = join6(home, "asked.jsonl");
     if (rows(askedPath).some((row2) => row2["session"] === session && row2["skill"] === skill))
       return null;
     const row = { at: now.toISOString(), session, skill, source };
@@ -4937,13 +5055,13 @@ async function stop(payload) {
 function onStop(input, now = new Date) {
   try {
     const home = arpHome();
-    const asked = rows(join5(home, "asked.jsonl")).flatMap((row) => row["session"] === input.session && typeof row["skill"] === "string" ? [{
+    const asked = rows(join6(home, "asked.jsonl")).flatMap((row) => row["session"] === input.session && typeof row["skill"] === "string" ? [{
       at: typeof row["at"] === "string" ? row["at"] : "",
       session: input.session,
       skill: row["skill"],
       source: typeof row["source"] === "string" ? row["source"] : null
     }] : []);
-    const answered = new Set(rows(join5(home, "outcomes.jsonl")).flatMap((row) => row["session"] === input.session && typeof row["skill"] === "string" ? [row["skill"]] : []));
+    const answered = new Set(rows(join6(home, "outcomes.jsonl")).flatMap((row) => row["session"] === input.session && typeof row["skill"] === "string" ? [row["skill"]] : []));
     const pending = asked.filter((row) => !answered.has(row.skill));
     const at = now.toISOString();
     const answers = answersIn2(input.last, pending.map((row) => row.skill));
@@ -4981,12 +5099,12 @@ async function route(handler, payload) {
   });
 }
 function fetchedRefs(cwd) {
-  const path = process.env["ARP_RECEIPTS"] ?? join6(cwd, ".arp", "receipts.jsonl");
+  const path = process.env["ARP_RECEIPTS"] ?? join7(cwd, ".arp", "receipts.jsonl");
   if (!existsSync4(path))
     return [];
   let text2;
   try {
-    text2 = readFileSync5(path, "utf8");
+    text2 = readFileSync6(path, "utf8");
   } catch {
     return [];
   }
@@ -5066,7 +5184,7 @@ try {
   process.exit(0);
 }
 if (process.argv.includes("--capture"))
-  capture(parsed2, join6(homedir3(), ".arp", "captures"));
+  capture(parsed2, join7(homedir3(), ".arp", "captures"));
 var event = eventOf(parsed2);
 var handler = event === null ? undefined : ROUTES[event];
 if (handler !== undefined)
@@ -5087,8 +5205,8 @@ if (what === null)
 var classified = classifyCall(call);
 if (classified === null)
   process.exit(0);
-var own = join6(cwd, ".arp");
-var path = process.env["ARP_SESSION_LOG"] ?? join6(own, "session.jsonl");
+var own = join7(cwd, ".arp");
+var path = process.env["ARP_SESSION_LOG"] ?? join7(own, "session.jsonl");
 var line = {
   at: new Date().toISOString(),
   session: call.session,
@@ -5102,9 +5220,9 @@ var line = {
 };
 try {
   mkdirSync5(dirname4(path), { recursive: true });
-  if (dirname4(path) === own && lstatSync2(own).isSymbolicLink())
+  if (dirname4(path) === own && lstatSync3(own).isSymbolicLink())
     throw new Error(`${own} is a symbolic link`);
-  const ignore = join6(own, ".gitignore");
+  const ignore = join7(own, ".gitignore");
   if (dirname4(path) === own && !existsSync4(ignore))
     writeFileSync3(ignore, `*
 `, { flag: "wx" });

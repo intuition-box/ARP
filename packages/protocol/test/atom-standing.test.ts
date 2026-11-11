@@ -3,7 +3,7 @@ import {INTUITION_URL} from "./helpers.js";
 
 import {getAtomStanding, getListedCapabilitiesFor} from "../src/atom-standing.js";
 import {CAPABILITY_SAMPLE_LIMIT, type GraphqlTransport} from "@arp-protocol/graphql";
-import {CAPABILITY_PREDICATE_IDS} from "../src/sources/intuition/terms.js";
+import {CAPABILITY_PREDICATE_IDS, USES, VERSION} from "../src/sources/intuition/terms.js";
 
 /**
  * Shapes recorded from Intuition mainnet on 2026-10-27 by probing a real tag atom, trimmed.
@@ -248,8 +248,33 @@ describe("getAtomStanding", () => {
             transport: transport(RECORDED, seen),
         });
         expect(seen[0]?.query).toContain("object_id: {_eq: $atomId}");
-        // And on no predicate, which is the whole reason this reader exists beside `getToolUsage`.
-        expect(seen[0]?.query).not.toContain("predicate_id");
+        // And on no predicate, which is the whole reason this reader exists beside `getToolUsage`. Only the
+        // incoming read's filter: the claims select a version triple's predicate since task 127.
+        const query = seen[0]?.query ?? "";
+        const from = query.indexOf("triples(");
+        const incoming = query.slice(from, query.indexOf("claims:", from));
+        const filter = /where: (.*)\n/.exec(incoming)?.[1] ?? "";
+        expect(filter).toContain("object_id: {_eq: $atomId}");
+        expect(filter).not.toContain("predicate_id");
+        expect(filter).not.toContain("predicate:");
+    });
+
+    it("reads a claim on a version of a skill as a claim about the skill, and no other version word (ADR 0192)", async () => {
+        const claim = (id: string, label: string, predicate = VERSION) => ({
+            term_id: id,
+            predicate: {term_id: USES, label: "uses"},
+            object: null,
+            object_term: {triple: {predicate_id: predicate, subject: {term_id: "0xskill", label: "a skill", type: "Thing"}, object: {label}}},
+            term: side("1000", 1),
+        });
+        const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport({
+                ...RECORDED,
+                claims: [claim("0xc1", `sha256:${"d1".repeat(32)}`), claim("0xc2", "1.0.0"), claim("0xc3", `sha256:${"d1".repeat(32)}`, "0xother")],
+            }),
+        });
+        expect(standing.claims.map((c) => [c.tripleId, c.object.atomId])).toEqual([["0xc1", "0xskill"]]);
     });
     it("reports an empty url as absent, because that is what a tag carries", async () => {
         // The field the app gates its deposit control on. Measured on mainnet 1155 on 2026-10-28:

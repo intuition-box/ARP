@@ -10,7 +10,8 @@ const VAULT_SIDE = `
     }`;
 
 /**
- * Every `uses` edge pointing AT a tool, with both sides of each edge's market.
+ * Every `uses` edge pointing AT a tool, with both sides of each edge's market, and since task 127 every `uses` edge
+ * pointing at one of its versions, `(tool, version, sha256:<digest>)` (ADR `0192`).
  *
  * `$curveId` is `numeric`, never `String!`. Declaring it `String!` is rejected at validation time
  * and takes the whole query down — the bug that broke the trust surface on 2026-09-16, which no
@@ -18,13 +19,13 @@ const VAULT_SIDE = `
  * query was valid.
  */
 export const TOOL_USAGE_QUERY = `
-query ToolUsage($toolId: String!, $uses: String!, $curveId: numeric!) {
+query ToolUsage($toolId: String!, $uses: String!, $version: String!, $curveId: numeric!) {
   tool: atoms(where: {term_id: {_eq: $toolId}}, limit: 1) {
     term_id
     label
     data
   }
-  triples(where: {predicate_id: {_eq: $uses}, object_id: {_eq: $toolId}}, limit: 200) {
+  triples(where: {predicate_id: {_eq: $uses}, _or: [{object_id: {_eq: $toolId}}, {object_term: {triple: {subject_id: {_eq: $toolId}, predicate_id: {_eq: $version}}}}]}, limit: 200) {
     term_id
     subject {
       term_id
@@ -44,7 +45,7 @@ query ToolUsage($toolId: String!, $uses: String!, $curveId: numeric!) {
  * from the chain.
  */
 export const ATTESTED_TOOL_USAGE_QUERY = `
-query AttestedToolUsage($toolId: String!, $uses: String!, $curveId: numeric!, $attestor: String!) {
+query AttestedToolUsage($toolId: String!, $uses: String!, $version: String!, $curveId: numeric!, $attestor: String!) {
   tool: atoms(where: {term_id: {_eq: $toolId}}, limit: 1) {
     term_id
     label
@@ -52,7 +53,7 @@ query AttestedToolUsage($toolId: String!, $uses: String!, $curveId: numeric!, $a
   }
   triples(where: {
     predicate_id: {_eq: $uses},
-    object_id: {_eq: $toolId},
+    _or: [{object_id: {_eq: $toolId}}, {object_term: {triple: {subject_id: {_eq: $toolId}, predicate_id: {_eq: $version}}}}],
     term: {positions: {account_id: {_eq: $attestor}}}
   }, limit: 200) {
     term_id

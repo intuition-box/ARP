@@ -51,6 +51,7 @@ query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor
     term_id
     predicate { term_id label }
     object { term_id label type }
+    object_term { triple { predicate_id subject { term_id label type } object { label } } }
     term {
       ${VAULT_SIDE}
       vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
@@ -75,7 +76,7 @@ export const DECLARED_MODULES_FOR_QUERY = `query DeclaredModulesFor($subjects: [
   triples(
     where: {subject_id: {_in: $subjects}, predicate_id: {_eq: $predicate}}
     limit: $limit
-  ) { subject { term_id } object { term_id } }
+  ) { subject { term_id } object { term_id } object_term { triple { predicate_id subject { term_id } object { label } } } }
 }`;
 
 export const LISTED_CAPABILITIES_FOR_QUERY = `query ListedCapabilitiesFor($subject: String!, $predicates: [String!]) {

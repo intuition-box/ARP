@@ -1,5 +1,8 @@
 import {
   checkLineLimits,
+  checkReceiptEvidence,
+  planVersionedUse,
+  receiptEvidenceLabel,
   checkPayee,
   checkX402Payment,
   exactEndpointNamesTool,
@@ -18,6 +21,7 @@ import {
   prepareUsageContext,
   verifyLineRequest,
   type PayeeCheck,
+  type SignedContentReceipt,
   type SignedLineRequest,
   type X402Terms,
 } from '@arp-protocol/core';
@@ -59,6 +63,15 @@ import { chainUnreadable, json, REGISTRY, type Body, type SponsorContext } from 
  * read from GitHub at `HEAD`, names it whole (`publishableNeed`): a word its author published, never one from
  * the agent's machine. A name the file does not hold refuses the whole request, since the agent signed it, and
  * nothing is spent.
+ *
+ * **Which version, and what backs it** (task 127, ADR `0192`). A request that signs a skill's directory digest is
+ * written about `V = (skill, version, sha256:<digest>)`: `T1 = (agent, uses, V)`, with `V` created if missing. The
+ * digest is written only when it is a published one: the skill's directory at its repository's `HEAD`, read from
+ * GitHub, or the digest of a content receipt from a node this service accepts. Otherwise 422 `rule: 'version'`,
+ * and a writer drops the version and signs again (a local edit writes no version, ADR `0185`). A request that names
+ * a receipt's hash brings the receipt beside it (`body.receipt`); it must be ARP's node's, for this agent, this tool
+ * and this digest (`checkReceiptEvidence`), or 422 `rule: 'evidence'`. It adds `(outcome, has evidence,
+ * content-receipt:<hash>)`, and the receipt is kept and served at `GET /receipt?hash=`.
  */
 export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
   const { options, chainId, wallet, reads, limits, ledger, now, multiVault } = ctx;
@@ -181,6 +194,17 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
     }
   }
 
+  // ADR `0192`: the version a line names is a published digest, and its evidence a receipt over that digest.
+  let evidence: { hash: string; receipt: SignedContentReceipt } | null = null;
+  if (request.version !== '') {
+    if (ledger.has('line', `line:${request.nonce.toLowerCase()}`)) {
+      return json({ error: 'this request was already used', rule: 'nonce' }, 409);
+    }
+    const checked = await checkVersion(ctx, lines, request.tool, request.version, request.evidence, body.receipt, agent);
+    if (checked instanceof Response) return checked;
+    evidence = checked;
+  }
+
   if (request.need !== '') {
     // A replayed request must not spend GitHub's hourly allowance: the nonce is checked again below, under the lock.
     if (ledger.has('line', `line:${request.nonce.toLowerCase()}`)) {
@@ -202,6 +226,8 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
     }
 
     let usesId: Hex;
+    let versioned: Awaited<ReturnType<typeof planVersionedUse>> | null = null;
+    let object: Hex = request.tool;
     let plan;
     let edgeExists: boolean;
     let cost: bigint;
@@ -219,7 +245,10 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
       if (about === 'unseen') {
         return json({ error: 'the index has no document for this tool yet', rule: 'tool', retry: true }, 422);
       }
-      usesId = await reads.tripleId(subject, options.usesPredicate, request.tool);
+      // With a version, the use is of `V = (skill, version, sha256:<digest>)`, not of the skill (ADR `0192`).
+      versioned = request.version === '' ? null : await planVersionedUse({ tool: request.tool, digest: request.version, reads });
+      object = versioned?.versionTripleId ?? request.tool;
+      usesId = await reads.tripleId(subject, options.usesPredicate, object);
       edgeExists = await reads.termExists(usesId);
       const [tripleCost, minDeposit] = await Promise.all([reads.tripleCost(), reads.minDeposit()]);
       cost = tripleCost + minDeposit;
@@ -231,6 +260,7 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
         ...(request.reason === '' ? {} : { reason: request.reason }),
         ...(payment === null ? {} : { payment: paymentLevelLabel(payment, request.endpoint) }),
         ...(request.need === '' ? {} : { need: request.need }),
+        ...(evidence === null ? {} : { evidence: receiptEvidenceLabel(evidence.hash) }),
         inContextOf: lines.inContextOf,
         isCategory: categories.isCategory,
         reads,
@@ -240,7 +270,15 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
     }
     if (plan.status === 'refused') return json({ error: plan.detail, rule: plan.rule }, 422);
 
-    const levels = [usesId, plan.contextTripleId, plan.outcomeTripleId, plan.reasonTripleId, plan.paymentTripleId, plan.needTripleId].filter(
+    const levels = [
+      usesId,
+      plan.contextTripleId,
+      plan.outcomeTripleId,
+      plan.reasonTripleId,
+      plan.paymentTripleId,
+      plan.needTripleId,
+      plan.evidenceTripleId,
+    ].filter(
       (term): term is Hex => term !== null,
     );
     const curve = await reads.defaultCurveId();
@@ -248,12 +286,13 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
     for (const term of levels) {
       if ((await reads.sharesOf(agent, term, curve)) === 0n) missing.push(term);
     }
-    if (edgeExists && plan.calls.length === 0 && missing.length === 0) {
-      return json({ termId: usesId, levels, created: false, transactions: [] });
+    const versionCalls = versioned?.calls ?? [];
+    if (edgeExists && versionCalls.length === 0 && plan.calls.length === 0 && missing.length === 0) {
+      return json({ termId: usesId, levels, created: false, transactions: [], ...versionAnswer(versioned) });
     }
 
     const value =
-      (edgeExists ? 0n : cost) + plan.totalValue + BigInt(missing.length) * limits.depositAmount;
+      (versioned?.totalValue ?? 0n) + (edgeExists ? 0n : cost) + plan.totalValue + BigInt(missing.length) * limits.depositAmount;
     const fits = checkLineLimits(ledger.relevant(now()), { agent, value, now: now(), limits });
     if (!fits.ok) return json({ error: fits.reason, rule: 'limit' }, 429);
 
@@ -275,23 +314,27 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
       );
     }
 
-    const calls = edgeExists
-      ? plan.calls
-      : [
-          {
-            kind: 'create-triple' as const,
-            chainId,
-            to: multiVault,
-            value: cost,
-            data: encodeCreateTriple(subject, options.usesPredicate, request.tool, cost),
-            why: `the \`uses\` triple ${usesId}, created for a sponsored line`,
-          },
-          ...plan.calls,
-        ];
+    const calls = [
+      ...versionCalls,
+      ...(edgeExists
+        ? []
+        : [
+            {
+              kind: 'create-triple' as const,
+              chainId,
+              to: multiVault,
+              value: cost,
+              data: encodeCreateTriple(subject, options.usesPredicate, object, cost),
+              why: `the \`uses\` triple ${usesId}, created for a sponsored line`,
+            },
+          ]),
+      ...plan.calls,
+    ];
     for (const call of calls) assertMultiVault(call);
 
     // Kept before the first send, as the spend is reserved: a line that lands always has its request (ADR `0188`).
     if (payment !== null) lines.requests?.keep(signed, now(), payee);
+    if (evidence !== null) lines.receipts?.keep(evidence.hash, evidence.receipt, now());
     ledger.reserve({ kind: 'line', subject: agent, value, at: now(), key, termId: usesId });
     const transactions: Hex[] = [];
     // A revert frees the reservation only when nothing landed. Terms already paid for stay counted, and
@@ -320,7 +363,7 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
       transactions.push(sent.hash);
     }
     ledger.settle('line', key, { status: 'success', hash: transactions.at(-1) as Hex }); // at least one, checked above
-    return json({ termId: usesId, levels, created: calls.length > 0, transactions });
+    return json({ termId: usesId, levels, created: calls.length > 0, transactions, ...versionAnswer(versioned) });
   });
 }
 
@@ -341,6 +384,88 @@ export function lineRequest(ctx: SponsorContext, url: URL): Response {
   if (kept === null) return json({ error: 'no signed request is kept for this payment' }, 404);
   // The payee check beside the request (ADR `0189`): ARP's word on which reading named the signed terms.
   return json({ ...kept.signed, payee_check: kept.payee.check, payee_checked_at: kept.payee.checkedAt });
+}
+
+/** The version a line was written on, for the answer: `V`'s id beside the levels, which do not include it. */
+function versionAnswer(versioned: Awaited<ReturnType<typeof planVersionedUse>> | null) {
+  return versioned === null ? {} : { versionTripleId: versioned.versionTripleId };
+}
+
+/**
+ * `GET /receipt?hash=0x…`: the content receipt behind a line that names `content-receipt:<hash>`, as the agent
+ * sent it, or 404 (task 127, ADR `0192`). Read-only. A stranger recomputes the hash (`contentReceiptHash`),
+ * recovers the node (`verifyContentReceipt`) and the digest from the repository at the receipt's commit.
+ */
+export function lineReceipt(ctx: SponsorContext, url: URL): Response {
+  const store = ctx.options.lines?.receipts ?? null;
+  if (store === null) return json({ error: 'receipts are not kept on this service', rule: 'config' }, 503);
+  const hash = url.searchParams.get('hash') ?? '';
+  if (!/^0x[0-9a-f]{64}$/.test(hash)) return json({ error: 'hash is 0x and 64 lower-case hex', rule: 'hash' }, 400);
+  const kept = store.get(hash);
+  return kept === null ? json({ error: 'no receipt is kept for this hash' }, 404) : json(kept);
+}
+
+/**
+ * Whether a line's version is a published digest, and its evidence a receipt over it (ADR `0192`): the receipt
+ * accepted, or `null` when the line names none; otherwise the answer that refuses the line. Nothing is spent.
+ */
+async function checkVersion(
+  ctx: SponsorContext,
+  lines: NonNullable<SponsorContext['options']['lines']>,
+  tool: Hex,
+  version: string,
+  evidenceHash: string,
+  sent: unknown,
+  agent: Address,
+): Promise<{ hash: string; receipt: SignedContentReceipt } | null | Response> {
+  if (lines.toolUrl === undefined) {
+    return json({ error: 'a line that names a version is not configured on this service', rule: 'config' }, 503);
+  }
+  let toolUrl: string | null;
+  try {
+    toolUrl = await lines.toolUrl(tool);
+  } catch (error) {
+    return chainUnreadable(String(error instanceof Error ? error.message : error));
+  }
+  if (toolUrl === null) return json({ error: 'the index has no document for this tool yet', rule: 'tool', retry: true }, 422);
+  if (skillRefFromUrl(toolUrl) === null) {
+    return json({ error: "a version names a skill's directory, and this tool is not a skill", rule: 'version' }, 422);
+  }
+  if (evidenceHash !== '') {
+    if (lines.receipts === undefined || lines.receipts === null) {
+      return json({ error: 'a line backed by a receipt is not configured on this service', rule: 'config' }, 503);
+    }
+    const verdict = await checkReceiptEvidence({
+      signed: sent,
+      hash: evidenceHash,
+      agent,
+      tool,
+      version,
+      chainId: ctx.chainId,
+      accepted: ctx.options.acceptedContentSigners,
+    });
+    if (verdict.status === 'refused') return json({ error: `the receipt does not back this line: ${verdict.reason}`, rule: 'evidence' }, 422);
+    // An accepted node served these files, so the digest is one it published.
+    return { hash: verdict.hash, receipt: sent as SignedContentReceipt }; // checked by `checkReceiptEvidence`
+  }
+  if (lines.skillDigest === undefined) {
+    return json({ error: 'a line that names a version is not configured on this service', rule: 'config' }, 503);
+  }
+  let published: string | null;
+  try {
+    published = await lines.skillDigest(toolUrl);
+  } catch (error) {
+    // GitHub not answering says nothing about the skill, and no version is written without its files.
+    const reason = String(error instanceof Error ? error.message : error).slice(0, 200);
+    return json({ error: `the skill's directory could not be read: ${reason}`, rule: 'version', retry: true }, 503);
+  }
+  if (published !== version.toLowerCase()) {
+    return json(
+      { error: `${version} is not ${toolUrl}'s directory at HEAD; a local edit writes no version`, rule: 'version' },
+      422,
+    );
+  }
+  return null;
 }
 
 /**

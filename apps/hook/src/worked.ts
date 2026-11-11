@@ -23,6 +23,7 @@ import { join } from 'node:path';
 // Pure modules by path, never the package index: the published hook carries no dependency (ADR `0145`).
 import { answersIn, type LocalOutcome, type OutcomeAnswer } from '../../../packages/protocol/src/local-outcomes.ts';
 import { publishableNeed } from '../../../packages/protocol/src/declare/line-need.ts';
+import { skillDirectoryDigest } from '../../../packages/protocol/src/node/skill-directory.ts';
 
 import { appendOwn } from './append.ts';
 import { offerShare, onStopShare, shareQuestionFor } from './share-ask.ts';
@@ -126,6 +127,9 @@ function record(input: StopInput, asked: Asked, outcome: OutcomeAnswer, at: stri
   const source =
     asked.source ?? search?.source ?? installedSource(asked.skill.split(':').pop() ?? asked.skill, input.cwd);
   const named = outcome === 'worked' ? withOf(asked.skill, source, input.cwd, at) : null;
+  // The version a shared line names (task 127, ADR `0192`): the digest of the files that ran, when they are here.
+  const directory = skillDirectory(asked.skill.split(':').pop() ?? asked.skill, input.cwd);
+  const version = directory === null ? null : skillDirectoryDigest(directory);
   const line: LocalOutcome = {
     at,
     session: input.session,
@@ -134,6 +138,7 @@ function record(input: StopInput, asked: Asked, outcome: OutcomeAnswer, at: stri
     ...(domain === null ? {} : { domain }),
     outcome,
     ...(named === null ? {} : { with: named }),
+    ...(version === null ? {} : { version }),
   };
   appendOwn(join(arpHome(), 'outcomes.jsonl'), `${JSON.stringify(line)}\n`);
 }

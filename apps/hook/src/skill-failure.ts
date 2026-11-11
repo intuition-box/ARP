@@ -13,6 +13,7 @@ import {
 // The pure module, not the package index: the published hook carries no dependency (ADR `0145`).
 import { domainInText } from '../../../packages/protocol/src/domain-words.ts';
 import { publishableNeed } from '../../../packages/protocol/src/declare/line-need.ts';
+import { skillDirectoryDigest } from '../../../packages/protocol/src/node/skill-directory.ts';
 import aliasTable from '../../../data/catalogue/domain-aliases.json';
 import skillNodes from '../../../data/catalogue/skill-nodes-13579.json';
 
@@ -286,6 +287,11 @@ export type FailureLine = {
   reason: DetectedReason;
   /** The missing program or variable's name, only when the skill's SKILL.md names it (`needOf`, ADR `0166`). */
   need?: string;
+  /**
+   * The digest of the directory the skill ran from (task 127, ADR `0192`): the version a shared line names. A
+   * digest of public files, nothing about the person; the sponsor writes it only when it is a published one.
+   */
+  version?: string;
 };
 
 /** Appends unless this session, skill and reason are already there. Says whether it wrote. */
@@ -329,6 +335,7 @@ export function recordSkillFailure(call: ToolCall, cwd: string): FailureLine | n
       const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync(call.transcript, 'utf8')) : '';
       const domain = search?.domain ?? contextOf(words, skill.name);
       const need = needOf(reason, failureText(call), markdown);
+      const version = skillDirectoryDigest(directory);
       const line: FailureLine = {
         at: new Date().toISOString(),
         session: call.session,
@@ -337,6 +344,7 @@ export function recordSkillFailure(call: ToolCall, cwd: string): FailureLine | n
         ...(domain === null ? {} : { domain }),
         reason,
         ...(need === null ? {} : { need }),
+        ...(version === null ? {} : { version }),
       };
       return appendFailure(line) ? line : null;
     }

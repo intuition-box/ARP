@@ -19,6 +19,41 @@ export const PULSE_USES_QUERY = `query PulseUses($tools: [String!]!, $uses: Stri
 }`;
 
 /**
+ * `PULSE_USES_QUERY`, and the versioned lines beside it (task 127, ADR `0192`): a `uses` edge whose object is
+ * `(tool, version, sha256:<digest>)` for one of these tools. One request, so reading versions costs no more.
+ */
+export const PULSE_VERSIONED_USES_QUERY = `query PulseUsesWithVersions($tools: [String!]!, $uses: String!, $version: String!, $limit: Int!) {
+    triples(
+        where: {
+            predicate_id: {_eq: $uses}
+            _or: [{object_id: {_in: $tools}}, {object_term: {triple: {subject_id: {_in: $tools}, predicate_id: {_eq: $version}}}}]
+        }
+        limit: $limit
+    ) {
+        term_id
+        object_id
+        creator_id
+        created_at
+        subject {
+            term_id
+            label
+        }
+        object_term {
+            triple {
+                subject_id
+                predicate_id
+                object {
+                    label
+                }
+            }
+        }
+        positions(where: {shares: {_gt: "0"}}) {
+            account_id
+        }
+    }
+}`;
+
+/**
  * What one agent declared it used: its `uses` edges as the subject (task 95). The lines on them are read
  * with `PULSE_USES_QUERY` keyed on each object, so one set of rules decides what counts.
  */
@@ -27,6 +62,18 @@ export const PULSE_SUBJECT_USES_QUERY = `query PulseSubjectUses($subject: String
         object {
             term_id
             label
+        }
+        object_term {
+            triple {
+                predicate_id
+                subject {
+                    term_id
+                    label
+                }
+                object {
+                    label
+                }
+            }
         }
     }
 }`;
@@ -72,6 +119,19 @@ export const PULSE_EDGE_TOOLS_QUERY = `query PulseEdgeTools($edges: [String!]!, 
             term_id
             label
             data
+        }
+        object_term {
+            triple {
+                predicate_id
+                subject {
+                    term_id
+                    label
+                    data
+                }
+                object {
+                    label
+                }
+            }
         }
     }
 }`;
