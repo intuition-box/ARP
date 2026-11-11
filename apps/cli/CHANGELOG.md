@@ -12,7 +12,7 @@
   so both failed. `ARP_CONTENT` still overrides it. The content server sees the skill fetched and
   your agent's address, never a search.
 
-## 0.0.5 — unreleased
+## 0.0.5 — published 2026-11-11
 
 - **Sharing is asked once** (task 126, ADR `0191`). After the first skill result (worked or failed) on a
   machine where sharing was never chosen, the agent asks: "yes, this once", "always" or "no". Nothing
