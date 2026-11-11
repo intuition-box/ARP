@@ -1,0 +1,7 @@
+[test]
+# Task 136, ADR 0198: `bun test` fails under 90 % of lines or functions. Bun measures no branches,
+# and counts only files a test loads, which is why test/every-module.test.ts imports all of src/.
+coverage = true
+coverageThreshold = { lines = 0.9, functions = 0.9 }
+# packages/protocol is another workspace, imported by src/probe.ts and measured by its own gate.
+coveragePathIgnorePatterns = ["../../packages/**"]
