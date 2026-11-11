@@ -32,6 +32,7 @@ export function liveTerms(ask: Ask, now: () => number): (endpoint: string) => Pr
 const isOffer = (value: unknown): value is X402Offer =>
   typeof value === 'object' &&
   value !== null &&
+  // A non-null object, checked on the two lines above; each field is read as `unknown`.
   ['network', 'asset', 'payTo', 'amount'].every((field) => typeof (value as Record<string, unknown>)[field] === 'string');
 
 /**
@@ -52,6 +53,7 @@ export function probeTerms(
       const response = await doFetch(url, { signal: AbortSignal.timeout(5_000) });
       if (response.status === 404) return null;
       if (!response.ok) throw new Error(`probe answered ${response.status}`);
+      // Every field is optional and `unknown` here, and each is checked on the next three lines.
       const body = (await response.json()) as { reading?: { at?: unknown; offers?: unknown } };
       const at = typeof body.reading?.at === 'string' ? Date.parse(body.reading.at) : Number.NaN;
       const offers = body.reading?.offers;

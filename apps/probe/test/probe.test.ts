@@ -230,6 +230,7 @@ describe('the service', () => {
     ]);
     const ask = async (query: string) => {
       const response = await handle(new Request(`https://probe.test/x402?${query}`), store, () => clock);
+      // The worker's own answer, whose shape the assertions below check.
       return { status: response.status, body: (await response.json()) as { reading?: { at: string; offers: { payTo: string }[] } } };
     };
     const found = await ask(`target=${encodeURIComponent(endpoint.label)}&before=2026-11-11T10:00:00Z`);
