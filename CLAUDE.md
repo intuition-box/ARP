@@ -169,6 +169,7 @@ ARP/
 │   ├── 31_HOW_IT_WORKS.md           (for someone new, with diagrams: the whole picture, one failure, a line, the rank, what runs where)
 │   ├── 32_THE_EVIDENCE_LADDER.md    (the ladder every task names: declared, observed, corroborated × skill, agent, hire — ADR `0147`)
 │   ├── 33_THE_HIRE_LOOP.md          (concept: the actors and actions to hire an agent, and what to reuse from 8004, x402, 8183, MetaMask)
+│   ├── 34_ARP_AS_A_SIGNAL_GENERATOR.md (for an adapter author: the shapes and term ids on 13579, the closed words, evidence, feeds, queries, open questions)
 │   ├── tasks/                       atomic task files
 │   ├── design/                      design handoffs, one folder per thing designed — its
 │   │                                `README.md` says what each is and whether it is built:

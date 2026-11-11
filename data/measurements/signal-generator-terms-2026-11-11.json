@@ -1,0 +1,550 @@
+{
+  "at": "2026-11-11T17:47:28.082Z",
+  "chains": [
+    {
+      "chainId": 13579,
+      "graphql": "https://testnet.intuition.sh/v1/graphql",
+      "multiVault": "0x2Ece8D4dEdcB9918A398528f3fa4688b1d2CAB91"
+    },
+    {
+      "chainId": 1155,
+      "graphql": "https://mainnet.intuition.sh/v1/graphql",
+      "multiVault": "0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e"
+    }
+  ],
+  "words": [
+    {
+      "1155": {
+        "termId": "0xa72b54260675ac655230b9d16f853f913ba98cc87a5fbc0934f8e9c978cff264",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0xa72b54260675ac655230b9d16f853f913ba98cc87a5fbc0934f8e9c978cff264",
+        "exists": true,
+        "label": "has outcome",
+        "type": "TextObject",
+        "triplesAsPredicate": 12,
+        "triplesAsObject": 0
+      },
+      "word": "has outcome",
+      "role": "predicate, T3",
+      "source": "declare/usage-words.ts HAS_OUTCOME_LABEL"
+    },
+    {
+      "1155": {
+        "termId": "0xe188e93174034a79b15bd58449d42ae9e7f43e2523fdca5061e9cafdbb51702c",
+        "exists": true,
+        "label": "because",
+        "type": "TextObject",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0xe188e93174034a79b15bd58449d42ae9e7f43e2523fdca5061e9cafdbb51702c",
+        "exists": true,
+        "label": "because",
+        "type": "TextObject",
+        "triplesAsPredicate": 11,
+        "triplesAsObject": 0
+      },
+      "word": "because",
+      "role": "predicate, T4",
+      "source": "declare/usage-words.ts BECAUSE_LABEL"
+    },
+    {
+      "1155": {
+        "termId": "0x8d4bd8f2ca7f4b33d7a75d831a82c56b4fcb5ae3be86001dd9d94501341986d9",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0x8d4bd8f2ca7f4b33d7a75d831a82c56b4fcb5ae3be86001dd9d94501341986d9",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "word": "needs",
+      "role": "predicate, (reason, needs, name)",
+      "source": "declare/line-need.ts NEEDS_LABEL"
+    },
+    {
+      "1155": {
+        "termId": "0x7a12f602febf92f0b79d06919fc136f48598f01321af9c3beae7ed7aae5a8eca",
+        "exists": true,
+        "label": "with",
+        "type": "TextObject",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0x7a12f602febf92f0b79d06919fc136f48598f01321af9c3beae7ed7aae5a8eca",
+        "exists": true,
+        "label": "with",
+        "type": "TextObject",
+        "triplesAsPredicate": 1,
+        "triplesAsObject": 0
+      },
+      "word": "with",
+      "role": "predicate, (outcome, with, name) on a worked line",
+      "source": "declare/line-need.ts WITH_LABEL"
+    },
+    {
+      "1155": {
+        "termId": "0x555e6e0864ceabc0edae2b5607c00daa866259ed0f2c9ceb6a2bc20da67cf238",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0x555e6e0864ceabc0edae2b5607c00daa866259ed0f2c9ceb6a2bc20da67cf238",
+        "exists": true,
+        "label": "paid with",
+        "type": "TextObject",
+        "triplesAsPredicate": 3,
+        "triplesAsObject": 0
+      },
+      "word": "paid with",
+      "role": "predicate, on the outcome",
+      "source": "x402-payment.ts PAID_WITH_LABEL"
+    },
+    {
+      "1155": {
+        "termId": "0x010057d90d7b6f0ecdb5c37e6bac9531881178a94603c7a50834a0f7a42795d5",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0x010057d90d7b6f0ecdb5c37e6bac9531881178a94603c7a50834a0f7a42795d5",
+        "exists": true,
+        "label": "has evidence",
+        "type": "TextObject",
+        "triplesAsPredicate": 61,
+        "triplesAsObject": 0
+      },
+      "word": "has evidence",
+      "role": "predicate, on the outcome",
+      "source": "line-evidence.ts HAS_EVIDENCE_LABEL"
+    },
+    {
+      "1155": {
+        "termId": "0x9622ec9e9e8265253328648119d02f85234737b991cf34ac9416b163b6e10230",
+        "exists": true,
+        "label": "version",
+        "type": "TextObject",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0x9622ec9e9e8265253328648119d02f85234737b991cf34ac9416b163b6e10230",
+        "exists": true,
+        "label": "version",
+        "type": "TextObject",
+        "triplesAsPredicate": 28,
+        "triplesAsObject": 0
+      },
+      "word": "version",
+      "role": "predicate, V = (skill, version, sha256:<digest>)",
+      "source": "terms.ts VERSION"
+    },
+    {
+      "1155": {
+        "termId": "0x64efdf97dae63d10ff6cf895060dad30e81e0b1c07bd499467201f718540a459",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0x64efdf97dae63d10ff6cf895060dad30e81e0b1c07bd499467201f718540a459",
+        "exists": true,
+        "label": "worked",
+        "type": "TextObject",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 5
+      },
+      "word": "worked",
+      "role": "object of has outcome",
+      "source": "declare/usage-words.ts USAGE_OUTCOMES"
+    },
+    {
+      "1155": {
+        "termId": "0x8be29a343e243d85e41bced19b5f6f3aa8510cf61c3d42a4d9120f0750b0c625",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0x8be29a343e243d85e41bced19b5f6f3aa8510cf61c3d42a4d9120f0750b0c625",
+        "exists": true,
+        "label": "failed",
+        "type": "TextObject",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 7
+      },
+      "word": "failed",
+      "role": "object of has outcome",
+      "source": "declare/usage-words.ts USAGE_OUTCOMES"
+    },
+    {
+      "1155": {
+        "termId": "0x175c1efd08ed3f4e665fe49d91f7d4680d8ac3b6a8c92ba117f02c1b1fde272d",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0x175c1efd08ed3f4e665fe49d91f7d4680d8ac3b6a8c92ba117f02c1b1fde272d",
+        "exists": true,
+        "label": "missing-key",
+        "type": "TextObject",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 1
+      },
+      "word": "missing-key",
+      "role": "object of because",
+      "source": "declare/usage-words.ts USAGE_REASONS"
+    },
+    {
+      "1155": {
+        "termId": "0x9c124e2e9d9b6eaa7ac0dbe9766eccfaa89d222e7438c5cde4228cbd57bda258",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0x9c124e2e9d9b6eaa7ac0dbe9766eccfaa89d222e7438c5cde4228cbd57bda258",
+        "exists": true,
+        "label": "missing-program",
+        "type": "TextObject",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 1
+      },
+      "word": "missing-program",
+      "role": "object of because",
+      "source": "declare/usage-words.ts USAGE_REASONS"
+    },
+    {
+      "1155": {
+        "termId": "0x55c49b9a6610f63b8e61e77ec4b2af65433ec1c2e82bd00040bf884f81aded40",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0x55c49b9a6610f63b8e61e77ec4b2af65433ec1c2e82bd00040bf884f81aded40",
+        "exists": true,
+        "label": "missing-file",
+        "type": "TextObject",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 2
+      },
+      "word": "missing-file",
+      "role": "object of because",
+      "source": "declare/usage-words.ts USAGE_REASONS"
+    },
+    {
+      "1155": {
+        "termId": "0x52454a716e8bc1bebc441b156b5175c29427a64c6e40e6b9610caf800fe82f99",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0x52454a716e8bc1bebc441b156b5175c29427a64c6e40e6b9610caf800fe82f99",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "word": "not-the-right-tool",
+      "role": "object of because",
+      "source": "declare/usage-words.ts USAGE_REASONS"
+    },
+    {
+      "1155": {
+        "termId": "0x3a48b603931eeb02ec51b55272c943755308013b98c44f4255e413963e9f78b7",
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0x3a48b603931eeb02ec51b55272c943755308013b98c44f4255e413963e9f78b7",
+        "exists": true,
+        "label": "no-delivery",
+        "type": "TextObject",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 2
+      },
+      "word": "no-delivery",
+      "role": "object of because",
+      "source": "declare/usage-words.ts USAGE_REASONS"
+    },
+    {
+      "1155": {
+        "termId": "0xd6cc02f562e37deba5f949487a3d29fead3f71934d43b41b4fb2fe10c062ca3e",
+        "exists": true,
+        "label": "tool",
+        "type": "TextObject",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "termId": "0xd6cc02f562e37deba5f949487a3d29fead3f71934d43b41b4fb2fe10c062ca3e",
+        "exists": true,
+        "label": "tool",
+        "type": "TextObject",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 36
+      },
+      "word": "tool",
+      "role": "root of the domain tree",
+      "source": "apps/mcp/src/config.ts DOMAIN_ROOT"
+    }
+  ],
+  "constants": [
+    {
+      "1155": {
+        "exists": true,
+        "label": "uses",
+        "type": "Thing",
+        "triplesAsPredicate": 188,
+        "triplesAsObject": 62
+      },
+      "13579": {
+        "exists": true,
+        "label": "uses",
+        "type": "Thing",
+        "triplesAsPredicate": 192,
+        "triplesAsObject": 62
+      },
+      "name": "uses",
+      "id": "0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800",
+      "role": "predicate, T1",
+      "source": "terms.ts USES"
+    },
+    {
+      "1155": {
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "exists": true,
+        "label": "in context of",
+        "type": "Thing",
+        "triplesAsPredicate": 48,
+        "triplesAsObject": 0
+      },
+      "name": "in context of (13579)",
+      "id": "0x61a88b9c372c0d164d2caf66947b67ed0fcb4c457178a271b6b3dc39fb1f8862",
+      "role": "predicate, T2",
+      "source": "data/deployments/13579.json"
+    },
+    {
+      "1155": {
+        "exists": true,
+        "label": "has type",
+        "type": "Thing",
+        "triplesAsPredicate": 57574,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "exists": true,
+        "label": "has type",
+        "type": "Thing",
+        "triplesAsPredicate": 767,
+        "triplesAsObject": 0
+      },
+      "name": "has type",
+      "id": "0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced",
+      "role": "predicate, (subject, has type, type)",
+      "source": "terms.ts HAS_TYPE"
+    },
+    {
+      "1155": {
+        "exists": true,
+        "label": "Skill",
+        "type": "Thing",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 5
+      },
+      "13579": {
+        "exists": true,
+        "label": "Skill",
+        "type": "Thing",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 6
+      },
+      "name": "Skill",
+      "id": "0xba57c5daf6c9b8b7821406db1bff01427b385a4a041f2ddd5cf004e80949610c",
+      "role": "type atom",
+      "source": "terms.ts SKILL_TYPE"
+    },
+    {
+      "1155": {
+        "exists": true,
+        "label": "MCP Server",
+        "type": "Thing",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 68
+      },
+      "13579": {
+        "exists": true,
+        "label": "MCP Server",
+        "type": "Thing",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 72
+      },
+      "name": "MCP Server",
+      "id": "0xb52bb294a1cbf67a3fccc6bc8423e0758a11acfeb60caf6a0465ffca9ec3ae79",
+      "role": "type atom",
+      "source": "terms.ts MCP_SERVER_TYPE"
+    },
+    {
+      "1155": {
+        "exists": true,
+        "label": "AIAgent",
+        "type": "Thing",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 28648
+      },
+      "13579": {
+        "exists": true,
+        "label": "AIAgent",
+        "type": "Thing",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 292
+      },
+      "name": "AIAgent",
+      "id": "0x800342c0ded1c288e69f39a2dc96d8cff9b242e9f573193e6e0a849e5315d3e9",
+      "role": "type atom",
+      "source": "terms.ts AI_AGENT"
+    },
+    {
+      "1155": {
+        "exists": true,
+        "label": "version",
+        "type": "TextObject",
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "exists": true,
+        "label": "version",
+        "type": "TextObject",
+        "triplesAsPredicate": 28,
+        "triplesAsObject": 0
+      },
+      "name": "version",
+      "id": "0x9622ec9e9e8265253328648119d02f85234737b991cf34ac9416b163b6e10230",
+      "role": "predicate",
+      "source": "terms.ts VERSION"
+    },
+    {
+      "1155": {
+        "exists": true,
+        "label": "has tag",
+        "type": "Keywords",
+        "triplesAsPredicate": 58269,
+        "triplesAsObject": 509
+      },
+      "13579": {
+        "exists": true,
+        "label": "has tag",
+        "type": "Keywords",
+        "triplesAsPredicate": 54631,
+        "triplesAsObject": 470
+      },
+      "name": "has tag",
+      "id": "0x7ec36d201c842dc787b45cb5bb753bea4cf849be3908fb1b0a7d067c3c3cc1f5",
+      "role": "predicate, (skill, has tag, domain)",
+      "source": "terms.ts HAS_TAG"
+    },
+    {
+      "1155": {
+        "exists": false,
+        "label": null,
+        "type": null,
+        "triplesAsPredicate": 0,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "exists": true,
+        "label": "is a sub-domain of",
+        "type": "TextObject",
+        "triplesAsPredicate": 313,
+        "triplesAsObject": 0
+      },
+      "name": "is a sub-domain of",
+      "id": "0x9c2e2f2018dbfaa74fd3fd86cd54a62b16e771936f5d342e3751db8d0c046f80",
+      "role": "predicate, (child, is a sub-domain of, parent)",
+      "source": "terms.ts IS_A_SUB_DOMAIN_OF"
+    },
+    {
+      "1155": {
+        "exists": true,
+        "label": "same as",
+        "type": "Thing",
+        "triplesAsPredicate": 30913,
+        "triplesAsObject": 0
+      },
+      "13579": {
+        "exists": true,
+        "label": "same as",
+        "type": "Thing",
+        "triplesAsPredicate": 815,
+        "triplesAsObject": 0
+      },
+      "name": "same as",
+      "id": "0xbeebfb7d177cbd96ffc239d2196c72ec346efe81f39dc595773f13d83506f5f0",
+      "role": "predicate, agent atom to its ERC-8004 identity",
+      "source": "terms.ts SAME_AS"
+    }
+  ],
+  "inContextOfByLabel": {
+    "1155": [
+      {
+        "termId": "0x892054b01d389bfe566166120470f572a56e3d4cd88c599b52c4708949625390",
+        "type": "Thing",
+        "triplesAsPredicate": 1229
+      }
+    ],
+    "13579": [
+      {
+        "termId": "0x61a88b9c372c0d164d2caf66947b67ed0fcb4c457178a271b6b3dc39fb1f8862",
+        "type": "Thing",
+        "triplesAsPredicate": 48
+      }
+    ]
+  }
+}

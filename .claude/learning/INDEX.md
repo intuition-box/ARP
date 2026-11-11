@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-126 entries, one per completed task. Written by `task-verifier` on a pass.
+127 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -131,4 +131,5 @@
 | [119](119-a-hosted-content-server.md) | `docs/tasks/131-a-hosted-content-server.md` | PASS (second pass; the first failed on three stale doc copies) | A hosted content server |
 | [120](120-the-install-page-says-what-runs.md) | `docs/tasks/132-the-install-page-says-what-runs.md` | PASS (round 2) | The install page says what runs today |
 | [121](121-the-landing-scenes-are-static.md) | `docs/tasks/133-the-landing-scenes-are-static.md` | PASS | The landing's scenes are static: they read nothing |
+| [122](122-arp-as-a-signal-generator.md) | `docs/tasks/134-arp-as-a-signal-generator.md` | PASS | ARP as a signal generator, for an external adapter |
 | [123](123-the-desktop-extension-is-built-here.md) | `docs/tasks/135-the-desktop-extension-is-built-here.md` | PASS | The Claude Desktop extension is built here |

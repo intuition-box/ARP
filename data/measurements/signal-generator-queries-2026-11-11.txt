@@ -1,0 +1,503 @@
+# signal-generator-queries, 2026-11-11T17:45:50.195Z, https://testnet.intuition.sh/v1/graphql
+
+### 1. Every line's outcome, walked back to T1
+
+query Outcomes($hasOutcome: String!) {
+  triples(where: {predicate_id: {_eq: $hasOutcome}}, order_by: {created_at: asc}) {
+    term_id created_at creator_id
+    object { label }
+    subject_term { triple {
+      term_id predicate { label } object { label }
+      subject { label }
+      subject_term { triple { term_id subject { label } predicate { label } object { label } } }
+    } }
+    positions(where: {shares: {_gt: "0"}}) { account_id }
+  }
+}
+
+variables: {"hasOutcome":"0xa72b54260675ac655230b9d16f853f913ba98cc87a5fbc0934f8e9c978cff264"}
+
+answer:
+{
+ "count": 12,
+ "created_by_an_arp_wallet": 12,
+ "about_an_arp_test_agent": 12,
+ "lines": [
+  {
+   "outcome_term": "0xb18171111fc67205a67d344823b8b208a5407abf8830d7e35c3dc0b73ff2ae2e",
+   "at": "2026-11-05T10:06:49+00:00",
+   "agent": "Agent 13579:6",
+   "tool": "github.com/nateherkai/herk-edit-kit?skill=cut-silences",
+   "domain": null,
+   "outcome": "failed",
+   "creator_is_arp": true,
+   "holders": [
+    "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f"
+   ],
+   "agent_is_arp_test": true
+  },
+  {
+   "outcome_term": "0xeabecf39e5bbe7da916426f53d19c20b3b78306283f2ae0a9d6081ee1b80ace4",
+   "at": "2026-11-05T10:07:39+00:00",
+   "agent": "Agent 13579:6",
+   "tool": "github.com/agenticluke/claude-skill-video-editing-plus?skill=video-editing",
+   "domain": null,
+   "outcome": "worked",
+   "creator_is_arp": true,
+   "holders": [
+    "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f"
+   ],
+   "agent_is_arp_test": true
+  },
+  {
+   "outcome_term": "0x6deb33276212d57fb5ce413ca5ccf2435a5e1094e9be9c7b7d39c9e4a17559cb",
+   "at": "2026-11-05T10:07:47+00:00",
+   "agent": "Agent 13579:2",
+   "tool": "github.com/agenticluke/claude-skill-video-editing-plus?skill=video-editing",
+   "domain": null,
+   "outcome": "worked",
+   "creator_is_arp": true,
+   "holders": [
+    "0xE596096F4176b682E300d73963e7B04B383C1AA1"
+   ],
+   "agent_is_arp_test": true
+  },
+  {
+   "outcome_term": "0xd624f0745b95a44d07735d1f4886a38befc821fc85f6de8c834062a936b25181",
+   "at": "2026-11-05T11:54:38+00:00",
+   "agent": "Agent 13579:6",
+   "tool": "github.com/nateherkai/herk-edit-kit?skill=cut-silences",
+   "domain": "video",
+   "outcome": "failed",
+   "creator_is_arp": true,
+   "holders": [
+    "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f"
+   ],
+   "agent_is_arp_test": true
+  },
+  {
+   "outcome_term": "0xd547b1c23251e683bfe9a0e3e5cc54fc086bee1c7b5046515bd18e13bb1b4a8b",
+   "at": "2026-11-05T15:51:05+00:00",
+   "agent": "Agent 13579:6",
+   "tool": "Agent 13579:2",
+   "domain": null,
+   "outcome": "worked",
+   "creator_is_arp": true,
+   "holders": [
+    "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f"
+   ],
+   "agent_is_arp_test": true
+  },
+  {
+   "outcome_term": "0x4e01af3e5d851918bd2334e3df7b6d0dda7af68dbc015b44eaf73a39bd5eb16a",
+   "at": "2026-11-05T18:13:17+00:00",
+   "agent": "Agent 13579:3",
+   "tool": "Agent 13579:2",
+   "domain": "document",
+   "outcome": "worked",
+   "creator_is_arp": true,
+   "holders": [
+    "0xE596096F4176b682E300d73963e7B04B383C1AA1"
+   ],
+   "agent_is_arp_test": true
+  },
+  {
+   "outcome_term": "0xd8090c4ef01198e27cab09eb34723314c4a6aa313a305b1c5aaa811cdf7346cc",
+   "at": "2026-11-05T18:14:06+00:00",
+   "agent": "Agent 13579:3",
+   "tool": "Agent 13579:2",
+   "domain": "document",
+   "outcome": "failed",
+   "creator_is_arp": true,
+   "holders": [
+    "0xE596096F4176b682E300d73963e7B04B383C1AA1"
+   ],
+   "agent_is_arp_test": true
+  },
+  {
+   "outcome_term": "0x820cba8582ab197268c2b2d03a09e3bafe529d14c3543491efc3a679bec47bfe",
+   "at": "2026-11-05T18:42:38+00:00",
+   "agent": "Agent 13579:12",
+   "tool": "github.com/intuition-box/ARP?skill=arp",
+   "domain": "development",
+   "outcome": "failed",
+   "creator_is_arp": true,
+   "holders": [
+    "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+    "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42"
+   ],
+   "agent_is_arp_test": true
+  },
+  {
+   "outcome_term": "0x9bc685e5f9baf1647818cc20edd604845bde42a11de9db66c0e22879d2c2c9eb",
+   "at": "2026-11-05T18:57:10+00:00",
+   "agent": "Agent 13579:38",
+   "tool": "github.com/softaworks/agent-toolkit?skill=web-to-markdown",
+   "domain": "document",
+   "outcome": "failed",
+   "creator_is_arp": true,
+   "holders": [
+    "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+    "0xd092f619687e774150b195f70EC54864C6053Db0"
+   ],
+   "agent_is_arp_test": true
+  },
+  {
+   "outcome_term": "0xcd5efa169a04526a191ffe5110e0c742138b37da68e81e9d74360da86669db3f",
+   "at": "2026-11-09T10:20:39+00:00",
+   "agent": "Agent 13579:12",
+   "tool": "github.com/anthropics/skills?skill=pptx",
+   "domain": "presentation",
+   "outcome": "worked",
+   "creator_is_arp": true,
+   "holders": [
+    "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+    "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42"
+   ],
+   "agent_is_arp_test": true
+  },
+  {
+   "outcome_term": "0x18bcb4be48db7b65803bd67455effff9312c65778e57f2a5459d9b7d8e149491",
+   "at": "2026-11-10T07:16:12+00:00",
+   "agent": "Agent 13579:12",
+   "tool": "127.0.0.1:4021/x402-demo/no-delivery",
+   "domain": null,
+   "outcome": "failed",
+   "creator_is_arp": true,
+   "holders": [
+    "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+    "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42"
+   ],
+   "agent_is_arp_test": true
+  },
+  {
+   "outcome_term": "0xd9a892d42a50c0204cdd468dfffad99eb993ff7d1df96bb5148fa0a38a186a99",
+   "at": "2026-11-11T15:08:41+00:00",
+   "agent": "Agent 13579:12",
+   "tool": "seller.arp.intuition.box/x402-demo/no-delivery",
+   "domain": null,
+   "outcome": "failed",
+   "creator_is_arp": true,
+   "holders": [
+    "0x77939A4c276f3E549276CEB3A09CDa1fF58b7ec9",
+    "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42"
+   ],
+   "agent_is_arp_test": true
+  }
+ ]
+}
+
+### 2. One line read forward from its T1
+
+query Below($terms: [String!]!) {
+  triples(where: {subject_id: {_in: $terms}}) {
+    term_id subject_id predicate { term_id label } object { label }
+    positions(where: {shares: {_gt: "0"}}) { account_id }
+  }
+}
+
+variables: {"terms":["0xd2d718776d0a7ff6dd32185b6cc689d1f5ece14d1d9c0e90803884093ab80450"]}
+
+answer:
+[
+ {
+  "depth": 2,
+  "rows": [
+   {
+    "term_id": "0xdf6c86a8c7b39bf4bc8238e29b401c1303cab402951cf45dbefff5c8af0521be",
+    "about": "0xd2d718776d0a7ff6dd32185b6cc689d1f5ece14d1d9c0e90803884093ab80450",
+    "predicate": "in context of",
+    "predicate_id": "0x61a88b9c372c0d164d2caf66947b67ed0fcb4c457178a271b6b3dc39fb1f8862",
+    "object": "video",
+    "holders": 1
+   },
+   {
+    "term_id": "0xb18171111fc67205a67d344823b8b208a5407abf8830d7e35c3dc0b73ff2ae2e",
+    "about": "0xd2d718776d0a7ff6dd32185b6cc689d1f5ece14d1d9c0e90803884093ab80450",
+    "predicate": "has outcome",
+    "predicate_id": "0xa72b54260675ac655230b9d16f853f913ba98cc87a5fbc0934f8e9c978cff264",
+    "object": "failed",
+    "holders": 1
+   }
+  ]
+ },
+ {
+  "depth": 3,
+  "rows": [
+   {
+    "term_id": "0xd624f0745b95a44d07735d1f4886a38befc821fc85f6de8c834062a936b25181",
+    "about": "0xdf6c86a8c7b39bf4bc8238e29b401c1303cab402951cf45dbefff5c8af0521be",
+    "predicate": "has outcome",
+    "predicate_id": "0xa72b54260675ac655230b9d16f853f913ba98cc87a5fbc0934f8e9c978cff264",
+    "object": "failed",
+    "holders": 1
+   }
+  ]
+ },
+ {
+  "depth": 4,
+  "rows": [
+   {
+    "term_id": "0xadfb8ae742112595b1ee6d11a9fab5bcef40e718c9b77aaf012a208498a3a7f5",
+    "about": "0xd624f0745b95a44d07735d1f4886a38befc821fc85f6de8c834062a936b25181",
+    "predicate": "because",
+    "predicate_id": "0xe188e93174034a79b15bd58449d42ae9e7f43e2523fdca5061e9cafdbb51702c",
+    "object": "missing-key",
+    "holders": 1
+   }
+  ]
+ },
+ {
+  "depth": 5,
+  "rows": []
+ }
+]
+
+### 3. Versioned lines and receipt evidence
+
+query Versioned($uses: String!, $version: String!, $hasEvidence: String!) {
+  versioned: triples_aggregate(where: {predicate_id: {_eq: $uses}, object_term: {triple: {predicate_id: {_eq: $version}}}}) { aggregate { count } }
+  versions: triples_aggregate(where: {predicate_id: {_eq: $version}, object: {label: {_like: "sha256:%"}}}) { aggregate { count } }
+  receipts: triples_aggregate(where: {predicate_id: {_eq: $hasEvidence}, object: {label: {_like: "content-receipt:%"}}}) { aggregate { count } }
+  evidenceAny: triples_aggregate(where: {predicate_id: {_eq: $hasEvidence}}) { aggregate { count } }
+}
+
+variables: {"uses":"0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800","version":"0x9622ec9e9e8265253328648119d02f85234737b991cf34ac9416b163b6e10230","hasEvidence":"0x010057d90d7b6f0ecdb5c37e6bac9531881178a94603c7a50834a0f7a42795d5"}
+
+answer:
+{
+ "versioned": {
+  "aggregate": {
+   "count": 0
+  }
+ },
+ "versions": {
+  "aggregate": {
+   "count": 0
+  }
+ },
+ "receipts": {
+  "aggregate": {
+   "count": 0
+  }
+ },
+ "evidenceAny": {
+  "aggregate": {
+   "count": 61
+  }
+ }
+}
+
+### 4. Lines that name a payment
+
+query Paid($paidWith: String!) {
+  triples(where: {predicate_id: {_eq: $paidWith}}, order_by: {created_at: asc}) {
+    term_id created_at subject_id object { label }
+    positions(where: {shares: {_gt: "0"}}) { account_id }
+  }
+}
+
+variables: {"paidWith":"0x555e6e0864ceabc0edae2b5607c00daa866259ed0f2c9ceb6a2bc20da67cf238"}
+
+answer:
+{
+ "triples": [
+  {
+   "term_id": "0xefdb82325730c58d13c9018fc411e2b5fca60d399fa22b5c664f88d024beca01",
+   "created_at": "2026-11-10T07:16:16+00:00",
+   "subject_id": "0x18bcb4be48db7b65803bd67455effff9312c65778e57f2a5459d9b7d8e149491",
+   "object": {
+    "label": "eip155:84532/tx/0xa08cad0c23e2a74b70f47f85b395ebe20e7052befe58a2f67cc007d3ce7d7191"
+   },
+   "positions": [
+    {
+     "account_id": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42"
+    },
+    {
+     "account_id": "0xE596096F4176b682E300d73963e7B04B383C1AA1"
+    }
+   ]
+  },
+  {
+   "term_id": "0x144e04f5bcc802894c6b6dd277998cd70a66627bafe9e6d6c1ebf09ea9b45436",
+   "created_at": "2026-11-10T11:35:43+00:00",
+   "subject_id": "0x18bcb4be48db7b65803bd67455effff9312c65778e57f2a5459d9b7d8e149491",
+   "object": {
+    "label": "eip155:84532/tx/0x8e0483db4cc7b3c605ef1c6deac44209cf6b72ca566e7028efd795f04dc643c7 http://127.0.0.1:4021/x402-demo/no-delivery"
+   },
+   "positions": [
+    {
+     "account_id": "0xE596096F4176b682E300d73963e7B04B383C1AA1"
+    },
+    {
+     "account_id": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42"
+    }
+   ]
+  },
+  {
+   "term_id": "0xd2930d0376524eec84d182d0758aec67e996d358545f603a2996ce16003f5924",
+   "created_at": "2026-11-11T15:08:43+00:00",
+   "subject_id": "0xd9a892d42a50c0204cdd468dfffad99eb993ff7d1df96bb5148fa0a38a186a99",
+   "object": {
+    "label": "eip155:84532/tx/0x10f48d8562e0bed45eeffc825624b6af5579c75e90acddd55b1ef141ae179e5d https://seller.arp.intuition.box/x402-demo/no-delivery"
+   },
+   "positions": [
+    {
+     "account_id": "0x77939A4c276f3E549276CEB3A09CDa1fF58b7ec9"
+    },
+    {
+     "account_id": "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42"
+    }
+   ]
+  }
+ ]
+}
+
+### 5. Reasons and named needs on these lines, and every use of the same words
+
+query Why($because: String!, $with: String!, $needs: String!, $outcomes: [String!]!) {
+  because: triples(where: {predicate_id: {_eq: $because}, subject_id: {_in: $outcomes}}) { object { label } }
+  with: triples(where: {predicate_id: {_eq: $with}, subject_id: {_in: $outcomes}}) { object { label } }
+  needs: triples_aggregate(where: {predicate_id: {_eq: $needs}}) { aggregate { count } }
+  becauseAnywhere: triples_aggregate(where: {predicate_id: {_eq: $because}}) { aggregate { count } }
+  withAnywhere: triples_aggregate(where: {predicate_id: {_eq: $with}}) { aggregate { count } }
+}
+
+variables: {"because":"0xe188e93174034a79b15bd58449d42ae9e7f43e2523fdca5061e9cafdbb51702c","with":"0x7a12f602febf92f0b79d06919fc136f48598f01321af9c3beae7ed7aae5a8eca","needs":"0x8d4bd8f2ca7f4b33d7a75d831a82c56b4fcb5ae3be86001dd9d94501341986d9","outcomes":"the 12 outcome terms of query 1"}
+
+answer:
+{
+ "because_on_lines": {
+  "missing-key": 1,
+  "missing-file": 2,
+  "missing-program": 1,
+  "no-delivery": 2
+ },
+ "with_on_lines": {},
+ "needs_anywhere": 0,
+ "because_anywhere": 11,
+ "with_anywhere": 1
+}
+
+### 6. The domain tree ARP's attestors stand behind
+
+query Tree($subDomainOf: String!, $attestors: [String!]!) {
+  all: triples_aggregate(where: {predicate_id: {_eq: $subDomainOf}}) { aggregate { count } }
+  attested: triples(where: {predicate_id: {_eq: $subDomainOf}, positions: {account_id: {_in: $attestors}, shares: {_gt: "0"}}}, limit: 1000) {
+    subject { label } object { label }
+  }
+}
+
+variables: {"subDomainOf":"0x9c2e2f2018dbfaa74fd3fd86cd54a62b16e771936f5d342e3751db8d0c046f80","attestors":["0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f","0xE596096F4176b682E300d73963e7B04B383C1AA1","0x77939A4c276f3E549276CEB3A09CDa1fF58b7ec9"]}
+
+answer:
+{
+ "edges_on_chain": 313,
+ "edges_attested": 243,
+ "under_tool": [
+  "ai/ml engineering",
+  "audio & speech processing",
+  "business and professional",
+  "computer vision",
+  "content, writing and marketing",
+  "cybersecurity",
+  "data engineering and analytics",
+  "devops and cloud infrastructure",
+  "governance, compliance and ethics",
+  "language processing",
+  "reasoning and planning",
+  "research, knowledge and productivity",
+  "software engineering",
+  "tool use and automation"
+ ],
+ "under_video": [
+  "image to video",
+  "talking avatar generation",
+  "text to video",
+  "video editing"
+ ],
+ "domains_named_by_lines": {
+  "video": [
+   "video",
+   "computer vision",
+   "tool"
+  ],
+  "document": null,
+  "development": null,
+  "presentation": null
+ }
+}
+
+### 7. Subjects typed Skill
+
+query Typed($hasType: String!, $skill: String!) {
+  triples(where: {predicate_id: {_eq: $hasType}, object_id: {_eq: $skill}}) { subject { label } creator_id }
+}
+
+variables: {"hasType":"0xa632a94306ab1d56911cff8c06473659a7caa2dfec6de3921bc23ec8ebf96ced","skill":"0xba57c5daf6c9b8b7821406db1bff01427b385a4a041f2ddd5cf004e80949610c"}
+
+answer:
+{
+ "triples": [
+  {
+   "subject": {
+    "label": "int:url:https://github.com/anthropics/skills/tree/main/skills/frontend-design"
+   },
+   "creator_id": "0x232C0e54a9fC9872D1682877EB1EE0812837F605"
+  },
+  {
+   "subject": {
+    "label": "int:url:https://github.com/vercel-labs/agent-skills/tree/main/skills/composition-patterns"
+   },
+   "creator_id": "0x232C0e54a9fC9872D1682877EB1EE0812837F605"
+  },
+  {
+   "subject": {
+    "label": "int:url:https://github.com/anthropics/skills/tree/main/skills/docx"
+   },
+   "creator_id": "0x232C0e54a9fC9872D1682877EB1EE0812837F605"
+  },
+  {
+   "subject": {
+    "label": "int:url:https://github.com/inference-sh/skills/tree/main/tools/image/ai-image-generation"
+   },
+   "creator_id": "0x232C0e54a9fC9872D1682877EB1EE0812837F605"
+  },
+  {
+   "subject": {
+    "label": "int:url:https://github.com/anthropics/skills/tree/main/skills/mcp-builder"
+   },
+   "creator_id": "0x232C0e54a9fC9872D1682877EB1EE0812837F605"
+  },
+  {
+   "subject": {
+    "label": "int:url:https://github.com/softaworks/agent-toolkit/tree/main/dist/plugins/agent-md-refactor/skills/agent-md-refactor"
+   },
+   "creator_id": "0x232C0e54a9fC9872D1682877EB1EE0812837F605"
+  }
+ ]
+}
+
+### 8. All `uses` edges, and those carrying a domain
+
+query Uses($uses: String!, $inContextOf: String!) {
+  uses: triples_aggregate(where: {predicate_id: {_eq: $uses}}) { aggregate { count } }
+  usesQualified: triples_aggregate(where: {predicate_id: {_eq: $inContextOf}, subject_term: {triple: {predicate_id: {_eq: $uses}}}}) { aggregate { count } }
+}
+
+variables: {"uses":"0x5c0bde1cc696456c0268248c4656acdf9621fdb39e605bc99b0a83dc8ff6e800","inContextOf":"0x61a88b9c372c0d164d2caf66947b67ed0fcb4c457178a271b6b3dc39fb1f8862"}
+
+answer:
+{
+ "uses": {
+  "aggregate": {
+   "count": 192
+  }
+ },
+ "usesQualified": {
+  "aggregate": {
+   "count": 8
+  }
+ }
+}
+
