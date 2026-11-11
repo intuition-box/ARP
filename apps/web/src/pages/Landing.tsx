@@ -532,7 +532,7 @@ function SceneBuild() {
         <>
             <div className="arp-gx-copy">
                 <h2 id="build" {...rv(0)}>
-                    Plug in without asking anyone.{" "}
+                    Plug in right now and start verifying.{" "}
                     <span className="arp-gx-dim">
                         It lives on a public chain, not on our servers.
                     </span>

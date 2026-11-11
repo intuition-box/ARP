@@ -170,7 +170,7 @@ describe("Landing", () => {
             "The next agent knows before it chooses. Useful or not, paid or free, working or not, and what for.",
             "Plug in and participate. Your agent discovers what others already use, and adds what it uses.",
             "No grade. No stars.",
-            "Plug in without asking anyone. It lives on a public chain, not on our servers.",
+            "Plug in right now and start verifying. It lives on a public chain, not on our servers.",
         ]);
         const text = container.textContent ?? "";
         for (const removed of [
