@@ -1,8 +1,13 @@
-import { describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, test } from 'bun:test';
 
-import { runSlice, unitsOf, type Store } from '../src/refresh.ts';
+import {
+  REPOS as CATALOGUE_REPOS,
+  SKILLS as CATALOGUE_SKILLS,
+  skillLabel,
+} from '../src/catalogue.ts';
+import { runSlice, unitsOf, type CycleState, type Store } from '../src/refresh.ts';
 import { readRepo, readSkillPage, readTree, shorten, type Fetch } from '../src/sources.ts';
-import { handle, sameSecret, type Env } from '../src/worker.ts';
+import worker, { handle, sameSecret, type Env } from '../src/worker.ts';
 
 function memoryStore(): Store & { data: Map<string, string>; writes: number } {
   const data = new Map<string, string>();
@@ -326,5 +331,169 @@ describe('the HTTP surface', () => {
       headers: { authorization: 'Bearer no' },
     });
     expect((await handle(wrong, env(store, 'yes'))).status).toBe(401);
+  });
+});
+
+describe('the rest of the HTTP surface', () => {
+  const authorised = (query = '') =>
+    new Request(`http://api/refresh${query}`, {
+      method: 'POST',
+      headers: { authorization: 'Bearer yes' },
+    });
+  const limited: Fetch = async () => new Response('slow down', { status: 429 });
+  const catalogueUnits = unitsOf(CATALOGUE_REPOS, CATALOGUE_SKILLS);
+
+  test('OPTIONS answers the CORS preflight with no body', async () => {
+    const response = await handle(new Request('http://api/facts', { method: 'OPTIONS' }), {
+      FACTS: memoryStore(),
+    });
+    expect(response.status).toBe(204);
+    expect(response.headers.get('access-control-allow-methods')).toBe('GET, OPTIONS');
+    expect(await response.text()).toBe('');
+  });
+
+  test('GET /healthz serves the cycle state, empty before the first slice', async () => {
+    const response = await handle(new Request('http://api/healthz'), { FACTS: memoryStore() });
+    expect(await response.json()).toEqual({
+      ok: true,
+      state: { cycleStartedAt: null, completedAt: null, cursor: 0, lastErrors: [] },
+    });
+  });
+
+  test('an unknown route names the four that exist', async () => {
+    const response = await handle(new Request('http://api/nope'), { FACTS: memoryStore() });
+    expect(response.status).toBe(404);
+    expect(((await response.json()) as { error: string }).error).toContain('GET /facts');
+  });
+
+  test('a last purchase nobody could read, and none cached, is a 502 with the reason', async () => {
+    const failing: Fetch = async () => new Response('down', { status: 500 });
+    const response = await handle(
+      new Request(`http://api/x402/last-purchase?url=${encodeURIComponent('https://a.example/x')}`),
+      { FACTS: memoryStore() },
+      failing,
+    );
+    expect(response.status).toBe(502);
+    expect(((await response.json()) as { error: string }).error).toContain('HTTP 500');
+  });
+
+  test('POST /refresh with the secret runs one slice and answers its result', async () => {
+    const store = memoryStore();
+    const response = await handle(authorised(), { FACTS: store, REFRESH_SECRET: ' yes ' }, limited);
+    const body = (await response.json()) as { ran: number; idle: boolean; state: CycleState };
+    expect(body.ran).toBe(0);
+    expect(body.idle).toBe(false);
+    expect(body.state.lastErrors).toEqual([expect.stringContaining('HTTP 429')]);
+    expect(store.data.has('state')).toBe(true);
+  });
+
+  test('?all=1 runs slices back to back until one makes no progress', async () => {
+    const store = memoryStore();
+    const start = catalogueUnits.length - 2;
+    await store.put(
+      'state',
+      JSON.stringify({
+        cycleStartedAt: '2026-11-11T00:00:00.000Z',
+        completedAt: null,
+        cursor: start,
+        lastErrors: [],
+      } satisfies CycleState),
+    );
+    const last = catalogueUnits[start];
+    if (last?.kind !== 'page') throw new Error('the catalogue ends with skill pages');
+    let calls = 0;
+    const onceThenLimited: Fetch = async () => {
+      calls += 1;
+      return calls === 1 ? page('a skill', 7) : new Response('slow down', { status: 429 });
+    };
+    const response = await handle(
+      authorised('?all=1'),
+      { FACTS: store, REFRESH_SECRET: 'yes' },
+      onceThenLimited,
+    );
+    const body = (await response.json()) as { ran: number; state: CycleState };
+    // Slice one read a page and hit the limit on the next; slice two read nothing and stopped the loop.
+    expect(calls).toBe(3);
+    expect(body.ran).toBe(0);
+    expect(body.state.cursor).toBe(start + 1);
+    const skills = JSON.parse(store.data.get('skills') ?? '{}') as Record<
+      string,
+      { installs: number }
+    >;
+    expect(skills[skillLabel(last.skill.repo, last.skill.skill)]?.installs).toBe(7);
+  });
+
+  test('an interval that is not a positive number falls back to a day', async () => {
+    const store = memoryStore();
+    const twoHoursAgo = new Date(Date.now() - 2 * 3_600_000).toISOString();
+    const finished = {
+      cycleStartedAt: twoHoursAgo,
+      completedAt: twoHoursAgo,
+      cursor: catalogueUnits.length,
+      lastErrors: [],
+    } satisfies CycleState;
+    await store.put('state', JSON.stringify(finished));
+    const idle = await handle(
+      authorised(),
+      { FACTS: store, REFRESH_SECRET: 'yes', REFRESH_EVERY_HOURS: 'soon' },
+      limited,
+    );
+    expect(((await idle.json()) as { idle: boolean }).idle).toBe(true);
+    const due = await handle(
+      authorised(),
+      { FACTS: store, REFRESH_SECRET: 'yes', REFRESH_EVERY_HOURS: '1' },
+      limited,
+    );
+    const body = (await due.json()) as { idle: boolean; state: CycleState };
+    expect(body.idle).toBe(false);
+    expect(body.state.cursor).toBe(0);
+  });
+});
+
+describe('the Worker entry', () => {
+  const realFetch = globalThis.fetch;
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+  });
+  /** The entry uses the global fetch; any call here would be a live request, so it fails the test. */
+  const forbidNetwork = () => {
+    const calls: string[] = [];
+    globalThis.fetch = Object.assign(
+      async (input: string | URL | Request) => {
+        calls.push(String(input));
+        return new Response('no network in a test', { status: 500 });
+      },
+      { preconnect: realFetch.preconnect },
+    );
+    return calls;
+  };
+
+  test('fetch routes to the handler', async () => {
+    const calls = forbidNetwork();
+    const response = await worker.fetch(new Request('http://api/healthz'), {
+      FACTS: memoryStore(),
+    });
+    expect(((await response.json()) as { ok: boolean }).ok).toBe(true);
+    expect(calls).toEqual([]);
+  });
+
+  test('the cron hands one slice to waitUntil, which idles while a finished cycle is fresh', async () => {
+    const calls = forbidNetwork();
+    const store = memoryStore();
+    const now = new Date().toISOString();
+    await store.put(
+      'state',
+      JSON.stringify({
+        cycleStartedAt: now,
+        completedAt: now,
+        cursor: unitsOf(CATALOGUE_REPOS, CATALOGUE_SKILLS).length,
+        lastErrors: [],
+      } satisfies CycleState),
+    );
+    const handed: Promise<unknown>[] = [];
+    worker.scheduled(null, { FACTS: store }, { waitUntil: (promise) => handed.push(promise) });
+    expect(handed).toHaveLength(1);
+    expect(await handed[0]).toMatchObject({ ran: 0, idle: true });
+    expect(calls).toEqual([]);
   });
 });
