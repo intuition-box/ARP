@@ -1,11 +1,11 @@
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from 'bun:test';
 
 import pkg from '../package.json';
-import { DESKTOP_ENV, manifest } from '../scripts/mcpb.ts';
+import { DESKTOP_ENV, build, manifest, runInherit, sha256 } from '../scripts/mcpb.ts';
 
 /** The Claude Desktop extension's manifest (task 135, ADR `0110`). */
 const built = manifest(pkg.version);
@@ -88,3 +88,61 @@ test('the bundled server leaves a choice made in Claude Code alone while the box
     rmSync(home, { recursive: true, force: true });
   }
 }, 40_000);
+
+test('build stages arp.js, its package.json, the icon and the manifest, validates, then packs', () => {
+  const root = mkdtempSync(join(tmpdir(), 'arp-mcpb-'));
+  try {
+    const bin = join(root, 'bin');
+    const cli = join(root, 'cli');
+    const out = join(root, 'out');
+    for (const dir of [bin, join(cli, 'assets')]) mkdirSync(dir, { recursive: true });
+    writeFileSync(join(bin, 'arp.js'), 'server');
+    writeFileSync(join(bin, 'package.json'), '{"type":"module"}');
+    writeFileSync(join(cli, 'assets', 'icon.png'), 'png');
+    const calls: string[][] = [];
+    const file = build({ bin, cli, out, mcpb: 'mcpb' }, (command, args) => {
+      calls.push([command, ...args]);
+    });
+
+    const stage = join(out, 'stage');
+    expect(file).toBe(join(out, `arp-${pkg.version}.mcpb`));
+    expect(calls).toEqual([
+      ['mcpb', 'validate', join(stage, 'manifest.json')],
+      ['mcpb', 'pack', stage, file],
+    ]);
+    expect(readFileSync(join(stage, 'server', 'arp.js'), 'utf8')).toBe('server');
+    expect(readFileSync(join(stage, 'icon.png'), 'utf8')).toBe('png');
+    expect(JSON.parse(readFileSync(join(stage, 'manifest.json'), 'utf8'))).toEqual(manifest(pkg.version));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('build refuses before writing anything when arp.js has not been packaged', () => {
+  const root = mkdtempSync(join(tmpdir(), 'arp-mcpb-'));
+  try {
+    const out = join(root, 'out');
+    expect(() => build({ bin: join(root, 'bin'), cli: root, out, mcpb: 'mcpb' }, () => undefined)).toThrow(
+      /arp\.js is missing: run bun run packages first/,
+    );
+    expect(existsSync(out)).toBe(false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('sha256 is the hex digest of the file', () => {
+  const root = mkdtempSync(join(tmpdir(), 'arp-mcpb-'));
+  try {
+    const file = join(root, 'f');
+    writeFileSync(file, 'abc');
+    expect(sha256(file)).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('the default runner passes when the command exits 0 and throws when it does not', () => {
+  expect(() => runInherit(process.execPath, ['-e', ''])).not.toThrow();
+  expect(() => runInherit(process.execPath, ['-e', 'process.exit(3)'])).toThrow();
+});

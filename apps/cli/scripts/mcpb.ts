@@ -26,7 +26,6 @@ const CLI = resolve(import.meta.dir, '..');
 const ROOT = resolve(CLI, '..', '..');
 const BIN = join(ROOT, 'packaging', 'claude', 'arp', 'bin');
 const OUT = join(CLI, 'dist-mcpb');
-const STAGE = join(OUT, 'stage');
 const MCPB = join(CLI, 'node_modules', '.bin', 'mcpb');
 
 // This package's own manifest: the three fields read below are in it, and `bun run mcpb` fails at once if not.
@@ -92,21 +91,37 @@ export function manifest(version: string) {
   };
 }
 
-function sha256(path: string): string {
+export function sha256(path: string): string {
   return createHash('sha256').update(readFileSync(path)).digest('hex');
 }
 
-if (import.meta.main) {
-  if (!existsSync(join(BIN, 'arp.js'))) throw new Error(`${BIN}/arp.js is missing: run bun run packages first`);
-  rmSync(OUT, { recursive: true, force: true });
-  mkdirSync(join(STAGE, 'server'), { recursive: true });
-  copyFileSync(join(BIN, 'arp.js'), join(STAGE, 'server', 'arp.js'));
-  copyFileSync(join(BIN, 'package.json'), join(STAGE, 'server', 'package.json'));
-  copyFileSync(join(CLI, 'assets', 'icon.png'), join(STAGE, 'icon.png'));
-  writeFileSync(join(STAGE, 'manifest.json'), `${JSON.stringify(manifest(pkg.version), null, 2)}\n`);
+/** Where `build` reads and writes, and how it runs `mcpb`; the defaults are this repo's. */
+export type BuildPaths = { bin: string; out: string; cli: string; mcpb: string };
 
-  execFileSync(MCPB, ['validate', join(STAGE, 'manifest.json')], { stdio: 'inherit' });
-  const file = join(OUT, `arp-${pkg.version}.mcpb`);
-  execFileSync(MCPB, ['pack', STAGE, file], { stdio: 'inherit' });
+type Run = (file: string, args: string[]) => void;
+
+export const runInherit: Run = (file, args) => {
+  execFileSync(file, args, { stdio: 'inherit' });
+};
+
+/** Stages the bundle, validates its manifest and packs it; returns the `.mcpb` file it wrote. */
+export function build(paths: BuildPaths = { bin: BIN, out: OUT, cli: CLI, mcpb: MCPB }, run: Run = runInherit): string {
+  const stage = join(paths.out, 'stage');
+  if (!existsSync(join(paths.bin, 'arp.js'))) throw new Error(`${paths.bin}/arp.js is missing: run bun run packages first`);
+  rmSync(paths.out, { recursive: true, force: true });
+  mkdirSync(join(stage, 'server'), { recursive: true });
+  copyFileSync(join(paths.bin, 'arp.js'), join(stage, 'server', 'arp.js'));
+  copyFileSync(join(paths.bin, 'package.json'), join(stage, 'server', 'package.json'));
+  copyFileSync(join(paths.cli, 'assets', 'icon.png'), join(stage, 'icon.png'));
+  writeFileSync(join(stage, 'manifest.json'), `${JSON.stringify(manifest(pkg.version), null, 2)}\n`);
+
+  run(paths.mcpb, ['validate', join(stage, 'manifest.json')]);
+  const file = join(paths.out, `arp-${pkg.version}.mcpb`);
+  run(paths.mcpb, ['pack', stage, file]);
+  return file;
+}
+
+if (import.meta.main) {
+  const file = build();
   console.log(`wrote ${file}\nsha256 ${sha256(file)}`);
 }
