@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-178 decisions. Newest last. `choices/README.md` says when to write one.
+179 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -225,3 +225,4 @@ Read these before relying on them.
 | [0186](0186-an-endpoint-url-is-written-without-its-values.md) | 2026-11-11 | Accepted | An x402 endpoint's URL is written without its values, reduced at the payer before signing |
 | [0187](0187-an-endpoints-last-purchase-is-read-on-demand-and-shown-beside-the-lines.md) | 2026-11-11 | Accepted | An endpoint's last purchase by nohumans.directory is read on demand, and shown beside the lines |
 | [0188](0188-the-signed-line-request-is-kept-by-the-sponsor-and-published-in-the-x402-feed.md) | 2026-11-11 | Accepted | An x402 line's signed request is kept by the sponsoring service and published in the x402 feed |
+| [0189](0189-an-x402-line-names-the-terms-it-paid-and-they-are-checked-against-the-endpoint.md) | 2026-11-11 | Accepted | An x402 line names the terms it paid against, and they are checked against the endpoint |

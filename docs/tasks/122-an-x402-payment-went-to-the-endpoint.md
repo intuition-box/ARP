@@ -1,7 +1,11 @@
 # Task 122 — An x402 line's payment went to the endpoint, for its price
 
-**Status:** spec, 2026-11-11, written by arp-c1 for the orchestrator. Task 122, ADR `0189`, post-mortem `110`,
-allocated by the orchestrator. Nothing built. Sequenced after task 121 (the payer's signature in the feed): if both change the
+**Status:** verified 2026-11-11, `task-verifier` PASS (round 2; round 1 failed on two uncommented `as`
+casts in `apps/sponsor/src/x402-terms-read.ts`), post-mortem `.claude/learning/110-an-x402-payment-went-to-the-endpoint.md`,
+ADR `0189`; commits `98b12bfd`, `4e969b43` on the worktree branch, for the orchestrator to push. **Line request
+version 5** (terms signed, `no-delivery` requires a payment, the orchestrator's scope addition): breaks CLI 0.0.3
+against a sponsor built from it. Feed schema `arp.x402-outcomes/4`.
+Spec as written: 2026-11-11, by arp-c1 for the orchestrator. Sequenced after task 121 (the payer's signature in the feed): if both change the
 line request, it gets one version bump, not two.
 **ADR:** one (the choice of section 3 and the new fields).
 **Rules:** `code.md`, `security.md` (a payment proof read on another chain; the signing list if the line
