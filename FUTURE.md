@@ -769,3 +769,11 @@ Intuition's GraphQL, which are third parties. The result is what `ARP_SEARCH_CON
 set to in Coolify.
 
 `.claude/STATE.md` (the user's list, 2026-11-03) gives performance checks to another session.
+
+## A staging that follows `dev`
+
+**Asked 2026-11-11, set for later by the user** (« on fera le staging plus tard »). Since that day every merge goes to `dev`, and `main` gets grouped pushes on the user's go: Coolify deploys every app from `main`, and one afternoon of merges had queued 14 deployments.
+
+**Proposed.** Four Coolify apps built from `dev`, with auto-deploy on: the site `staging.arp.intuition.box`, the sponsor `sponsor-staging.arp.intuition.box`, the MCP endpoint `mcp-staging.arp.intuition.box`, the content server `content-staging.arp.intuition.box`. The wildcard DNS already covers them. The site's `VITE_ARP_SPONSOR_URL` points at the staging sponsor; a tester points the CLI there with `ARP_SPONSOR` and `ARP_CONTENT`. The x402 demo seller needs no staging copy.
+
+**Open.** The staging sponsor's key: its own, with a small budget and its own `/data` volume (recommended, so a test never touches the production ledger or budget), or the production key (simpler, but two services on one address race each other). Its address would also go into the content signers and, if it files categories, into `ARP_DOMAIN_ATTESTORS`.
