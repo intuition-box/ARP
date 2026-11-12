@@ -10,6 +10,14 @@ import type {MintQuote} from "../../services/identity-mint";
 import type {ToolRegistration} from "../../services/tool-register";
 import type {RedeemQuote, StakeChain, StakeQuote, StakeTarget} from "../../services/trust-stake";
 import {hookProviders} from "./hook-providers";
+// Static, not `await import`: vi.mock is hoisted above these, and a module loaded at the top level
+// with `await` was seen loading after the environment had been torn down under a loaded machine.
+import {useAgentImport} from "../use-agent-import";
+import {useDeclareUse} from "../use-declare-use";
+import {draftToAgentUri, useIdentityMint} from "../use-identity-mint";
+import {useProposeCategory} from "../use-propose-category";
+import {useStakeActions} from "../use-stake-actions";
+import {useToolRegister} from "../use-tool-register";
 
 /**
  * The hooks that sign. Each one's contract with its page: it prices on the chain the page chose,
@@ -38,7 +46,11 @@ vi.mock("../../services/trust-stake", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../../services/trust-stake")>()),
     ...stake,
 }));
-const txRecord = vi.hoisted(() => ({recordSent: vi.fn(), recordSettled: vi.fn(), recordUnsettled: vi.fn()}));
+const txRecord = vi.hoisted(() => ({
+    recordSent: vi.fn(),
+    recordSettled: vi.fn(),
+    recordUnsettled: vi.fn(),
+}));
 vi.mock("../../services/tx-record", () => txRecord);
 const mint = vi.hoisted(() => ({quoteMint: vi.fn(), submitMint: vi.fn()}));
 vi.mock("../../services/identity-mint", async (importOriginal) => ({
@@ -50,7 +62,10 @@ vi.mock("../../services/declare-use", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../../services/declare-use")>()),
     ...declare,
 }));
-const register = vi.hoisted(() => ({planToolRegistration: vi.fn(), submitToolRegistration: vi.fn()}));
+const register = vi.hoisted(() => ({
+    planToolRegistration: vi.fn(),
+    submitToolRegistration: vi.fn(),
+}));
 vi.mock("../../services/tool-register", async (importOriginal) => ({
     ...(await importOriginal<typeof import("../../services/tool-register")>()),
     ...register,
@@ -75,13 +90,6 @@ vi.mock("../../services/smart-account", async (importOriginal) => ({
     ...smartAccount,
 }));
 
-const {useStakeActions} = await import("../use-stake-actions");
-const {draftToAgentUri, useIdentityMint} = await import("../use-identity-mint");
-const {useDeclareUse} = await import("../use-declare-use");
-const {useToolRegister} = await import("../use-tool-register");
-const {useAgentImport} = await import("../use-agent-import");
-const {useProposeCategory} = await import("../use-propose-category");
-
 const testnet = choiceFor(false);
 const mainnet = choiceFor(true);
 
@@ -100,9 +108,15 @@ describe("useStakeActions", () => {
         const {result} = renderHook(() => useStakeActions(), {wrapper});
         const session = {curveId: 1n, minDeposit: 1n, minShare: 1n};
         await result.current.quote({target, side: "support", assets: 5n, receiver: OWNER, session});
-        expect(stake.quoteStake).toHaveBeenCalledWith(mainnet.client, expect.objectContaining({assets: 5n, chain: mainnet}));
+        expect(stake.quoteStake).toHaveBeenCalledWith(
+            mainnet.client,
+            expect.objectContaining({assets: 5n, chain: mainnet}),
+        );
         await result.current.quoteExit({termId: HASH, curveId: 1n, shares: 3n, receiver: OWNER});
-        expect(stake.quoteRedeem).toHaveBeenCalledWith(mainnet.client, expect.objectContaining({shares: 3n, chain: mainnet}));
+        expect(stake.quoteRedeem).toHaveBeenCalledWith(
+            mainnet.client,
+            expect.objectContaining({shares: 3n, chain: mainnet}),
+        );
     });
 
     it("refuses to sign without a connected wallet", async () => {
@@ -125,7 +139,11 @@ describe("useStakeActions", () => {
         const {result} = renderHook(() => useStakeActions(), {wrapper});
         const quote = {chain: mainnet, assets: 5n} as unknown as StakeQuote; // As above.
         expect(await result.current.submit(quote)).toBe(HASH);
-        expect(txRecord.recordSent).toHaveBeenCalledWith(HASH, {label: "support", chainId: 1155, valueWei: 5n});
+        expect(txRecord.recordSent).toHaveBeenCalledWith(HASH, {
+            label: "support",
+            chainId: 1155,
+            valueWei: 5n,
+        });
         const exit = {chain: testnet} as unknown as RedeemQuote; // As above.
         expect(await result.current.submitExit(exit)).toBe(HASH);
         expect(txRecord.recordSent).toHaveBeenCalledWith(HASH, {label: "withdraw", chainId: 13579});
@@ -135,7 +153,9 @@ describe("useStakeActions", () => {
         const {wrapper} = hookProviders();
         const {result} = renderHook(() => useStakeActions(), {wrapper});
         const receipt = {status: "success"};
-        const settles = {client: {waitForTransactionReceipt: vi.fn(async () => receipt)}} as unknown as StakeChain; // Only the client's receipt wait is used.
+        const settles = {
+            client: {waitForTransactionReceipt: vi.fn(async () => receipt)},
+        } as unknown as StakeChain; // Only the client's receipt wait is used.
         await result.current.awaitReceipt(HASH, settles);
         expect(txRecord.recordSettled).toHaveBeenCalledWith(HASH, receipt);
         const cause = new Error("timeout");
@@ -154,7 +174,9 @@ describe("useStakeActions", () => {
 describe("useIdentityMint", () => {
     it("targets the testnet registry on testnet and Base on mainnet", () => {
         const onTestnet = renderHook(() => useIdentityMint(), {wrapper: hookProviders().wrapper});
-        const onMainnet = renderHook(() => useIdentityMint(), {wrapper: hookProviders({isMainnet: true}).wrapper});
+        const onMainnet = renderHook(() => useIdentityMint(), {
+            wrapper: hookProviders({isMainnet: true}).wrapper,
+        });
         expect(onTestnet.result.current.target.chain.id).toBe(13579);
         expect(onMainnet.result.current.target.chain.id).toBe(8453);
     });
@@ -164,7 +186,11 @@ describe("useIdentityMint", () => {
         const {result} = renderHook(() => useIdentityMint(), {wrapper: hookProviders().wrapper});
         await result.current.quote(OWNER, "data:,x");
         expect(mint.quoteMint).toHaveBeenCalledWith(
-            expect.objectContaining({target: result.current.target, owner: OWNER, agentUri: "data:,x"}),
+            expect.objectContaining({
+                target: result.current.target,
+                owner: OWNER,
+                agentUri: "data:,x",
+            }),
         );
     });
 
@@ -177,7 +203,11 @@ describe("useIdentityMint", () => {
         mint.submitMint.mockResolvedValue({tokenId: "9"});
         expect(await result.current.submit(quoted)).toEqual({tokenId: "9"});
         expect(mint.submitMint).toHaveBeenCalledWith(
-            expect.objectContaining({walletClient: WALLET, agentUri: "data:,x", target: expect.objectContaining({registry: expect.any(String)})}),
+            expect.objectContaining({
+                walletClient: WALLET,
+                agentUri: "data:,x",
+                target: expect.objectContaining({registry: expect.any(String)}),
+            }),
         );
         expect(mint.submitMint.mock.calls[0]?.[0].target.chain.id).toBe(8453);
     });
@@ -199,7 +229,9 @@ describe("useDeclareUse", () => {
         declare.planUseDeclaration.mockResolvedValue({chain: testnet});
         declare.submitUseDeclaration.mockResolvedValue(HASH);
         connectedWalletClient.mockResolvedValue(WALLET);
-        const {result} = renderHook(() => useDeclareUse(), {wrapper: hookProviders({isMainnet: true}).wrapper});
+        const {result} = renderHook(() => useDeclareUse(), {
+            wrapper: hookProviders({isMainnet: true}).wrapper,
+        });
         const agent = {chainId: 13579, tokenId: "1", registry: REGISTRY};
         await result.current.plan({agent, connected: OWNER, object: HASH});
         expect(declare.planUseDeclaration).toHaveBeenCalledWith(
@@ -239,7 +271,12 @@ describe("useAgentImport's signing steps", () => {
     it("verifies ownership of the agent named", async () => {
         agentImport.verifyAgentOwnership.mockResolvedValue({status: "owner"});
         const {result} = renderHook(() => useAgentImport());
-        await result.current.verifyOwnership({chainId: 8453, tokenId: "4", registry: REGISTRY, connected: OWNER});
+        await result.current.verifyOwnership({
+            chainId: 8453,
+            tokenId: "4",
+            registry: REGISTRY,
+            connected: OWNER,
+        });
         expect(agentImport.verifyAgentOwnership).toHaveBeenCalledWith({
             ref: {chainId: 8453, tokenId: "4", registry: REGISTRY},
             connected: OWNER,
@@ -251,7 +288,10 @@ describe("useAgentImport's signing steps", () => {
         smartAccount.createUserSmartAccount.mockResolvedValue({address: REGISTRY});
         const {result} = renderHook(() => useAgentImport());
         expect(await result.current.deriveOperatingAccount(OWNER)).toBe(REGISTRY);
-        expect(smartAccount.createUserSmartAccount).toHaveBeenCalledWith({owner: OWNER, signer: {walletClient: WALLET}});
+        expect(smartAccount.createUserSmartAccount).toHaveBeenCalledWith({
+            owner: OWNER,
+            signer: {walletClient: WALLET},
+        });
     });
 
     it("signs the consent and publishes the link with the connected wallet", async () => {
@@ -278,10 +318,17 @@ describe("useAgentImport's signing steps", () => {
         const {result} = renderHook(() => useAgentImport());
         const onMainnet = {chainId: 1155} as IdentityAtomPlan; // Only `chainId` is read by the hook.
         await result.current.publishIdentity(onMainnet);
-        expect(identityAtom.submitIdentityAtom).toHaveBeenLastCalledWith(expect.objectContaining({chain: mainnet}));
+        expect(identityAtom.submitIdentityAtom).toHaveBeenLastCalledWith(
+            expect.objectContaining({chain: mainnet}),
+        );
         await result.current.publishIdentity({chainId: 13579} as IdentityAtomPlan); // As above.
-        expect(identityAtom.submitIdentityAtom).toHaveBeenLastCalledWith(expect.objectContaining({chain: testnet}));
-        await expect(result.current.publishIdentity({chainId: 8453} as IdentityAtomPlan)).rejects.toThrow( // As above.
+        expect(identityAtom.submitIdentityAtom).toHaveBeenLastCalledWith(
+            expect.objectContaining({chain: testnet}),
+        );
+        await expect(
+            result.current.publishIdentity({chainId: 8453} as IdentityAtomPlan),
+        ).rejects.toThrow(
+            // As above.
             /chain 8453, which ARP does not write to/,
         );
     });
@@ -289,8 +336,12 @@ describe("useAgentImport's signing steps", () => {
 
 describe("useProposeCategory", () => {
     it("posts the request to the sponsor and returns its answer", async () => {
-        const fetchSpy = vi.fn(async () =>
-            new Response(JSON.stringify({label: "payment", newCategory: false, created: true}), {status: 200}),
+        const fetchSpy = vi.fn(
+            async () =>
+                new Response(
+                    JSON.stringify({label: "payment", newCategory: false, created: true}),
+                    {status: 200},
+                ),
         );
         vi.stubGlobal("fetch", fetchSpy);
         const {result} = renderHook(() => useProposeCategory(), {wrapper: hookProviders().wrapper});
@@ -298,11 +349,19 @@ describe("useProposeCategory", () => {
         expect(result.current.result).toBeNull();
         act(() => result.current.submit({label: "payment", subjectId: "0xtool"}));
         await waitFor(() => expect(result.current.result).not.toBeNull());
-        expect(result.current.result).toEqual({status: "done", label: "payment", newCategory: false, created: true});
+        expect(result.current.result).toEqual({
+            status: "done",
+            label: "payment",
+            newCategory: false,
+            created: true,
+        });
         expect(result.current.pending).toBe(false);
         expect(fetchSpy).toHaveBeenCalledWith(
             expect.stringMatching(/\/propose-category$/),
-            expect.objectContaining({method: "POST", body: JSON.stringify({label: "payment", subjectId: "0xtool"})}),
+            expect.objectContaining({
+                method: "POST",
+                body: JSON.stringify({label: "payment", subjectId: "0xtool"}),
+            }),
         );
     });
 });

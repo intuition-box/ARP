@@ -1,4 +1,4 @@
-import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
+import {afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {TransactionReceiptNotFoundError, type Chain, type Hex} from "viem";
 
 /**
@@ -56,6 +56,13 @@ async function load() {
 }
 const confirmed = (log: {all(): readonly {key?: string; label: string}[]}) =>
     log.all().find((entry) => entry.key === `agent:confirmed:${HASH}`);
+
+// The first import transforms viem and the feed's graph; on a loaded machine that alone passed 5 s and
+// the late import then opened a feed inside the next test. Warm it once, so each `load()` re-evaluates
+// cached modules.
+beforeAll(async () => {
+    await import("../agent-feed-live");
+}, 60_000);
 
 beforeEach(() => {
     FakeEventSource.opened = [];

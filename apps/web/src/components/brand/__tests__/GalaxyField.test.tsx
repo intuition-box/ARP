@@ -376,7 +376,7 @@ describe("GalaxyField", () => {
         frames(150);
         frame();
         expect(paint.written().size).toBe(0);
-    });
+    }, 20_000);
 
     it("beats once per real line when scene 0 arrives, and never without one", () => {
         const quiet = galaxy(moving(0, 1), SAMPLE_FIELD, {beats: 0});
