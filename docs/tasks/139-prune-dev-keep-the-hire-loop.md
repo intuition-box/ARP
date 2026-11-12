@@ -1,6 +1,6 @@
 # Task 139 — Prune what production does not need; keep the hire loop on `future/hire-loop`
 
-**Status:** built 2026-11-11 on a worktree branch from `origin/dev` (`72a62f1c`). ADR `0199`,
+**Status:** done 2026-11-11 on a worktree branch from `origin/dev` (`72a62f1c`). `task-verifier` PASS (second round). ADR `0199`,
 post-mortem `.claude/learning/127-prune-dev-keep-the-hire-loop.md`.
 **Rules:** `code.md`, `workflow.md`, `claims.md`, `security.md`.
 **Required skills:** `arp-contributing`.

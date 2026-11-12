@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-12 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-187 decisions. Newest last. `choices/README.md` says when to write one.
+188 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -236,3 +236,4 @@ Read these before relying on them.
 | [0195](0195-the-hosted-surfaces-bound-their-load.md) | 2026-11-11 | Accepted | The hosted surfaces bound their load, and the server caches none of the words searched |
 | [0196](0196-a-hosted-content-server-that-signs-receipts.md) | 2026-11-11 | Accepted | A hosted content server that signs receipts, and serves nothing else |
 | [0197](0197-the-landing-scenes-are-static.md) | 2026-11-11 | Accepted | The landing's scenes are static: they read nothing |
+| [0199](0199-prune-dev-and-keep-the-hire-loop-on-a-branch.md) | 2026-11-11 | Accepted | Prune what production does not need from `dev`; keep the hire loop on `future/hire-loop` |

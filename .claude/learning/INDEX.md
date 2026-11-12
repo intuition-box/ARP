@@ -1,8 +1,8 @@
 # Post-mortem index
 
-**Generated** 2026-11-11 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-12 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-129 entries, one per completed task. Written by `task-verifier` on a pass.
+130 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -135,3 +135,4 @@
 | [123](123-the-desktop-extension-is-built-here.md) | `docs/tasks/135-the-desktop-extension-is-built-here.md` | PASS | The Claude Desktop extension is built here |
 | [125](125-desktop-share-and-server-version.md) | `docs/tasks/137-desktop-share-and-server-version.md` | PASS | Desktop's share setting stops overwriting, and the server names its version |
 | [126](126-the-skills-say-what-0-0-6-does.md) | `docs/tasks/138-the-skills-say-what-0-0-6-does.md` | PASS (second pass; the first failed on three sentences) | The skills say what CLI 0.0.4 to 0.0.6 does |
+| [127](127-prune-dev-keep-the-hire-loop.md) | `docs/tasks/139-prune-dev-keep-the-hire-loop.md` | PASS (second pass; first FAIL on ` | Prune what production does not need; keep the hire loop on `future/hire-loop` |
