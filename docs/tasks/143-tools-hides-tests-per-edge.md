@@ -43,6 +43,7 @@ there is, while they are only ARP's catalogue.
    sponsor's position on the atom page would need a per-position read it does not make, so the
    minimal honest fix is a `Hint` on `/tools`' Signals header ("About: signals"). The header words
    are `aria-hidden` one by one now, not the whole header, so the Hint stays reachable.
+   Superseded by task 144: the atom page no longer counts that position, and the Hint is gone.
 5. `apps/web/src/pages/ToolCatalog.tsx`: the tabs carry no count; one page-level link, "Search all
    of skills.sh", to `/search`, which asks skills.sh for the same words (task 82).
 6. `packaging/claude/arp/bin/arp.js` regenerated (`bun run --cwd apps/cli packages`): the CLI

@@ -1,8 +1,6 @@
 # Task 144 — a tool's page does not count the sponsor's opening position as a support
 
-**Status:** in progress 2026-11-12 on `task-144`, from `dev` `da6b5da8`. Task 144, post-mortem
-`132`, allocated by the orchestrator. No ADR: it applies the rule `/tools`' Signals already follow
-(ADR `0143`) to the atom page's count.
+**Status:** complete 2026-11-12 on `task-144`, from `dev` `da6b5da8`, code in `b55a1a9f` and `faadbacb`. `ui-reviewer` PASS on round 3, `task-verifier` PASS on round 2 (round 1 failed: `scripts/measure/versioned-queries-valid.ts` did not send the new `$exclude`); post-mortem `.claude/learning/132-atom-page-excludes-sponsor-position.md`. Task 144, post-mortem `132`, allocated by the orchestrator. No ADR: it applies the rule `/tools`' Signals already follow (ADR `0143`) to the atom page's count.
 **Rules:** `code.md`, `ui.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`.
 
