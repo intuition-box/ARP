@@ -61,7 +61,7 @@ own test agents, so this part shows how it works, not what anyone else found.
 
 In Claude Code, with Node 22: `claude plugin marketplace add intuition-box/ARP`, then
 `claude plugin install arp@arp`. The plugin carries its own copy of the CLI, which is also on npm as
-[`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-protocol/cli) 0.0.6 and in the official MCP
+[`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-protocol/cli) 0.0.7 and in the official MCP
 Registry as `io.github.Wieedze/arp`.
 
 **Every other route, and the state of each** (Claude Desktop by hand, the hosted connector at
