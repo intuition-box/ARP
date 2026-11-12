@@ -201,7 +201,7 @@ function files(source: Source, cli: string): Files {
     description:
       `${FIND} Name ARP in your request for the agent to use it. A search reads skills.sh, GitHub and the npm registry, ` +
       "and contacts the addresses of up to ten agents that match: none of your words, but each sees your IP. " +
-      'The hook records each skill and MCP call on your machine and sends nothing. Sharing failures is off by default; declaring a use is optional.',
+      'The hook records each skill and MCP call on your machine. After your first skill result it asks you once whether to share closed worked/failed lines; nothing is sent before you answer, and never your words.',
     homepage: 'https://github.com/intuition-box/ARP',
     repository: 'https://github.com/intuition-box/ARP',
     license: pkg.license,
