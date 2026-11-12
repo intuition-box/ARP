@@ -5,8 +5,8 @@
 **Triggered by:** the user's Claude Desktop test, 2026-11-12, and his choice of option 1 of 3, task 141
 (`docs/tasks/141-the-search-package-is-bundled.md`)
 
-Amends the decision recorded in commit `ada72614` (2026-11-05), `apps/mcp/src/handlers/pulse.ts`
-`canSearch` and `docs/22`: "it does not run where an agent key is kept". It now runs there **only** as the
+Amends ADR `0134` point 5, the decision commit `ada72614` (2026-11-05) wrote there, in
+`apps/mcp/src/handlers/pulse.ts` `canSearch` and in `docs/22`: "it does not run where an agent key is kept". It now runs there **only** as the
 bundled copy below, never through `npx`.
 
 ## Context
@@ -40,8 +40,9 @@ the search keeps `npx`, outside those modes.
   `minipass`, `chownr`, `yallist`). Each allows redistribution with its notice.
   `apps/cli/scripts/vendor-licenses.ts` writes every package's licence file, and `skills`' own
   `ThirdPartyNoticeText.txt`, to `skills-cli.LICENSE.txt` beside the bundle, in every place it ships.
-- **What it reaches.** The bundle names eleven hosts, for its other commands (`add`, audit, telemetry).
-  `find` with a query calls `searchSkillsAPI`, one `fetch` of `https://skills.sh/api/search?q=…`
+- **What it reaches.** The bundle names eleven hosts (`skills.sh`, `www.skills.sh`, `github.com`,
+  `api.github.com`, `raw.githubusercontent.com`, `gitlab.com`, `example.com`, `schemas.agentskills.io`,
+  `notion.so`, `developers.notion.com`, `connectors-skills.zapier.com`); `find` reaches one. `find` with a query calls `searchSkillsAPI`, one `fetch` of `https://skills.sh/api/search?q=…`
   (`SKILLS_API_URL` is not in its environment), then `track()`, which returns at once when
   `DISABLE_TELEMETRY` is set. Checked by running it with every `fetch` and socket connect logged:
   `https://skills.sh/api/search` and `skills.sh:443`, nothing else; the same run without
@@ -50,6 +51,15 @@ the search keeps `npx`, outside those modes.
   shell, the query one argument, working directory the private `ARP_HOME/skills-cli`, and four
   variables: `PATH` (a project's `node_modules/.bin` removed), `HOME` (that private directory),
   `DISABLE_TELEMETRY=1`, `NO_COLOR=1`.
+- **One behaviour changes.** The bundle reads the `package.json` beside its directory as its own version, so
+  inside ARP's npm package it reports ARP's version (`v=0.0.6` in the telemetry URL a run without
+  `DISABLE_TELEMETRY` built). With telemetry off nothing reads it.
+- **Sizes.** Plugin `bin/`: 3,105,000 bytes on `dev` `eda9f36c`, 4,079,030 after. `.mcpb`: 688,320 bytes (built
+  from `dev` `72a62f1c`, 2026-11-11), 898,515 after. npm package: 894.3 kB packed after (`npm pack --dry-run`).
+- **Coverage of the new code.** `apps/cli/scripts/vendor-licenses.ts` 100% of functions, 93.55% of lines (the
+  `import.meta.main` lines); the new functions in `pulse.ts` have no uncovered line under `bun test --coverage`.
+  Branch coverage is not measurable with bun here; every new branch has a test. The bundled versions are
+  asserted by `apps/cli/test/vendor-licenses.test.ts`, so a moved dependency tree fails the CLI's tests.
 - **Tracked.** `packaging/claude/arp/bin/skills-cli.js` and its licence file are committed, because the
   plugin installs from the repository and `packaging/` is generated and committed (`packages --check`).
   `apps/cli/dist` and `apps/cli/dist-mcpb` are not.
@@ -71,9 +81,11 @@ the search keeps `npx`, outside those modes.
 - No release reaches the npm registry to search, and none needs `npx`.
 
 **Negative:**
-- Third-party code still runs beside the agent key, as the same OS user. What changed is that it is the
-  code built and checked here, not what npm resolves at run time; a flaw in `skills@1.7.6` or its tree
-  is ours to ship until we rebuild.
+- Third-party code still runs beside the agent key, as the same OS user, and can read `~/.arp/agent-key` by its
+  absolute path: the private `HOME` only stops a default path from resolving to it. What changed is that it is
+  the code fixed at build, not what npm resolves at run time. "Checked" means what is listed above: the lockfile's
+  integrity, a network trace of `find` and a count of the hosts it names, not a review of the bundle's 27,000
+  lines. A flaw in `skills@1.7.6` or its tree is ours to ship until we rebuild.
 - About +970 KB in the plugin and the npm package, +210 KB in the `.mcpb` (compressed). Updating the
   search package is now a release, with this ADR's figures re-taken.
 

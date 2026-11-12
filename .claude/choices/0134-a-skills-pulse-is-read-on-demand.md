@@ -3,6 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-11-05
 **Triggered by:** `docs/tasks/63`, the user's decisions there
+**Amended:** 2026-11-12 by ADR `0201`: point 5's "It does not run where an agent key is kept" now reads: there it runs only as the copy of the package a release bundles, never through `npx`.
 
 ## Context
 

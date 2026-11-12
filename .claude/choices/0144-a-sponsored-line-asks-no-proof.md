@@ -1,6 +1,6 @@
 # 0144 — A sponsored line asks no proof of use, and its key stays out of the plugin's server
 
-**Status:** Accepted. Amended by ADR `0159`, 2026-11-09: a line about an endpoint is sponsored when it names a payment the agent made.
+**Status:** Accepted. Amended by ADR `0159`, 2026-11-09: a line about an endpoint is sponsored when it names a payment the agent made. Its context's "a server holding an agent key does not run the search package" holds until ADR `0201`, 2026-11-12: such a server runs only the bundled copy.
 **Date:** 2026-11-05
 **Amends:** ADR `0094` (a sponsored spend needs a proof), ADR `0135` (the sponsored path was not extended), ADR `0110` (what the local key signs), ADR `0138`
 **Triggered by:** `docs/tasks/70` item 1. The user answered « oui aux 3 », relayed by `arp-f3`

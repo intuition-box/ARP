@@ -26,6 +26,24 @@ test('every bundled package resolves from where the CLI is built, at one version
   expect(noticeOf(skills).version).toBe('1.7.6');
 });
 
+test('the bundled tree is the one ADR 0201 lists: a moved dependency fails here, before a different bundle ships', () => {
+  const skills = packageDir('skills', CLI);
+  const tar = packageDir('tar', skills);
+  const versions = Object.fromEntries(
+    BUNDLED.map((name) => [name, noticeOf(name === 'skills' ? skills : packageDir(name, skills, tar, CLI)).version]),
+  );
+  expect(versions).toEqual({
+    skills: '1.7.6',
+    tar: '7.5.23',
+    yaml: '2.9.1',
+    minipass: '7.1.3',
+    chownr: '3.0.0',
+    minizlib: '3.1.0',
+    '@isaacs/fs-minipass': '4.0.1',
+    yallist: '5.0.0',
+  });
+});
+
 test("a package's licence and third-party notice are both kept", () => {
   const notice = noticeOf(fakePackage({ LICENSE: 'the licence', 'ThirdPartyNoticeText.txt': 'the notice', 'README.md': 'zzz-readme' }));
   expect(notice.text).toContain('the licence');

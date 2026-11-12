@@ -33,9 +33,9 @@ skills.sh's API, drop `arp_pulse` from Desktop) the user chose the first.
 - **Network.** `skills-cli.js find "video demo"` with every `fetch` and socket connect logged, the
   restricted env: `https://skills.sh/api/search?q=…` and `skills.sh:443` only. Without
   `DISABLE_TELEMETRY`: also `https://www.skills.sh/tele/t` with the query.
-- **Sizes.** Plugin `bin/`: 3,105,000 bytes on `dev` `eda9f36c`, 4,078,684 after. `.mcpb`: 688,320 bytes
-  built from `dev` `72a62f1c` on 2026-11-11, 898,458 after (877.4 kB packed, 6 files). npm tarball
-  876K (`check:node`).
+- **Sizes.** Plugin `bin/`: 3,105,000 bytes on `dev` `eda9f36c`, 4,079,030 after. `.mcpb`: 688,320 bytes
+  built from `dev` `72a62f1c` on 2026-11-11, 898,515 after (877.4 kB packed, 6 files). npm package
+  894.3 kB packed (`npm pack --dry-run`).
 - **Gates.** `apps/mcp` 340 tests, tsc clean; `apps/cli` 89 tests, lint clean, `check:node` PASS,
   `packages --check` matches; `apps/hook` 116; root `bun run check`. New code's coverage:
   `scripts/vendor-licenses.ts` 100% functions, 93.55% lines (the `import.meta.main` lines are not run by

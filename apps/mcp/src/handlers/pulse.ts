@@ -122,15 +122,6 @@ export function saysNothingFound(output: string): boolean {
 }
 
 /**
- * How the search runs, as data so a test can hold it to this: a pinned package, the query as one
- * argument and never through a shell, and an environment of four variables. It is somebody else's
- * package, and `task-verifier` found the first version handing it the server's whole environment.
- * `HOME` is a private directory, so a default path to a key does not resolve to one. It is not in a
- * shared `/tmp`, where another account could plant the `.npmrc` that chooses npm's registry. The package
- * still runs as the same OS user, which is why a server holding an agent key runs only the bundled copy, never
- * `npx` (`canSearch`, ADR `0201`), and `docs/22` says so.
- */
-/**
  * The search package as a file in this build, or `null` (task 141, ADR `0201`). The plugin, the `.mcpb` and the
  * npm package carry `skills-cli.js` beside their entry: `skills` at the version above, bundled with its
  * dependencies when the release is built, so nothing is downloaded or resolved when it runs. From a checkout
@@ -153,6 +144,15 @@ export function searchLabel(vendored: string | null): string {
   return vendored === null ? 'npx skills find' : `skills find (${SKILLS_CLI}, bundled)`;
 }
 
+/**
+ * How the search runs, as data so a test can hold it to this: a pinned package, the query as one
+ * argument and never through a shell, and an environment of four variables. It is somebody else's
+ * package, and `task-verifier` found the first version handing it the server's whole environment.
+ * `HOME` is a private directory, so a default path to a key does not resolve to one. It is not in a
+ * shared `/tmp`, where another account could plant the `.npmrc` that chooses npm's registry. The package
+ * still runs as the same OS user, which is why a server holding an agent key runs only the bundled copy, never
+ * `npx` (`canSearch`, ADR `0201`), and `docs/22` says so.
+ */
 export function searchInvocation(
   query: string,
   path: string | undefined,
@@ -508,10 +508,13 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
       agents: null,
       agents_note: 'the agents could not be read in time',
     }));
-  // In the plugin this is the only search there is, so nothing here may point at another tool.
-  const next = READ_ONLY
-    ? 'run `npx skills find` yourself and pass its text as `search_output`. No other search is served here, so say that the search did not run, rather than choosing from memory'
-    : 'run `npx skills find` yourself and pass its text as `search_output`, or use `arp_find_tools`';
+  // In the plugin this is the only search there is, so nothing here may point at another tool. Desktop has
+  // `arp_find_tools` and no terminal, so it is pointed there first (task 141).
+  const next = DESKTOP
+    ? 'use `arp_find_tools`, which searches ARP\'s own listing; or, where you can run `npx skills find`, pass its text as `search_output`'
+    : READ_ONLY
+      ? 'run `npx skills find` yourself and pass its text as `search_output`. No other search is served here, so say that the search did not run, rather than choosing from memory'
+      : 'run `npx skills find` yourself and pass its text as `search_output`, or use `arp_find_tools`';
 
   const lists: SkillSearchResult[][] = [];
   const phrasesFailed: { phrase: string; detail: string }[] = [];

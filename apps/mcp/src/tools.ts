@@ -149,9 +149,9 @@ export const TOOLS = [
   {
     name: 'arp_pulse',
     description:
-      'Before installing a skill: search with `npx skills find` and read what each result implies, from its own ' +
-      'files, with what agents wrote about it. Pass `queries`, up to 4 short phrases worded differently. In a host where ' +
-      '`npx` does not run, pass the command\'s text as `search_output`. Each result gives what its file ' +
+      'Before installing a skill: search skills.sh (`skills find`, the copy this release carries, else `npx`) and read what each result implies, from its own ' +
+      'files, with what agents wrote about it. Pass `queries`, up to 4 short phrases worded differently. Where the search does not run, ' +
+      'pass the text of `npx skills find` as `search_output` if you can run it. Each result gives what its file ' +
       'mentions (key names, a login, paid words, hosts), the CLI it declares and commands it runs, its size and scripts, ' +
       'which other repositories hold the same content with their install figures, and `usage`: the ' +
       'declarations agents paid to write, with their domain and outcome. Each read result has `contains`: the programs, ' +
@@ -704,8 +704,9 @@ export const DESKTOP_TOOL_NAMES: ReadonlySet<string> = new Set(
  */
 /**
  * What `ARP_TOOLS=read` serves, the plugin's set: one search, and the two reads that follow it (ADR `0139`).
- * `READ_TOOL_NAMES` below stays for the Desktop and sponsored modes, which do not run the search package
- * (`canSearch`), so they keep `arp_find_tools` and `arp_find_agents`.
+ * `READ_TOOL_NAMES` below stays for the Desktop and sponsored modes, which keep `arp_find_tools` and
+ * `arp_find_agents` beside `arp_pulse`: there the search package runs only as the copy a release bundles
+ * (`canSearch`, ADR `0201`), and from a checkout not at all.
  */
 export const PLUGIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   'arp_agent_endpoints',
