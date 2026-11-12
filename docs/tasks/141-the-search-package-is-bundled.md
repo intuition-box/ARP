@@ -33,14 +33,14 @@ skills.sh's API, drop `arp_pulse` from Desktop) the user chose the first.
 - **Network.** `skills-cli.js find "video demo"` with every `fetch` and socket connect logged, the
   restricted env: `https://skills.sh/api/search?q=…` and `skills.sh:443` only. Without
   `DISABLE_TELEMETRY`: also `https://www.skills.sh/tele/t` with the query.
-- **Sizes.** Plugin `bin/`: 3,105,000 bytes on `dev` `eda9f36c`, 4,079,030 after. `.mcpb`: 688,320 bytes
-  built from `dev` `72a62f1c` on 2026-11-11, 898,515 after (877.4 kB packed, 6 files). npm package
+- **Sizes.** Plugin `bin/`: 3,105,000 bytes on `dev` `eda9f36c`, 4,079,150 after. `.mcpb`: 688,320 bytes
+  built from `dev` `72a62f1c` on 2026-11-11, 898,551 after (877.4 kB packed, 6 files). npm package
   894.3 kB packed (`npm pack --dry-run`).
-- **Gates.** `apps/mcp` 340 tests, tsc clean; `apps/cli` 90 tests, lint clean, `check:node` PASS,
+- **Gates.** `apps/mcp` 631 tests with coverage (on `dev` after task 136), tsc clean; `apps/cli` 107 tests, lint clean, `check:node` PASS,
   `packages --check` matches; `apps/hook` 116; root `bun run check`. New code's coverage:
   `scripts/vendor-licenses.ts` 100% functions, 93.55% lines (the `import.meta.main` lines are not run by
-  a test); `pulse.ts`'s new functions each have a test (`vendoredSearchCli`, `searchLabel`, the vendored
-  `searchInvocation`, `canSearch`).
+  a test); `pulse.ts`: every branch arm of the new code taken under `vitest --coverage` (`vendoredSearchCli`, `searchLabel`,
+  `nextStep`, the vendored `searchInvocation`, `canSearch`).
 
 ## Do not do in this task
 

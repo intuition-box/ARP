@@ -5,7 +5,7 @@ import {join} from "node:path";
 import {describe, expect, it} from "vitest";
 
 import {edgeWriterWarning} from "../src/handlers/declare.js";
-import {canSearch, searchInvocation, setAsideBecause, SKILLS_CLI, searchLabel, toCheck, usageLine, vendoredSearchCli, yourFailuresLine} from "../src/handlers/pulse.js";
+import {canSearch, nextStep, searchInvocation, setAsideBecause, SKILLS_CLI, searchLabel, toCheck, usageLine, vendoredSearchCli, yourFailuresLine} from "../src/handlers/pulse.js";
 import {readSkillContents, type SkillPulse} from "@arp-protocol/core";
 
 const read = (overrides: Partial<Extract<SkillPulse, {status: "read"}>> = {}): SkillPulse => ({
@@ -85,6 +85,16 @@ describe("the search package", () => {
         expect(cwd).toBe("/private/cli");
         expect(Object.keys(env).sort()).toEqual(["DISABLE_TELEMETRY", "HOME", "NO_COLOR", "PATH"]);
         expect(env.PATH).toBe("/usr/bin");
+    });
+
+    it("tells Desktop to use arp_find_tools when the search did not run, the plugin to run npx, the rest either", () => {
+        expect(nextStep({desktop: true, readOnly: true})).toMatch(/^use `arp_find_tools`/);
+        expect(nextStep({desktop: false, readOnly: true})).toMatch(/No other search is served here/);
+        expect(nextStep({desktop: false, readOnly: false})).toMatch(/or use `arp_find_tools`$/);
+    });
+
+    it("passes no PATH when the server has none", () => {
+        expect(searchInvocation("x", undefined, "/private/cli", false, "/opt/arp/skills-cli.js").env).not.toHaveProperty("PATH");
     });
 
     it("names what ran the search", () => {

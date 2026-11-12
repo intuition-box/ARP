@@ -54,11 +54,12 @@ the search keeps `npx`, outside those modes.
 - **One behaviour changes.** The bundle reads the `package.json` beside its directory as its own version, so
   inside ARP's npm package it reports ARP's version (`v=0.0.6` in the telemetry URL a run without
   `DISABLE_TELEMETRY` built). With telemetry off nothing reads it.
-- **Sizes.** Plugin `bin/`: 3,105,000 bytes on `dev` `eda9f36c`, 4,079,030 after. `.mcpb`: 688,320 bytes (built
-  from `dev` `72a62f1c`, 2026-11-11), 898,515 after. npm package: 894.3 kB packed after (`npm pack --dry-run`).
+- **Sizes.** Plugin `bin/`: 3,105,000 bytes on `dev` `eda9f36c`, 4,079,150 after. `.mcpb`: 688,320 bytes (built
+  from `dev` `72a62f1c`, 2026-11-11), 898,551 after. npm package: 894.3 kB packed after (`npm pack --dry-run`).
 - **Coverage of the new code.** `apps/cli/scripts/vendor-licenses.ts` 100% of functions, 93.55% of lines (the
-  `import.meta.main` lines); the new functions in `pulse.ts` have no uncovered line under `bun test --coverage`.
-  Branch coverage is not measurable with bun here; every new branch has a test. The bundled versions are
+  `import.meta.main` lines); in `pulse.ts`, under `vitest --coverage` (v8), every branch arm of the new code
+  is taken (`vendoredSearchCli`, `searchLabel`, `nextStep`, the bundled `searchInvocation`, `canSearch`); the
+  file as a whole is at 88.51% of branches from older code, and the workspace at 91.69%. The bundled versions are
   asserted by `apps/cli/test/vendor-licenses.test.ts`, so a moved dependency tree fails the CLI's tests.
 - **Tracked.** `packaging/claude/arp/bin/skills-cli.js` and its licence file are committed, because the
   plugin installs from the repository and `packaging/` is generated and committed (`packages --check`).

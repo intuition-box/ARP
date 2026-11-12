@@ -42250,10 +42250,16 @@ async function searchServiceTrouble(get, timeoutMs) {
     return `skills.sh did not answer (${error instanceof Error ? error.name : "error"})`;
   }
 }
+function nextStep(mode2) {
+  if (mode2.desktop) {
+    return "use `arp_find_tools`, which searches ARP's own listing; or, where you can run `npx skills find`, pass its text as `search_output`";
+  }
+  return mode2.readOnly ? "run `npx skills find` yourself and pass its text as `search_output`. No other search is served here, so say that the search did not run, rather than choosing from memory" : "run `npx skills find` yourself and pass its text as `search_output`, or use `arp_find_tools`";
+}
 function saysNothingFound(output) {
   return /No skills found/i.test(output);
 }
-function vendoredSearchCli(entry = process.argv[1]) {
+function vendoredSearchCli(entry) {
   if (entry === undefined)
     return null;
   try {
@@ -42525,7 +42531,7 @@ async function answer(id, args, budget, cancelled) {
     agents: null,
     agents_note: "the agents could not be read in time"
   }));
-  const next = DESKTOP ? "use `arp_find_tools`, which searches ARP's own listing; or, where you can run `npx skills find`, pass its text as `search_output`" : READ_ONLY ? "run `npx skills find` yourself and pass its text as `search_output`. No other search is served here, so say that the search did not run, rather than choosing from memory" : "run `npx skills find` yourself and pass its text as `search_output`, or use `arp_find_tools`";
+  const next = nextStep({ desktop: DESKTOP, readOnly: READ_ONLY });
   const lists = [];
   const phrasesFailed = [];
   let trouble = null;
@@ -42760,7 +42766,7 @@ var init_pulse2 = __esm(() => {
     agentsMs: 8000,
     filesMs: 1e4
   };
-  VENDORED = vendoredSearchCli();
+  VENDORED = vendoredSearchCli(process.argv[1]);
   searchGate = createSearchGate({
     maxRunning: positiveSetting(process.env["ARP_SEARCH_CONCURRENCY"], 4),
     maxWaiting: positiveSetting(process.env["ARP_SEARCH_QUEUE"], 64)

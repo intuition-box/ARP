@@ -116,6 +116,20 @@ export async function searchServiceTrouble(get: typeof fetch, timeoutMs: number)
 
 const PROBE_MS = 3_000;
 
+/**
+ * What a reply tells the agent to do when the search did not run. In the plugin it is the only search there is,
+ * so nothing may point at another tool. Desktop has `arp_find_tools` and no terminal, so it is pointed there
+ * first (task 141).
+ */
+export function nextStep(mode: { desktop: boolean; readOnly: boolean }): string {
+  if (mode.desktop) {
+    return "use `arp_find_tools`, which searches ARP's own listing; or, where you can run `npx skills find`, pass its text as `search_output`";
+  }
+  return mode.readOnly
+    ? 'run `npx skills find` yourself and pass its text as `search_output`. No other search is served here, so say that the search did not run, rather than choosing from memory'
+    : 'run `npx skills find` yourself and pass its text as `search_output`, or use `arp_find_tools`';
+}
+
 /** The CLI's own sentence for an empty list. Text with neither this nor a result is a format we do not read. */
 export function saysNothingFound(output: string): boolean {
   return /No skills found/i.test(output);
@@ -127,7 +141,7 @@ export function saysNothingFound(output: string): boolean {
  * dependencies when the release is built, so nothing is downloaded or resolved when it runs. From a checkout
  * there is none, and the search goes through `npx` as before.
  */
-export function vendoredSearchCli(entry: string | undefined = process.argv[1]): string | null {
+export function vendoredSearchCli(entry: string | undefined): string | null {
   if (entry === undefined) return null;
   try {
     const file = join(dirname(realpathSync(entry)), 'skills-cli.js');
@@ -137,7 +151,7 @@ export function vendoredSearchCli(entry: string | undefined = process.argv[1]): 
   }
 }
 
-const VENDORED = vendoredSearchCli();
+const VENDORED = vendoredSearchCli(process.argv[1]);
 
 /** What ran the search, as the answer names it: the bundled copy, or the package through `npx`. */
 export function searchLabel(vendored: string | null): string {
@@ -508,13 +522,7 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
       agents: null,
       agents_note: 'the agents could not be read in time',
     }));
-  // In the plugin this is the only search there is, so nothing here may point at another tool. Desktop has
-  // `arp_find_tools` and no terminal, so it is pointed there first (task 141).
-  const next = DESKTOP
-    ? 'use `arp_find_tools`, which searches ARP\'s own listing; or, where you can run `npx skills find`, pass its text as `search_output`'
-    : READ_ONLY
-      ? 'run `npx skills find` yourself and pass its text as `search_output`. No other search is served here, so say that the search did not run, rather than choosing from memory'
-      : 'run `npx skills find` yourself and pass its text as `search_output`, or use `arp_find_tools`';
+  const next = nextStep({ desktop: DESKTOP, readOnly: READ_ONLY });
 
   const lists: SkillSearchResult[][] = [];
   const phrasesFailed: { phrase: string; detail: string }[] = [];
