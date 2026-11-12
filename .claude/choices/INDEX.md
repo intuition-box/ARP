@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-12 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-189 decisions. Newest last. `choices/README.md` says when to write one.
+190 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -238,3 +238,4 @@ Read these before relying on them.
 | [0197](0197-the-landing-scenes-are-static.md) | 2026-11-11 | Accepted | The landing's scenes are static: they read nothing |
 | [0198](0198-coverage-ninety-gate.md) | 2026-11-11 | Accepted | A 90 % coverage gate in every workspace |
 | [0199](0199-prune-dev-and-keep-the-hire-loop-on-a-branch.md) | 2026-11-11 | Accepted | Prune what production does not need from `dev`; keep the hire loop on `future/hire-loop` |
+| [0200](0200-api-and-probe-run-on-coolify.md) | 2026-11-11 | Accepted | The API and the probe run as containers on Coolify, with SQLite, and their x402 parts off |

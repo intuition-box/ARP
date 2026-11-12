@@ -1,6 +1,6 @@
 # Task 140 — The API and the probe on Coolify
 
-**Status:** built 2026-11-11 on `task-140-coolify-api-probe`, from `dev`. Task 140, ADR `0200`,
+**Status:** built 2026-11-11 on `task-140-coolify-api-probe`, from `dev`. `task-verifier` PASS 2026-11-12, post-mortem `.claude/learning/128-api-and-probe-on-coolify.md`. Task 140, ADR `0200`,
 post-mortem `128`, allocated by the orchestrator. **Not deployed**: the deploy is the user's (the
 sheet below).
 **Rules:** `code.md`, `security.md`, `portability.md`, `claims.md`, `workflow.md`.

@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-12 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-131 entries, one per completed task. Written by `task-verifier` on a pass.
+132 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -137,3 +137,4 @@
 | [125](125-desktop-share-and-server-version.md) | `docs/tasks/137-desktop-share-and-server-version.md` | PASS | Desktop's share setting stops overwriting, and the server names its version |
 | [126](126-the-skills-say-what-0-0-6-does.md) | `docs/tasks/138-the-skills-say-what-0-0-6-does.md` | PASS (second pass; the first failed on three sentences) | The skills say what CLI 0.0.4 to 0.0.6 does |
 | [127](127-prune-dev-keep-the-hire-loop.md) | `docs/tasks/139-prune-dev-keep-the-hire-loop.md` | PASS (second pass; first FAIL on ` | Prune what production does not need; keep the hire loop on `future/hire-loop` |
+| [128](128-api-and-probe-on-coolify.md) | `docs/tasks/140-api-and-probe-on-coolify.md` | PASS | The API and the probe on Coolify |
