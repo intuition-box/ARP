@@ -2,7 +2,7 @@
 
 **Task:** `docs/tasks/141-the-search-package-is-bundled.md`
 **Completed:** 2026-11-12
-**Commit:** `6be1d4b8` on `feat/pulse-vendored-search` (after `dfd45832`)
+**Commit:** `1afb293a`, `5e5d99c6`, `8ed46f2f` on `feat/pulse-vendored-search`, rebased on `dev` `9304ff74`
 **Verifier verdict:** PASS (second round; the first failed on the record, not the code)
 
 ## What shipped
@@ -33,9 +33,8 @@
 ## Suggestions for future tasks
 
 - When a decision is amended, grep the ADRs for its sentence, not just the commit that introduced it.
-- A size figure in a task file is taken after the last text change, or it drifts (4,078,684 → 4,079,030 across one round).
+- A size figure in a task file is taken after the last text change, or it drifts (4,078,684 → 4,079,030 → 4,079,150 across two rounds and a rebase).
 - A trace of a third-party CLI should hook `child_process` and `dns` too, not only `fetch` and sockets; here it showed none.
-- Task file's gate line still says `apps/cli` 89 tests; it is 90 after the version-pin test.
 
 ## Evidence ladder
 
