@@ -39,7 +39,7 @@ const queries: [string, string, Record<string, unknown>][] = [
         RECENT_QUERY.replace("$limit: Int!)", "$limit: Int!, $curveId: numeric!)"),
         {uses: USES, sameAs: SAME_AS, limit: 5, curveId: "1"},
     ],
-    ["ATOM_STANDING_QUERY", ATOM_STANDING_QUERY, {atomId: TOOL, curveId: "1", limit: 5, attestor: [SPONSOR.toLowerCase()]}],
+    ["ATOM_STANDING_QUERY", ATOM_STANDING_QUERY, {atomId: TOOL, curveId: "1", limit: 5, attestor: [SPONSOR.toLowerCase()], exclude: [SPONSOR]}],
     ["DECLARED_MODULES_FOR_QUERY", DECLARED_MODULES_FOR_QUERY, {subjects: [TOOL], predicate: USES, limit: 5}],
 ];
 
