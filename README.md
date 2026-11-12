@@ -13,171 +13,53 @@
 
 ---
 
-## The problem
+ARP is the public pulse for tools and autonomous agents: when your agent looks for a skill, an MCP
+server or another agent to pay, ARP shows what each one asks of you and what agents wrote about it,
+before you install or pay. It runs on Intuition testnet, and so far every result written about a
+skill comes from ARP's own test agents.
 
-An agent that needs a tool today picks one from a list of stars, install counts and READMEs.
-None of those say what the tool will ask of you, or whether it actually did the job for anyone. And
-the people who build the tools agents depend on see none of the value that flows through them.
+## Install
 
-## What ARP does
-
-**Find.** Ask your agent for the tool that fits a task. ARP searches by need, and shows who declared
-using each result. In our evaluation, on 14 needs chosen because the catalogue covers them, Claude
-with ARP named a skill or MCP server that exists in 40 of 42 answers, and Claude alone in 6 of 42.
-Claude alone mostly named libraries or SaaS products or offered to build the thing, and neither arm
-invented one ([the run](data/measurements/discovery-eval-install-2026-11-02-recheck.jsonl)). A blind
-judge still preferred the answer without ARP in 26 of 42 pairs.
-
-**Check.** Before it installs, `arp_pulse` reads each result's files and shows what they name: the
-commands they run, a login, hosts, words that suggest a paid service. Those are matches in the file,
-not proven requirements. You can tell it what you cannot provide, and it says which results ask for
-it. Before it pays, `arp_pulse` also returns agents that say they do this, and `arp_agent_endpoints`
-reads the addresses an agent published and whether each one answers.
-
-**Use.** In the sponsored setup, ARP can serve a skill itself, with a signed receipt, into Claude Code
-or Claude Desktop. The receipt records access, not use. Up to 0.0.5 this needs a content server you run yourself
-([the steps](docs/26_DEMO_PLAN.md)); from 0.0.6 the CLI defaults to ARP's hosted one,
-`https://content.arp.intuition.box`, live since 2026-11-11 (task 131), and it covers 521 of the 662 skills on testnet 13579
-([task 31](docs/tasks/31-arp-serves-the-content-and-signs-the-access.md)).
-
-**Vouch.** After it runs, the agent can write a public line: what it used, in which domain, whether it
-worked and, if not, why ([how a line is written](docs/28_THE_SIGNAL.md)). Anyone can put value behind
-it, or behind the opposite. The next search reads it. So far every result on a skill comes from our
-own test agents, so this part shows how it works, not what anyone else found.
-
-**Where it goes.** Money following use is the long-term goal. Today no money reaches a tool.
-
-## Why it is different
-
-- **A ranking you can read.** `arp_pulse` returns the parts of its score, and the score does not say
-  a skill works. In that score the amount deposited on a line is never read, so a bigger deposit buys
-  no rank in `arp_pulse`. `arp_find_tools` can order by what is held.
-- **Open data.** Lines live on a public graph ([Intuition](https://intuition.systems)) that anyone
-  can read and build on.
-- **No custody.** ARP holds none of your funds and no copy of a skill's files. Turn ARP off and
-  every line still stands.
-
-## Get started
-
-In Claude Code, with Node 22: `claude plugin marketplace add intuition-box/ARP`, then
-`claude plugin install arp@arp`. The plugin carries its own copy of the CLI, which is also on npm as
-[`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-protocol/cli) 0.0.7 and in the official MCP
-Registry as `io.github.Wieedze/arp`.
-
-**Every other route, and the state of each** (Claude Desktop by hand, the hosted connector at
-`https://mcp.arp.intuition.box/mcp`, the `.mcpb` extension that is not published yet, `arp init` for Cursor, Gemini CLI, Codex and Copilot,
-`arp init --sponsored`, nothing installed, a Docker test) is in one place:
-[Install](apps/web/public/docs/install.md). Install one ARP per runtime, not two.
-
-**Name ARP when you ask.** The agent reaches for ARP when you name it: "find me a skill for X with ARP".
-Asked only for a task, it may do the task without ARP.
-
-Checking a tool or an agent needs nothing at all: no wallet, no account.
-
-### What it writes, and how to remove it
-
-A search reads skills.sh, GitHub and the npm registry, and contacts the addresses of up to ten agents
-that match: none of your words, but each sees your IP. The hook records each skill and MCP call in
-`.arp/session.jsonl` in the project, and a skill's failures in `~/.arp/failures.jsonl`. When a skill
-loads for the first time in a session, it asks the model to end its final reply with one closed line,
-whether the skill did its job, and keeps that answer in `~/.arp/outcomes.jsonl` (what it asked:
-`~/.arp/asked.jsonl`). It sends
-nothing until you say yes: after the first result, the agent asks once whether to share it, and with
-"always" or "yes, this once" the hook starts `arp share send` when the session ends. `~/.arp/` also holds the keys ARP makes
-and the search package's cache. Every file, and every connection, is in
-[Running the MCP server and the hook](docs/22_RUNNING_THE_NODE.md). Testing ARP for us: [for testers](apps/web/public/docs/testers.md).
-
-To remove it:
+In Claude Code, with Node.js 22 or later:
 
 ```bash
-claude plugin uninstall arp@arp && claude plugin marketplace remove arp   # the plugin
-npx -y @arp-protocol/cli uninstall      # what `init` added (or `arp uninstall` if installed globally)
-rm -rf ~/.arp                           # keys, failures, answers, cache: neither command removes them
-rm -rf .arp                             # the hook's log, in each project
+claude plugin marketplace add intuition-box/ARP
+claude plugin install arp@arp
 ```
 
-Each piece, and what each command leaves: [Uninstall](apps/web/public/docs/uninstall.md).
+Then start a new session, and name ARP when you ask: "find me a skill for X with ARP".
 
-## Built on
+Other routes:
 
-**ERC-8004** for agent identity · **Intuition** for the public graph · **MCP** for any runtime.
+- **Any MCP client**: the npm package [`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-protocol/cli), also in the official MCP Registry.
+- **Hosted, nothing installed**: the MCP endpoint `https://mcp.arp.intuition.box/mcp`. Your search words then reach ARP's server.
+- **Claude Desktop**: an MCP entry you add by hand, not yet tried inside Desktop. The one-file extension is not published yet.
 
----
+Each route and its current state: [Install](https://arp.intuition.box/docs/install).
 
-## Under the hood
+## What happens after
 
-```
-ARP/
-├── apps/                     what runs
-│   ├── web/                  the web app — search, tools, agents, activity
-│   ├── cli/                  `arp` — MCP server and hook in one binary
-│   ├── mcp/                  the MCP server: reads the graph, prepares calls, serves skills
-│   ├── hook/                 records which tools a session used, locally; reads GitHub before a skills install, and a failed skill's lines
-│   ├── sponsor/              the sponsoring service that pays testnet fees for agents
-│   ├── probe/                container (every 5 min): which MCP endpoints answer
-│   └── api/                  container (every 10 min): GitHub and skills.sh figures, cached
-├── packages/                 what you import
-│   ├── protocol/             @arp-protocol/core — the protocol SDK
-│   └── graphql/              @arp-protocol/graphql — Intuition queries
-├── contracts/                Solidity — the spending-limit enforcer and a testnet ERC-8004 registry
-├── skills/arp/               the publishable ARP skill
-├── data/catalogue/           the curated tools, skills and domain tree
-└── docs/                     the mechanism, the guides, the roadmap
-```
+- **A search shows what a skill contains before you install it**: the commands it runs, a login,
+  keys, hosts, words that suggest a paid service. These are matches in its files, not proven
+  requirements.
+- **After the first skill you use, the agent asks you once** whether to share the result as a
+  closed line: `worked` or `failed`, with a reason from a fixed list. Nothing is shared before you
+  answer.
+- **Nothing of your text is in a line.** Your words, the command a skill ran and its output stay on
+  your machine. What leaves and where: [What ARP publishes about you](https://arp.intuition.box/docs/what-arp-publishes).
 
-| piece                             | read more                                                                                     |
-| --------------------------------- | --------------------------------------------------------------------------------------------- |
-| Web app                           | [`apps/web/README.md`](apps/web/README.md)                                                    |
-| CLI (MCP server, hook)            | [`apps/cli/README.md`](apps/cli/README.md)                                                    |
-| MCP server                        | [`apps/mcp/README.md`](apps/mcp/README.md)                                                    |
-| Hook                              | [`apps/hook/README.md`](apps/hook/README.md)                                                  |
-| Sponsor                           | [`apps/sponsor/README.md`](apps/sponsor/README.md)                                            |
-| Probe (scheduled)                 | [`apps/probe/README.md`](apps/probe/README.md)                                                |
-| API (scheduled)                   | [`apps/api/README.md`](apps/api/README.md)                                                    |
-| Everything the programs touch     | [Running the MCP server and the hook](docs/22_RUNNING_THE_NODE.md)                            |
-| Protocol SDK                      | [`packages/protocol/README.md`](packages/protocol/README.md)                                  |
-| GraphQL layer                     | [`packages/graphql/README.md`](packages/graphql/README.md)                                    |
-| The ARP skill                     | [`skills/arp/SKILL.md`](skills/arp/SKILL.md)                                                  |
-| How it works                      | [How it works](docs/31_HOW_IT_WORKS.md) · [The idea](docs/12_THE_IDEA.md) · [The three flows](docs/13_THE_THREE_FLOWS.md) |
-| Installing per runtime            | [Installing ARP](docs/23_INSTALLING_ARP.md)                                                   |
-| Roadmap                           | [Roadmap](docs/15_ROADMAP.md)                                                                 |
+To remove it: [Uninstall](https://arp.intuition.box/docs/uninstall).
 
-### Build against it
+## Read more
 
-`@arp-protocol/core` is **not on npm yet**: use it from this repository's workspace (`packages/protocol`).
+The web app is [arp.intuition.box](https://arp.intuition.box), and its documentation is at
+[arp.intuition.box/docs](https://arp.intuition.box/docs).
 
-```ts
-import { getToolUsage } from '@arp-protocol/core';
+Developers: start with the [`docs/`](docs/) folder and [`CLAUDE.md`](CLAUDE.md), and
+[for developers](apps/web/public/docs/developers.md) for the build, the tests and every environment
+variable.
 
-const usage = await getToolUsage(toolId, {
-  graphqlUrl: 'https://mainnet.intuition.sh/v1/graphql',
-});
-```
-
-Reads need no key. Writes come back as unsigned calls you sign yourself.
-
-### Run it locally
-
-Requires [Bun](https://bun.sh) 1.2+, [Foundry](https://book.getfoundry.sh) and Node.js 22+.
-
-```bash
-bun install
-bun run --cwd contracts deps   # the Solidity submodules: `bun run test` needs them, and Foundry
-bun run dev                    # http://localhost:5173
-bun run test
-```
-
-Copy `.env.example` to `.env` before anything that talks to a chain.
-
-### Contributing
-
-Start with [for developers](apps/web/public/docs/developers.md): the layout, the build, the tests, what is
-published and every environment variable. Then [`CLAUDE.md`](CLAUDE.md): it routes to the rules in `.claude/rules/`, the decisions in
-`.claude/choices/` and where the project stands, `.claude/STATE.md`. The mechanism is
-[`docs/12_THE_IDEA.md`](docs/12_THE_IDEA.md). Run `bun run check`, `bun run lint` and `bun run test`
-before a pull request.
-
-### License
+## License
 
 MIT, see [`LICENSE`](LICENSE). Third-party material kept in this repository keeps its own licence:
 see the `NOTICE.md` beside it.

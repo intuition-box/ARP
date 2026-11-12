@@ -25,7 +25,7 @@ import type {TermShape} from "@arp-protocol/core";
  * The strong signal is **overlap**: a cluster is the same addresses backing the same claims, and
  * giving each address an independent history is what actually costs money. It is pairwise over a
  * term's supporters, so its cost grows with the square of their number, and it is not computed —
- * `FUTURE.md` carries the reasoning.
+ * the reasoning is in the backlog kept outside this repository.
  */
 export type TermShapeView = {
     /**

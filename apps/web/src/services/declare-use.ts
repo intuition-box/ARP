@@ -33,7 +33,7 @@ import {waitAndRecord} from "./tx-record";
  * ## Who may speak for an agent
  *
  * A `uses` edge's subject is the **agent's** identity atom (ADR `0032`), and a human reading an
- * atom page is not an agent. `FUTURE.md` flagged this as the thing to decide before building:
+ * atom page is not an agent. The backlog (kept outside this repository since task 142) flagged this as the thing to decide before building:
  * _"a human pasting a URL is not an agent. Decide whose claim the screen writes."_
  *
  * The answer here is the same proof `/agent/import` already uses, and it needs no new mechanism: the

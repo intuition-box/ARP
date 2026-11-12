@@ -22,6 +22,24 @@ scripts/     the maintainers' own tooling: seeding, measuring, demos
 docs/        the mechanism, the decisions, the guides
 ```
 
+## Each piece's own README
+
+| Piece | Read more |
+| --- | --- |
+| Web app | [`apps/web/README.md`](https://github.com/intuition-box/ARP/blob/main/apps/web/README.md) |
+| CLI (MCP server, hook) | [`apps/cli/README.md`](https://github.com/intuition-box/ARP/blob/main/apps/cli/README.md) |
+| MCP server | [`apps/mcp/README.md`](https://github.com/intuition-box/ARP/blob/main/apps/mcp/README.md) |
+| Hook | [`apps/hook/README.md`](https://github.com/intuition-box/ARP/blob/main/apps/hook/README.md) |
+| Sponsor | [`apps/sponsor/README.md`](https://github.com/intuition-box/ARP/blob/main/apps/sponsor/README.md) |
+| Probe | [`apps/probe/README.md`](https://github.com/intuition-box/ARP/blob/main/apps/probe/README.md) |
+| API | [`apps/api/README.md`](https://github.com/intuition-box/ARP/blob/main/apps/api/README.md) |
+| Protocol SDK | [`packages/protocol/README.md`](https://github.com/intuition-box/ARP/blob/main/packages/protocol/README.md) |
+| GraphQL layer | [`packages/graphql/README.md`](https://github.com/intuition-box/ARP/blob/main/packages/graphql/README.md) |
+| Every file and connection the programs touch | [Running the MCP server and the hook](https://github.com/intuition-box/ARP/blob/main/docs/22_RUNNING_THE_NODE.md) |
+| How it works | [How it works](https://github.com/intuition-box/ARP/blob/main/docs/31_HOW_IT_WORKS.md), [the idea](https://github.com/intuition-box/ARP/blob/main/docs/12_THE_IDEA.md), [the three flows](https://github.com/intuition-box/ARP/blob/main/docs/13_THE_THREE_FLOWS.md) |
+| Installing per runtime | [Installing ARP](https://github.com/intuition-box/ARP/blob/main/docs/23_INSTALLING_ARP.md) |
+| Roadmap | [Roadmap](https://github.com/intuition-box/ARP/blob/main/docs/15_ROADMAP.md) |
+
 ## Build and test
 
 You need [Bun](https://bun.sh) 1.2 or later, Node.js 22 or later and [Foundry](https://book.getfoundry.sh).
@@ -58,6 +76,20 @@ Only **`@arp-protocol/cli`** is on npm. `@arp-protocol/core` and `@arp-protocol/
 The Claude Code plugin is not on npm. It is `packaging/claude/arp/`, listed by `.claude-plugin/marketplace.json` at the repository root, which is what `claude plugin marketplace add intuition-box/ARP` reads. It carries the CLI as one file, `bin/arp.js`.
 
 Three dated feeds are served from this site under `/feeds/`, readable from any origin, each rebuilt by a script in `scripts/build/`: [the x402 outcomes feed](/docs/x402-feed) (`x402-outcomes.json`), [the skill lines feed](/docs/skill-lines-feed) (`skill-lines.json`) and [the agent sieve feed](/docs/agent-sieve-feed) (`agent-sieve.json`).
+
+## Building against the protocol package
+
+`@arp-protocol/core` is not on npm: use it from this repository's workspace (`packages/protocol`).
+
+```ts
+import { getToolUsage } from '@arp-protocol/core';
+
+const usage = await getToolUsage(toolId, {
+  graphqlUrl: 'https://mainnet.intuition.sh/v1/graphql',
+});
+```
+
+Reads need no key. Writes come back as unsigned calls you sign yourself.
 
 ## The MCP tools
 

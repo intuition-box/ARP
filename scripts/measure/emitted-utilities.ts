@@ -24,7 +24,7 @@
  *  `text-[color:var(--color-steel)]`. **A gate that cries wolf teaches people to silence it.**
  *
  *  So this prints a population and a verdict and exits non-zero only on a real miss. Making it a
- *  gate is in `FUTURE.md`.
+ *  gate is in the backlog kept outside this repository.
  *
  *  ## Why the figure needs a script at all
  *

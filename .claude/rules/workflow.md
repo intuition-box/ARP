@@ -14,7 +14,7 @@ Drift signals — when you catch yourself thinking any of these, stop:
 - "I noticed we could easily add…"
 - "let me make this more flexible for the future…"
 
-Every signal triggers a stop. Either the user authorizes the scope expansion explicitly, or the idea goes in a `FUTURE.md` for later.
+Every signal triggers a stop. Either the user authorizes the scope expansion explicitly, or the idea goes in the backlog for later. The backlog is kept outside this repository, privately, since task 142 (ADR `0202`): this repository is public, and the backlog holds plans and third-party notes that are not.
 
 ## Git hygiene
 

@@ -53,7 +53,7 @@ import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
  * What stays hard to fake is **independence**: a common funding source (not visible through this
  * indexer — it needs chain-level reads), correlated timing, and overlapping holdings. The last of
  * those is the strongest available signal and is **not** computed here: it is pairwise over a term's
- * backers, so its cost grows with the square of their number. `FUTURE.md` carries the reasoning.
+ * backers, so its cost grows with the square of their number. The reasoning is in the backlog kept outside this repository.
  */
 export type TermShape = {
     termId: string;

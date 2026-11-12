@@ -101,7 +101,7 @@ function App() {
                         }
                     />
                     {/* `/account` (the Smart Account and its delegations) was removed on
-                    2026-11-10 by the user; delegations come back later (`FUTURE.md`). An old link
+                    2026-11-10 by the user; delegations come back later (the backlog, kept outside this repository). An old link
                     lands on no route, like `/rig`, `/profile` and `/me` (`docs/tasks/35` §0). */}
                     {/* Folded into `/start/<profile>` (task 62, ADR `0125`): it wrote what Get started
                     writes, with a wallet. Redirected, not removed, for the links in commits and ADRs. */}

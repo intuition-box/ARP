@@ -34,7 +34,7 @@ ARP fails if any of these three drift:
 
 ### Scope discipline
 
-The MVP is one contract, three seed modules, one UI. Nothing else. If a task seems to need more, **it doesn't**. The need is real but belongs to a later milestone. Write it down in a `FUTURE.md` or similar, and stay in scope.
+The MVP is one contract, three seed modules, one UI. Nothing else. If a task seems to need more, **it doesn't**. The need is real but belongs to a later milestone. Write it down in the backlog, which is kept outside this repository (`.claude/rules/workflow.md`, ADR `0202`), and stay in scope.
 
 Phrases that signal drift:
 

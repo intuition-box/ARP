@@ -29,7 +29,7 @@ import type {PayeeSource} from "./x402-terms.js";
  * kept only when the payment checks out on its own chain when the feed is built.
  *
  * Built for a reader outside ARP: x402 Doctor shows "N paid, M got nothing" beside its verdict, and
- * verifies each settlement itself (`FUTURE.md`, x402 section). So a record carries what that check
+ * verifies each settlement itself (the backlog's x402 section, kept outside this repository). So a record carries what that check
  * needs: the endpoint, the outcome, the settlement transaction, its network and the dates.
  *
  * **The endpoint is the URL the payer called** (task 93, ADR `0162`), as the payment level carries it:

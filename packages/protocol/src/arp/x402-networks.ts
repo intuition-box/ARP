@@ -7,7 +7,7 @@ import {x402NetworksFrom, type X402NetworkTable} from "../x402-payment.js";
  * RPC to read it (task 89, ADR `0159`). Here because `rules/portability.md` lets `arp/` name a chain.
  *
  * Base, with native USDC, is what x402 sellers are paid in today and what x402 Doctor reads first
- * (`FUTURE.md`, x402 section). An operator adds a network by configuration, `ARP_X402_NETWORKS` with
+ * (the backlog's x402 section, kept outside this repository). An operator adds a network by configuration, `ARP_X402_NETWORKS` with
  * `ARP_X402_RPC_<chain id>` (`x402NetworksFrom`, ADR `0160`); ARP **reads** these chains and never signs
  * or sends on them.
  *

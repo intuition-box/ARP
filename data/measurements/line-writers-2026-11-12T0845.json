@@ -1,0 +1,31 @@
+{
+ "at": "2026-11-12T08:45:25.287Z",
+ "chain": 13579,
+ "ourWallets": [
+  "0x906f3a52ec089f8d4e9127f91c6be5ae0d18f91f",
+  "0xe596096f4176b682e300d73963e7b04b383c1aa1",
+  "0x77939a4c276f3e549276ceb3a09cda1ff58b7ec9"
+ ],
+ "resultLines": {
+  "total": 13,
+  "ours": 13,
+  "others": 0,
+  "otherWallets": 0,
+  "holdersOutsideOurs": 3,
+  "holders": {
+   "paidByUs": [
+    "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42",
+    "0xd092f619687e774150b195f70EC54864C6053Db0",
+    "0xdD072CAe7F70147C9470a5748ad524268D777003"
+   ],
+   "independent": []
+  }
+ },
+ "usesEdges": {
+  "total": 194,
+  "ours": 48,
+  "others": 146,
+  "otherWallets": 113,
+  "holdersOutsideOurs": 99
+ }
+}
