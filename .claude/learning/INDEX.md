@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-12 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-135 entries, one per completed task. Written by `task-verifier` on a pass.
+136 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -141,3 +141,4 @@
 | [129](129-the-search-package-is-bundled.md) | `docs/tasks/141-the-search-package-is-bundled.md` | PASS (second round; the first failed on the record, not the code) | The search package is bundled, so `arp_pulse` searches in Claude Desktop |
 | [130](130-the-backlog-leaves-and-a-short-readme.md) | `docs/tasks/142-the-backlog-leaves-and-a-short-readme.md` | PASS (second pass; the first failed on three README claims and the ADR index) | The backlog leaves the public repository, and a short README for users |
 | [131](131-tools-hides-tests-per-edge.md) | `docs/tasks/143-tools-hides-tests-per-edge.md` | PASS (second pass; the first failed on the evidence-ladder tier, "observed" instead of "declared") | /tools hides ARP's own test identities per edge, as the atom page does |
+| [133](133-the-share-card-is-the-current-landing.md) | `docs/tasks/145-the-share-card-is-the-current-landing.md` | PASS (round 2) | The share card is the current landing |

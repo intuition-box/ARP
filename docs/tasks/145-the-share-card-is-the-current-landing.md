@@ -1,6 +1,6 @@
 # Task 145 — The share card is the current landing
 
-**Status:** done 2026-11-12, branch `chore/og-image`, written by arp-97. Task 145, post-mortem `133`, no
+**Status:** done 2026-11-12, branch `chore/og-image`, written by arp-97. `task-verifier` PASS on round 2, post-mortem `.claude/learning/133-the-share-card-is-the-current-landing.md`. Task 145, post-mortem `133`, no
 ADR, allocated by the orchestrator.
 **Rules:** `code.md`, `ui.md`, `claims.md`, `workflow.md`.
 **Required skills:** `arp-contributing`.
