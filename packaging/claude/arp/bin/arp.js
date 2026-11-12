@@ -23552,6 +23552,7 @@ async function listTools2(config) {
   const readsWallets = sponsor !== null && walletRows !== null && walletRows.length < INTUITION_MAX_PAGE;
   const edgeWallets = walletsByEdge(walletRows ?? []);
   const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
+  const excluded = config.excludeSubjects ?? new Set;
   const byAtom = new Map;
   const walletsByAtom = new Map;
   for (const row of rows) {
@@ -23564,6 +23565,8 @@ async function listTools2(config) {
     if (atomId === null)
       continue;
     const declarer = readString(row, "subject_id");
+    if (declarer !== null && excluded.has(declarer.toLowerCase()))
+      continue;
     const support = sideOf(row["term"]);
     const oppose = sideOf(row["counter_term"]);
     const deposits = depositsOf(row["term"]);

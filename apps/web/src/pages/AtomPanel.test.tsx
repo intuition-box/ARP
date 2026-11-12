@@ -51,29 +51,33 @@ beforeAll(() => {
 
 /** The catalogue's row for this page's atom, with Signals from a declarer who is not a test. */
 function withSignals(declarers: string[]) {
-    vi.mocked(listTools).mockResolvedValue({
+    // As the real read does since task 143: an excluded subject's edge is not summed, so a tool
+    // with only excluded declarers is not returned.
+    vi.mocked(listTools).mockImplementation(async ({excludeSubjects}) => ({
         curveId: 1,
         edgesRead: 1,
         truncated: false,
         sponsor: null,
-        tools: [
-            {
-                atomId: `0x${"ab".repeat(32)}`,
-                label: null,
-                uri: null,
-                hostedAt: null,
-                type: "Thing",
-                edgeCount: 1,
-                declarers,
-                pricedEdges: 1,
-                sponsoredDeposits: 2,
-                sponsoredWallets: 1,
-                declaredDeposits: 0,
-                supportAssetsSum: 0n,
-                opposeAssetsSum: 0n,
-            },
-        ],
-    });
+        tools: declarers.every((atom) => excludeSubjects?.has(atom.toLowerCase()) === true)
+            ? []
+            : [
+                  {
+                      atomId: `0x${"ab".repeat(32)}`,
+                      label: null,
+                      uri: null,
+                      hostedAt: null,
+                      type: "Thing",
+                      edgeCount: 1,
+                      declarers,
+                      pricedEdges: 1,
+                      sponsoredDeposits: 2,
+                      sponsoredWallets: 1,
+                      declaredDeposits: 0,
+                      supportAssetsSum: 0n,
+                      opposeAssetsSum: 0n,
+                  },
+              ],
+    }));
 }
 const read = getAtomStanding as unknown as ReturnType<typeof vi.fn>;
 /**

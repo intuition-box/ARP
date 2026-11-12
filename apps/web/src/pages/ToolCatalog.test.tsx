@@ -1,4 +1,4 @@
-import {fireEvent, screen} from "@testing-library/react";
+import {fireEvent, screen, within} from "@testing-library/react";
 import {beforeEach, describe, expect, it, vi} from "vitest";
 
 import type {ToolCatalogView, ToolRow} from "../services/tool-catalog";
@@ -129,6 +129,20 @@ describe("the tools page", () => {
         expect(screen.getByRole("button", {name: "Most signals"})).toHaveAttribute(
             "aria-pressed",
             "true",
+        );
+    });
+
+    it("names each index with no count, and points to search for the rest of skills.sh", () => {
+        // Task 143, the user: a count beside "Skills" read as every skill there is.
+        renderWithProviders(<ToolCatalog />);
+        const group = screen.getByRole("group", {name: "Index"});
+        expect(within(group).getByRole("button", {name: "Skills"})).toHaveTextContent(/^Skills$/);
+        expect(within(group).getByRole("button", {name: "Repositories"})).toHaveTextContent(
+            /^Repositories$/,
+        );
+        expect(screen.getByRole("link", {name: "Search all of skills.sh"})).toHaveAttribute(
+            "href",
+            "/search",
         );
     });
 

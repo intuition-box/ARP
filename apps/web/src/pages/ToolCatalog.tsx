@@ -142,8 +142,6 @@ export function ToolCatalog() {
         }),
     );
     const page = pageOfTools(visible, offset, TOOL_PAGE_SIZE);
-    const countIn = (which: ToolIndex) =>
-        (view?.rows ?? []).filter((row) => toolIndexOf(row) === which).length;
 
     return (
         <section>
@@ -158,14 +156,22 @@ export function ToolCatalog() {
                         as a choice of what page you are on, not as one more toolbar control. */}
                     <DisplayTabs
                         label="Index"
-                        options={TOOL_INDEXES.map((entry) => ({
-                            ...entry,
-                            count: view === undefined ? null : countIn(entry.id),
-                        }))}
+                        // No count on a tab (user, 2026-11-12, task 143): "Skills 676" read as
+                        // every skill there is, and it is only ARP's catalogue. Search reads the
+                        // whole of skills.sh, and the link below says where.
+                        options={TOOL_INDEXES}
                         selected={index}
                         onChange={chooseIndex}
                     />
                 </div>
+                {/* A link, not a sentence: this list is ARP's catalogue, and /search also asks
+                    skills.sh for the same words (task 82). */}
+                <Link
+                    to="/search"
+                    className={`mt-6 inline-block font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)] ${linkClass}`}
+                >
+                    Search all of skills.sh
+                </Link>
             </header>
 
             {/* The toolbar on its own rule, like the index's. It was inline with the `h1`, which
@@ -173,7 +179,8 @@ export function ToolCatalog() {
             <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-[color:var(--color-rule)] py-3.5">
                 <Segmented label="Order" selected={axis} onChange={setAxis} options={axes} />
                 {/* No Signal outside ARP's own tests yet, which are hidden (task 74). */}
-                {view !== undefined && !view.rows.some((row) => (row.sponsoredDeposits ?? 0) > 0) ? (
+                {view !== undefined &&
+                !view.rows.some((row) => (row.sponsoredDeposits ?? 0) > 0) ? (
                     <span className="flex items-center gap-2">
                         <span className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.06em] text-[color:var(--color-steel)]">
                             No signals yet

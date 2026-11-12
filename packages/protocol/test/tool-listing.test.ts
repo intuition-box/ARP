@@ -1,7 +1,11 @@
 import {describe, expect, it, vi} from "vitest";
 import {INTUITION_URL} from "./helpers.js";
 
-import {SPONSORED_WALLETS_QUERY, TOOL_LISTING_QUERY, TOOL_LISTING_SPONSORED_QUERY} from "@arp-protocol/graphql";
+import {
+    SPONSORED_WALLETS_QUERY,
+    TOOL_LISTING_QUERY,
+    TOOL_LISTING_SPONSORED_QUERY,
+} from "@arp-protocol/graphql";
 
 import {INTUITION_MAX_PAGE, getToolWallets, listTools} from "../src/tool-listing.js";
 import {SAME_AS, USES} from "../src/sources/intuition/terms.js";
@@ -39,7 +43,9 @@ function edge(params: {
                 },
             ],
             deposits: {aggregate: {count: params.deposits ?? 0}},
-            ...(params.sponsored === undefined ? {} : {sponsored: {aggregate: {count: params.sponsored}}}),
+            ...(params.sponsored === undefined
+                ? {}
+                : {sponsored: {aggregate: {count: params.sponsored}}}),
         },
         counter_term: {
             total_assets: params.opposeAssets ?? "0",
@@ -244,6 +250,69 @@ describe("listTools — sponsored and declared (ADR 0094 §2)", () => {
             sponsor: SPONSOR,
         });
         expect(page.tools[0]?.sponsoredWallets).toBe(2);
+    });
+
+    it("leaves an excluded subject's edges out of every figure, per edge (task 143)", async () => {
+        // The pdf case on 13579: one tool, a hidden test agent's edge beside a visible agent's.
+        // The tool keeps the visible edge's figures and nothing of the hidden one's.
+        const request = vi.fn(async (query: string) =>
+            query === SPONSORED_WALLETS_QUERY
+                ? {
+                      deposits: [
+                          {term_id: "edge-0xaa-7", receiver_id: "0xHidden"},
+                          {term_id: "edge-0xaa-3", receiver_id: "0xVisible"},
+                      ],
+                  }
+                : {
+                      triples: [
+                          edge({
+                              atomId: "0xaa",
+                              subject: "0xTEST",
+                              supportAssets: "7",
+                              supportPositions: 2,
+                              opposeAssets: "4",
+                              deposits: 2,
+                              sponsored: 1,
+                          }),
+                          edge({
+                              atomId: "0xaa",
+                              subject: "0xreal",
+                              supportAssets: "3",
+                              supportPositions: 2,
+                              deposits: 2,
+                              sponsored: 1,
+                          }),
+                          edge({
+                              atomId: "0xbb",
+                              subject: "0xtest",
+                              supportAssets: "9",
+                              deposits: 1,
+                              sponsored: 1,
+                          }),
+                      ],
+                  },
+        );
+        const page = await listTools({
+            graphqlUrl: INTUITION_URL,
+            // A stub of the one method `listTools` calls; the transport's other members go unused.
+            transport: {request} as never,
+            sponsor: SPONSOR,
+            excludeSubjects: new Set(["0xtest"]),
+        });
+        // `0xbb` had only the excluded subject's edge, so it is not returned at all.
+        expect(page.tools.map((t) => t.atomId)).toEqual(["0xaa"]);
+        expect(page.tools[0]).toMatchObject({
+            edgeCount: 1,
+            declarers: ["0xreal"],
+            pricedEdges: 1,
+            sponsoredDeposits: 1,
+            sponsoredWallets: 1,
+            declaredDeposits: 1,
+            supportAssetsSum: 3n,
+            opposeAssetsSum: 0n,
+        });
+        // What was read is still what was read: truncation is about the read, not the result.
+        expect(page.edgesRead).toBe(3);
     });
 
     it("keeps the listing when the wallet read fails, and says it cannot count", async () => {

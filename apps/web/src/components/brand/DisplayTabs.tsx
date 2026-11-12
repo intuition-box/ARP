@@ -1,6 +1,7 @@
 /**
  * Two or more views of one page as words in display type beside its title: the selected one in
- * paper with the Saffron underline, the others dim, each with its count.
+ * paper with the Saffron underline, the others dim, each with its count when one is given (`/tools`
+ * gives none since task 143).
  *
  * Buttons with `aria-pressed`, not tabs: the choice switches what the list shows and keeps the
  * reader on the page. Shared by `/tools` (Skills / Repositories) and `/activity` (Yours / Everyone),

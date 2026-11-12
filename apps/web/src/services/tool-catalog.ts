@@ -338,28 +338,15 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
 }
 
 /**
- * What ARP's own tests left on a tool, removed (task 74, `services/test-identities.ts`).
+ * The page was read with ARP's own test identities left out (task 74, `services/test-identities.ts`).
  *
- * `hiddenAtoms` are the identity atoms of ARP's test agents. A tool whose declarers are all hidden
- * loses its declared row, and with it the Signals on those agents' edges; the catalogue keeps it as
- * registered. The sponsor's address is **not** a reason to hide a Signal: it signs every Signal,
- * a tester's included (ADR `0144`).
- *
- * A tool declared by a test agent **and** somebody else keeps its row whole: the read sums Signals
- * per tool, not per edge, so they cannot be split here.
+ * The leaving out is `listTools`'s, per edge and before anything is summed (`excludeSubjects`,
+ * task 143), so a tool one test agent and one other agent declared shows the other's figures only,
+ * as its atom page does. A tool whose every declarer was a test is not on the page; the catalogue
+ * keeps it as registered. The sponsor's address is **not** a reason to hide a Signal: it signs every
+ * Signal, a tester's included (ADR `0144`).
  */
-export type HiddenTests = {hiddenAtoms: ReadonlySet<string>};
-
-function withoutTests(tool: ToolListing, hidden: HiddenTests): ToolListing | null {
-    const declarers = tool.declarers.filter((atom) => !hidden.hiddenAtoms.has(atom.toLowerCase()));
-    if (declarers.length === 0 && tool.declarers.length > 0) return null;
-    const changed = declarers.length !== tool.declarers.length;
-    return {
-        ...tool,
-        declarers,
-        edgeCount: changed ? declarers.length : tool.edgeCount,
-    };
-}
+export type HiddenTests = {testsExcluded: true};
 
 /**
  * The two populations, merged into one list, with the declared row winning a collision.
@@ -389,14 +376,7 @@ export function buildToolCatalogView(
     registered?: RegisteredToolsPage,
     hidden?: HiddenTests,
 ): ToolCatalogView {
-    const tools =
-        hidden === undefined
-            ? page.tools
-            : page.tools.flatMap((tool) => {
-                  const kept = withoutTests(tool, hidden);
-                  return kept === null ? [] : [kept];
-              });
-    const rows = tools.map(rowOf);
+    const rows = page.tools.map(rowOf);
     const declared = new Set(rows.map((row) => row.key.toLowerCase()));
     for (const tool of registered?.tools ?? []) {
         if (declared.has(tool.atomId.toLowerCase())) continue;

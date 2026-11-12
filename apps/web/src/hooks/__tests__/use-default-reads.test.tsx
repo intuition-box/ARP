@@ -108,6 +108,7 @@ describe("useToolCatalog", () => {
             order: "declarations",
             curveId: 1,
             sponsor: expect.stringMatching(/^0x[0-9a-fA-F]{40}$/),
+            excludeSubjects: expect.any(Set),
         });
         expect(core.listRegisteredTools).toHaveBeenCalledWith({graphqlUrl: TESTNET_GRAPHQL, curveId: 1});
     });

@@ -6,7 +6,11 @@ import type {
     ToolListingPage,
 } from "@arp-protocol/core";
 
+import {listTools, type AtomStanding} from "@arp-protocol/core";
+
 import {toolCatalogQueryKey, toolCatalogQueryOptions} from "../use-tool-catalog";
+import {visibleStanding} from "../../services/test-identities";
+import {formatTrust} from "../../services/trust-format";
 
 function tool(atomId: string, overrides: Partial<ToolListing> = {}): ToolListing {
     return {
@@ -94,7 +98,7 @@ describe("toolCatalogQueryOptions", () => {
         );
         const view = await options.queryFn();
 
-        expect(fetchListing).toHaveBeenCalledWith("conviction", 2, null);
+        expect(fetchListing).toHaveBeenCalledWith("conviction", 2, null, new Set());
         expect(view.rows).toHaveLength(1);
         expect(view.rows[0]?.name).toBe("Trail of Bits — guidelines-advisor");
         expect(view.rows[0]?.href).toBe("/atom/0xba5844b5");
@@ -117,7 +121,7 @@ describe("toolCatalogQueryOptions", () => {
             noneHidden,
         );
         await options.queryFn();
-        expect(fetchListing).toHaveBeenCalledWith("conviction", 1, sponsor);
+        expect(fetchListing).toHaveBeenCalledWith("conviction", 1, sponsor, new Set());
         expect(options.queryKey).toEqual(toolCatalogQueryKey(13579, "conviction", 1, sponsor));
         expect(options.queryKey).not.toEqual(toolCatalogQueryKey(13579, "conviction", 1));
     });
@@ -210,32 +214,107 @@ describe("toolCatalogQueryOptions", () => {
     });
 
     it("leaves out what ARP's own tests wrote, and keeps the tool in the catalogue", async () => {
-        // Task 74: a tool declared only by ARP's test agents loses its declared row and its Signals,
-        // and stays listed as registered with no declaration. The sponsor is on the list, and a
-        // tester's Signal it signed stays.
-        const sponsor = "0xE596096F4176b682E300d73963e7B04B383C1AA1";
+        // Task 74: a tool declared only by ARP's test agents loses its declared row, and stays
+        // listed as registered with no declaration. The leaving out is `listTools`'s (task 143), so
+        // the listing is asked with the hidden list and returns no row for that tool.
+        const fetchListing = vi.fn(async () => ({...pageOf(), tools: []}));
         const options = toolCatalogQueryOptions(
-            {chainId: 13579, graphqlUrl: "https://indexer.test", sponsor},
+            {chainId: 13579, graphqlUrl: "https://indexer.test"},
             "conviction",
             1,
-            async () => ({
-                ...pageOf(),
-                tools: [
-                    tool("0xba5844b5", {declarers: ["0xAAA"], edgeCount: 3, sponsoredDeposits: 3}),
-                    tool("0xc0ffee", {declarers: ["0xaaa", "0xbbb"], edgeCount: 2, sponsoredDeposits: 2}),
-                ],
-            }),
+            fetchListing,
             async () => registeredPageOf([registered("0xba5844b5", {declarations: 3})]),
             async () => new Set(["0xaaa"]),
         );
         const view = await options.queryFn();
 
+        expect(fetchListing).toHaveBeenCalledWith("conviction", 1, null, new Set(["0xaaa"]));
         const only = view.rows.find((row) => row.key === "0xba5844b5");
         expect(only?.provenance).toBe("registered");
         expect(only?.declarations).toBe(0);
-        const mixed = view.rows.find((row) => row.key === "0xc0ffee");
-        expect(mixed?.declarers).toEqual(["0xbbb"]);
-        expect(mixed?.declarations).toBe(1);
-        expect(mixed?.sponsoredDeposits).toBe(2);
+    });
+
+    it("shows a tool one hidden and one visible agent declared as its atom page does (task 143)", async () => {
+        // The pdf skill on 13579, 2026-11-12: four `uses pdf` edges, three by ARP's test agents.
+        // /tools showed all four edges' figures while the atom page showed one declaration.
+        const sponsor = "0x77939A4c276f3E549276CEB3A09CDa1fF58b7ec9";
+        const edge = (subject: string, assets: string) => ({
+            term_id: `edge-${subject}`,
+            subject_id: subject,
+            object: {
+                term_id: "0xpdf",
+                label: "github.com/anthropics/skills?skill=pdf",
+                data: null,
+                type: "Thing",
+            },
+            term: {
+                total_assets: assets,
+                vaults: [{position_count: 2, total_assets: assets}],
+                deposits: {aggregate: {count: 2}},
+                sponsored: {aggregate: {count: 1}},
+            },
+            counter_term: {total_assets: "0", vaults: [{position_count: 0, total_assets: "0"}]},
+        });
+        const triples = [edge("0xtest", "1980000001000000"), edge("0xreal", "990000001000000")];
+        const transport = {
+            async request(query: string) {
+                if (query.includes("deposits(")) {
+                    return {
+                        deposits: [
+                            {term_id: "edge-0xtest", receiver_id: "0xTesterWallet"},
+                            {term_id: "edge-0xreal", receiver_id: "0xRealWallet"},
+                        ],
+                    };
+                }
+                return {triples};
+            },
+        };
+        const options = toolCatalogQueryOptions(
+            {chainId: 13579, graphqlUrl: "https://indexer.test", sponsor},
+            "conviction",
+            1,
+            (order, curveId, chosen, excludeSubjects) =>
+                // A stub of the one method `listTools` calls; the transport's other members go unused.
+                listTools({
+                    graphqlUrl: "https://indexer.test",
+                    transport: transport as never,
+                    order,
+                    curveId,
+                    sponsor: chosen,
+                    excludeSubjects,
+                }),
+            noneRegistered,
+            async () => new Set(["0xtest"]),
+        );
+        const row = (await options.queryFn()).rows.find((r) => r.key === "0xpdf");
+
+        // The atom page's read of the same two edges, after `visibleStanding`.
+        // Only the fields `visibleStanding` reads are set.
+        const standing = visibleStanding(
+            {
+                edgeCount: 2,
+                groups: [
+                    {
+                        predicate: {atomId: "0xuses", label: "uses"},
+                        edges: triples.map((t) => ({
+                            tripleId: t.term_id,
+                            subject: {atomId: t.subject_id, label: null, type: null},
+                            support: {totalAssets: BigInt(t.term.total_assets), positionCount: 2},
+                            oppose: {totalAssets: 0n, positionCount: 0},
+                        })),
+                        assets: 0n,
+                        positions: 0,
+                    },
+                ],
+            } as unknown as AtomStanding,
+            new Set(["0xtest"]),
+        );
+
+        expect(row?.declarations).toBe(standing.edgeCount);
+        expect(row?.declarers).toEqual(["0xreal"]);
+        expect(row?.sponsoredDeposits).toBe(1);
+        expect(row?.wallets).toBe(1);
+        expect(row?.supportTrust).toBe(formatTrust(standing.groups[0]?.assets ?? -1n));
+        expect(row?.supportTrust).toBe(formatTrust(990_000_001_000_000n));
     });
 });

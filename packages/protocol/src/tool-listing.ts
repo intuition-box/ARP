@@ -49,7 +49,6 @@ import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
  * config: without one, every deposit is declared.
  */
 
-
 /**
  * The most rows Intuition's indexer will return for one query, whatever `limit` asks for.
  *
@@ -126,7 +125,7 @@ export type ToolListing = {
 export type ToolListingPage = {
     /** The curve the position counts and per-vault assets were read at. */
     curveId: number;
-    /** How many `uses` edges this page was computed from. */
+    /** How many `uses` edges were read, those `excludeSubjects` then left out included. */
     edgesRead: number;
     /** True when the edge limit was hit, so the grouping may be a prefix rather than the whole set. */
     truncated: boolean;
@@ -154,6 +153,12 @@ export type ToolListingConfig = {
      * sponsored; omitted or `null`, every deposit counts as declared.
      */
     sponsor?: string | null;
+    /**
+     * Subjects whose edges are left out **before** anything is summed, compared lower-case. A tool
+     * whose every edge is left out is not returned. The caller decides who: this package knows no
+     * list of anybody (`apps/web` passes ARP's own test identities, task 143).
+     */
+    excludeSubjects?: ReadonlySet<string>;
 };
 
 /** The Thing's `url`, with the literal string `"null"` treated as absent — three tools carry it. */
@@ -253,12 +258,15 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
                   .catch(() => null),
     ]);
     const walletRows =
-        walletRead !== null && Array.isArray(walletRead["deposits"]) ? walletRead["deposits"] : null;
+        walletRead !== null && Array.isArray(walletRead["deposits"])
+            ? walletRead["deposits"]
+            : null;
     const readsWallets =
         sponsor !== null && walletRows !== null && walletRows.length < INTUITION_MAX_PAGE;
     const edgeWallets = walletsByEdge(walletRows ?? []);
 
     const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
+    const excluded = config.excludeSubjects ?? new Set<string>();
     const byAtom = new Map<string, ToolListing>();
     const walletsByAtom = new Map<string, Set<string>>();
 
@@ -270,6 +278,9 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
         const atomId = readString(object, "term_id");
         if (atomId === null) continue;
         const declarer = readString(row, "subject_id");
+        // Per edge, so a tool one hidden and one visible agent declared keeps the visible one's
+        // figures only, as the atom page does (`visibleStanding`).
+        if (declarer !== null && excluded.has(declarer.toLowerCase())) continue;
 
         const support = sideOf(row["term"]);
         const oppose = sideOf(row["counter_term"]);

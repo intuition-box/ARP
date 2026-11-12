@@ -39,14 +39,16 @@ export type ToolCatalogFetcher = (
     order: ToolListingOrder,
     curveId: number,
     sponsor: string | null,
+    /** Identity atoms whose edges are left out before anything is summed: ARP's own tests. */
+    excludeSubjects: ReadonlySet<string>,
 ) => Promise<ToolListingPage>;
 
 export type RegisteredToolsFetcher = (curveId: number) => Promise<RegisteredToolsPage>;
 
 const fetchToolListing =
     (graphqlUrl: string): ToolCatalogFetcher =>
-    (order, curveId, sponsor) =>
-        listTools({graphqlUrl, order, curveId, sponsor});
+    (order, curveId, sponsor, excludeSubjects) =>
+        listTools({graphqlUrl, order, curveId, sponsor, excludeSubjects});
 
 const fetchRegisteredTools =
     (graphqlUrl: string): RegisteredToolsFetcher =>
@@ -96,14 +98,16 @@ export function toolCatalogQueryOptions(
     return {
         queryKey: toolCatalogQueryKey(chain.chainId, order, curveId, sponsor),
         queryFn: async (): Promise<ToolCatalogView> => {
-            // In parallel: independent reads of the same endpoint, and neither needs the other.
-            const [declared, registered, hiddenAtoms] = await Promise.all([
-                fetchListing(order, curveId, sponsor),
+            // The listing waits for the hidden list, because it leaves those agents' edges out
+            // before it sums (task 143); the registered read needs neither and runs alongside.
+            const [declared, registered] = await Promise.all([
+                fetchHidden(chain.graphqlUrl).then((hidden) =>
+                    fetchListing(order, curveId, sponsor, hidden),
+                ),
                 fetchRegistered(curveId),
-                fetchHidden(chain.graphqlUrl),
             ]);
             // ARP's own tests are left out of the figures, not the catalogue (task 74).
-            return buildToolCatalogView(declared, registered, {hiddenAtoms});
+            return buildToolCatalogView(declared, registered, {testsExcluded: true});
         },
         // Graph reads, and both populations move on the order of days at most.
         staleTime: 120_000,
