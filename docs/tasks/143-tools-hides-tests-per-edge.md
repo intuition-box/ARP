@@ -1,7 +1,7 @@
 # Task 143 — /tools hides ARP's own test identities per edge, as the atom page does
 
-**Status:** in progress on `task-143-tools-hide-tests`, from `dev` `4882741e`. Task 143,
-post-mortem `131`, allocated by the orchestrator. No ADR: the change applies the atom page's
+**Status:** complete 2026-11-12 on `task-143-tools-hide-tests`, from `dev` `4882741e`, code in `6d04d52a`. `task-verifier` PASS on round 2 (round 1 failed on the evidence-ladder tier, fixed); post-mortem `.claude/learning/131-tools-hides-tests-per-edge.md`. Task 143,
+post-mortem `131`, allocated by the orchestrator. No ADR: it applies the atom page's
 existing rule (task 74, `visibleStanding`) to `/tools`.
 **Rules:** `code.md`, `ui.md`, `claims.md`, `portability.md`, `workflow.md`.
 **Required skills:** `arp-contributing`.
@@ -58,6 +58,12 @@ there is, while they are only ARP's catalogue.
   declarations, Signals 1, Wallets 1 and Support equal to the visible edge's.
 - `ToolCatalogList.test.tsx`: the Hint opens on focus. `ToolCatalog.test.tsx`: the tabs read
   "Skills" and "Repositories" with no number, and the link goes to `/search`.
+
+## Evidence ladder
+
+Skill column, declared tier (`docs/32`): `/tools` now sums only what non-test agents declared about
+a skill, edge by edge, so its figures match the atom page instead of carrying ARP's own test lines.
+It does not move ARP up a tier; it keeps the declared tier's figures honest.
 
 ## Do not do in this task
 
