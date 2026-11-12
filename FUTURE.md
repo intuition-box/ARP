@@ -783,3 +783,13 @@ set to in Coolify.
 **Proposed.** Four Coolify apps built from `dev`, with auto-deploy on: the site `staging.arp.intuition.box`, the sponsor `sponsor-staging.arp.intuition.box`, the MCP endpoint `mcp-staging.arp.intuition.box`, the content server `content-staging.arp.intuition.box`. The wildcard DNS already covers them. The site's `VITE_ARP_SPONSOR_URL` points at the staging sponsor; a tester points the CLI there with `ARP_SPONSOR` and `ARP_CONTENT`. The x402 demo seller needs no staging copy.
 
 **Open.** The staging sponsor's key: its own, with a small budget and its own `/data` volume (recommended, so a test never touches the production ledger or budget), or the production key (simpler, but two services on one address race each other). Its address would also go into the content signers and, if it files categories, into `ARP_DOMAIN_ATTESTORS`.
+
+## Badges for skills, the way mcptry does it for MCP servers
+
+**Asked 2026-11-11, for later.** mcptry gives a maintainer who proves ownership a badge for their README (ARP's own: `https://mcptry.com/badge/io.github.Wieedze/arp`, in the README since that day). Each badge in another project's README links back, which is distribution.
+
+**What an ARP badge could show, without contradicting `docs/30` or ADR 0137:** facts, never a grade. What the skill's files ask for (keys, programs to install, hosts it contacts, the same reading as "Before you install"); how many distinct wallets wrote a line about it, worked and failed, with the date; and the version (the directory digest, ADR 0185), so a change to the files shows. Rendered as SVG by `apps/api` (task 140), with a public page for the method.
+
+**Rejected as proposed:** an A–F grade (the score ranks a search and does not say a skill works) and "used by N agents" (a line is an agent's word, not proof of use; and no third party has written one yet).
+
+**Open:** a claim by proof of ownership (a file in the repository, a gist or DNS), and what it would buy; a scan of SKILL.md and bundled scripts for hidden instructions, as a separate task; a public history of what changed between versions. The design `docs/design/readme-badges` lives on `future/hire-loop` since task 139.

@@ -9,6 +9,8 @@
 
 <p align="center"><i>Check before your agent installs or pays.</i></p>
 
+<p align="center"><a href="https://mcptry.com/servers/io.github.Wieedze/arp"><img src="https://mcptry.com/badge/io.github.Wieedze/arp" alt="mcptry" /></a></p>
+
 ---
 
 ## The problem
