@@ -3,7 +3,8 @@
  *      cd apps/web && bun run build && bunx vite preview --port 4173 &
  *      bun run scripts/build/og-image.ts [url]
  *
- *  `og:image` and `twitter:image` name this file (`apps/web/index.html`). It was a screenshot taken once on
+ *  `og:image` and `twitter:image`, written into the built page by `apps/web/vite.config.ts` from `VITE_SITE_URL`,
+ *  name this file. It was a screenshot taken once on
  *  2026-11-09 and nothing redid it, so a shared link kept showing a landing that no longer existed. This
  *  script redoes it the same way every time.
  *
@@ -12,7 +13,7 @@
  *  Playwright's cached Chromium under `/root` or the user's home. Reduced motion is forced, so the
  *  landing's first scene shows its end state rather than a frame of its animation.
  */
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -43,6 +44,7 @@ if (import.meta.main) {
   const url = process.argv[2] ?? 'http://localhost:4173/';
   const out = resolve(import.meta.dir, '..', '..', 'apps', 'web', 'public', 'og.png');
   const chrome = chromePath(process.env, homedir(), existsSync);
+  const profile = `/tmp/arp-og-${process.pid}`;
   const child = Bun.spawn(
     [
       chrome,
@@ -52,7 +54,7 @@ if (import.meta.main) {
       '--hide-scrollbars',
       '--force-prefers-reduced-motion',
       `--remote-debugging-port=${PORT}`,
-      `--user-data-dir=/tmp/arp-og-${process.pid}`,
+      `--user-data-dir=${profile}`,
       'about:blank',
     ],
     { stdout: 'ignore', stderr: 'ignore' },
@@ -92,5 +94,6 @@ if (import.meta.main) {
     console.log(`wrote ${out} from ${url}`);
   } finally {
     child.kill();
+    rmSync(profile, { recursive: true, force: true });
   }
 }

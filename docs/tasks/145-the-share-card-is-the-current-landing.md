@@ -7,8 +7,9 @@ ADR, allocated by the orchestrator.
 
 ## Why
 
-The user, 2026-11-12: a shared link to the site still shows the old site. `og:image` and `twitter:image`
-(`apps/web/index.html`) name `https://arp.intuition.box/og.png`; the live file is byte-identical to
+The user, 2026-11-12: a shared link to the site still shows the old site. `og:image` and `twitter:image`,
+written into the built page by `apps/web/vite.config.ts:93` from `VITE_SITE_URL`, name
+`https://arp.intuition.box/og.png` on the live site; the live file is byte-identical to
 `apps/web/public/og.png`, a screenshot added once on 2026-11-09 (`c3833be0`) and never redone. It shows
 the landing of that day: another title, "TESTNET · TEST MONEY", "Pulse · 0 on testnet". Not a cache. Of two
 options (a fresh capture of the landing's top, or a fixed designed card) the user chose the capture.
@@ -35,6 +36,12 @@ exist will show them instead.
 - Run against `vite preview` of `dev`'s build: the card was read back and shows the current title and nav.
 - `bun test ./scripts/test/og-image.test.ts` 3 pass; root `bun run check` (scripts typecheck, tokens,
   contrast); web tests 1447.
+
+## Evidence ladder
+
+No column and no tier: the share card is the site's presentation, done at the user's request on
+2026-11-12; it puts no evidence on the ladder and moves ARP up nothing. The user's request is the review
+`workflow.md` asks of a task that names no tier.
 
 ## After deploy
 
