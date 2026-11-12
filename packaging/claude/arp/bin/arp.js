@@ -34769,7 +34769,7 @@ function domainWalk() {
     attestor: DOMAIN_ATTESTORS
   };
 }
-var refusedHosting, HOSTED, PORT, RECEIPT_SIGNER, DESKTOP, SKILLS_DIR, READ_ONLY, CONTENT_DEFAULT = "https://content.arp.intuition.box", CONTENT_URL, SPONSOR_DEFAULT = "https://sponsor.arp.intuition.box", SPONSOR_URL, SERVER_VERSION = "0.0.6", SESSION_LOG, RECEIPTS_LOG, TARGETS, targetName, chainId, recorded, record, sessionCatalogue, accepted = null, GRAPHQL_URL, RPC_URL, MULTI_VAULT_RAW, GRAPHQL, SKILLS_INDEX, RPC, MULTI_VAULT, reads, toolAtoms, DOMAIN_ROOT = "tool", REACHABLE_ATOM = "0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805", DOMAIN_ATTESTORS, directory, IN_CONTEXT_OF, LINE_PAYERS;
+var refusedHosting, HOSTED, PORT, RECEIPT_SIGNER, DESKTOP, SKILLS_DIR, READ_ONLY, CONTENT_DEFAULT = "https://content.arp.intuition.box", CONTENT_URL, SPONSOR_DEFAULT = "https://sponsor.arp.intuition.box", SPONSOR_URL, SERVER_VERSION = "0.0.7", SESSION_LOG, RECEIPTS_LOG, TARGETS, targetName, chainId, recorded, record, sessionCatalogue, accepted = null, GRAPHQL_URL, RPC_URL, MULTI_VAULT_RAW, GRAPHQL, SKILLS_INDEX, RPC, MULTI_VAULT, reads, toolAtoms, DOMAIN_ROOT = "tool", REACHABLE_ATOM = "0x997fd60b1bd203d0c579fb72eea70e585d2fbd68287a911b7cc0e7ed0eae0805", DOMAIN_ATTESTORS, directory, IN_CONTEXT_OF, LINE_PAYERS;
 var init_config = __esm(() => {
   init_dist2();
   init__esm();
@@ -47148,7 +47148,7 @@ init_node2();
 import { dirname as dirname8 } from "node:path";
 import { fileURLToPath } from "node:url";
 // package.json
-var version2 = "0.0.6";
+var version2 = "0.0.7";
 
 // src/cli.ts
 var USAGE = `arp ${version2} — ARP's agent-side programs

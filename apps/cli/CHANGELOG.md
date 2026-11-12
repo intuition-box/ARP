@@ -3,8 +3,9 @@
 `@arp-protocol/cli`. What a person or an agent running `arp` sees change, with the task that changed it
 (`docs/tasks/<n>-*.md` in the repository). Everything writes on Intuition testnet 13579 only.
 
-## Unreleased
+## 0.0.7 — unreleased
 
+- **The plugin's skill says what 0.0.4–0.0.6 do** (task 138): the sharing question asked once and answered by the person, what a shared line says (the version, the type, a content receipt as evidence, an x402 line's payment), and still no query of ARP's sources by the agent.
 - **Removed: `arp node` and `arp init --node`** (task 139). The hire endpoint, which listened on
   127.0.0.1 behind a tunnel you rent and signed a receipt for a paid call, and the handshake that bound
   it to an ERC-8004 agent, are no longer in the CLI. `arp node` now answers `unknown command`, and

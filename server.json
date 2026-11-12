@@ -3,7 +3,7 @@
   "name": "io.github.Wieedze/arp",
   "title": "ARP",
   "description": "Check a skill, MCP server or agent before your agent installs or pays it. Reads only.",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "websiteUrl": "https://github.com/intuition-box/ARP",
   "repository": {
     "url": "https://github.com/intuition-box/ARP",
@@ -15,7 +15,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@arp-protocol/cli",
-      "version": "0.0.6",
+      "version": "0.0.7",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
