@@ -207,6 +207,26 @@ describe("fieldGroups", () => {
         expect(fieldGroups([], [], view, USES).at(-1)?.rows[0]?.positions).toBe(0);
     });
 
+    it("does not count a payer's opening position as a support, in either ring (task 144)", () => {
+        const sponsor = "0x77939A4c276f3E549276CEB3A09CDa1fF58b7ec9";
+        const held = {holders: [sponsor, "0xAgentWallet"]};
+        const view = buildAgentLinesView(
+            lines(
+                [declaration({atomId: "0xH", label: "hirer"}, held)],
+                [
+                    {
+                        tool: {atomId: "0xtool", label: "pdf"},
+                        declaration: declaration({atomId: "0xA", label: "me"}, held),
+                    },
+                ],
+            ),
+            new Set(),
+            [sponsor.toLowerCase()],
+        );
+        expect(view.usedBy[0]?.positions).toBe(1);
+        expect(view.used[0]?.positions).toBe(1);
+    });
+
     it("leaves the groups alone when there are no lines", () => {
         expect(fieldGroups([usesGroup], [], undefined, USES)).toEqual([
             {...usesGroup, inverse: "used by", rows: [{...usesGroup.rows[0], line: null}]},

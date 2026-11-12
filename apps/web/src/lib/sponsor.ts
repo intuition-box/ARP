@@ -1,4 +1,4 @@
-import {isAddress, type Address} from "viem";
+import {getAddress, isAddress, type Address} from "viem";
 
 import {intuitionTestnet} from "./chains";
 
@@ -24,4 +24,26 @@ export function sponsorAddressFor(
     if (chainId !== intuitionTestnet.id || raw === undefined) return null;
     const trimmed = raw.trim();
     return isAddress(trimmed, {strict: false}) ? trimmed : null;
+}
+
+/**
+ * The wallets ARP pays from on this chain, whose own positions are not supports (task 144): the
+ * sponsoring service opens one on every edge it creates, a deposit to itself. Its sending address
+ * and the deployer, which sent for it until 2026-11-09 (`data/deployments/13579.json`), plus a
+ * configured sponsoring address when it differs. Testnet only, like the service; empty elsewhere.
+ */
+export function arpPayersFor(
+    chainId: number,
+    configured: string | undefined,
+    recorded: {deployer: string; sponsor: string},
+): Address[] {
+    if (chainId !== intuitionTestnet.id) return [];
+    const sponsor = sponsorAddressFor(chainId, configured, recorded.sponsor);
+    const payers: Address[] = [];
+    for (const raw of [recorded.deployer, recorded.sponsor, sponsor]) {
+        if (raw === null || !isAddress(raw.trim(), {strict: false})) continue;
+        const address = getAddress(raw.trim());
+        if (!payers.includes(address)) payers.push(address);
+    }
+    return payers;
 }

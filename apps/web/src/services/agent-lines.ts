@@ -71,6 +71,7 @@ function rowsByEdge(
         atom: {atomId: string; label: string | null};
         declaration: PulseDeclaration;
     }[],
+    paying: ReadonlySet<string>,
 ): AgentLineRow[] {
     const byEdge = new Map<string, AgentLineRow>();
     for (const {atom, declaration} of entries) {
@@ -80,7 +81,9 @@ function rowsByEdge(
             atomId: atom.atomId,
             label: atom.label,
             ...nameOf(atom),
-            positions: declaration.holders?.length ?? 0,
+            // A payer's position is the one it opened creating the edge, not a support (task 144).
+            positions: (declaration.holders ?? []).filter((holder) => !paying.has(holder.toLowerCase()))
+                .length,
             parts: [],
         };
         for (const part of partsOf(declaration)) {
@@ -96,17 +99,21 @@ function rowsByEdge(
 export function buildAgentLinesView(
     lines: AgentLines,
     hidden: ReadonlySet<string>,
+    payers: readonly string[] = [],
 ): AgentLinesView {
     const visible = (atomId: string) => !hidden.has(atomId.toLowerCase());
+    const paying = new Set(payers.map((payer) => payer.toLowerCase()));
     const usedBy = rowsByEdge(
         lines.usedBy.declarations
             .filter((declaration) => visible(declaration.agent.atomId))
             .map((declaration) => ({atom: declaration.agent, declaration})),
+        paying,
     );
     const used = rowsByEdge(
         lines.used
             .filter((line) => visible(line.tool.atomId))
             .map((line) => ({atom: line.tool, declaration: line.declaration})),
+        paying,
     );
     const counts = new Map<string, number>();
     for (const entry of [...usedBy, ...used]) {
@@ -216,5 +223,5 @@ export async function loadAgentLines(
         because: ids.because,
         payers: vocabulary.payers,
     };
-    return buildAgentLinesView(await reads.getAgentLines(atomId, config), hidden);
+    return buildAgentLinesView(await reads.getAgentLines(atomId, config), hidden, vocabulary.payers);
 }

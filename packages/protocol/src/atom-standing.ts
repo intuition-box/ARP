@@ -9,9 +9,11 @@ import {
     type GraphqlTransport,
     isRecord,
     LISTED_CAPABILITIES_FOR_QUERY,
+    readNumber,
     readRecord,
     readString,
 } from "@arp-protocol/graphql";
+import {getAddress} from "viem";
 import {parseCaip19} from "./caip.js";
 import {versionedSubject} from "./pulse-usage.js";
 import {CAPABILITY_PREDICATE_IDS, USES} from "./sources/intuition/terms.js";
@@ -57,6 +59,11 @@ export type AtomEdge = {
     /** The triple's term id. Its two vaults are the market on this claim. */
     tripleId: string;
     subject: {atomId: string; label: string | null; type: string | null};
+    /**
+     * `positionCount` here counts the positions **not** held by `excludeHolders` (task 144), so
+     * the opening position ARP's sponsoring service takes when it creates an edge is not a
+     * support. The assets are the vault's whole, as `/tools`' Support is (`listTools`).
+     */
     support: MarketSide;
     /**
      * The counter-triple.
@@ -163,6 +170,13 @@ export type AtomStandingConfig = {
      * than as a bad query.
      */
     attestor?: string | readonly string[];
+    /**
+     * Accounts whose positions on an incoming edge are not counted as supports: the caller's own
+     * paying wallets (`apps/web` passes ARP's sponsoring service and deployer on 13579, task 144).
+     * This package knows no list of anybody. Checksummed here, since the indexer stores
+     * `account_id` checksummed and `_nin` is case-sensitive. The assets are not reduced.
+     */
+    excludeHolders?: readonly string[];
     graphqlUrl: string;
     fetch?: FetchLike;
     timeoutMs?: number;
@@ -204,6 +218,22 @@ function heldByAttestor(term: unknown): boolean {
     });
 }
 
+/**
+ * An incoming edge's side, its count replaced by the positions the excluded holders do not hold.
+ * Kept as `position_count` when the row carries no `kept` aggregate.
+ */
+function edgeSideOf(term: unknown): MarketSide {
+    const side = mapMarketSide(term);
+    const vaults = isRecord(term) && Array.isArray(term["vaults"]) ? term["vaults"] : [];
+    const vault = vaults.length > 0 && isRecord(vaults[0]) ? vaults[0] : null;
+    const kept = readRecord(readRecord(vault, "kept"), "aggregate");
+    const count = kept === null ? null : readNumber(kept, "count");
+    return count === null ? side : {...side, positionCount: count};
+}
+
+/** No exclusion still needs a list `_nin` can read: an address nobody holds a position from. */
+const NOBODY = "0x0000000000000000000000000000000000000000";
+
 export async function getAtomStanding(
     atomId: string,
     config: AtomStandingConfig,
@@ -229,6 +259,10 @@ export async function getAtomStanding(
                 : typeof config.attestor === "string"
                   ? [config.attestor]
                   : [...config.attestor],
+        exclude:
+            config.excludeHolders === undefined || config.excludeHolders.length === 0
+                ? [NOBODY]
+                : config.excludeHolders.map((account) => getAddress(account.trim().toLowerCase())),
     });
 
     const atomRows = Array.isArray(data["atom"]) ? data["atom"] : [];
@@ -276,7 +310,7 @@ export async function getAtomStanding(
         // making the claim and the predicate is what the claim says, so neither has a default.
         if (tripleId === null || predicateId === null || subjectId === null) continue;
 
-        const support = mapMarketSide(row["term"]);
+        const support = edgeSideOf(row["term"]);
         const edge: AtomEdge = {
             tripleId,
             subject: {
@@ -285,7 +319,7 @@ export async function getAtomStanding(
                 type: readString(subject, "type"),
             },
             support,
-            oppose: mapMarketSide(row["counter_term"]),
+            oppose: edgeSideOf(row["counter_term"]),
         };
 
         const existing = byPredicate.get(predicateId);

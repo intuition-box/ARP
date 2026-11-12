@@ -5,7 +5,6 @@ import {PersonMark} from "../agent/StakerCount";
 
 import {repoKeyOf, type RepoSkillUsage, type ToolRow} from "../../services/tool-catalog";
 import {shortTrust} from "../../services/trust-format";
-import {Hint} from "../brand/Hint";
 
 /**
  * Tools as a list, not as N boxes.
@@ -201,32 +200,22 @@ function Row({
 function Headers({curveId}: {curveId: number}) {
     return (
         <div
+            // `aria-hidden` because every cell carries its own `sr-only` label: without it a
+            // screen reader reads the header and then the label again, for every row.
+            aria-hidden
             className={`${ROW_GRID} hidden sm:grid pb-2 border-b border-[color:var(--color-rule-strong)] font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]`}
         >
-            {/* Each word is `aria-hidden` because every cell carries its own `sr-only` label:
-                without it a screen reader reads the header and then the label again, for every
-                row. The Hint is not, so the keyboard and a screen reader still reach it. */}
             {/* **"Signals", not "Usage".** The user rejected "used" on 2026-10-27: whether a use happened
                 is unknowable from outside (`docs/14`), and a sponsored line asks no proof (ADR
-                `0144`), so this column cannot claim one (ADR `0143`). */}
-            <span aria-hidden>Tool</span>
-            {/* The Hint is why a tool's page reads "2 supports" where this reads 1 Signal: a
-                position count includes the one the sponsor opened when it created the edge, and a
-                Signal excludes it (ADR `0143`, task 143). Measured on 13579 on 2026-11-12: each of
-                the four `uses pdf` edges holds 2 positions, the sponsor's and the agent's. */}
-            <span className="flex items-center justify-end gap-1.5">
-                <span aria-hidden>Signals</span>
-                <Hint label="About: signals" align="right">
-                    One per line the sponsor wrote in an agent&apos;s name; a tool&apos;s page
-                    counts supports, which also include the sponsor&apos;s own opening position.
-                </Hint>
-            </span>
-            <span aria-hidden className="text-right">
-                Wallets
-            </span>
+                `0144`), so this column cannot claim one (ADR `0143`). A tool's page no longer counts
+                the sponsor's opening position as a support (task 144), so one line reads 1 there
+                and 1 here, and task 143's Hint on this header went with the gap. */}
+            <span>Tool</span>
+            <span className="text-right">Signals</span>
+            <span className="text-right">Wallets</span>
             {/* The curve is part of a TRUST sum's population (`rules/claims.md` §2). It belongs on
                 the figure rather than in a footer line nobody needs twice. */}
-            <span aria-hidden className="text-right" title={`Read on pricing ${curveId}`}>
+            <span className="text-right" title={`Read on pricing ${curveId}`}>
                 Support
             </span>
         </div>

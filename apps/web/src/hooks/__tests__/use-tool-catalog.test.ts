@@ -6,8 +6,9 @@ import type {
     ToolListingPage,
 } from "@arp-protocol/core";
 
-import {listTools, type AtomStanding} from "@arp-protocol/core";
+import {getAtomStanding, listTools, type AtomStanding} from "@arp-protocol/core";
 
+import {atomStandingQueryOptions} from "../use-atom-standing";
 import {toolCatalogQueryKey, toolCatalogQueryOptions} from "../use-tool-catalog";
 import {visibleStanding} from "../../services/test-identities";
 import {formatTrust} from "../../services/trust-format";
@@ -316,5 +317,96 @@ describe("toolCatalogQueryOptions", () => {
         expect(row?.wallets).toBe(1);
         expect(row?.supportTrust).toBe(formatTrust(standing.groups[0]?.assets ?? -1n));
         expect(row?.supportTrust).toBe(formatTrust(990_000_001_000_000n));
+    });
+
+    it("counts one sponsored line once on the atom page and on /tools (task 144)", async () => {
+        // `uses pdf` by agent 46 on 13579, read 2026-11-12: two positions, the sponsoring service's
+        // opening one and the agent's, 0.00099 tTRUST each. The atom page counted 2 supports and
+        // /tools 1 Signal; with the sponsor excluded, both read 1.
+        const sponsor = "0x77939A4c276f3E549276CEB3A09CDa1fF58b7ec9";
+        const assets = "1980000001000000";
+        const listingTransport = {
+            async request(query: string) {
+                if (query.includes("deposits(")) {
+                    return {deposits: [{term_id: "edge-46", receiver_id: "0xAgentWallet"}]};
+                }
+                return {
+                    triples: [
+                        {
+                            term_id: "edge-46",
+                            subject_id: "0xagent46",
+                            object: {term_id: "0xpdf", label: "pdf", data: null, type: "Thing"},
+                            term: {
+                                total_assets: assets,
+                                vaults: [{position_count: 2, total_assets: assets}],
+                                deposits: {aggregate: {count: 2}},
+                                sponsored: {aggregate: {count: 1}},
+                            },
+                            counter_term: {total_assets: "0", vaults: []},
+                        },
+                    ],
+                };
+            },
+        };
+        const tools = toolCatalogQueryOptions(
+            {chainId: 13579, graphqlUrl: "https://indexer.test", sponsor},
+            "conviction",
+            1,
+            (order, curveId, chosen, excludeSubjects) =>
+                // A stub of the one method `listTools` calls; the transport's other members go unused.
+                listTools({
+                    graphqlUrl: "https://indexer.test",
+                    transport: listingTransport as never,
+                    order,
+                    curveId,
+                    sponsor: chosen,
+                    excludeSubjects,
+                }),
+            noneRegistered,
+            async () => new Set<string>(),
+        );
+        const row = (await tools.queryFn()).rows.find((r) => r.key === "0xpdf");
+
+        const seen: unknown[] = [];
+        const standingTransport = {
+            async request(_query: string, variables: Record<string, unknown>) {
+                seen.push(variables["exclude"]);
+                // `kept` answers what `_nin: $exclude` leaves: the agent's position only.
+                // `getAtomStanding` always sends `exclude` as a string array, asserted just below.
+                const kept = (variables["exclude"] as string[]).includes(sponsor) ? 1 : 2;
+                return {
+                    atom: [{term_id: "0xpdf", label: "pdf", type: "Thing", term: {}}],
+                    claims: [],
+                    triples: [
+                        {
+                            term_id: "edge-46",
+                            predicate: {term_id: "0xuses", label: "uses"},
+                            subject: {term_id: "0xagent46", label: "Agent 13579:46", type: "Thing"},
+                            term: {
+                                total_assets: assets,
+                                vaults: [{position_count: 2, kept: {aggregate: {count: kept}}}],
+                            },
+                            counter_term: {total_assets: "0", vaults: []},
+                        },
+                    ],
+                };
+            },
+        };
+        const atomPage = atomStandingQueryOptions(
+            {chainId: 13579, graphqlUrl: "https://indexer.test", symbol: "tTRUST", payers: [sponsor]},
+            "0xpdf",
+            (atomId, config) =>
+                // A stub of the one method `getAtomStanding` calls.
+                getAtomStanding(atomId, {...config, transport: standingTransport as never}),
+        );
+        const view = await atomPage.queryFn();
+        const edge = view.groups[0]?.rows[0];
+
+        expect(seen).toEqual([[sponsor]]);
+        expect(edge?.positions).toBe(1);
+        expect(edge?.positions).toBe(row?.sponsoredDeposits);
+        // The amount is the vault's whole on both pages, the sponsor's own deposit included.
+        expect(row?.supportTrust).toBe(formatTrust(BigInt(assets)));
+        expect(edge?.backing).toBe(`${formatTrust(BigInt(assets))} tTRUST`);
     });
 });

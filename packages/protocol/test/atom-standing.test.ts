@@ -259,6 +259,60 @@ describe("getAtomStanding", () => {
         expect(filter).not.toContain("predicate:");
     });
 
+    it("does not count the sponsor's opening position as a support (task 144)", async () => {
+        // `uses pdf` by agent 46 on 13579, read 2026-11-12: two positions, the sponsoring service's
+        // own (its creation deposit to itself) and the agent's, 0.00099 each. `kept` is what the
+        // query returns once the sponsor is excluded.
+        const sponsor = "0x77939A4c276f3E549276CEB3A09CDa1fF58b7ec9";
+        const seen: {query: string; variables: unknown}[] = [];
+        const edgeSide = {
+            ...side("1980000001000000", 2),
+            vaults: [{...side("1980000001000000", 2).vaults[0], kept: {aggregate: {count: 1}}}],
+        };
+        const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(
+                {
+                    ...RECORDED,
+                    triples: [
+                        {
+                            term_id: "0xpdf-46",
+                            predicate: {term_id: USES, label: "uses"},
+                            subject: {term_id: "0xagent46", label: "Agent 13579:46", type: "Thing"},
+                            term: edgeSide,
+                            counter_term: side("0", 0),
+                        },
+                    ],
+                },
+                seen,
+            ),
+            excludeHolders: [sponsor.toLowerCase()],
+        });
+        const edge = standing.groups[0]?.edges[0];
+        expect(edge?.support.positionCount).toBe(1);
+        // The amount is the vault's whole, as `/tools`' Support is.
+        expect(edge?.support.totalAssets).toBe(1_980_000_001_000_000n);
+        expect(standing.groups[0]?.positions).toBe(1);
+        // Checksummed, because `_nin` on `account_id` is case-sensitive.
+        expect(seen[0]?.variables).toMatchObject({exclude: [sponsor]});
+        expect(seen[0]?.query).toContain("account_id: {_nin: $exclude}");
+        // A side with no `kept` aggregate keeps `position_count`.
+        expect(edge?.oppose.positionCount).toBe(0);
+    });
+
+    it("excludes nobody when no holder is given, with a list the indexer can still read", async () => {
+        const seen: {query: string; variables: unknown}[] = [];
+        const standing = await getAtomStanding(TAG_ATOM, {
+            graphqlUrl: INTUITION_URL,
+            transport: transport(RECORDED, seen),
+            excludeHolders: [],
+        });
+        expect(seen[0]?.variables).toMatchObject({
+            exclude: ["0x0000000000000000000000000000000000000000"],
+        });
+        expect(standing.groups[0]?.positions).toBe(4127);
+    });
+
     it("reads a claim on a version of a skill as a claim about the skill, and no other version word (ADR 0192)", async () => {
         const claim = (id: string, label: string, predicate: string = VERSION) => ({
             term_id: id,

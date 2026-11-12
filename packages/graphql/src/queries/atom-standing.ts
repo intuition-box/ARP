@@ -12,6 +12,18 @@ const VAULT_SIDE = `
     }`;
 
 /**
+ * One side of an incoming edge: {@link VAULT_SIDE}, and the positions on it that the caller does
+ * not hold. `kept` is what the atom page counts as supports (task 144): `position_count` includes
+ * the position the sponsoring service opens when it creates an edge, its deposit to itself.
+ * Equal to `position_count` when `$exclude` names nobody who holds one: over 200 testnet vaults
+ * with a redemption, `position_count` equalled the count of positions with shares (2026-11-12).
+ */
+const EDGE_SIDE = `${VAULT_SIDE}
+    vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
+      kept: positions_aggregate(where: {account_id: {_nin: $exclude}, shares: {_gt: "0"}}) { aggregate { count } }
+    }`;
+
+/**
  * Every triple whose **object** is this atom, with both sides of each edge's market.
  *
  * `$curveId` is `numeric`, never `String!` — declaring it `String!` is rejected at validation time
@@ -23,7 +35,7 @@ const VAULT_SIDE = `
  * edges first so a truncated read loses the quiet tail rather than an arbitrary slice.
  */
 export const ATOM_STANDING_QUERY = `
-query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor: [String!]!) {
+query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor: [String!]!, $exclude: [String!]!) {
   atom: atoms(where: {term_id: {_eq: $atomId}}, limit: 1) {
     term_id
     label
@@ -40,8 +52,8 @@ query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor
     term_id
     predicate { term_id label }
     subject { term_id label type }
-    term { ${VAULT_SIDE} }
-    counter_term { ${VAULT_SIDE} }
+    term { ${EDGE_SIDE} }
+    counter_term { ${EDGE_SIDE} }
   }
   claims: triples(
     where: {subject_id: {_eq: $atomId}}

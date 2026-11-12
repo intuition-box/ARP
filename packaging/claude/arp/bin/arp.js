@@ -6449,11 +6449,15 @@ var VAULT_SIDE = `
       total_shares
       current_share_price
       position_count
-    }`, ATOM_STANDING_QUERY, LISTED_CAPABILITIES_FOR_QUERY;
+    }`, EDGE_SIDE, ATOM_STANDING_QUERY, LISTED_CAPABILITIES_FOR_QUERY;
 var init_atom_standing = __esm(() => {
   init_agent();
+  EDGE_SIDE = `${VAULT_SIDE}
+    vaults(where: {curve_id: {_eq: $curveId}}, limit: 1) {
+      kept: positions_aggregate(where: {account_id: {_nin: $exclude}, shares: {_gt: "0"}}) { aggregate { count } }
+    }`;
   ATOM_STANDING_QUERY = `
-query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor: [String!]!) {
+query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor: [String!]!, $exclude: [String!]!) {
   atom: atoms(where: {term_id: {_eq: $atomId}}, limit: 1) {
     term_id
     label
@@ -6470,8 +6474,8 @@ query AtomStanding($atomId: String!, $curveId: numeric!, $limit: Int!, $attestor
     term_id
     predicate { term_id label }
     subject { term_id label type }
-    term { ${VAULT_SIDE} }
-    counter_term { ${VAULT_SIDE} }
+    term { ${EDGE_SIDE} }
+    counter_term { ${EDGE_SIDE} }
   }
   claims: triples(
     where: {subject_id: {_eq: $atomId}}

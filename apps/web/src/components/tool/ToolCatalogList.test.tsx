@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from "vitest";
-import {fireEvent, screen} from "@testing-library/react";
+import {screen} from "@testing-library/react";
 
 import {renderWithProviders} from "../../test/render";
 import type {ToolRow} from "../../services/tool-catalog";
@@ -37,18 +37,14 @@ const row = (overrides: Partial<ToolRow> = {}): ToolRow => ({
 describe("ToolCatalogList", () => {
     it("heads the figures Signals, Wallets, Support, and no longer Declared, Paid for or Claims", () => {
         const {container} = renderWithProviders(<ToolCatalogList rows={[row()]} curveId={1} />);
-        const words = [...container.querySelectorAll("[aria-hidden]")].map(
-            (node) => node.textContent,
-        );
-        expect(words.slice(0, 4)).toEqual(["Tool", "Signals", "Wallets", "Support"]);
+        const header = container.querySelector("[aria-hidden]");
+        expect(header?.textContent).toBe("ToolSignalsWalletsSupport");
         expect(screen.queryByText(/paid for/i)).toBeNull();
     });
 
-    it("says, on demand, why a tool's page counts one more support than Signals (task 143)", () => {
+    it("has no Hint on Signals: a tool's page counts the same line once too (task 144)", () => {
         renderWithProviders(<ToolCatalogList rows={[row()]} curveId={1} />);
-        const hint = screen.getByRole("button", {name: "About: signals"});
-        fireEvent.focus(hint);
-        expect(screen.getByRole("tooltip")).toHaveTextContent(/sponsor's own opening position/);
+        expect(screen.queryByRole("button", {name: "About: signals"})).toBeNull();
     });
 
     it("gives each figure its own label", () => {

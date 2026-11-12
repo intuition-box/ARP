@@ -94,7 +94,18 @@ describe("atomStandingQueryOptions", () => {
         expect(fetcher).toHaveBeenCalledWith(ATOM, {
             graphqlUrl: TESTNET.graphqlUrl,
             attestor: DOMAIN_ATTESTORS,
+            excludeHolders: [],
         });
+    });
+
+    it("passes ARP's paying wallets so their positions are not supports, and keys on them (task 144)", async () => {
+        const fetcher = vi.fn().mockResolvedValue(standing());
+        const payers = ["0x77939A4c276f3E549276CEB3A09CDa1fF58b7ec9"];
+        const options = atomStandingQueryOptions({...TESTNET, payers}, ATOM, fetcher);
+        // react-query types `queryFn` with a context argument this one never reads.
+        await (options.queryFn as () => Promise<unknown>)();
+        expect(fetcher).toHaveBeenCalledWith(ATOM, expect.objectContaining({excludeHolders: payers}));
+        expect(options.queryKey).not.toEqual(atomStandingQueryOptions(TESTNET, ATOM, fetcher).queryKey);
     });
 
     it("labels the figures with the chain's own symbol", async () => {
@@ -124,5 +135,39 @@ describe("atomStandingQueryOptions", () => {
             }>
         )();
         expect(onMainnet.ownBacking).toBe("5 TRUST");
+    });
+
+    it("reads an edge only ARP's payers hold as nobody's: no amount, no support (task 144)", async () => {
+        // On 13579, 2026-11-12, some `source` and `uses` edges hold the sponsor's opening position
+        // and nothing else. Its assets are its creation deposit, which the page does not print.
+        const sponsorOnly = {
+            ...standing(),
+            groups: [
+                {
+                    predicate: {atomId: "0xuses", label: "uses"},
+                    edges: [
+                        {
+                            tripleId: "0xedge",
+                            subject: {atomId: "0xagent", label: "Agent 13579:47", type: "Thing"},
+                            support: {totalAssets: 990_000_001_000_000n, positionCount: 0},
+                            oppose: {totalAssets: 0n, positionCount: 0},
+                        },
+                    ],
+                    assets: 990_000_001_000_000n,
+                    positions: 0,
+                },
+            ],
+            edgeCount: 1,
+            // Only the fields `buildAtomView` reads are set; the edge's other members go unused.
+        } as unknown as AtomStanding;
+        const fetcher = vi.fn().mockResolvedValue(sponsorOnly);
+        const options = atomStandingQueryOptions({...TESTNET, payers: ["0xsponsor"]}, ATOM, fetcher);
+        // react-query types `queryFn` with a context argument this one never reads, and it
+        // resolves to `buildAtomView`'s `AtomView`, of which only these fields are read.
+        const view = (await (options.queryFn as () => Promise<unknown>)()) as {
+            groups: {backing: string | null; rows: {backing: string | null; positions: number}[]}[];
+        };
+        expect(view.groups[0]?.rows[0]).toMatchObject({backing: null, positions: 0});
+        expect(view.groups[0]?.backing).toBeNull();
     });
 });
