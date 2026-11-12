@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-12 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-191 decisions. Newest last. `choices/README.md` says when to write one.
+192 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -240,3 +240,4 @@ Read these before relying on them.
 | [0199](0199-prune-dev-and-keep-the-hire-loop-on-a-branch.md) | 2026-11-11 | Accepted | Prune what production does not need from `dev`; keep the hire loop on `future/hire-loop` |
 | [0200](0200-api-and-probe-run-on-coolify.md) | 2026-11-11 | Accepted | The API and the probe run as containers on Coolify, with SQLite, and their x402 parts off |
 | [0201](0201-the-search-package-is-bundled-and-runs-beside-the-key.md) | 2026-11-12 | Accepted | The search package is bundled in the release, and runs beside an agent key |
+| [0202](0202-the-backlog-leaves-the-public-repository.md) | 2026-11-12 | Accepted | The backlog leaves the public repository |

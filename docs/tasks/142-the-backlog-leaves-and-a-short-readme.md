@@ -1,6 +1,6 @@
 # Task 142 — The backlog leaves the public repository, and a short README for users
 
-**Status:** built 2026-11-12 on `task-142-future-readme`, from `dev` `314dd77f`. Task 142, ADR `0202`,
+**Status:** complete 2026-11-12 on `task-142-future-readme`, rebased onto `dev` `692a13d8`. `task-verifier` PASS on round 2 (round 1 failed on three README claims, fixed in `09edc028`); post-mortem `.claude/learning/130-the-backlog-leaves-and-a-short-readme.md`. Task 142, ADR `0202`,
 post-mortem `130`, allocated by the orchestrator.
 **Rules:** `workflow.md`, `claims.md`; `docs/30_THE_POSITIONING.md` for the README.
 **Required skills:** `arp-contributing`.
