@@ -13,6 +13,8 @@ repository; the README is for a user, not a developer, and is short.
 ## What changes
 
 1. `FUTURE.md` copied as-is to the private business repository and committed there; deleted here.
+   The orchestrator then had one entry appended to the private copy, "The search package cannot read
+   the agent key — before mainnet", from a commit never merged here.
 2. `.claude/rules/workflow.md`: a deferred idea goes to the backlog kept outside this repository
    (ADR `0202`). Also `CLAUDE.md`'s directory map, `.claude/STATE.md`,
    `.claude/skills/arp-contributing/SKILL.md`, `docs/33_THE_HIRE_LOOP.md`, and seven code comments
