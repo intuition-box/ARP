@@ -33,7 +33,7 @@ Other routes:
 
 - **Any MCP client**: the npm package [`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-protocol/cli), also in the official MCP Registry.
 - **Hosted, nothing installed**: the MCP endpoint `https://mcp.arp.intuition.box/mcp`. Your search words then reach ARP's server.
-- **Claude Desktop**: an MCP entry you add by hand, not yet tried inside Desktop. The one-file extension is not published yet.
+- **Claude Desktop**: the one-file extension `arp-0.0.7.mcpb`, from the [v0.0.7 release](https://github.com/intuition-box/ARP/releases/tag/v0.0.7). Tested on Windows, not yet on macOS.
 
 Each route and its current state: [Install](https://arp.intuition.box/docs/install).
 

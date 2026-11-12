@@ -7,7 +7,7 @@ Every way to install ARP, and the state of each on 2026-11-11. This page is the 
 | Claude Code | [the plugin](#claude-code-the-plugin) | works | three read tools, the hook, five commands you type |
 | Claude Desktop | [an MCP entry you add by hand](#claude-desktop-today-an-mcp-entry-by-hand) | works outside Desktop; not yet run inside it | three read tools, no hook |
 | Claude Desktop, claude.ai | [a custom connector to ARP's hosted endpoint](#claude-desktop-and-claude-ai-a-hosted-connector) | live at `https://mcp.arp.intuition.box/mcp`; not yet added as a connector in Claude | three read tools, no hook, your words reach ARP's server |
-| Claude Desktop | [the extension, one `.mcpb` file](#claude-desktop-the-extension) | **not published** | sponsored tools, nothing to sign |
+| Claude Desktop | [the extension, one `.mcpb` file](#claude-desktop-the-extension) | published, 0.0.7; tested on Windows, not on macOS | sponsored tools, nothing to sign |
 | Cursor, Gemini CLI, Codex, Copilot, Grok Build | [`arp init`](#other-runtimes-arp-init) | works | the full tool set; the hook in Claude Code and Grok Build only |
 | the runtimes `arp init` finds, sponsored | [`arp init --sponsored`](#arp-init---sponsored) | works from 0.0.6, with ARP's hosted sponsor and content server | tools that sign nothing for you |
 | any MCP client | [the npm package and the MCP Registry](#the-npm-package-and-the-mcp-registry) | published, 0.0.7 on npm (2026-11-12) | what the client's entry starts |
@@ -94,7 +94,9 @@ It serves the same three read tools, with no hook. One difference with every oth
 
 ## Claude Desktop: the extension
 
-A one-file extension (`.mcpb`), installed from Settings, then Extensions, in sponsored mode: you sign nothing and see no wallet, and `arp_pulse` reads results you pass it instead of running the search. **It is not published**, so there is no file to download. Use the entry by hand above meanwhile.
+A one-file extension (`.mcpb`), in sponsored mode on testnet 13579: you sign nothing and see no wallet. Download `arp-0.0.7.mcpb` from the [v0.0.7 release](https://github.com/intuition-box/ARP/releases/tag/v0.0.7) (sha256 `fc92faa23aaa660a7ef9668d3ce064843e8a5f3dda62d798752fb28268d0b965`), then open it, or drag it into Claude Desktop's Settings, then Extensions.
+
+Checked on Windows on 2026-11-12: `arp_pulse` searched skills.sh with the copy of the search the extension carries, `arp_get_skill` showed a skill's `contains` lines then its SKILL.md, and `arp_declare_used` declared. **Not yet tried on macOS.** Claude Desktop runs no hook, so there is no question after use there.
 
 ## Other runtimes: `arp init`
 
