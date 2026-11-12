@@ -4,7 +4,7 @@ import {Readable} from "node:stream";
 
 import {afterEach, describe, expect, it} from "vitest";
 
-import {linesOf, serveFetch} from "../src/node/serve.js";
+import {DEFAULT_SERVE_MAX_BODY_BYTES, linesOf, serveFetch} from "../src/node/serve.js";
 
 const PORT = 3197;
 let server: Server | null = null;
@@ -70,29 +70,53 @@ describe("serveFetch", () => {
         );
     });
 
-    it("caps the body by default, and stops reading a body that never ends", async () => {
+    // Two tests, because one could not be deterministic: a server that closes with bytes still
+    // unread sends a reset, and a reset may discard the 413 before the client reads it. Sending
+    // exactly one byte over the cap leaves nothing unread, so the 413 always arrives; the endless
+    // body is a separate claim, asserted on what was sent, not on what came back.
+    it("refuses a body over the default cap with 413, and never calls the handler", async () => {
+        let called = false;
+        server = await serveFetch({port: PORT}, () => {
+            called = true;
+            return new Response("no");
+        });
+        const over = DEFAULT_SERVE_MAX_BODY_BYTES + 1;
+        const answer = await new Promise<string>((resolve) => {
+            const socket = connect(PORT, "127.0.0.1");
+            let answer = "";
+            socket.on("data", (chunk) => {
+                answer += chunk.toString();
+            });
+            socket.on("close", () => resolve(answer));
+            socket.on("error", () => undefined);
+            socket.on("connect", () => {
+                // Declared larger than sent, so the server stops on the cap and not on the length.
+                socket.write(`POST / HTTP/1.1\r\nHost: x\r\nContent-Length: ${over * 2}\r\n\r\n`);
+                socket.write(new Uint8Array(over));
+            });
+        });
+        expect(answer).toMatch(/^HTTP\/1\.1 413/);
+        expect(called).toBe(false);
+    });
+
+    it("stops reading a body that never ends", async () => {
         let called = false;
         server = await serveFetch({port: PORT}, () => {
             called = true;
             return new Response("no");
         });
         // A client declaring 100 MiB and writing until the server stops it. Raw TCP, because a
-        // fetch client may hide the 413 behind its own EPIPE.
+        // fetch client may hide the refusal behind its own EPIPE.
         const declared = 100 * 1024 * 1024;
         const ceiling = 32 * 1024 * 1024;
-        const {answer, sent} = await new Promise<{answer: string; sent: number}>((resolve) => {
+        const sent = await new Promise<number>((resolve) => {
             const socket = connect(PORT, "127.0.0.1");
-            let answer = "";
             let sent = 0;
             let open = true;
-            const finish = () => {
+            socket.on("close", () => {
                 open = false;
-                resolve({answer, sent});
-            };
-            socket.on("data", (chunk) => {
-                answer += chunk.toString();
+                resolve(sent);
             });
-            socket.on("close", finish);
             socket.on("error", () => undefined);
             socket.on("connect", () => {
                 socket.write(`POST / HTTP/1.1\r\nHost: x\r\nContent-Length: ${declared}\r\n\r\n`);
@@ -110,7 +134,6 @@ describe("serveFetch", () => {
                 pump();
             });
         });
-        expect(answer).toMatch(/^HTTP\/1\.1 413/);
         expect(called).toBe(false);
         expect(sent).toBeLessThan(ceiling);
     });
