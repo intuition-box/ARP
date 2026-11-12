@@ -1,74 +1,13 @@
-import type {GraphqlTransport} from "@arp-protocol/graphql";
 import {BaseError, ContractFunctionRevertedError, multicall3Abi} from "viem";
 import {describe, expect, it} from "vitest";
 
 import {ChainUnreadableError, isContractRevert, isTransactionAbsent} from "../src/chain-errors.js";
 import {domainInText, resolveDomain, suggestNodes, type DomainWords} from "../src/domain-words.js";
-import {getTermLabels} from "../src/term-labels.js";
 import {
     assertPublishableToolUrl,
     publishableToolUrl,
     ToolUrlCarriesValuesError,
 } from "../src/tool-url-values.js";
-import {INTUITION_URL} from "./helpers.js";
-
-describe("getTermLabels", () => {
-    it("asks nothing for no ids", async () => {
-        let asked = 0;
-        const transport: GraphqlTransport = {
-            async request() {
-                asked += 1;
-                return {};
-            },
-        };
-        expect((await getTermLabels([], {graphqlUrl: INTUITION_URL, transport})).size).toBe(0);
-        expect(asked).toBe(0);
-    });
-
-    it("names atoms and complete triples, deduping ids case-insensitively and skipping the rest", async () => {
-        const seen: unknown[] = [];
-        const transport: GraphqlTransport = {
-            async request(_query, variables) {
-                seen.push(variables["ids"]);
-                return {
-                    terms: [
-                        "junk",
-                        {atom: {label: "no id"}},
-                        {id: "0xA", atom: {label: " slither "}},
-                        {
-                            id: "0xB",
-                            atom: {},
-                            triple: {
-                                subject: {label: " a "},
-                                predicate: {label: "uses"},
-                                object: {label: "b "},
-                            },
-                        },
-                        {
-                            id: "0xC",
-                            triple: {subject: {label: "a"}, predicate: null, object: {label: "b"}},
-                        },
-                        {id: "0xD"},
-                    ],
-                };
-            },
-        };
-        const labels = await getTermLabels(["0xA", "0xa", "0xB", "0xC", "0xD"], {
-            graphqlUrl: INTUITION_URL,
-            transport,
-        });
-        expect(seen).toEqual([["0xa", "0xb", "0xc", "0xd"]]);
-        expect([...labels.entries()]).toEqual([
-            ["0xa", {kind: "atom", label: "slither"}],
-            ["0xb", {kind: "triple", subject: "a", predicate: "uses", object: "b"}],
-        ]);
-    });
-
-    it("survives an answer with no terms list", async () => {
-        const transport: GraphqlTransport = {request: async () => ({terms: null})};
-        expect((await getTermLabels(["0xa"], {graphqlUrl: INTUITION_URL, transport})).size).toBe(0);
-    });
-});
 
 describe("publishableToolUrl, the remaining refusals", () => {
     it("refuses a GitHub URL with a fragment and offers it without", () => {

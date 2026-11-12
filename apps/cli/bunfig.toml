@@ -6,7 +6,6 @@ coveragePathIgnorePatterns = [
   "../../packages/**",
   "../hook/**",
   "../mcp/**",
-  "../node/**",
   "test/**",
   # Entrypoint: reads process.argv and runs a command at import. test/cli.test.ts runs it built.
   "src/cli.ts",

@@ -71,6 +71,10 @@ Measured 2026-11-11 at `abba75e9` (on `origin/dev` `4815c2b9`), by the root `bun
 `apps/cli`'s figure includes `scripts/mcpb.ts`, which task 135 added after the lot measured: its build
 moved into `build(paths, run)` so a test runs it (100 % functions, 97.4 % lines).
 
+2026-11-12: rebased on task 139 (`eda9f36c`), which deleted `apps/node`, the sponsor's `/publish`,
+`declare/delegated.ts`, `term-labels.ts` and the JSON pinner. This branch's tests of those went with
+them, and so did `apps/node`'s gate; the table above is the 2026-11-11 record.
+
 The bun "before" figures include a test importing every module, so they differ from the table above
 where an unloaded file was invisible. Every bun workspace ignores `../../packages/**`, gated in its own
 workspace. No test file or test was removed; no product code changed beyond extracting `apps/cli/scripts/mcpb.ts`'s build into a function.

@@ -2,7 +2,6 @@ import type {FetchLike, GraphqlTransport} from "@arp-protocol/graphql";
 import {getAddress, type Address, type Hex} from "viem";
 import {describe, expect, it} from "vitest";
 
-import {SmartAccountsKitMissingError} from "../src/declare/delegated.js";
 import {namedInSkill} from "../src/declare/line-need.js";
 import {readReachabilityState} from "../src/declare/reachability-plan.js";
 import {
@@ -244,15 +243,6 @@ describe("readReachabilityState", () => {
             1n,
         );
         expect(both).toMatchObject({recorded: "up", shares: 2n, bothSides: true});
-    });
-});
-
-describe("SmartAccountsKitMissingError", () => {
-    it("says delegated mode needs the kit and keeps the cause short", () => {
-        const error = new SmartAccountsKitMissingError("x".repeat(500));
-        expect(error.name).toBe("SmartAccountsKitMissingError");
-        expect(error.message).toContain("direct mode does not");
-        expect(error.message.length).toBeLessThan(400);
     });
 });
 

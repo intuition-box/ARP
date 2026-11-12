@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import { intuitionJsonPinner, intuitionPinner } from '../src/pin.ts';
+import { intuitionPinner } from '../src/pin.ts';
 import { restoreFetch, stubFetch } from './fetch-stub.ts';
 
 afterEach(restoreFetch);
@@ -22,20 +22,5 @@ describe('pinning an identity Thing', () => {
     await expect(intuitionPinner(AUTH)(THING)).rejects.toThrow('http 401');
     stubFetch(() => Response.json({ data: { pinThing: {} } }));
     await expect(intuitionPinner(AUTH)(THING)).rejects.toThrow('no uri');
-  });
-});
-
-describe('pinning a JSON document', () => {
-  it('uploads the parsed document and returns its ipfs URI', async () => {
-    const asked = stubFetch(() => Response.json({ data: { uploadJsonToIpfs: { hash: 'bafy1' } } }));
-    expect(await intuitionJsonPinner(AUTH)('{"b":1,"a":2}')).toBe('ipfs://bafy1');
-    expect(asked[0]?.body).toMatchObject({ variables: { json: { a: 2, b: 1 } } });
-  });
-
-  it('fails on an HTTP error and on an answer with no hash', async () => {
-    stubFetch(() => new Response('', { status: 500 }));
-    await expect(intuitionJsonPinner(AUTH)('{}')).rejects.toThrow('http 500');
-    stubFetch(() => Response.json({ data: {} }));
-    await expect(intuitionJsonPinner(AUTH)('{}')).rejects.toThrow('no hash');
   });
 });
