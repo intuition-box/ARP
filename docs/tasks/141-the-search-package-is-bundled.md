@@ -1,6 +1,6 @@
 # Task 141 — The search package is bundled, so `arp_pulse` searches in Claude Desktop
 
-**Status:** built 2026-11-12 on `feat/pulse-vendored-search`, written by arp-97. Task 141, ADR `0201`,
+**Status:** built 2026-11-12 on `feat/pulse-vendored-search`, written by arp-97. `task-verifier` PASS on round 2, post-mortem `.claude/learning/129-the-search-package-is-bundled.md`. Task 141, ADR `0201`,
 post-mortem `129`, allocated by the orchestrator. Ships in the release after 0.0.6.
 **Rules:** `code.md`, `security.md`, `claims.md`, `workflow.md`.
 **Required skills:** `arp-contributing`.
@@ -36,7 +36,7 @@ skills.sh's API, drop `arp_pulse` from Desktop) the user chose the first.
 - **Sizes.** Plugin `bin/`: 3,105,000 bytes on `dev` `eda9f36c`, 4,079,030 after. `.mcpb`: 688,320 bytes
   built from `dev` `72a62f1c` on 2026-11-11, 898,515 after (877.4 kB packed, 6 files). npm package
   894.3 kB packed (`npm pack --dry-run`).
-- **Gates.** `apps/mcp` 340 tests, tsc clean; `apps/cli` 89 tests, lint clean, `check:node` PASS,
+- **Gates.** `apps/mcp` 340 tests, tsc clean; `apps/cli` 90 tests, lint clean, `check:node` PASS,
   `packages --check` matches; `apps/hook` 116; root `bun run check`. New code's coverage:
   `scripts/vendor-licenses.ts` 100% functions, 93.55% lines (the `import.meta.main` lines are not run by
   a test); `pulse.ts`'s new functions each have a test (`vendoredSearchCli`, `searchLabel`, the vendored

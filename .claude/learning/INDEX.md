@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-12 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-132 entries, one per completed task. Written by `task-verifier` on a pass.
+133 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -138,3 +138,4 @@
 | [126](126-the-skills-say-what-0-0-6-does.md) | `docs/tasks/138-the-skills-say-what-0-0-6-does.md` | PASS (second pass; the first failed on three sentences) | The skills say what CLI 0.0.4 to 0.0.6 does |
 | [127](127-prune-dev-keep-the-hire-loop.md) | `docs/tasks/139-prune-dev-keep-the-hire-loop.md` | PASS (second pass; first FAIL on ` | Prune what production does not need; keep the hire loop on `future/hire-loop` |
 | [128](128-api-and-probe-on-coolify.md) | `docs/tasks/140-api-and-probe-on-coolify.md` | PASS | The API and the probe on Coolify |
+| [129](129-the-search-package-is-bundled.md) | `docs/tasks/141-the-search-package-is-bundled.md` | PASS (second round; the first failed on the record, not the code) | The search package is bundled, so `arp_pulse` searches in Claude Desktop |

@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-12 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-190 decisions. Newest last. `choices/README.md` says when to write one.
+191 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -33,7 +33,7 @@ Read these before relying on them.
 - **0137** (Accepted. Its design is open.) — ARP will compute a score
 - **0138** (Accepted. Amended by ADR `0159`, 2026-11-09: a fifth reason, `no-delivery`.) — A line is written in form B, has a closed reason, and money does not weigh in the score
 - **0140** (Accepted; its "writes `worked` never" superseded by `0169` (2026-11-10)) — The hook records a skill's failure, in one file, and writes `worked` never
-- **0144** (Accepted. Amended by ADR `0159`, 2026-11-09: a line about an endpoint is sponsored when it names a payment the agent made.) — A sponsored line asks no proof of use, and its key stays out of the plugin's server
+- **0144** (Accepted. Amended by ADR `0159`, 2026-11-09: a line about an endpoint is sponsored when it names a payment the agent made. Its context's "a server holding an agent key does not run the search package" holds until ADR `0201`, 2026-11-12: such a server runs only the bundled copy.) — A sponsored line asks no proof of use, and its key stays out of the plugin's server
 - **0145** (Accepted. Amended 2026-11-06 for the Claude Code plugin, at the end: it no longer goes through `npx`.) — The published CLI carries viem and has no dependency
 - **0148** (Accepted (design; nothing built)) — The hire loop reuses x402, ERC-8183 and ERC-8004, and checks the payment at read time
 - **0152** (Accepted; §5, §6 and §6's 2026-11-10 amendment reversed by ADR `0197` (2026-11-11: the) — The landing is one camera through a galaxy, and the claim field is on it
@@ -190,7 +190,7 @@ Read these before relying on them.
 | [0142](0142-the-message-is-not-the-argument.md) | 2026-11-05 | Accepted | The public message is not the internal argument |
 | [0143](0143-the-ranking-moves-from-three-wallets.md) | 2026-11-05 | Accepted | The ranking moves from three wallets, and a line below that is only shown |
 | [0143](0143-tools-page-unknown-is-not-dead-and-most-used.md) | 2026-11-05 | Accepted | /tools counts only what the sponsor deposited for an agent, as Signals |
-| [0144](0144-a-sponsored-line-asks-no-proof.md) | 2026-11-05 | Accepted. Amended by ADR `0159`, 2026-11-09: a line about an endpoint is sponsored when it names a payment the agent made. | A sponsored line asks no proof of use, and its key stays out of the plugin's server |
+| [0144](0144-a-sponsored-line-asks-no-proof.md) | 2026-11-05 | Accepted. Amended by ADR `0159`, 2026-11-09: a line about an endpoint is sponsored when it names a payment the agent made. Its context's "a server holding an agent key does not run the search package" holds until ADR `0201`, 2026-11-12: such a server runs only the bundled copy. | A sponsored line asks no proof of use, and its key stays out of the plugin's server |
 | [0145](0145-the-published-package-has-no-dependency.md) | 2026-11-05 | Accepted. Amended 2026-11-06 for the Claude Code plugin, at the end: it no longer goes through `npx`. | The published CLI carries viem and has no dependency |
 | [0146](0146-an-agent-grows-the-domain-tree.md) | 2026-11-09 | Accepted | An agent grows the domain tree, by a signed request |
 | [0147](0147-the-evidence-ladder-is-ordered-by-who-produced-the-signal.md) | 2026-11-09 | Accepted | The evidence ladder is ordered by who produced the signal |
@@ -239,3 +239,4 @@ Read these before relying on them.
 | [0198](0198-coverage-ninety-gate.md) | 2026-11-11 | Accepted | A 90 % coverage gate in every workspace |
 | [0199](0199-prune-dev-and-keep-the-hire-loop-on-a-branch.md) | 2026-11-11 | Accepted | Prune what production does not need from `dev`; keep the hire loop on `future/hire-loop` |
 | [0200](0200-api-and-probe-run-on-coolify.md) | 2026-11-11 | Accepted | The API and the probe run as containers on Coolify, with SQLite, and their x402 parts off |
+| [0201](0201-the-search-package-is-bundled-and-runs-beside-the-key.md) | 2026-11-12 | Accepted | The search package is bundled in the release, and runs beside an agent key |
