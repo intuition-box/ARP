@@ -505,7 +505,7 @@ its requests to ARP's services.
 
 | tool                    | what it does                                                                                                                        |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `arp_find_tools`        | the search in this mode. `arp_pulse` is listed too, but this mode does not run the search package: pass it `search_output`, or use `arp_find_tools` |
+| `arp_find_tools`        | a search of ARP's own listing. `arp_pulse` searches skills.sh too in releases after 0.0.6, with the copy of the search package the release carries; in 0.0.6 and earlier it ran nothing here and took `search_output` |
 | `arp_tool_reputation`, `arp_agent_endpoints`, `arp_find_agents` | the same reads as anywhere else                                                         |
 | `arp_get_skill`         | takes the `id` from a search and returns the skill's SKILL.md, `contains` first, with a receipt from ARP's content server. In Claude Code it can install the skill into `.claude/skills`, after a dialog the person answers; in Desktop it installs nothing |
 | `arp_declare_used`      | records publicly, in this agent's name, that it used a skill it got through `arp_get_skill`. The first call registers the agent on ARP's testnet ERC-8004 registry and takes about a minute |

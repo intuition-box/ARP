@@ -42215,9 +42215,9 @@ function positiveSetting(raw2, fallback2) {
 var BUSY = "the server is running as many searches as it can; try again in a moment", CANCELLED = "the call was cancelled";
 
 // ../mcp/src/handlers/pulse.ts
-import { chmodSync as chmodSync3, existsSync as existsSync7, mkdirSync as mkdirSync7, readFileSync as readFileSync9, rmSync as rmSync2 } from "node:fs";
+import { chmodSync as chmodSync3, existsSync as existsSync7, mkdirSync as mkdirSync7, readFileSync as readFileSync9, realpathSync, rmSync as rmSync2 } from "node:fs";
 import { homedir as homedir3 } from "node:os";
-import { join as join10, delimiter } from "node:path";
+import { delimiter, dirname as dirname4, join as join10 } from "node:path";
 function within(work, ms, stop) {
   return new Promise((resolve3, reject) => {
     const quit = () => reject(new Error("no answer in time"));
@@ -42253,7 +42253,28 @@ async function searchServiceTrouble(get, timeoutMs) {
 function saysNothingFound(output) {
   return /No skills found/i.test(output);
 }
-function searchInvocation(query, path, home, firstDownload = false) {
+function vendoredSearchCli(entry = process.argv[1]) {
+  if (entry === undefined)
+    return null;
+  try {
+    const file = join10(dirname4(realpathSync(entry)), "skills-cli.js");
+    return existsSync7(file) ? file : null;
+  } catch {
+    return null;
+  }
+}
+function searchLabel(vendored) {
+  return vendored === null ? "npx skills find" : `skills find (${SKILLS_CLI}, bundled)`;
+}
+function searchInvocation(query, path, home, firstDownload = false, vendored = null) {
+  const env = {
+    ...path === undefined ? {} : { PATH: path.split(delimiter).filter((dir) => !/node_modules[\\/]\.bin[\\/]?$/.test(dir)).join(delimiter) },
+    HOME: home,
+    DISABLE_TELEMETRY: "1",
+    NO_COLOR: "1"
+  };
+  if (vendored !== null)
+    return { file: process.execPath, cwd: home, args: [vendored, "find", query], env };
   return {
     file: "npx",
     cwd: home,
@@ -42267,16 +42288,11 @@ function searchInvocation(query, path, home, firstDownload = false) {
       "find",
       query
     ],
-    env: {
-      ...path === undefined ? {} : { PATH: path.split(delimiter).filter((dir) => !/node_modules[\\/]\.bin[\\/]?$/.test(dir)).join(delimiter) },
-      HOME: home,
-      DISABLE_TELEMETRY: "1",
-      NO_COLOR: "1"
-    }
+    env
   };
 }
 function canSearch(env) {
-  return !env.holdsAgentKey && env.setting !== "off";
+  return env.setting !== "off" && (!env.holdsAgentKey || env.vendored === true);
 }
 function searchHome() {
   return join10(arpHome(process.env, homedir3()), "skills-cli");
@@ -42285,7 +42301,7 @@ function searchIsCached() {
   return existsSync7(join10(searchHome(), ".npm", "_npx"));
 }
 async function search(query, timeoutMs, stop, firstDownload = false) {
-  if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env["ARP_PULSE_SEARCH"] })) {
+  if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env["ARP_PULSE_SEARCH"], vendored: VENDORED !== null })) {
     return { error: "this server does not run the search package" };
   }
   const home = searchHome();
@@ -42297,7 +42313,7 @@ async function search(query, timeoutMs, stop, firstDownload = false) {
     return { error: withoutPaths(error instanceof Error ? error.message.split(`
 `)[0] ?? "failed" : String(error)) };
   }
-  const invocation = searchInvocation(query, process.env["PATH"], home, firstDownload);
+  const invocation = searchInvocation(query, process.env["PATH"], home, firstDownload, VENDORED);
   return searchGate.run(JSON.stringify([invocation.env["PATH"] ?? "", home, query.trim()]), (shared2) => runSearch(invocation, { timeoutMs, stop: shared2 }).then((output) => ({ output }), (error) => ({ error: withoutPaths(error instanceof Error ? error.message.split(`
 `)[0] ?? "failed" : String(error)) })), stop, timeoutMs);
 }
@@ -42516,7 +42532,7 @@ async function answer(id, args, budget, cancelled) {
   if (typeof given === "string") {
     lists.push(parseSkillsFind(given));
   } else {
-    const firstDownload = !searchIsCached();
+    const firstDownload = VENDORED === null && !searchIsCached();
     const [head, ...rest] = phrases;
     const first = firstDownload && head !== undefined ? [await search(head, budget.searchMs, stop, true)] : [];
     const others = await Promise.all((firstDownload ? rest : phrases).map((phrase) => search(phrase, budget.searchMs, stop)));
@@ -42638,7 +42654,7 @@ async function answer(id, args, budget, cancelled) {
   results = results.filter((result2) => rankOf2.has(`${result2.source}@${result2.skill}`) || entersList(usageOf(result2), signal));
   if (results.length === 0) {
     return text(id, {
-      search: typeof given === "string" ? "search_output" : "npx skills find",
+      search: typeof given === "string" ? "search_output" : searchLabel(VENDORED),
       results: [],
       ...unavailablePart,
       ...failedPart,
@@ -42691,7 +42707,7 @@ async function answer(id, args, budget, cancelled) {
   });
   const mine = readYourFailures();
   return text(id, {
-    search: typeof given === "string" ? "search_output" : "npx skills find",
+    search: typeof given === "string" ? "search_output" : searchLabel(VENDORED),
     ...unavailablePart,
     ...phrases.length > 1 ? { phrases } : {},
     ...failedPart,
@@ -42723,7 +42739,7 @@ async function answer(id, args, budget, cancelled) {
     ...await agentsWithin(domain)
   });
 }
-var DEFAULT_LIMIT3 = 5, MAX_LIMIT = 20, MAX_PHRASES = 4, SKILLS_CLI = "skills@1.7.6", PULSE_BUDGET, PROBE_MS = 3000, searchGate, CONTAINS_PER_LIST = 4, bounded2 = (words) => words.slice(0, 30).map((word) => word.slice(0, 80));
+var DEFAULT_LIMIT3 = 5, MAX_LIMIT = 20, MAX_PHRASES = 4, SKILLS_CLI = "skills@1.7.6", PULSE_BUDGET, PROBE_MS = 3000, VENDORED, searchGate, CONTAINS_PER_LIST = 4, bounded2 = (words) => words.slice(0, 30).map((word) => word.slice(0, 80));
 var init_pulse2 = __esm(() => {
   init_dist2();
   init_node2();
@@ -42744,6 +42760,7 @@ var init_pulse2 = __esm(() => {
     agentsMs: 8000,
     filesMs: 1e4
   };
+  VENDORED = vendoredSearchCli();
   searchGate = createSearchGate({
     maxRunning: positiveSetting(process.env["ARP_SEARCH_CONCURRENCY"], 4),
     maxWaiting: positiveSetting(process.env["ARP_SEARCH_QUEUE"], 64)
@@ -45139,10 +45156,10 @@ var init_classify = __esm(() => {
 
 // ../hook/src/append.ts
 import { closeSync as closeSync2, constants, lstatSync as lstatSync2, openSync as openSync2, writeSync as writeSync2 } from "node:fs";
-import { dirname as dirname4 } from "node:path";
+import { dirname as dirname5 } from "node:path";
 function appendOwn(path, text2) {
-  if (lstatSync2(dirname4(path)).isSymbolicLink())
-    throw new Error(`${dirname4(path)} is a symbolic link`);
+  if (lstatSync2(dirname5(path)).isSymbolicLink())
+    throw new Error(`${dirname5(path)} is a symbolic link`);
   const flags = constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | (constants.O_NOFOLLOW ?? 0);
   const fd = openSync2(path, flags, 384);
   try {
@@ -45943,7 +45960,7 @@ var init_skill_nodes_13579 = __esm(() => {
 // ../hook/src/skill-failure.ts
 import { existsSync as existsSync9, mkdirSync as mkdirSync8, readFileSync as readFileSync10 } from "node:fs";
 import { homedir as homedir4 } from "node:os";
-import { dirname as dirname5, join as join12 } from "node:path";
+import { dirname as dirname6, join as join12 } from "node:path";
 function failureReason(text2) {
   if (MISSING_PROGRAM.test(text2))
     return "missing-program";
@@ -45999,7 +46016,7 @@ function appendFailure(line) {
   if (seen.split(`
 `).some((row) => row.includes(key) && row.includes(`"reason":"${line.reason}"`)))
     return false;
-  mkdirSync8(dirname5(path), { recursive: true });
+  mkdirSync8(dirname6(path), { recursive: true });
   appendOwn(path, `${JSON.stringify(line)}
 `);
   return true;
@@ -46387,7 +46404,7 @@ var init_edits = __esm(() => {
 
 // src/install/targets.ts
 import { existsSync as existsSync10, readFileSync as readFileSync12 } from "node:fs";
-import { dirname as dirname6, join as join14 } from "node:path";
+import { dirname as dirname7, join as join14 } from "node:path";
 function namesOurServer(text2, cliPath) {
   return text2.includes("@arp-protocol/cli") || text2.includes(cliPath) || /apps[\\/]cli[\\/]dist[\\/]cli\.js/.test(text2) || /[\\/]dist[\\/]cli\.js/.test(text2) && text2.includes("ARP_TARGET") || /(?:packaging[\\/]claude[\\/]arp|plugins[\\/]cache[\\/]arp[\\/]arp[\\/][^\\/]+)[\\/]bin[\\/]arp\.js/.test(text2);
 }
@@ -46428,7 +46445,7 @@ function commandsFor(env, cliPath, capture = false, sponsored = false, force = f
   };
   const hook = `"${env.node}" "${hookFile}"${capture ? " --capture" : ""}`;
   const send3 = fromNpx ? npxLaunch(`@arp-protocol/cli@${env.version}`, "share send --auto") : { command: env.node, args: [cliPath, "share", "send", "--auto"] };
-  return { mcp, hook, hookFile, sendFile: join14(dirname6(hookFile), "send.json"), send: send3, cliPath, capture, force };
+  return { mcp, hook, hookFile, sendFile: join14(dirname7(hookFile), "send.json"), send: send3, cliPath, capture, force };
 }
 function diffLines(before, after) {
   const lines = (value, sign3) => value === undefined || typeof value === "object" && value !== null && Object.keys(value).length === 0 ? [] : JSON.stringify(value, null, 2).split(`
@@ -46778,7 +46795,7 @@ import {
   statSync as statSync4,
   writeFileSync as writeFileSync8
 } from "node:fs";
-import { dirname as dirname7, join as join15 } from "node:path";
+import { dirname as dirname8, join as join15 } from "node:path";
 function parseFlags(args) {
   const flags = {
     yes: false,
@@ -46860,7 +46877,7 @@ function apply(env, step2) {
       rmSync3(step2.path, { force: true });
       return null;
     }
-    mkdirSync9(dirname7(step2.path), { recursive: true });
+    mkdirSync9(dirname8(step2.path), { recursive: true });
     const mode2 = step2.before === null ? undefined : statSync4(step2.path).mode & 511;
     const temp = `${step2.path}.arp-tmp`;
     writeFileSync8(temp, step2.after, mode2 === undefined ? undefined : { mode: mode2 });
@@ -47145,7 +47162,7 @@ var init_env = () => {};
 
 // src/cli.ts
 init_node2();
-import { dirname as dirname8 } from "node:path";
+import { dirname as dirname9 } from "node:path";
 import { fileURLToPath } from "node:url";
 // package.json
 var version2 = "0.0.7";
@@ -47371,7 +47388,7 @@ async function run(argv) {
 `);
         return EXIT2.usage;
       }
-      const env = processEnv2(dirname8(CLI_PATH), version2);
+      const env = processEnv2(dirname9(CLI_PATH), version2);
       if (command === "doctor")
         return install.doctor(env, flags, CLI_PATH);
       return command === "init" ? install.init(env, flags, CLI_PATH) : install.uninstall(env, flags, CLI_PATH);

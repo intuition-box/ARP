@@ -89,7 +89,7 @@ test('the bundled server leaves a choice made in Claude Code alone while the box
   }
 }, 40_000);
 
-test('build stages arp.js, its package.json, the icon and the manifest, validates, then packs', () => {
+test('build stages arp.js, the bundled search and its licences, its package.json, the icon and the manifest, validates, then packs', () => {
   const root = mkdtempSync(join(tmpdir(), 'arp-mcpb-'));
   try {
     const bin = join(root, 'bin');
@@ -98,6 +98,8 @@ test('build stages arp.js, its package.json, the icon and the manifest, validate
     for (const dir of [bin, join(cli, 'assets')]) mkdirSync(dir, { recursive: true });
     writeFileSync(join(bin, 'arp.js'), 'server');
     writeFileSync(join(bin, 'package.json'), '{"type":"module"}');
+    writeFileSync(join(bin, 'skills-cli.js'), 'search');
+    writeFileSync(join(bin, 'skills-cli.LICENSE.txt'), 'licences');
     writeFileSync(join(cli, 'assets', 'icon.png'), 'png');
     const calls: string[][] = [];
     const file = build({ bin, cli, out, mcpb: 'mcpb' }, (command, args) => {
@@ -111,6 +113,8 @@ test('build stages arp.js, its package.json, the icon and the manifest, validate
       ['mcpb', 'pack', stage, file],
     ]);
     expect(readFileSync(join(stage, 'server', 'arp.js'), 'utf8')).toBe('server');
+    expect(readFileSync(join(stage, 'server', 'skills-cli.js'), 'utf8')).toBe('search');
+    expect(readFileSync(join(stage, 'server', 'skills-cli.LICENSE.txt'), 'utf8')).toBe('licences');
     expect(readFileSync(join(stage, 'icon.png'), 'utf8')).toBe('png');
     expect(JSON.parse(readFileSync(join(stage, 'manifest.json'), 'utf8'))).toEqual(manifest(pkg.version));
   } finally {

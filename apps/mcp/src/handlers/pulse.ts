@@ -1,6 +1,6 @@
-import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join, delimiter } from 'node:path';
+import { delimiter, dirname, join } from 'node:path';
 
 import {
   domainInText,
@@ -127,10 +127,48 @@ export function saysNothingFound(output: string): boolean {
  * package, and `task-verifier` found the first version handing it the server's whole environment.
  * `HOME` is a private directory, so a default path to a key does not resolve to one. It is not in a
  * shared `/tmp`, where another account could plant the `.npmrc` that chooses npm's registry. The package
- * still runs as the same OS user, which is why a server holding an agent key does not run it (`canSearch`) and `docs/22`
- * says so.
+ * still runs as the same OS user, which is why a server holding an agent key runs only the bundled copy, never
+ * `npx` (`canSearch`, ADR `0201`), and `docs/22` says so.
  */
-export function searchInvocation(query: string, path: string | undefined, home: string, firstDownload = false) {
+/**
+ * The search package as a file in this build, or `null` (task 141, ADR `0201`). The plugin, the `.mcpb` and the
+ * npm package carry `skills-cli.js` beside their entry: `skills` at the version above, bundled with its
+ * dependencies when the release is built, so nothing is downloaded or resolved when it runs. From a checkout
+ * there is none, and the search goes through `npx` as before.
+ */
+export function vendoredSearchCli(entry: string | undefined = process.argv[1]): string | null {
+  if (entry === undefined) return null;
+  try {
+    const file = join(dirname(realpathSync(entry)), 'skills-cli.js');
+    return existsSync(file) ? file : null;
+  } catch {
+    return null;
+  }
+}
+
+const VENDORED = vendoredSearchCli();
+
+/** What ran the search, as the answer names it: the bundled copy, or the package through `npx`. */
+export function searchLabel(vendored: string | null): string {
+  return vendored === null ? 'npx skills find' : `skills find (${SKILLS_CLI}, bundled)`;
+}
+
+export function searchInvocation(
+  query: string,
+  path: string | undefined,
+  home: string,
+  firstDownload = false,
+  vendored: string | null = null,
+) {
+  const env = {
+    // npm put the project's `node_modules/.bin` here when it started the server. A planted `npx` would run.
+    ...(path === undefined ? {} : { PATH: path.split(delimiter).filter((dir) => !/node_modules[\\/]\.bin[\\/]?$/.test(dir)).join(delimiter) }),
+    HOME: home,
+    DISABLE_TELEMETRY: '1',
+    NO_COLOR: '1',
+  };
+  // The bundled copy: this Node runs it, nothing is fetched, the query is still one argument.
+  if (vendored !== null) return { file: process.execPath, cwd: home, args: [vendored, 'find', query], env };
   return {
     file: 'npx',
     // Run away from the project, and with a prefix of our own: from the project, a planted
@@ -149,19 +187,16 @@ export function searchInvocation(query: string, path: string | undefined, home: 
       'find',
       query,
     ],
-    env: {
-      // npm put the project's `node_modules/.bin` here when it started the server. A planted `npx` would run.
-      ...(path === undefined ? {} : { PATH: path.split(delimiter).filter((dir) => !/node_modules[\\/]\.bin[\\/]?$/.test(dir)).join(delimiter) }),
-      HOME: home,
-      DISABLE_TELEMETRY: '1',
-      NO_COLOR: '1',
-    },
+    env,
   };
 }
 
-/** Off when the operator says so, and in the modes that keep an agent key on this machine (ADR `0110`). */
-export function canSearch(env: { holdsAgentKey: boolean; setting: string | undefined }): boolean {
-  return !env.holdsAgentKey && env.setting !== 'off';
+/**
+ * Off when the operator says so. In the modes that keep an agent key on this machine (ADR `0110`), only the
+ * bundled copy runs: `npx` would resolve the package's dependencies when it starts, next to the key (ADR `0201`).
+ */
+export function canSearch(env: { holdsAgentKey: boolean; setting: string | undefined; vendored?: boolean }): boolean {
+  return env.setting !== 'off' && (!env.holdsAgentKey || env.vendored === true);
 }
 
 /** A failure is a value, because a host without `npx` can still pass `search_output` itself. */
@@ -181,7 +216,7 @@ const searchGate = createSearchGate({
 });
 
 async function search(query: string, timeoutMs: number, stop: AbortSignal, firstDownload = false): Promise<{ output: string } | { error: string }> {
-  if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env['ARP_PULSE_SEARCH'] })) {
+  if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env['ARP_PULSE_SEARCH'], vendored: VENDORED !== null })) {
     return { error: 'this server does not run the search package' };
   }
   const home = searchHome();
@@ -193,7 +228,7 @@ async function search(query: string, timeoutMs: number, stop: AbortSignal, first
   } catch (error) {
     return { error: withoutPaths(error instanceof Error ? (error.message.split('\n')[0] ?? 'failed') : String(error)) };
   }
-  const invocation = searchInvocation(query, process.env['PATH'], home, firstDownload);
+  const invocation = searchInvocation(query, process.env['PATH'], home, firstDownload, VENDORED);
   // The words alone are not the key: an answer is what one package, on one PATH, printed for them.
   return searchGate.run(
     JSON.stringify([invocation.env['PATH'] ?? '', home, query.trim()]),
@@ -486,7 +521,7 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
     lists.push(parseSkillsFind(given));
   } else {
     // A first download alone: `npx` runs started together on an empty cache can fail on each other (`EEXIST`).
-    const firstDownload = !searchIsCached();
+    const firstDownload = VENDORED === null && !searchIsCached();
     const [head, ...rest] = phrases;
     const first = firstDownload && head !== undefined ? [await search(head, budget.searchMs, stop, true)] : [];
     const others = await Promise.all((firstDownload ? rest : phrases).map((phrase) => search(phrase, budget.searchMs, stop)));
@@ -616,7 +651,7 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
   results = results.filter((result) => rankOf.has(`${result.source}@${result.skill}`) || entersList(usageOf(result), signal));
   if (results.length === 0) {
     return text(id, {
-      search: typeof given === 'string' ? 'search_output' : 'npx skills find',
+      search: typeof given === 'string' ? 'search_output' : searchLabel(VENDORED),
       results: [],
       ...unavailablePart,
       ...failedPart,
@@ -688,7 +723,7 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
   const mine = readYourFailures();
 
   return text(id, {
-    search: typeof given === 'string' ? 'search_output' : 'npx skills find',
+    search: typeof given === 'string' ? 'search_output' : searchLabel(VENDORED),
     ...unavailablePart,
     ...(phrases.length > 1 ? { phrases } : {}),
     ...failedPart,

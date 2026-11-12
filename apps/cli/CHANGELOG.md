@@ -5,6 +5,11 @@
 
 ## 0.0.7 — unreleased
 
+- **`arp_pulse` searches in Claude Desktop and in the sponsored setup** (task 141, ADR `0201`). The release
+  carries `skills@1.7.6` bundled with its dependencies as `skills-cli.js`, with their licences in
+  `skills-cli.LICENSE.txt`, and runs it with this Node: no `npx`, nothing downloaded when it runs. The modes
+  that keep an agent key used to skip the search entirely, and Desktop, which has no terminal, could not run
+  it itself. Telemetry stays off; the search reaches skills.sh only.
 - **The plugin's skill says what 0.0.4–0.0.6 do** (task 138): the sharing question asked once and answered by the person, what a shared line says (the version, the type, a content receipt as evidence, an x402 line's payment), and still no query of ARP's sources by the agent.
 - **Removed: `arp node` and `arp init --node`** (task 139). The hire endpoint, which listened on
   127.0.0.1 behind a tunnel you rent and signed a receipt for a paid call, and the handshake that bound

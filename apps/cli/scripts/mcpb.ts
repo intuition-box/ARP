@@ -111,6 +111,9 @@ export function build(paths: BuildPaths = { bin: BIN, out: OUT, cli: CLI, mcpb: 
   rmSync(paths.out, { recursive: true, force: true });
   mkdirSync(join(stage, 'server'), { recursive: true });
   copyFileSync(join(paths.bin, 'arp.js'), join(stage, 'server', 'arp.js'));
+  // The search package the release bundles, and its licences (task 141, ADR `0201`).
+  copyFileSync(join(paths.bin, 'skills-cli.js'), join(stage, 'server', 'skills-cli.js'));
+  copyFileSync(join(paths.bin, 'skills-cli.LICENSE.txt'), join(stage, 'server', 'skills-cli.LICENSE.txt'));
   copyFileSync(join(paths.bin, 'package.json'), join(stage, 'server', 'package.json'));
   copyFileSync(join(paths.cli, 'assets', 'icon.png'), join(stage, 'icon.png'));
   writeFileSync(join(stage, 'manifest.json'), `${JSON.stringify(manifest(pkg.version), null, 2)}\n`);

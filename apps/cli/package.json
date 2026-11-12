@@ -28,7 +28,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "bun run --cwd ../../packages/protocol build && rm -rf dist && ARP_SPONSOR_DEFAULT=$(bun -e 'console.log(require(\"./package.json\").config.sponsorDefault)') bun build src/cli.ts --env 'ARP_SPONSOR_DEFAULT*' --define process.env.ARP_CONTENT_DEFAULT=\\\"$(bun -e 'console.log(require(\"./package.json\").config.contentDefault)')\\\" --define process.env.ARP_PACKAGE_VERSION=\\\"$(bun -e 'console.log(require(\"./package.json\").version)')\\\" --outdir dist --target=node --format=esm --splitting --entry-naming '[name].js' --chunk-naming 'chunks/[name]-[hash].js' --external ./hook.js --banner '#!/usr/bin/env node' && bun build ../hook/src/hook.ts --outfile dist/hook.js --target=node --format=esm --external viem --external 'viem/*'",
+    "build": "bun run --cwd ../../packages/protocol build && rm -rf dist && ARP_SPONSOR_DEFAULT=$(bun -e 'console.log(require(\"./package.json\").config.sponsorDefault)') bun build src/cli.ts --env 'ARP_SPONSOR_DEFAULT*' --define process.env.ARP_CONTENT_DEFAULT=\\\"$(bun -e 'console.log(require(\"./package.json\").config.contentDefault)')\\\" --define process.env.ARP_PACKAGE_VERSION=\\\"$(bun -e 'console.log(require(\"./package.json\").version)')\\\" --outdir dist --target=node --format=esm --splitting --entry-naming '[name].js' --chunk-naming 'chunks/[name]-[hash].js' --external ./hook.js --banner '#!/usr/bin/env node' && bun build ../hook/src/hook.ts --outfile dist/hook.js --target=node --format=esm --external viem --external 'viem/*' && bun build ./node_modules/skills/dist/cli.mjs --outfile dist/skills-cli.js --target=node --format=esm && bun scripts/vendor-licenses.ts",
     "test": "bun run build && bun test",
     "prepublishOnly": "bun run build",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json",
@@ -42,6 +42,7 @@
     "@arp/hook": "workspace:*",
     "@arp/mcp": "workspace:*",
     "@types/bun": "^1.4.4",
+    "skills": "1.7.6",
     "typescript": "~6.0.2",
     "viem": "2.52.0"
   },

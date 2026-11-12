@@ -201,12 +201,16 @@ the signed addresses   `arp_agent_endpoints` asks `/` of an agent's three newest
 The hook, a separate program, reaches two of these too: GitHub before a skills install, with the repository and skill names the command holds (ADR `0167`), and the Intuition graph once when a skill's command fails, with the skill's atom and nothing of yours (ADR `0168`). Its section below has both.
 
 **`arp_pulse` runs somebody else's package, and you should decide about that.** Called with a `query`,
-it runs `npx --yes skills@1.7.6 find <query>` with a short fetch limit, from its private directory rather than your project, and without a project's `node_modules/.bin` on `PATH`: the pinned npm package executes on your machine, as your
+a release (the plugin, the Desktop extension, the npm package, after 0.0.6) runs the copy of `skills@1.7.6` it
+carries, `skills-cli.js` beside its entry, bundled with its dependencies when the release was built, so nothing
+is downloaded and npm is not reached (task 141, ADR `0201`); its licences are in `skills-cli.LICENSE.txt`.
+Of the hosts that file names, its `find` reaches one, `skills.sh`, with telemetry off. From a checkout, it runs
+`npx --yes skills@1.7.6 find <query>` with a short fetch limit. Either way it runs from its private directory rather than your project, and without a project's `node_modules/.bin` on `PATH`: the pinned package executes on your machine, as your
 OS user, so it can read what that user can read. It gets four environment variables (`PATH`, `HOME` set to
 the private directory `skills-cli` in `ARP_HOME`, and two that turn off telemetry and colour), none of your secrets, and the query as
 one argument with no shell. **Your search words reach skills.sh**, and `npx` reaches the npm registry when the package is not in its cache.
-A `node_modules/.bin` in your home folder or a parent of it, or in a project holding `ARP_HOME`, is **not** covered: a program there ran through this `npx`, tried 2026-11-06. `ARP_PULSE_SEARCH=off` stops it, and it never runs in `desktop` or `sponsored`, which keep an agent key on
-the machine. An agent can always pass the command's text as `search_output`, which runs nothing. Either way
+A `node_modules/.bin` in your home folder or a parent of it, or in a project holding `ARP_HOME`, is **not** covered: a program there ran through this `npx`, tried 2026-11-06. `ARP_PULSE_SEARCH=off` stops it. In `desktop` or `sponsored`, which keep an agent key on the machine, only the
+bundled copy runs, never `npx`, which resolves the package's dependencies when it starts. An agent can always pass the command's text as `search_output`, which runs nothing. Either way
 the tool asks `api.github.com` for each repository's listing and, with `GITHUB_TOKEN`, also its figures.
 
 One search answers within 50 s, whatever does not answer, because an MCP client gives up at 60 (`PULSE_BUDGET`, `handlers/pulse.ts`). The package gets 25 s, each GitHub read 10 s. What did not answer is named in the reply: `search: "unavailable"` with its `detail`, `phrases_failed`, `files_not_all_read`, `public_record`. Only `nothing_found` says that nothing exists. The package runs in its own process group, killed when its time is up, when the call is cancelled, when your client closes the server's stdin, and on SIGTERM, SIGINT or SIGHUP. A server killed with SIGKILL runs no code, so a search open at that moment is left running.

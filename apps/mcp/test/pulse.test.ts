@@ -1,7 +1,11 @@
+import {mkdtempSync, realpathSync, writeFileSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
+
 import {describe, expect, it} from "vitest";
 
 import {edgeWriterWarning} from "../src/handlers/declare.js";
-import {canSearch, searchInvocation, setAsideBecause, SKILLS_CLI, toCheck, usageLine, yourFailuresLine} from "../src/handlers/pulse.js";
+import {canSearch, searchInvocation, setAsideBecause, SKILLS_CLI, searchLabel, toCheck, usageLine, vendoredSearchCli, yourFailuresLine} from "../src/handlers/pulse.js";
 import {readSkillContents, type SkillPulse} from "@arp-protocol/core";
 
 const read = (overrides: Partial<Extract<SkillPulse, {status: "read"}>> = {}): SkillPulse => ({
@@ -66,10 +70,36 @@ describe("the search package", () => {
         expect(env.HOME).toBe("/private/cli");
     });
 
-    it("does not run where an agent key is kept, or where the operator turned it off", () => {
+    it("never runs npx where an agent key is kept; the bundled copy runs there (task 141)", () => {
         expect(canSearch({holdsAgentKey: false, setting: undefined})).toBe(true);
         expect(canSearch({holdsAgentKey: true, setting: undefined})).toBe(false);
+        expect(canSearch({holdsAgentKey: true, setting: undefined, vendored: true})).toBe(true);
         expect(canSearch({holdsAgentKey: false, setting: "off"})).toBe(false);
+        expect(canSearch({holdsAgentKey: true, setting: "off", vendored: true})).toBe(false);
+    });
+
+    it("runs the bundled copy with this Node, the query as one argument, the same four variables", () => {
+        const {file, args, cwd, env} = searchInvocation('video; rm -rf "$HOME"', "/evil/node_modules/.bin:/usr/bin", "/private/cli", true, "/opt/arp/skills-cli.js");
+        expect(file).toBe(process.execPath);
+        expect(args).toEqual(["/opt/arp/skills-cli.js", "find", 'video; rm -rf "$HOME"']);
+        expect(cwd).toBe("/private/cli");
+        expect(Object.keys(env).sort()).toEqual(["DISABLE_TELEMETRY", "HOME", "NO_COLOR", "PATH"]);
+        expect(env.PATH).toBe("/usr/bin");
+    });
+
+    it("names what ran the search", () => {
+        expect(searchLabel(null)).toBe("npx skills find");
+        expect(searchLabel("/opt/arp/skills-cli.js")).toBe(`skills find (${SKILLS_CLI}, bundled)`);
+    });
+
+    it("finds the bundled copy beside the entry it was started from, and nothing from a checkout", () => {
+        const dir = mkdtempSync(join(tmpdir(), "arp-vendored-"));
+        writeFileSync(join(dir, "arp.js"), "");
+        expect(vendoredSearchCli(join(dir, "arp.js"))).toBeNull();
+        writeFileSync(join(dir, "skills-cli.js"), "");
+        expect(vendoredSearchCli(join(dir, "arp.js"))).toBe(join(realpathSync(dir), "skills-cli.js"));
+        expect(vendoredSearchCli(undefined)).toBeNull();
+        expect(vendoredSearchCli(join(dir, "missing.js"))).toBeNull();
     });
 });
 

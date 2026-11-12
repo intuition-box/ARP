@@ -1,8 +1,8 @@
 /**
  * Writing one line from this machine: `arp line`, and what `arp share` calls (ADR `0144`). Kept out of the
- * MCP server's tools on purpose: a server that holds an agent key does not run the search package
- * (`handlers/pulse.ts`, `canSearch`), so the plugin's server stays read-only and holds no key, and this holds
- * it for the length of one call.
+ * MCP server's tools on purpose: the plugin's server stays read-only and holds no key, and this holds it for
+ * the length of one call. (A server that holds an agent key runs the search package only as the bundled copy,
+ * `handlers/pulse.ts`, `canSearch`, ADR `0201`.)
  */
 import {
   chainIdOfNetwork,

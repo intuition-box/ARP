@@ -248,6 +248,9 @@ function files(source: Source, cli: string): Files {
   );
   out.set(`${claude}/bin/hook.js`, hook);
   out.set(`${claude}/bin/arp.js`, cli);
+  // The search package, bundled at its pinned version, so `arp_pulse` runs it with no `npx` (task 141, ADR `0201`).
+  out.set(`${claude}/bin/skills-cli.js`, readFileSync(join(CLI, 'dist', 'skills-cli.js'), 'utf8'));
+  out.set(`${claude}/bin/skills-cli.LICENSE.txt`, readFileSync(join(CLI, 'dist', 'skills-cli.LICENSE.txt'), 'utf8'));
   out.set(`${claude}/bin/package.json`, json({ type: 'module', private: true }));
   for (const command of PLUGIN_COMMANDS) {
     out.set(`${claude}/commands/${command.file}.md`, commandFile(command));

@@ -12,7 +12,7 @@ The server serves a different set depending on the `ARP_TOOLS` environment varia
 | Sponsored | `desktop` or `sponsored` | The Claude Desktop extension (`desktop`), `arp init --sponsored` (`sponsored`) | `arp_find_tools`, `arp_find_agents`, `arp_pulse`, `arp_tool_reputation`, `arp_agent_endpoints`, `arp_get_skill`, and a sponsored `arp_declare_used` |
 | Full | unset | `arp init`, or running `arp mcp` yourself | all thirteen tools in the table below |
 
-In the sponsored set, `arp_pulse` does not run the search package: pass it the results you already have. The sponsored set holds a local agent key in `~/.arp/agent-key`, and ARP's sponsoring service pays for what it writes, on testnet 13579 only.
+In the sponsored set, `arp_pulse` runs the search only from the copy of `skills` bundled in the release (in releases after 0.0.6; 0.0.6 and earlier did not run it, and took the results you passed). The sponsored set holds a local agent key in `~/.arp/agent-key`, and ARP's sponsoring service pays for what it writes, on testnet 13579 only.
 
 | Tool | Kind | What it does |
 | --- | --- | --- |

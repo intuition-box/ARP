@@ -63,11 +63,14 @@ done
 pass "a project's planted node, npx and arp do not run"
 
 # The plugin carries the CLI (ADR `0145`, amended 2026-11-06): no install, no `npx` for the server, and the
-# project is the working directory. A copy outside the repo, as nothing above it may help. The search is the
-# one thing that still runs `npx`, so a stub stands in for it and says it ran, and none of the planted ones may.
+# project is the working directory. A copy outside the repo, as nothing above it may help. The search runs the
+# copy of `skills` the plugin carries, `bin/skills-cli.js` (task 141, ADR `0201`): a stub stands in for that copy
+# and says it ran, a stub `npx` says if it ran instead, and none of the planted ones may.
 plugin="$work/plugin"; cp -r "$here/../../packaging/claude/arp" "$plugin"
+[[ -f "$plugin/bin/skills-cli.js" && -f "$plugin/bin/skills-cli.LICENSE.txt" ]] || fail "the plugin carries no bundled search, or not its licences"
+printf 'import {writeFileSync} from "node:fs";\nwriteFileSync(%s, "");\n' "'$work/SEARCH_RAN'" > "$plugin/bin/skills-cli.js"
 stub_npx="$work/stub-bin"; mkdir -p "$stub_npx"
-printf '#!/bin/sh\ntouch "%s/SEARCH_RAN"\nexit 0\n' "$work" > "$stub_npx/npx"; chmod +x "$stub_npx/npx"
+printf '#!/bin/sh\ntouch "%s/NPX_RAN"\nexit 0\n' "$work" > "$stub_npx/npx"; chmod +x "$stub_npx/npx"
 (cd "$planted" && env -i PATH="$stub_npx:$node_bin:/usr/bin:/bin" HOME="$work/home" ARP_HOME="$work/home/.arp-plugin" \
   INTUITION_GRAPHQL_URL=http://127.0.0.1:9/ INTUITION_RPC_URL=http://127.0.0.1:9/ GITHUB_API_URL=http://127.0.0.1:9/ \
   node "$here/scripts/plugin-session.mjs" "$plugin" --search "video editing") > "$work/plugin-session.json" \
@@ -76,7 +79,8 @@ grep -q '"arp_pulse"' "$work/plugin-session.json" || fail "the plugin's server l
 pass "the plugin's bin/arp.js answers from a copy, with nothing installed"
 [[ -e "$work/SEARCH_RAN" ]] || fail "the search did not run: the check below would prove nothing"
 [[ ! -e "$work/PWNED" ]] || fail "a planted program ran through the plugin"
-pass "from a project with planted node, npx, arp and skills: the search ran, and none of them did"
+[[ ! -e "$work/NPX_RAN" ]] || fail "the plugin's search went through npx, not its bundled copy"
+pass "from a project with planted node, npx, arp and skills: the bundled search ran, and none of them did"
 (cd "$planted" && echo '{"tool_name":"mcp__x__y","tool_use_id":"t2","tool_response":"ok"}' | clean node "$plugin/bin/hook.js")
 grep -q '"call":"t2"' "$planted/.arp/session.jsonl" || fail "the plugin's hook wrote no line in the project"
 pass "the plugin's hook writes in the project, its working directory"
